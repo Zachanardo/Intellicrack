@@ -30,7 +30,7 @@ import threading
 import traceback
 import types
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, TypedDict, cast
 
 from intellicrack.handlers.psutil_handler import PSUTIL_AVAILABLE
 
@@ -58,6 +58,90 @@ else:
     psutil = None
 
 logger = logging.getLogger(__name__)
+
+
+class BinaryAnalysisResult(TypedDict, total=False):
+    """Result from binary analysis."""
+
+    success: bool
+    findings: list[str]
+    vulnerability_count: int
+    file_size: int
+    format: str
+    error: str
+
+
+class VulnerabilityInfo(TypedDict, total=False):
+    """Vulnerability information."""
+
+    type: str
+    severity: str
+    address: int
+    description: str
+    confidence: float
+
+
+class TargetDetectionResult(TypedDict, total=False):
+    """Result from target detection."""
+
+    targets_found: list[str]
+    license_checks: list[str]
+    vulnerabilities: list[VulnerabilityInfo]
+
+
+class PatchOperation(TypedDict, total=False):
+    """Individual patch operation."""
+
+    type: str
+    offset: int
+    original: bytes
+    patched: bytes
+    description: str
+
+
+class PatchInfo(TypedDict, total=False):
+    """Patch information."""
+
+    success: bool
+    target: str
+    operations: list[PatchOperation]
+    strategy: str
+    error: str
+
+
+class AutonomousPatchResult(TypedDict, total=False):
+    """Result from autonomous patching."""
+
+    status: str
+    message: str
+    analysis: BinaryAnalysisResult
+    detection: TargetDetectionResult
+    patches: list[PatchInfo]
+    backup_path: str
+
+
+class PatchGenerationResult(TypedDict, total=False):
+    """Result from patch generation."""
+
+    patches: list[PatchInfo]
+    patch_count: int
+
+
+class BackupResult(TypedDict, total=False):
+    """Result from backup operation."""
+
+    success: bool
+    backup_path: str
+    error: str
+    message: str
+
+
+class PatchApplicationResult(TypedDict, total=False):
+    """Result from patch application."""
+
+    results: list[PatchInfo]
+    applied_count: int
+    failed_count: int
 
 
 def _emit_output(app_instance: object | None, message: str) -> None:
@@ -2779,7 +2863,7 @@ def run_autonomous_patching(app_instance: object | None = None, **kwargs: object
 
         start_time = time.time()
 
-        patches_found: list[dict[str, Any]] = []
+        patches_found: list[PatchInfo] = []
         patches_applied: int = 0
         analysis_phases: dict[str, Any] = {}
         patch_statistics: dict[str, Any] = {}
@@ -2907,10 +2991,10 @@ def run_autonomous_patching(app_instance: object | None = None, **kwargs: object
         return {"status": "error", "message": str(e)}
 
 
-def _autonomous_analyze_binary(target_binary: str) -> dict[str, Any]:
+def _autonomous_analyze_binary(target_binary: str) -> BinaryAnalysisResult:
     """Analyze binary for autonomous patching."""
     findings: list[str] = []
-    result: dict[str, Any] = {"success": False, "findings": findings, "vulnerability_count": 0}
+    result: BinaryAnalysisResult = {"success": False, "findings": findings, "vulnerability_count": 0}
 
     try:
         if not os.path.exists(target_binary):
@@ -2945,13 +3029,13 @@ def _autonomous_analyze_binary(target_binary: str) -> dict[str, Any]:
     return result
 
 
-def _autonomous_detect_targets(target_binary: str, analysis_result: dict[str, Any]) -> dict[str, Any]:
+def _autonomous_detect_targets(target_binary: str, analysis_result: BinaryAnalysisResult) -> TargetDetectionResult:
     """Detect patching targets (license checks, vulnerabilities)."""
     logger.debug("Detecting targets for %s with analysis result keys: %s", target_binary, list(analysis_result.keys()))
     targets_found: list[str] = []
     license_checks: list[str] = []
-    vulnerabilities: list[dict[str, Any]] = []
-    result: dict[str, Any] = {"targets_found": targets_found, "license_checks": license_checks, "vulnerabilities": vulnerabilities}
+    vulnerabilities_raw: list[dict[str, Any]] = []
+    result: TargetDetectionResult = {"targets_found": targets_found, "license_checks": license_checks, "vulnerabilities": cast(list[VulnerabilityInfo], vulnerabilities_raw)}
 
     try:
         # Use existing vulnerability detection
@@ -2961,8 +3045,8 @@ def _autonomous_detect_targets(target_binary: str, analysis_result: dict[str, An
         vulns = vuln_engine.scan_binary(target_binary)
 
         if isinstance(vulns, list):
-            vulnerabilities.extend(vulns)
-        targets_found.extend([f"Vulnerability: {v.get('type', 'unknown')}" for v in vulnerabilities])
+            vulnerabilities_raw.extend(vulns)
+        targets_found.extend([f"Vulnerability: {v.get('type', 'unknown')}" for v in vulnerabilities_raw])
 
         # Detect license check patterns
         try:
@@ -2984,17 +3068,18 @@ def _autonomous_detect_targets(target_binary: str, analysis_result: dict[str, An
     return result
 
 
-def _autonomous_generate_patches(target_binary: str, detection_result: dict[str, Any], strategy: str) -> dict[str, Any]:
+def _autonomous_generate_patches(target_binary: str, detection_result: TargetDetectionResult, strategy: str) -> PatchGenerationResult:
     """Generate patches based on detected targets."""
     logger.debug("Generating patches for %s with strategy: %s, detection keys: %s", target_binary, strategy, list(detection_result.keys()))
-    result = {"patches": [], "patch_count": 0}
+    result: PatchGenerationResult = {"patches": [], "patch_count": 0}
 
     try:
-        patches = []
+        patches: list[dict[str, Any]] = []
 
         # Generate patches for vulnerabilities
         for vuln in detection_result.get("vulnerabilities", []):
-            if patch := _generate_vulnerability_patch(vuln, strategy):
+            vuln_dict: dict[str, Any] = dict(vuln)
+            if patch := _generate_vulnerability_patch(vuln_dict, strategy):
                 patches.append(patch)
 
         # Generate patches for license checks
@@ -3002,7 +3087,7 @@ def _autonomous_generate_patches(target_binary: str, detection_result: dict[str,
             if patch := _generate_license_patch(license_check, strategy):
                 patches.append(patch)
 
-        result["patches"] = patches
+        result["patches"] = cast(list[PatchInfo], patches)
         result["patch_count"] = len(patches)
 
     except Exception as e:
@@ -3062,9 +3147,9 @@ def _generate_license_patch(license_check: str, strategy: str) -> dict[str, Any]
     }
 
 
-def _autonomous_backup_original(target_binary: str) -> dict[str, Any]:
+def _autonomous_backup_original(target_binary: str) -> BackupResult:
     """Create backup of original binary."""
-    result = {"success": False, "backup_path": ""}
+    result: BackupResult = {"success": False, "backup_path": ""}
 
     try:
         backup_path = f"{target_binary}.backup"
@@ -3081,17 +3166,18 @@ def _autonomous_backup_original(target_binary: str) -> dict[str, Any]:
     return result
 
 
-def _autonomous_apply_patches(target_binary: str, patches: list[dict[str, Any]], strategy: str) -> dict[str, Any]:
+def _autonomous_apply_patches(target_binary: str, patches: list[PatchInfo], strategy: str) -> PatchApplicationResult:
     """Apply generated patches to binary."""
-    results: list[dict[str, Any]] = []
+    results_raw: list[dict[str, Any]] = []
     applied_count = 0
     failed_count = 0
-    result: dict[str, Any] = {"applied_count": applied_count, "failed_count": failed_count, "results": results}
+    result: PatchApplicationResult = {"applied_count": applied_count, "failed_count": failed_count, "results": cast(list[PatchInfo], results_raw)}
 
     try:
         for patch in patches:
-            patch_result = _apply_single_patch(target_binary, patch, strategy)
-            results.append(patch_result)
+            patch_dict: dict[str, Any] = dict(patch)
+            patch_result = _apply_single_patch(target_binary, patch_dict, strategy)
+            results_raw.append(patch_result)
 
             if patch_result.get("success", False):
                 applied_count += 1

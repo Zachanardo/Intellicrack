@@ -155,7 +155,25 @@ _lazy_imports: dict[str, object] = {}
 
 
 def __getattr__(name: str) -> object:
-    """Lazy load AI module attributes to prevent circular imports."""
+    """Lazy load AI module attributes to prevent circular imports.
+
+    Dynamically imports and caches AI module components on demand to avoid
+    circular import dependencies. Supports lazy loading of classes, functions,
+    and type definitions from submodules.
+
+    Args:
+        name: The name of the attribute to lazy load from the AI module.
+
+    Returns:
+        The lazily loaded module attribute, or None if the attribute is
+        intentionally unavailable (like deprecated predictors).
+
+    Raises:
+        AttributeError: If the requested attribute name is not found in the
+            import_map or special_cases, and is not in the list of
+            intentionally unavailable attributes.
+
+    """
     if name in _lazy_imports:
         return _lazy_imports[name]
 

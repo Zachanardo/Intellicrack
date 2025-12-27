@@ -116,7 +116,15 @@ class ScriptTester:
         self.ai_generator = AIScriptGenerator()
 
     def validate_script(self, script_content: str, script_type: str) -> tuple[ValidationResult, dict[str, Any]]:
-        """Validate script using LLM for comprehensive analysis."""
+        """Validate script using LLM for comprehensive analysis.
+
+        Args:
+            script_content: The script content to validate.
+            script_type: The type of script (frida, ghidra, python, etc.).
+
+        Returns:
+            A tuple containing the validation result status and a dict with detailed validation analysis.
+        """
         results = {
             "syntax_check": True,
             "security_scan": {},
@@ -206,7 +214,17 @@ Provide only the JSON response, no explanations."""
         binary_path: str | None = None,
         timeout: int = 30,
     ) -> dict[str, Any]:
-        """Test script execution in QEMU virtual machine."""
+        """Test script execution in QEMU virtual machine.
+
+        Args:
+            script_content: The script content to execute and test.
+            script_type: The type of script (frida, ghidra, python, etc.).
+            binary_path: Optional path to the target binary for testing.
+            timeout: Execution timeout in seconds.
+
+        Returns:
+            A dict containing execution results with success status, output, errors, and performance metrics.
+        """
         try:
             qemu_manager = self._get_qemu_manager()
 
@@ -233,7 +251,11 @@ Provide only the JSON response, no explanations."""
             return {"error": str(e), "success": False}
 
     def _get_qemu_manager(self) -> QEMUManager:
-        """Get or create QEMUManager instance."""
+        """Get or create QEMUManager instance.
+
+        Returns:
+            A QEMUManager instance for virtual machine testing.
+        """
         if not hasattr(self, "_qemu_manager"):
             from intellicrack.ai.qemu_manager import QEMUManager
 
@@ -243,7 +265,14 @@ Provide only the JSON response, no explanations."""
         return self._qemu_manager
 
     def _validate_frida_syntax(self, script: str) -> ValidationResult:
-        """Validate Frida JavaScript syntax."""
+        """Validate Frida JavaScript syntax.
+
+        Args:
+            script: The Frida script content to validate.
+
+        Returns:
+            A ValidationResult enum indicating the validation outcome.
+        """
         # Check for required Frida patterns
         required_patterns = [
             r"Java\.perform|Interceptor\.attach|Process\.enumerate",
@@ -263,7 +292,14 @@ Provide only the JSON response, no explanations."""
         return ValidationResult.SUCCESS
 
     def _validate_ghidra_syntax(self, script: str) -> ValidationResult:
-        """Validate Ghidra Java syntax."""
+        """Validate Ghidra Java syntax.
+
+        Args:
+            script: The Ghidra Java script content to validate.
+
+        Returns:
+            A ValidationResult enum indicating the validation outcome.
+        """
         # Check for required Ghidra imports
         required_imports = ["ghidra.app.script.GhidraScript", "ghidra.program.model"]
 
@@ -281,7 +317,14 @@ Provide only the JSON response, no explanations."""
         return ValidationResult.SUCCESS
 
     def _validate_python_syntax(self, script: str) -> ValidationResult:
-        """Validate Python syntax."""
+        """Validate Python syntax.
+
+        Args:
+            script: The Python script content to validate.
+
+        Returns:
+            A ValidationResult enum indicating the validation outcome.
+        """
         try:
             compile(script, "<string>", "exec")
             return ValidationResult.SUCCESS
@@ -291,7 +334,14 @@ Provide only the JSON response, no explanations."""
             return ValidationResult.RUNTIME_ERROR
 
     def _scan_security_issues(self, script: str) -> dict[str, Any]:
-        """Scan for potential security issues."""
+        """Scan for potential security issues.
+
+        Args:
+            script: The script content to scan for security vulnerabilities.
+
+        Returns:
+            A dict containing categorized security issues (critical_issues, warnings, info).
+        """
         issues: dict[str, list[str]] = {"critical_issues": [], "warnings": [], "info": []}
 
         # Check for dangerous patterns
@@ -320,7 +370,14 @@ Provide only the JSON response, no explanations."""
         return issues
 
     def _analyze_performance(self, script: str) -> dict[str, Any]:
-        """Analyze script performance characteristics."""
+        """Analyze script performance characteristics.
+
+        Args:
+            script: The script content to analyze for performance metrics.
+
+        Returns:
+            A dict with complexity score, estimated runtime, memory usage, and optimization suggestions.
+        """
         metrics = {
             "complexity_score": 0.0,
             "estimated_runtime": "unknown",
@@ -333,7 +390,7 @@ Provide only the JSON response, no explanations."""
         complexity_factors = {
             "loops": len(re.findall(r"for\s*\(|while\s*\(|forEach", script)),
             "conditions": len(re.findall(r"if\s*\(|switch\s*\(", script)),
-            "recursion": len(re.findall(r"function.*\{[\s\S]*?\1\s*\(", script)),
+            "recursion": len(re.findall(r"function\s+(\w+)[\s\S]*?\1\s*\(", script)),
             "memory_operations": len(re.findall(r"Memory\.|mem\.", script)),
         }
 
@@ -359,7 +416,11 @@ class ScriptVersionManager:
     """Manages script versions and evolution history."""
 
     def __init__(self, base_path: str) -> None:
-        """Initialize version manager with base path for version storage."""
+        """Initialize version manager with base path for version storage.
+
+        Args:
+            base_path: The base directory path where script versions will be stored.
+        """
         self.base_path = Path(base_path)
         self.versions_dir = self.base_path / "versions"
         self.versions_dir.mkdir(parents=True, exist_ok=True)
@@ -370,7 +431,16 @@ class ScriptVersionManager:
         edit_history: list[ScriptEdit],
         parent_version: str | None = None,
     ) -> ScriptVersion:
-        """Create new script version."""
+        """Create new script version.
+
+        Args:
+            content: The script content to store in this version.
+            edit_history: List of ScriptEdit records that led to this version.
+            parent_version: Optional ID of the parent version if this is derived.
+
+        Returns:
+            A ScriptVersion object representing the newly created version.
+        """
         version_id = self._generate_version_id(content)
 
         version = ScriptVersion(
@@ -400,7 +470,11 @@ class ScriptVersionManager:
         return version
 
     def get_version_history(self) -> list[ScriptVersion]:
-        """Get version history for a script."""
+        """Get version history for a script.
+
+        Returns:
+            A list of ScriptVersion objects sorted by creation timestamp.
+        """
         versions = []
 
         for version_file in self.versions_dir.glob("*.json"):
@@ -427,7 +501,14 @@ class ScriptVersionManager:
         return versions
 
     def rollback_to_version(self, version_id: str) -> str | None:
-        """Rollback to a specific version."""
+        """Rollback to a specific version.
+
+        Args:
+            version_id: The ID of the version to rollback to.
+
+        Returns:
+            The script content from the specified version, or None if not found.
+        """
         version_file = self.versions_dir / f"{version_id}.json"
 
         if not version_file.exists():
@@ -444,13 +525,27 @@ class ScriptVersionManager:
             return None
 
     def _generate_version_id(self, content: str) -> str:
-        """Generate unique version ID."""
+        """Generate unique version ID.
+
+        Args:
+            content: The script content to hash for version ID generation.
+
+        Returns:
+            A unique version identifier string based on timestamp and content hash.
+        """
         content_hash = hashlib.sha256(content.encode()).hexdigest()[:12]
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         return f"v_{timestamp}_{content_hash}"
 
     def _edit_to_dict(self, edit: ScriptEdit) -> dict[str, Any]:
-        """Convert ScriptEdit to dictionary."""
+        """Convert ScriptEdit to dictionary.
+
+        Args:
+            edit: The ScriptEdit object to convert.
+
+        Returns:
+            A dictionary representation of the ScriptEdit for serialization.
+        """
         return {
             "edit_id": edit.edit_id,
             "timestamp": edit.timestamp,
@@ -464,7 +559,14 @@ class ScriptVersionManager:
         }
 
     def _dict_to_edit(self, data: dict[str, Any]) -> ScriptEdit:
-        """Convert dictionary to ScriptEdit."""
+        """Convert dictionary to ScriptEdit.
+
+        Args:
+            data: A dictionary representation of a ScriptEdit.
+
+        Returns:
+            A ScriptEdit object reconstructed from the dictionary data.
+        """
         return ScriptEdit(
             edit_id=data["edit_id"],
             timestamp=data["timestamp"],
@@ -482,7 +584,10 @@ class AIScriptEditor:
     """Advanced AI-powered script editor with iterative improvement capabilities."""
 
     def __init__(self) -> None:
-        """Initialize AI script editor with all necessary components for advanced editing."""
+        """Initialize AI script editor with all necessary components for advanced editing.
+
+        Sets up the script generator, tester, version manager, and edit history tracking.
+        """
         self.ai_generator = AIScriptGenerator()
         self.tester = ScriptTester()
         import intellicrack
@@ -503,6 +608,17 @@ class AIScriptEditor:
         """Edit an existing script based on modification prompt.
 
         This is the main entry point for AI script editing.
+
+        Args:
+            script_path: Path to the script file to edit.
+            modification_prompt: The modification request or enhancement description.
+            edit_type: The type of edit (ENHANCEMENT, BUGFIX, OPTIMIZATION, etc.).
+            test_binary: Optional path to a binary for testing the modified script.
+            preserve_functionality: Whether to maintain existing script functionality.
+
+        Returns:
+            A dict with success status, modified content, edit record, version ID, validation results,
+            and execution test results or suggested fixes if validation failed.
         """
         logger.info(f"Editing script {script_path}: {modification_prompt[:100]}...")
 
@@ -607,7 +723,18 @@ class AIScriptEditor:
         max_iterations: int = 5,
         test_binary: str | None = None,
     ) -> dict[str, Any]:
-        """Improve a script iteratively through multiple edit cycles using QEMU feedback."""
+        """Improve a script iteratively through multiple edit cycles using QEMU feedback.
+
+        Args:
+            script_path: Path to the script file to improve.
+            improvement_goals: List of goals the script should achieve.
+            max_iterations: Maximum number of improvement iterations to perform.
+            test_binary: Optional path to a binary for QEMU testing.
+
+        Returns:
+            A dict containing iteration results, final success status, improvement metrics,
+            and QEMU feedback from each iteration.
+        """
         results: dict[str, Any] = {
             "iterations": [],
             "final_success": False,
@@ -687,7 +814,15 @@ class AIScriptEditor:
         return results
 
     def compare_versions(self, version1_id: str, version2_id: str) -> dict[str, Any]:
-        """Compare two script versions."""
+        """Compare two script versions.
+
+        Args:
+            version1_id: The ID of the first version to compare.
+            version2_id: The ID of the second version to compare.
+
+        Returns:
+            A dict with version IDs, diff statistics, and comparison recommendations.
+        """
         v1_content = self.version_manager.rollback_to_version(version1_id)
         v2_content = self.version_manager.rollback_to_version(version2_id)
 
@@ -705,7 +840,15 @@ class AIScriptEditor:
         }
 
     def rollback_edit(self, script_path: str, edit_id: str) -> dict[str, Any]:
-        """Rollback a specific edit."""
+        """Rollback a specific edit.
+
+        Args:
+            script_path: Path to the script file to rollback.
+            edit_id: The ID of the edit to rollback.
+
+        Returns:
+            A dict with success status, restored content, and the rollback edit ID.
+        """
         if script_path not in self.edit_history:
             return {"success": False, "error": "No edit history found"}
 
@@ -741,7 +884,15 @@ class AIScriptEditor:
         }
 
     def get_edit_suggestions(self, script_path: str, binary_analysis: dict[str, Any] | None = None) -> list[dict[str, Any]]:
-        """Get AI-powered suggestions for script improvements."""
+        """Get AI-powered suggestions for script improvements.
+
+        Args:
+            script_path: Path to the script file to analyze.
+            binary_analysis: Optional dict with binary analysis details for targeted suggestions.
+
+        Returns:
+            A list of suggestion dicts with type, priority, description, and details.
+        """
         script_content = self._load_script(script_path)
         if not script_content:
             return []
@@ -785,7 +936,14 @@ class AIScriptEditor:
         return suggestions
 
     def _load_script(self, script_path: str) -> str | None:
-        """Load script content from file."""
+        """Load script content from file.
+
+        Args:
+            script_path: Path to the script file to load.
+
+        Returns:
+            The script content as a string, or None if file cannot be read.
+        """
         try:
             with open(script_path, encoding="utf-8") as f:
                 return f.read()
@@ -794,7 +952,13 @@ class AIScriptEditor:
             return None
 
     def _save_script(self, script_path: str, content: str, edit_record: ScriptEdit) -> None:
-        """Save modified script content."""
+        """Save modified script content.
+
+        Args:
+            script_path: Path where the script should be saved.
+            content: The script content to save.
+            edit_record: The ScriptEdit record associated with this save.
+        """
         try:
             # Create backup of original
             backup_path = f"{script_path}.backup_{edit_record.edit_id}"
@@ -812,7 +976,16 @@ class AIScriptEditor:
             logger.error(f"Failed to save script: {e}")
 
     def _build_edit_prompt(self, original_content: str, edit_request: EditRequest, script_type: str) -> str:
-        """Build comprehensive prompt for script editing."""
+        """Build comprehensive prompt for script editing.
+
+        Args:
+            original_content: The original script content.
+            edit_request: The EditRequest containing modification details.
+            script_type: The type of script being edited.
+
+        Returns:
+            A comprehensive prompt string for the AI script generator.
+        """
         return f"""Modify the following {script_type} script based on the user's request.
 
 ORIGINAL SCRIPT:
@@ -841,7 +1014,15 @@ CONSTRAINTS:
 Generate the complete modified script:"""
 
     def _extract_changes(self, original: str, modified: str) -> list[str]:
-        """Extract summary of changes between scripts."""
+        """Extract summary of changes between scripts.
+
+        Args:
+            original: The original script content.
+            modified: The modified script content.
+
+        Returns:
+            A list of strings describing the changes made.
+        """
         changes = []
 
         original_lines = original.split("\n")
@@ -863,7 +1044,16 @@ Generate the complete modified script:"""
         return changes
 
     def _calculate_edit_confidence(self, original: str, modified: str, validation: ValidationResult) -> float:
-        """Calculate confidence score for the edit."""
+        """Calculate confidence score for the edit.
+
+        Args:
+            original: The original script content.
+            modified: The modified script content.
+            validation: The validation result from testing the modification.
+
+        Returns:
+            A confidence score between 0.0 and 1.0.
+        """
         base_score = 0.5
 
         # Validation impact
@@ -882,11 +1072,23 @@ Generate the complete modified script:"""
         return max(0.0, min(1.0, base_score))
 
     def _generate_edit_id(self) -> str:
-        """Generate unique edit ID."""
+        """Generate unique edit ID.
+
+        Returns:
+            A unique edit identifier string.
+        """
         return f"edit_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{os.urandom(4).hex()}"
 
     def _analyze_qemu_results_for_goals(self, qemu_result: dict[str, Any], goals: list[str]) -> bool:
-        """Analyze QEMU execution results to determine if improvement goals are met."""
+        """Analyze QEMU execution results to determine if improvement goals are met.
+
+        Args:
+            qemu_result: The execution result dict from QEMU testing.
+            goals: List of improvement goals to check against results.
+
+        Returns:
+            True if 80% or more of the goals are met, False otherwise.
+        """
         if not qemu_result.get("success"):
             return False
 
@@ -901,7 +1103,17 @@ Generate the complete modified script:"""
         return achievement_ratio >= 0.8
 
     def _is_goal_met(self, goal: str, output: str, errors: list[str], performance: dict[str, Any]) -> int:
-        """Check if a specific goal is met based on QEMU results."""
+        """Check if a specific goal is met based on QEMU results.
+
+        Args:
+            goal: The goal to check.
+            output: The script execution output.
+            errors: List of errors from execution.
+            performance: Performance metrics dict from execution.
+
+        Returns:
+            1 if goal is met, 0 otherwise.
+        """
         if "no errors" in goal or "error-free" in goal:
             return int(not errors)
         if "extract" in goal or "find" in goal:
@@ -917,7 +1129,15 @@ Generate the complete modified script:"""
         return int(not errors)
 
     def _create_improvement_prompt_with_feedback(self, goals: list[str], qemu_result: dict[str, Any]) -> str:
-        """Create an improvement prompt that includes QEMU execution feedback."""
+        """Create an improvement prompt that includes QEMU execution feedback.
+
+        Args:
+            goals: List of improvement goals to include in the prompt.
+            qemu_result: Execution result dict from QEMU testing.
+
+        Returns:
+            A detailed improvement prompt string incorporating QEMU feedback.
+        """
         prompt_parts = [
             f"Improve this script to achieve the following goals: {', '.join(goals)}",
             "\n\nCurrent script execution results from QEMU VM:",
@@ -932,25 +1152,45 @@ Generate the complete modified script:"""
         return "\n".join(prompt_parts)
 
     def _add_execution_status(self, qemu_result: dict[str, Any], prompt_parts: list[str]) -> None:
-        """Add execution status to the prompt."""
+        """Add execution status to the prompt.
+
+        Args:
+            qemu_result: The execution result dict from QEMU testing.
+            prompt_parts: List to append status information to.
+        """
         if qemu_result.get("success"):
             prompt_parts.append("OK Script executed successfully")
         else:
             prompt_parts.append("FAIL Script execution failed")
 
     def _add_output_information(self, qemu_result: dict[str, Any], prompt_parts: list[str]) -> None:
-        """Add output information to the prompt."""
+        """Add output information to the prompt.
+
+        Args:
+            qemu_result: The execution result dict from QEMU testing.
+            prompt_parts: List to append output information to.
+        """
         if output := qemu_result.get("output", ""):
             prompt_parts.append(f"\nScript output:\n{output[:500]}")  # Limit output length
 
     def _add_error_information(self, qemu_result: dict[str, Any], prompt_parts: list[str]) -> None:
-        """Add error information to the prompt."""
+        """Add error information to the prompt.
+
+        Args:
+            qemu_result: The execution result dict from QEMU testing.
+            prompt_parts: List to append error information to.
+        """
         if errors := qemu_result.get("errors", []):
             prompt_parts.append("\nErrors encountered:")
             prompt_parts.extend(f"  - {error}" for error in errors[:5])
 
     def _add_performance_metrics(self, qemu_result: dict[str, Any], prompt_parts: list[str]) -> None:
-        """Add performance metrics to the prompt."""
+        """Add performance metrics to the prompt.
+
+        Args:
+            qemu_result: The execution result dict from QEMU testing.
+            prompt_parts: List to append performance metrics to.
+        """
         if performance := qemu_result.get("performance", {}):
             runtime = performance.get("runtime_ms", 0)
             exit_code = performance.get("exit_code", 0)
@@ -959,7 +1199,13 @@ Generate the complete modified script:"""
             prompt_parts.append(f"  - Exit code: {exit_code}")
 
     def _add_specific_improvements(self, qemu_result: dict[str, Any], goals: list[str], prompt_parts: list[str]) -> None:
-        """Add specific improvement suggestions to the prompt."""
+        """Add specific improvement suggestions to the prompt.
+
+        Args:
+            qemu_result: The execution result dict from QEMU testing.
+            goals: List of improvement goals.
+            prompt_parts: List to append improvement suggestions to.
+        """
         prompt_parts.append("\nSpecific improvements needed:")
 
         if not qemu_result.get("success"):
@@ -978,7 +1224,12 @@ Generate the complete modified script:"""
         self._add_goal_based_suggestions(goals, qemu_result.get("output", ""), prompt_parts)
 
     def _add_error_based_suggestions(self, errors: list[str], prompt_parts: list[str]) -> None:
-        """Add suggestions based on errors."""
+        """Add suggestions based on errors.
+
+        Args:
+            errors: List of errors from script execution.
+            prompt_parts: List to append error-based suggestions to.
+        """
         if any("syntax" in str(e).lower() for e in errors):
             prompt_parts.append("- Fix syntax errors in the script")
         if any("import" in str(e).lower() or "module" in str(e).lower() for e in errors):
@@ -987,7 +1238,13 @@ Generate the complete modified script:"""
             prompt_parts.append("- Fix permission/access issues")
 
     def _add_goal_based_suggestions(self, goals: list[str], output: str, prompt_parts: list[str]) -> None:
-        """Add suggestions based on unmet goals."""
+        """Add suggestions based on unmet goals.
+
+        Args:
+            goals: List of improvement goals.
+            output: Script execution output to check against goals.
+            prompt_parts: List to append goal-based suggestions to.
+        """
         output_lower = output.lower() if output else ""
         for goal in goals:
             goal_lower = goal.lower()
@@ -1086,7 +1343,14 @@ Generate the complete modified script:"""
         return "unknown"
 
     def _detect_script_type_from_path(self, script_path: str) -> str:
-        """Detect script type from file path/extension."""
+        """Detect script type from file path/extension.
+
+        Args:
+            script_path: Path to the script file.
+
+        Returns:
+            A string identifying the detected script type or "unknown".
+        """
         path = Path(script_path)
         extension = path.suffix.lower()
 
@@ -1117,7 +1381,15 @@ Generate the complete modified script:"""
         return script_type
 
     def _calculate_diff_stats(self, content1: str, content2: str) -> dict[str, Any]:
-        """Calculate statistics about differences between two scripts."""
+        """Calculate statistics about differences between two scripts.
+
+        Args:
+            content1: The first script content.
+            content2: The second script content.
+
+        Returns:
+            A dict with lines added/removed, line counts, and similarity ratio.
+        """
         lines1 = content1.split("\n")
         lines2 = content2.split("\n")
 
@@ -1130,13 +1402,28 @@ Generate the complete modified script:"""
         }
 
     def _calculate_similarity(self, content1: str, content2: str) -> float:
-        """Calculate similarity ratio between two scripts."""
+        """Calculate similarity ratio between two scripts.
+
+        Args:
+            content1: The first script content.
+            content2: The second script content.
+
+        Returns:
+            A float between 0.0 and 1.0 representing similarity ratio.
+        """
         from difflib import SequenceMatcher
 
         return SequenceMatcher(None, content1, content2).ratio()
 
     def _generate_version_recommendations(self, diff_stats: dict[str, Any]) -> list[str]:
-        """Generate recommendations based on version comparison."""
+        """Generate recommendations based on version comparison.
+
+        Args:
+            diff_stats: Dictionary with diff statistics from version comparison.
+
+        Returns:
+            A list of recommendation strings based on the diff analysis.
+        """
         recommendations = []
 
         if diff_stats["similarity_ratio"] < 0.5:
@@ -1151,7 +1438,15 @@ Generate the complete modified script:"""
         return recommendations
 
     def _suggest_fixes(self, validation_result: ValidationResult, validation_details: dict[str, Any]) -> list[str]:
-        """Suggest fixes for validation issues."""
+        """Suggest fixes for validation issues.
+
+        Args:
+            validation_result: The validation result status enum.
+            validation_details: Dictionary with detailed validation information.
+
+        Returns:
+            A list of suggested fix strings for the identified issues.
+        """
         fixes: list[str] = []
 
         if validation_result == ValidationResult.SYNTAX_ERROR:
@@ -1179,7 +1474,16 @@ Generate the complete modified script:"""
         script_type: str,
         binary_analysis: dict[str, Any],
     ) -> list[dict[str, Any]]:
-        """Generate suggestions specific to the target binary."""
+        """Generate suggestions specific to the target binary.
+
+        Args:
+            script_content: The script content to analyze.
+            script_type: The type of script being analyzed.
+            binary_analysis: Dictionary with binary analysis information.
+
+        Returns:
+            A list of suggestion dicts tailored to the binary's characteristics.
+        """
         suggestions = []
 
         # Architecture-specific suggestions
@@ -1207,7 +1511,14 @@ Generate the complete modified script:"""
         return suggestions
 
     def _edit_to_dict(self, edit: ScriptEdit) -> dict[str, Any]:
-        """Convert ScriptEdit to dictionary for serialization."""
+        """Convert ScriptEdit to dictionary for serialization.
+
+        Args:
+            edit: The ScriptEdit object to convert.
+
+        Returns:
+            A dictionary representation of the ScriptEdit.
+        """
         return {
             "edit_id": edit.edit_id,
             "timestamp": edit.timestamp,

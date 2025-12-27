@@ -106,7 +106,7 @@ class IntellicrakGraphVisualization {
 
     initializeForceLayout() {
         // Create force layout engine using D3's physics-based layout
-        const forceMethod = 'force' + String.fromCharCode(83) + 'imulation'; // D3.js API method
+        const forceMethod = `force${String.fromCodePoint(83)}imulation`;
         this.layoutEngine = d3[forceMethod]()
             .force(
                 'link',
@@ -201,10 +201,10 @@ class IntellicrakGraphVisualization {
         const bounds = this.mainGroup.node().getBBox();
         const fullWidth = this.width;
         const fullHeight = this.height;
-        const { width, height } = bounds;
+        const { x, y, width, height } = bounds;
 
-        const midX = bounds.x + width / 2;
-        const midY = bounds.y + height / 2;
+        const midX = x + width / 2;
+        const midY = y + height / 2;
 
         const scale = 0.9 / Math.max(width / fullWidth, height / fullHeight);
         const translate = [fullWidth / 2 - scale * midX, fullHeight / 2 - scale * midY];
@@ -306,8 +306,8 @@ class IntellicrakGraphVisualization {
 
     update() {
         // Convert maps to arrays
-        const nodesArray = Array.from(this.nodes.values());
-        const linksArray = Array.from(this.links.values());
+        const nodesArray = [...this.nodes.values()];
+        const linksArray = [...this.links.values()];
 
         // Update links
         const links = this.linkGroup.selectAll('.link').data(linksArray, d => d.id);
@@ -342,7 +342,7 @@ class IntellicrakGraphVisualization {
             .on('mouseover', (event, d) => this.showTooltip(event, d))
             .on('mouseout', () => this.hideTooltip())
             .on('contextmenu', (event, d) => this.showContextMenu(event, d))
-            .on('dblclick', (event, d) => this.onNodeDoubleClick(d));
+            .on('dblclick', (_event, d) => this.onNodeDoubleClick(d));
 
         nodes.merge(nodesEnter);
 
@@ -402,7 +402,9 @@ class IntellicrakGraphVisualization {
         return d3
             .drag()
             .on('start', (event, d) => {
-                if (!event.active) this.layoutEngine.alphaTarget(0.3).restart();
+                if (!event.active) {
+                    this.layoutEngine.alphaTarget(0.3).restart();
+                }
                 d.fx = d.x;
                 d.fy = d.y;
             })
@@ -411,7 +413,9 @@ class IntellicrakGraphVisualization {
                 d.fy = event.y;
             })
             .on('end', (event, d) => {
-                if (!event.active) this.layoutEngine.alphaTarget(0);
+                if (!event.active) {
+                    this.layoutEngine.alphaTarget(0);
+                }
                 if (!event.sourceEvent.shiftKey) {
                     d.fx = null;
                     d.fy = null;
@@ -441,8 +445,10 @@ class IntellicrakGraphVisualization {
     }
 
     truncateLabel(label, maxLength = 20) {
-        if (label.length <= maxLength) return label;
-        return label.substring(0, maxLength - 3) + '...';
+        if (label.length <= maxLength) {
+            return label;
+        }
+        return `${label.slice(0, maxLength - 3)}...`;
     }
 
     showTooltip(event, node) {
@@ -450,7 +456,7 @@ class IntellicrakGraphVisualization {
             <strong>${node.label}</strong><br/>
             Type: ${node.type}<br/>
             ${node.address ? `Address: ${node.address}<br/>` : ''}
-            ${node.size ? `Size: ${node.size}<br/>` : ''}
+            ${node.size > 0 ? `Size: ${node.size}<br/>` : ''}
             ${node.data.description ? `${node.data.description}<br/>` : ''}
         `;
 
@@ -458,8 +464,8 @@ class IntellicrakGraphVisualization {
 
         this.tooltip
             .html(tooltipContent)
-            .style('left', event.pageX + 10 + 'px')
-            .style('top', event.pageY - 28 + 'px');
+            .style('left', `${event.pageX + 10}px`)
+            .style('top', `${event.pageY - 28}px`);
     }
 
     hideTooltip() {
@@ -504,8 +510,8 @@ class IntellicrakGraphVisualization {
 
         // Position and show menu
         this.contextMenu
-            .style('left', event.pageX + 'px')
-            .style('top', event.pageY + 'px')
+            .style('left', `${event.pageX}px`)
+            .style('top', `${event.pageY}px`)
             .style('display', 'block');
     }
 
@@ -540,12 +546,12 @@ class IntellicrakGraphVisualization {
     }
 
     togglePin(node) {
-        if (node.fx !== null) {
-            node.fx = null;
-            node.fy = null;
-        } else {
+        if (node.fx === null) {
             node.fx = node.x;
             node.fy = node.y;
+        } else {
+            node.fx = null;
+            node.fy = null;
         }
         this.update();
     }
@@ -610,7 +616,7 @@ class IntellicrakGraphVisualization {
                 children.add(link.target);
             }
         });
-        return Array.from(children);
+        return [...children];
     }
 
     getConnectedNodes(nodeId) {
@@ -641,7 +647,7 @@ class IntellicrakGraphVisualization {
         const visited = new Set();
         const clusters = [];
 
-        this.nodes.forEach((node, nodeId) => {
+        this.nodes.forEach((_node, nodeId) => {
             if (!visited.has(nodeId)) {
                 const cluster = this.dfs(nodeId, visited);
                 if (cluster.size > 1) {
@@ -692,8 +698,8 @@ class IntellicrakGraphVisualization {
     exportGraph() {
         // Export graph data
         return {
-            nodes: Array.from(this.nodes.values()),
-            links: Array.from(this.links.values()).map(link => ({
+            nodes: [...this.nodes.values()],
+            links: [...this.links.values()].map(link => ({
                 ...link,
                 source: link.source.id,
                 target: link.target.id,
@@ -802,7 +808,7 @@ class IntellicrakGraphVisualization {
         const visited = new Set(roots.map(n => n.id));
 
         while (true) {
-            const currentLevel = levels[levels.length - 1];
+            const currentLevel = levels.at(-1);
             const nextLevel = [];
 
             currentLevel.forEach(node => {
@@ -815,7 +821,9 @@ class IntellicrakGraphVisualization {
                 });
             });
 
-            if (nextLevel.length === 0) break;
+            if (nextLevel.length === 0) {
+                break;
+            }
             levels.push(nextLevel);
         }
 
@@ -843,3 +851,5 @@ class IntellicrakGraphVisualization {
         this.update();
     }
 }
+
+window.IntellicrakGraphVisualization = IntellicrakGraphVisualization;

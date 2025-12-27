@@ -106,7 +106,16 @@ except ImportError:
 
 
 def _load_tokenizer(source: str, **kwargs: Any) -> Any:
-    """Load a tokenizer using transformers. Wrapper to avoid mypy no-untyped-call."""
+    """Load a tokenizer using transformers. Wrapper to avoid mypy no-untyped-call.
+
+    Args:
+        source: Model name or path to load tokenizer from
+        **kwargs: Additional keyword arguments passed to AutoTokenizer.from_pretrained
+
+    Returns:
+        Loaded tokenizer instance
+
+    """
     from transformers import AutoTokenizer
 
     loader: CallableType[..., Any] = AutoTokenizer.from_pretrained
@@ -114,13 +123,33 @@ def _load_tokenizer(source: str, **kwargs: Any) -> Any:
 
 
 def _load_model_pretrained(model_class: Any, source: str, **kwargs: Any) -> Any:
-    """Load a model using from_pretrained. Wrapper to avoid mypy no-untyped-call."""
+    """Load a model using from_pretrained. Wrapper to avoid mypy no-untyped-call.
+
+    Args:
+        model_class: The model class with from_pretrained method
+        source: Model name or path to load from
+        **kwargs: Additional keyword arguments passed to from_pretrained
+
+    Returns:
+        Loaded model instance
+
+    """
     loader: CallableType[..., Any] = model_class.from_pretrained
     return loader(source, **kwargs)
 
 
 def _load_model_from_config(model_class: Any, config: Any, **kwargs: Any) -> Any:
-    """Create a model from config. Wrapper to avoid mypy no-untyped-call."""
+    """Create a model from config. Wrapper to avoid mypy no-untyped-call.
+
+    Args:
+        model_class: The model class with from_config method
+        config: Model configuration object
+        **kwargs: Additional keyword arguments passed to from_config
+
+    Returns:
+        Model instance created from config
+
+    """
     loader: CallableType[..., Any] = model_class.from_config
     return loader(config, **kwargs)
 
@@ -146,7 +175,26 @@ class LLMProvider(Enum):
 
 @dataclass
 class LLMConfig:
-    """Configuration for LLM backends."""
+    """Configuration for LLM backends.
+
+    This dataclass defines all configuration parameters needed to initialize and
+    run an LLM backend for AI-assisted binary analysis and code generation.
+    Attributes:
+        provider: LLM provider enum (OpenAI, Anthropic, Google, etc.)
+        model_name: Name or identifier of the model to load
+        api_key: API key for authentication (if using cloud API)
+        api_base: Custom API base URL for self-hosted or alternative endpoints
+        model_path: Local filesystem path to model file or directory
+        context_length: Maximum context window size in tokens (default 4096)
+        temperature: Sampling temperature for generation (0.0-1.0, default 0.7)
+        max_tokens: Maximum tokens to generate per request (default 2048)
+        tools_enabled: Whether to enable function calling/tool use (default True)
+        system_prompt: System prompt to prepend to all requests
+        custom_params: Additional backend-specific parameters
+        device: Device specification (cuda, cpu, auto, etc.)
+        quantization: Quantization method if using quantized models
+        model: Alias for model_name field
+    """
 
     provider: LLMProvider
     model_name: str | None = None
@@ -164,7 +212,14 @@ class LLMConfig:
     model: str | None = None
 
     def __post_init__(self) -> None:
-        """Post-initialization to handle alternative parameter names."""
+        """Validate and normalize configuration after dataclass initialization.
+
+        Handles the 'model' field as an alias for 'model_name' and ensures that
+        at least one model identifier is specified.
+
+        Raises:
+            ValueError: If neither model_name nor model is specified
+        """
         # Handle 'model' as alias for 'model_name'
         if self.model and not self.model_name:
             self.model_name = self.model
@@ -178,7 +233,17 @@ class LLMConfig:
 
 @dataclass
 class LLMMessage:
-    """Message structure for LLM communication."""
+    """Message structure for LLM communication.
+
+    Represents a single message in a chat conversation with an LLM, supporting
+    role-based messaging and function calling.
+
+    Attributes:
+        role: Message role - "system", "user", "assistant", or "tool"
+        content: The actual message text content
+        tool_calls: Optional list of tool/function calls made by the model
+        tool_call_id: Optional identifier for tool call responses
+    """
 
     role: str
     content: str
@@ -188,7 +253,18 @@ class LLMMessage:
 
 @dataclass
 class LLMResponse:
-    """Response structure from LLM."""
+    """Response structure from LLM.
+
+    Encapsulates the complete response from an LLM backend, including generated
+    content, usage statistics, and tool call results.
+
+    Attributes:
+        content: Generated response text content
+        tool_calls: Optional list of tool calls made by the model
+        usage: Optional dictionary with token usage stats (prompt_tokens, completion_tokens, total_tokens)
+        finish_reason: Reason for generation stop (stop, length, tool_calls, error)
+        model: Name or identifier of the model that generated this response
+    """
 
     content: str
     tool_calls: list[dict[str, Any]] | None = None
@@ -198,13 +274,18 @@ class LLMResponse:
 
 
 class LLMBackend:
-    """Base class for LLM backends."""
+    """Base class for LLM backends.
+
+    Provides a common interface for different LLM providers (OpenAI, Anthropic, etc).
+    Subclasses must implement the initialize() and chat() methods to support
+    specific backend implementations.
+    """
 
     def __init__(self, config: LLMConfig) -> None:
         """Initialize the LLM backend with configuration.
 
         Args:
-            config: LLM configuration object
+            config: LLMConfig object with backend settings and model parameters
 
         """
         self.config = config
@@ -213,13 +294,33 @@ class LLMBackend:
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
     def initialize(self) -> bool:
-        """Initialize the backend."""
+        """Initialize the backend.
+
+        This base implementation always returns False. Subclasses must override
+        to provide actual initialization logic for their specific LLM providers.
+
+        Returns:
+            False to indicate initialization is not implemented in base class
+
+        """
         logger.warning("Base LLMBackend.initialize() called - subclasses should override this method")
         self.is_initialized = False
         return False
 
     def chat(self, messages: list[LLMMessage], tools: list[dict[str, Any]] | None = None) -> LLMResponse:
-        """Send chat messages and get response."""
+        """Send chat messages and get response.
+
+        This base implementation returns an error response. Subclasses must override
+        to provide actual chat functionality for their specific LLM providers.
+
+        Args:
+            messages: List of LLMMessage objects to send to the model
+            tools: Optional list of tool/function definitions for function calling
+
+        Returns:
+            LLMResponse with error message indicating not implemented
+
+        """
         logger.debug("Chat called with %d messages and %d tools", len(messages), len(tools or []))
 
         logger.error("Base LLMBackend.chat() called - this method must be implemented by subclasses")
@@ -230,35 +331,72 @@ class LLMBackend:
         )
 
     def complete(self, messages: list[LLMMessage], tools: list[dict[str, Any]] | None = None) -> LLMResponse:
-        """Send chat messages and get response (alias for chat)."""
+        """Send chat messages and get response (alias for chat).
+
+        This method provides an alternative name for the chat() method for
+        compatibility with different API styles.
+
+        Args:
+            messages: List of LLMMessage objects to send to the model
+            tools: Optional list of tool/function definitions for function calling
+
+        Returns:
+            LLMResponse from the chat() method
+
+        """
         return self.chat(messages, tools)
 
     def register_tools(self, tools: list[dict[str, Any]]) -> None:
-        """Register tools for function calling."""
+        """Register tools for function calling.
+
+        Stores a list of available tools that the LLM can call. The specific
+        handling of these tools is backend-dependent.
+
+        Args:
+            tools: List of tool/function definitions in OpenAI format
+
+        """
         self.tools = tools
 
     def shutdown(self) -> None:
-        """Shutdown the backend and clean up resources."""
+        """Shutdown the backend and clean up resources.
+
+        Clears initialization state and registered tools. Subclasses should override
+        to release backend-specific resources like model memory or server connections.
+
+        """
         self.is_initialized = False
         self.tools.clear()
         logger.debug("Backend shutdown: %s", self.__class__.__name__)
 
 
 class OpenAIBackend(LLMBackend):
-    """OpenAI API backend."""
+    """OpenAI API backend.
+
+    Implements LLM backend using OpenAI's API endpoints. Supports all OpenAI models
+    including GPT-4, GPT-3.5-turbo, and custom fine-tuned models through compatible APIs.
+    """
 
     def __init__(self, config: LLMConfig) -> None:
         """Initialize OpenAI backend with configuration.
 
         Args:
-            config: LLM configuration object
+            config: LLMConfig object with OpenAI-specific settings (api_key, api_base, etc)
 
         """
         super().__init__(config)
         self.client: Any = None
 
     def initialize(self) -> bool:
-        """Initialize OpenAI client."""
+        """Initialize OpenAI client and verify connection.
+
+        Loads API key from configuration, environment variables, or secrets manager.
+        Tests the connection by listing available models.
+
+        Returns:
+            True if client initialized and connection verified, False otherwise
+
+        """
         try:
             import openai
 
@@ -292,7 +430,21 @@ class OpenAIBackend(LLMBackend):
             return False
 
     def chat(self, messages: list[LLMMessage], tools: list[dict[str, Any]] | None = None) -> LLMResponse:
-        """Send chat to OpenAI API."""
+        """Send chat to OpenAI API.
+
+        Args:
+            messages: List of chat messages to send
+            tools: Optional list of tools for function calling
+
+        Returns:
+            LLMResponse with content, tool calls, usage, finish reason, and model name
+
+        Raises:
+            RuntimeError: If backend is not initialized
+            OSError: If API call fails
+            ValueError: If response format is invalid
+
+        """
         if not self.is_initialized:
             raise RuntimeError("Backend not initialized")
 
@@ -335,26 +487,43 @@ class OpenAIBackend(LLMBackend):
             raise
 
     def shutdown(self) -> None:
-        """Shutdown OpenAI backend."""
+        """Shutdown OpenAI backend.
+
+        Closes the client connection and releases resources. Calls parent shutdown
+        to clear tools and reset initialization state.
+
+        """
         super().shutdown()
         self.client = None
 
 
 class AnthropicBackend(LLMBackend):
-    """Anthropic Claude API backend."""
+    """Anthropic Claude API backend.
+
+    Implements LLM backend using Anthropic's Claude API. Supports various Claude model
+    versions and includes extended context windows for large-scale binary analysis.
+    """
 
     def __init__(self, config: LLMConfig) -> None:
         """Initialize Anthropic backend with configuration.
 
         Args:
-            config: LLM configuration object
+            config: LLMConfig object with Anthropic-specific settings (api_key, model_name, etc)
 
         """
         super().__init__(config)
         self.client: Any = None
 
     def initialize(self) -> bool:
-        """Initialize Anthropic client."""
+        """Initialize Anthropic client and verify API connectivity.
+
+        Loads API key from configuration, environment variables, or secure storage.
+        Validates client initialization without making a test API call.
+
+        Returns:
+            True if client initialized successfully, False otherwise
+
+        """
         try:
             import anthropic
 
@@ -382,7 +551,21 @@ class AnthropicBackend(LLMBackend):
             return False
 
     def chat(self, messages: list[LLMMessage], tools: list[dict[str, Any]] | None = None) -> LLMResponse:
-        """Send chat to Anthropic API."""
+        """Send chat to Anthropic API.
+
+        Args:
+            messages: List of chat messages to send
+            tools: Optional list of tools for function calling
+
+        Returns:
+            LLMResponse with content, tool calls, finish reason, and model name
+
+        Raises:
+            RuntimeError: If backend is not initialized
+            OSError: If API call fails
+            ValueError: If response format is invalid
+
+        """
         if not self.is_initialized:
             raise RuntimeError("Backend not initialized")
 
@@ -424,19 +607,28 @@ class AnthropicBackend(LLMBackend):
             raise
 
     def shutdown(self) -> None:
-        """Shutdown Anthropic backend."""
+        """Shutdown Anthropic backend.
+
+        Closes the client connection and releases resources. Calls parent shutdown
+        to clear tools and reset initialization state.
+
+        """
         super().shutdown()
         self.client = None
 
 
 class GoogleBackend(LLMBackend):
-    """Google AI (Gemini) API backend."""
+    """Google AI (Gemini) API backend.
+
+    Implements LLM backend using Google's Generative AI API. Supports various Gemini
+    model versions with custom system instructions and generation configurations.
+    """
 
     def __init__(self, config: LLMConfig) -> None:
         """Initialize Google AI backend with configuration.
 
         Args:
-            config: LLM configuration object
+            config: LLMConfig object with Google AI-specific settings (api_key, model_name, etc)
 
         """
         super().__init__(config)
@@ -444,7 +636,15 @@ class GoogleBackend(LLMBackend):
         self.model: Any = None
 
     def initialize(self) -> bool:
-        """Initialize Google AI client."""
+        """Initialize Google Generative AI client.
+
+        Loads API key from configuration, environment variables, or secure storage.
+        Initializes the GenerativeModel with the specified model identifier.
+
+        Returns:
+            True if client and model initialized successfully, False otherwise
+
+        """
         try:
             import google.generativeai as genai
 
@@ -473,7 +673,21 @@ class GoogleBackend(LLMBackend):
             return False
 
     def chat(self, messages: list[LLMMessage], tools: list[dict[str, Any]] | None = None) -> LLMResponse:
-        """Send chat to Google AI API."""
+        """Send chat to Google AI API.
+
+        Args:
+            messages: List of chat messages to send
+            tools: Optional list of tools for function calling
+
+        Returns:
+            LLMResponse with content, finish reason, and model name
+
+        Raises:
+            RuntimeError: If backend is not initialized
+            OSError: If API call fails
+            ValueError: If response format is invalid
+
+        """
         if not self.is_initialized:
             raise RuntimeError("Backend not initialized")
 
@@ -516,27 +730,44 @@ class GoogleBackend(LLMBackend):
             raise
 
     def shutdown(self) -> None:
-        """Shutdown Google AI backend."""
+        """Shutdown Google AI backend.
+
+        Closes the client and model instances. Calls parent shutdown to clear
+        tools and reset initialization state.
+
+        """
         super().shutdown()
         self.client = None
         self.model = None
 
 
 class LlamaCppBackend(LLMBackend):
-    """llama.cpp backend for GGUF models."""
+    """llama.cpp backend for GGUF models.
+
+    Implements LLM backend using llama.cpp for efficient local inference with
+    quantized GGUF-format models. Provides CPU and GPU support for various architectures.
+    """
 
     def __init__(self, config: LLMConfig) -> None:
         """Initialize llama.cpp backend with configuration.
 
         Args:
-            config: LLM configuration object
+            config: LLMConfig object with model_path pointing to a GGUF file
 
         """
         super().__init__(config)
         self.llama: Any = None
 
     def initialize(self) -> bool:
-        """Initialize llama.cpp."""
+        """Initialize llama.cpp and load GGUF model.
+
+        Validates the GGUF model file exists and creates a llama.cpp Llama instance
+        with the specified context length and threading configuration.
+
+        Returns:
+            True if llama.cpp initialized and model loaded successfully, False otherwise
+
+        """
         try:
             from llama_cpp import Llama
 
@@ -564,7 +795,21 @@ class LlamaCppBackend(LLMBackend):
             return False
 
     def chat(self, messages: list[LLMMessage], tools: list[dict[str, Any]] | None = None) -> LLMResponse:
-        """Chat with llama.cpp model."""
+        """Chat with llama.cpp model.
+
+        Args:
+            messages: List of chat messages to send
+            tools: Optional list of tools for function calling
+
+        Returns:
+            LLMResponse with generated content, finish reason, and model name
+
+        Raises:
+            RuntimeError: If backend is not initialized
+            OSError: If generation fails
+            ValueError: If invalid response format received
+
+        """
         if not self.is_initialized:
             raise RuntimeError("Backend not initialized")
 
@@ -601,7 +846,18 @@ class LlamaCppBackend(LLMBackend):
 
     @staticmethod
     def _messages_to_prompt(messages: list[LLMMessage]) -> str:
-        """Convert messages to prompt format."""
+        """Convert chat messages to llama.cpp prompt format.
+
+        Formats messages using the ChatML format with special tokens for different roles.
+        Automatically appends the assistant prompt to prepare for generation.
+
+        Args:
+            messages: List of LLMMessage objects to format
+
+        Returns:
+            Formatted prompt string with ChatML role markers and special tokens
+
+        """
         prompt_parts = []
 
         for msg in messages:
@@ -617,7 +873,19 @@ class LlamaCppBackend(LLMBackend):
 
     @staticmethod
     def _extract_tool_calls(content: str, tools: list[dict[str, Any]]) -> list[dict[str, Any]] | None:
-        """Extract tool calls from generated content (basic implementation)."""
+        """Extract tool/function calls from generated content using regex matching.
+
+        Parses generated text for function call patterns and extracts arguments as JSON.
+        This is a simplified implementation suitable for llama.cpp model responses.
+
+        Args:
+            content: Generated content string to parse for tool calls
+            tools: List of available tool/function definitions to match against
+
+        Returns:
+            List of tool call dictionaries in OpenAI format, or None if no calls found
+
+        """
         # This is a simplified implementation
         # In practice, you'd want more sophisticated parsing
         tool_calls = []
@@ -651,7 +919,12 @@ class LlamaCppBackend(LLMBackend):
         return tool_calls or None
 
     def shutdown(self) -> None:
-        """Shutdown llama.cpp backend."""
+        """Shutdown llama.cpp backend.
+
+        Releases the llama.cpp model and associated resources. Calls parent shutdown
+        to clear tools and reset initialization state.
+
+        """
         super().shutdown()
         if self.llama is not None:
             # Clean up llama.cpp model
@@ -660,14 +933,23 @@ class LlamaCppBackend(LLMBackend):
 
 
 class OllamaBackend(LLMBackend):
-    """Ollama backend for local model serving."""
+    """Ollama backend for local model serving.
+
+    Implements LLM backend using Ollama's local HTTP API for running models
+    on the same machine or local network. Supports all Ollama-compatible models.
+    """
 
     def __init__(self, config: LLMConfig) -> None:
         """Initialize Ollama backend with configuration.
 
-        Args:
-            config: LLM configuration object
+        Loads Ollama server URL from configuration, environment variables, or
+        service configuration. Raises ConfigurationError if URL cannot be determined.
 
+        Args:
+            config: LLMConfig object with api_base or Ollama server URL
+
+        Raises:
+            ConfigurationError: If Ollama API URL cannot be located or configured
         """
         super().__init__(config)
         # Get URL from configuration first, then secrets, then service config
@@ -684,7 +966,15 @@ class OllamaBackend(LLMBackend):
             ) from e
 
     def initialize(self) -> bool:
-        """Initialize Ollama connection."""
+        """Initialize and verify connection to Ollama server.
+
+        Attempts to connect to the Ollama server by fetching the list of available models.
+        Handles connection errors gracefully and logs warnings instead of failing loudly.
+
+        Returns:
+            True if Ollama server is accessible and responsive, False otherwise
+
+        """
         try:
             try:
                 import requests
@@ -719,7 +1009,16 @@ class OllamaBackend(LLMBackend):
             return False
 
     def chat(self, messages: list[LLMMessage], tools: list[dict[str, Any]] | None = None) -> LLMResponse:
-        """Chat with Ollama model."""
+        """Chat with Ollama model.
+
+        Args:
+            messages: List of chat messages to send
+            tools: Optional list of tools for function calling
+
+        Returns:
+            LLMResponse with content, finish reason, and model name or error message
+
+        """
         if not self.is_initialized:
             return LLMResponse(
                 content="Ollama backend not initialized - please check if Ollama server is running",
@@ -797,20 +1096,34 @@ class OllamaBackend(LLMBackend):
             )
 
     def shutdown(self) -> None:
-        """Shutdown Ollama backend."""
+        """Shutdown Ollama backend.
+
+        Closes connection to Ollama server. No persistent resources to release
+        since HTTP connections are stateless. Calls parent shutdown to clear tools.
+
+        """
         super().shutdown()
         # No specific cleanup needed for HTTP client
 
 
 class LocalGGUFBackend(LLMBackend):
-    """Local GGUF model backend using our local server."""
+    """Local GGUF model backend using local inference server.
+
+    Implements LLM backend using a local GGUF model server that runs on the same
+    machine or local network. Supports model loading and unloading on demand.
+    """
 
     def __init__(self, config: LLMConfig) -> None:
         """Initialize Local GGUF backend with configuration.
 
-        Args:
-            config: LLM configuration object
+        Loads local server URL from configuration or service configuration.
+        Raises ConfigurationError if server URL cannot be determined.
 
+        Args:
+            config: LLMConfig object with model_path for GGUF model files
+
+        Raises:
+            ConfigurationError: If local LLM server URL not configured
         """
         super().__init__(config)
         # Get URL from configuration first, then fallback
@@ -826,7 +1139,15 @@ class LocalGGUFBackend(LLMBackend):
         self.gguf_manager: Any = None
 
     def initialize(self) -> bool:
-        """Initialize GGUF backend."""
+        """Initialize GGUF backend and load model.
+
+        Starts the local GGUF server if not already running and loads the specified
+        model. Tests server connectivity before marking as initialized.
+
+        Returns:
+            True if GGUF server initialized and model loaded successfully, False otherwise
+
+        """
         try:
             # Import the GGUF manager
             from .local_gguf_server import gguf_manager
@@ -889,7 +1210,20 @@ class LocalGGUFBackend(LLMBackend):
             return False
 
     def chat(self, messages: list[LLMMessage], tools: list[dict[str, Any]] | None = None) -> LLMResponse:
-        """Chat with local GGUF model."""
+        """Chat with local GGUF model.
+
+        Args:
+            messages: List of chat messages to send
+            tools: Optional list of tools for function calling
+
+        Returns:
+            LLMResponse with content, usage info, finish reason, and model name
+
+        Raises:
+            RuntimeError: If backend is not initialized or GGUF server returns error
+            Exception: If API request fails or response parsing fails
+
+        """
         if not self.is_initialized:
             raise RuntimeError("Backend not initialized")
 
@@ -948,20 +1282,29 @@ class LocalGGUFBackend(LLMBackend):
             raise
 
     def shutdown(self) -> None:
-        """Shutdown GGUF backend."""
+        """Shutdown GGUF backend.
+
+        Calls parent shutdown to clear tools and reset state. Intentionally does not
+        stop the server to allow other backend instances to continue using it.
+
+        """
         super().shutdown()
         # Could stop the server here, but leave it running for other instances
         # self.gguf_manager.stop_server() if self.gguf_manager else None
 
 
 class PyTorchLLMBackend(LLMBackend):
-    """PyTorch model backend for loading .pth/.pt files."""
+    """PyTorch model backend for loading .pth/.pt checkpoint files.
+
+    Implements LLM backend using PyTorch for loading and running transformer models
+    from checkpoint files. Supports device auto-detection, quantization, and GPU optimization.
+    """
 
     def __init__(self, config: LLMConfig) -> None:
         """Initialize PyTorch backend with configuration.
 
         Args:
-            config: LLM configuration object
+            config: LLMConfig object with model_path pointing to .pth/.pt checkpoint or directory
 
         """
         super().__init__(config)
@@ -971,7 +1314,18 @@ class PyTorchLLMBackend(LLMBackend):
         self.quantization_manager: Any = None
 
     def initialize(self) -> bool:
-        """Initialize PyTorch model and tokenizer."""
+        """Initialize PyTorch model and tokenizer.
+
+        Loads model architecture from directory config or model name, then loads checkpoint
+        weights. Handles device selection (CPU/CUDA/GPU), quantization, and GPU optimization.
+        Supports both pre-trained HuggingFace models and raw checkpoint files.
+
+        Returns:
+            True if model and tokenizer loaded successfully, False otherwise
+
+        Raises:
+            RuntimeError: If PyTorch is not installed
+        """
         try:
             if not HAS_TORCH:
                 raise RuntimeError("PyTorch is not installed")
@@ -1082,7 +1436,20 @@ class PyTorchLLMBackend(LLMBackend):
             return False
 
     def chat(self, messages: list[LLMMessage], tools: list[dict[str, Any]] | None = None) -> LLMResponse:
-        """Generate response using PyTorch model."""
+        """Generate response using PyTorch model.
+
+        Args:
+            messages: List of chat messages to send
+            tools: Optional list of tools (limited tool support for PyTorch models)
+
+        Returns:
+            LLMResponse with generated content, finish reason, and model name
+
+        Raises:
+            RuntimeError: If backend is not initialized or PyTorch not available
+            Exception: If generation fails
+
+        """
         if not self.is_initialized:
             raise RuntimeError("Backend not initialized")
 
@@ -1134,7 +1501,12 @@ class PyTorchLLMBackend(LLMBackend):
             raise
 
     def shutdown(self) -> None:
-        """Shutdown PyTorch backend."""
+        """Shutdown PyTorch backend.
+
+        Releases model and tokenizer objects and clears GPU cache if available.
+        Calls parent shutdown to clear tools and reset initialization state.
+
+        """
         super().shutdown()
         if self.model is not None:
             del self.model
@@ -1152,13 +1524,17 @@ class PyTorchLLMBackend(LLMBackend):
 
 
 class TensorFlowLLMBackend(LLMBackend):
-    """TensorFlow model backend for loading .h5 and SavedModel formats."""
+    """TensorFlow model backend for loading .h5 and SavedModel formats.
+
+    Implements LLM backend using TensorFlow/Keras for loading and running models
+    in SavedModel and HDF5 formats. Supports GPU acceleration and custom model architectures.
+    """
 
     def __init__(self, config: LLMConfig) -> None:
         """Initialize TensorFlow backend with configuration.
 
         Args:
-            config: LLM configuration object
+            config: LLMConfig object with model_path pointing to SavedModel directory or .h5 file
 
         """
         super().__init__(config)
@@ -1166,7 +1542,17 @@ class TensorFlowLLMBackend(LLMBackend):
         self.tokenizer: Any = None
 
     def initialize(self) -> bool:
-        """Initialize TensorFlow model."""
+        """Initialize TensorFlow model and tokenizer.
+
+        Loads model from SavedModel directory or HDF5 file. Automatically detects
+        available GPU devices and configures TensorFlow accordingly.
+
+        Returns:
+            True if model and tokenizer loaded successfully, False otherwise
+
+        Raises:
+            RuntimeError: If TensorFlow is not installed
+        """
         try:
             if not HAS_TENSORFLOW:
                 raise RuntimeError("TensorFlow is not installed")
@@ -1219,7 +1605,20 @@ class TensorFlowLLMBackend(LLMBackend):
             return False
 
     def chat(self, messages: list[LLMMessage], tools: list[dict[str, Any]] | None = None) -> LLMResponse:
-        """Generate response using TensorFlow model."""
+        """Generate response using TensorFlow model.
+
+        Args:
+            messages: List of chat messages to send
+            tools: Optional list of tools (limited tool support for TensorFlow models)
+
+        Returns:
+            LLMResponse with generated content, finish reason, and model name
+
+        Raises:
+            RuntimeError: If backend is not initialized
+            Exception: If generation fails
+
+        """
         if not self.is_initialized:
             raise RuntimeError("Backend not initialized")
 
@@ -1266,7 +1665,15 @@ class TensorFlowLLMBackend(LLMBackend):
             raise
 
     def shutdown(self) -> None:
-        """Shutdown TensorFlow backend."""
+        """Shutdown TensorFlow backend.
+
+        Releases model and tokenizer objects and clears TensorFlow session.
+        Calls parent shutdown to clear tools and reset initialization state.
+
+        Raises:
+            RuntimeError: If TensorFlow is not installed
+
+        """
         super().shutdown()
         if self.model is not None:
             del self.model
@@ -1287,13 +1694,17 @@ class TensorFlowLLMBackend(LLMBackend):
 
 
 class ONNXLLMBackend(LLMBackend):
-    """ONNX model backend for loading .onnx files."""
+    """ONNX model backend for loading .onnx files.
+
+    Implements LLM backend using ONNX Runtime for efficient inference of models
+    exported to ONNX format. Supports CPU and GPU execution providers.
+    """
 
     def __init__(self, config: LLMConfig) -> None:
         """Initialize ONNX backend with configuration.
 
         Args:
-            config: LLM configuration object
+            config: LLMConfig object with model_path pointing to .onnx model file
 
         """
         super().__init__(config)
@@ -1301,7 +1712,15 @@ class ONNXLLMBackend(LLMBackend):
         self.tokenizer: Any = None
 
     def initialize(self) -> bool:
-        """Initialize ONNX model."""
+        """Initialize ONNX Runtime inference session.
+
+        Creates an ONNX Runtime session with CPU and GPU execution providers.
+        Loads tokenizer from model name or model directory.
+
+        Returns:
+            True if ONNX session created and tokenizer loaded successfully, False otherwise
+
+        """
         try:
             import onnxruntime as ort
             from transformers import AutoTokenizer
@@ -1343,7 +1762,20 @@ class ONNXLLMBackend(LLMBackend):
             return False
 
     def chat(self, messages: list[LLMMessage], tools: list[dict[str, Any]] | None = None) -> LLMResponse:
-        """Generate response using ONNX model."""
+        """Generate response using ONNX model.
+
+        Args:
+            messages: List of chat messages to send
+            tools: Optional list of tools (limited tool support for ONNX models)
+
+        Returns:
+            LLMResponse with generated content, finish reason, and model name
+
+        Raises:
+            RuntimeError: If backend is not initialized or NumPy not available
+            Exception: If generation fails
+
+        """
         if not self.is_initialized:
             raise RuntimeError("Backend not initialized")
 
@@ -1456,7 +1888,12 @@ class ONNXLLMBackend(LLMBackend):
             raise
 
     def shutdown(self) -> None:
-        """Shutdown ONNX backend."""
+        """Shutdown ONNX backend.
+
+        Releases ONNX Runtime session and tokenizer. Calls parent shutdown
+        to clear tools and reset initialization state.
+
+        """
         super().shutdown()
         if self.session is not None:
             del self.session
@@ -1467,13 +1904,17 @@ class ONNXLLMBackend(LLMBackend):
 
 
 class SafetensorsBackend(LLMBackend):
-    """Safetensors model backend for loading .safetensors files."""
+    """Safetensors model backend for loading .safetensors files.
+
+    Implements LLM backend using Safetensors format for secure and efficient
+    model loading. Supports single-file and directory-based model structures.
+    """
 
     def __init__(self, config: LLMConfig) -> None:
         """Initialize Safetensors backend with configuration.
 
         Args:
-            config: LLM configuration object
+            config: LLMConfig object with model_path pointing to safetensors file or directory
 
         """
         super().__init__(config)
@@ -1482,7 +1923,17 @@ class SafetensorsBackend(LLMBackend):
         self.device: Any = None
 
     def initialize(self) -> bool:
-        """Initialize Safetensors model."""
+        """Initialize Safetensors model and tokenizer.
+
+        Loads model from safetensors file or directory. Handles device selection,
+        GPU optimization, and model architecture from config or model name.
+
+        Returns:
+            True if model and tokenizer loaded successfully, False otherwise
+
+        Raises:
+            RuntimeError: If PyTorch is not installed
+        """
         try:
             if not HAS_TORCH:
                 raise RuntimeError("PyTorch is not installed")
@@ -1573,7 +2024,20 @@ class SafetensorsBackend(LLMBackend):
             return False
 
     def chat(self, messages: list[LLMMessage], tools: list[dict[str, Any]] | None = None) -> LLMResponse:
-        """Generate response using Safetensors model."""
+        """Generate response using Safetensors model.
+
+        Args:
+            messages: List of chat messages to send
+            tools: Optional list of tools (limited tool support for Safetensors models)
+
+        Returns:
+            LLMResponse with generated content, finish reason, and model name
+
+        Raises:
+            RuntimeError: If backend is not initialized or PyTorch not available
+            Exception: If generation fails
+
+        """
         if not self.is_initialized:
             raise RuntimeError("Backend not initialized")
 
@@ -1625,7 +2089,12 @@ class SafetensorsBackend(LLMBackend):
             raise
 
     def shutdown(self) -> None:
-        """Shutdown Safetensors backend."""
+        """Shutdown Safetensors backend.
+
+        Releases model and tokenizer objects and clears GPU cache if available.
+        Calls parent shutdown to clear tools and reset initialization state.
+
+        """
         super().shutdown()
         if self.model is not None:
             del self.model
@@ -1643,13 +2112,18 @@ class SafetensorsBackend(LLMBackend):
 
 
 class GPTQBackend(LLMBackend):
-    """GPTQ quantized model backend."""
+    """GPTQ quantized model backend.
+
+    Implements LLM backend using GPTQ-quantized models loaded with auto-gptq.
+    Provides efficient inference on GPUs with support for various quantization levels.
+    Requires GPU availability for proper operation.
+    """
 
     def __init__(self, config: LLMConfig) -> None:
         """Initialize GPTQ backend with configuration.
 
         Args:
-            config: LLM configuration object
+            config: LLMConfig object with model_path pointing to GPTQ model directory
 
         """
         super().__init__(config)
@@ -1658,7 +2132,17 @@ class GPTQBackend(LLMBackend):
         self.device: Any = None
 
     def initialize(self) -> bool:
-        """Initialize GPTQ model."""
+        """Initialize GPTQ model.
+
+        Loads GPTQ-quantized model from directory using auto-gptq library.
+        Requires GPU availability for operation. Uses Triton optimizations if available.
+
+        Returns:
+            True if GPTQ model loaded successfully, False otherwise
+
+        Raises:
+            RuntimeError: If PyTorch is not installed
+        """
         try:
             if not HAS_TORCH:
                 raise RuntimeError("PyTorch is not installed")
@@ -1714,7 +2198,20 @@ class GPTQBackend(LLMBackend):
             return False
 
     def chat(self, messages: list[LLMMessage], tools: list[dict[str, Any]] | None = None) -> LLMResponse:
-        """Generate response using GPTQ model."""
+        """Generate response using GPTQ model.
+
+        Args:
+            messages: List of chat messages to send
+            tools: Optional list of tools (limited tool support for GPTQ models)
+
+        Returns:
+            LLMResponse with generated content, finish reason, and model name
+
+        Raises:
+            RuntimeError: If backend is not initialized
+            Exception: If generation fails
+
+        """
         if not self.is_initialized:
             raise RuntimeError("Backend not initialized")
 
@@ -1761,7 +2258,12 @@ class GPTQBackend(LLMBackend):
             raise
 
     def shutdown(self) -> None:
-        """Shutdown GPTQ backend."""
+        """Shutdown GPTQ backend.
+
+        Releases model and tokenizer objects and clears GPU cache.
+        Calls parent shutdown to clear tools and reset initialization state.
+
+        """
         super().shutdown()
         if self.model is not None:
             del self.model
@@ -1779,13 +2281,18 @@ class GPTQBackend(LLMBackend):
 
 
 class HuggingFaceLocalBackend(LLMBackend):
-    """Hugging Face local model backend for loading from directories."""
+    """Hugging Face local model backend for loading from directories.
+
+    Implements LLM backend using transformers library for loading HuggingFace models
+    from local directories. Supports large models with accelerate library features
+    like device_map and checkpoint sharding.
+    """
 
     def __init__(self, config: LLMConfig) -> None:
         """Initialize Hugging Face Local backend with configuration.
 
         Args:
-            config: LLM configuration object
+            config: LLMConfig object with model_path pointing to model directory
 
         """
         super().__init__(config)
@@ -1795,7 +2302,17 @@ class HuggingFaceLocalBackend(LLMBackend):
         self.quantization_manager: Any = None
 
     def initialize(self) -> bool:
-        """Initialize Hugging Face model from local directory."""
+        """Initialize Hugging Face model from local directory.
+
+        Loads model and config from local directory. Supports device mapping for
+        large models and automatic checkpoint sharding with accelerate library.
+
+        Returns:
+            True if model and tokenizer loaded successfully, False otherwise
+
+        Raises:
+            RuntimeError: If PyTorch is not installed
+        """
         try:
             if not HAS_TORCH:
                 raise RuntimeError("PyTorch is not installed")
@@ -1910,7 +2427,20 @@ class HuggingFaceLocalBackend(LLMBackend):
             return False
 
     def chat(self, messages: list[LLMMessage], tools: list[dict[str, Any]] | None = None) -> LLMResponse:
-        """Generate response using Hugging Face model."""
+        """Generate response using Hugging Face model.
+
+        Args:
+            messages: List of chat messages to send
+            tools: Optional list of tools (limited tool support for HuggingFace models)
+
+        Returns:
+            LLMResponse with generated content, finish reason, and model name
+
+        Raises:
+            RuntimeError: If backend is not initialized or PyTorch not available
+            Exception: If generation fails
+
+        """
         if not self.is_initialized:
             raise RuntimeError("Backend not initialized")
 
@@ -1975,7 +2505,12 @@ class HuggingFaceLocalBackend(LLMBackend):
             raise
 
     def shutdown(self) -> None:
-        """Shutdown Hugging Face backend."""
+        """Shutdown Hugging Face backend.
+
+        Releases model and tokenizer objects and clears GPU cache if available.
+        Calls parent shutdown to clear tools and reset initialization state.
+
+        """
         super().shutdown()
         if self.model is not None:
             del self.model
@@ -1993,14 +2528,33 @@ class HuggingFaceLocalBackend(LLMBackend):
 
 
 class LLMManager:
-    """Manager for LLM backends and configurations with lazy loading support."""
+    """Manager for LLM backends and configurations with lazy and background loading.
+
+    Implements a singleton pattern to manage multiple LLM backend instances.
+    Supports lazy loading (on-demand initialization) and background loading (asynchronous
+    model loading) for efficient resource management during AI-assisted binary analysis.
+    """
 
     _instance: "LLMManager | None" = None
     _lock = threading.Lock()
     _initialized: bool = False
 
     def __new__(cls, enable_lazy_loading: bool = True, enable_background_loading: bool = True) -> "LLMManager":
-        """Singleton pattern implementation."""
+        """Create or retrieve singleton LLM manager instance.
+
+        Implements singleton pattern with thread-safe instantiation. Validates that
+        boolean parameters are actual booleans, not truthy values.
+
+        Args:
+            enable_lazy_loading: Enable lazy loading of models on first use
+            enable_background_loading: Enable background model loading in separate threads
+
+        Returns:
+            Singleton LLMManager instance
+
+        Raises:
+            TypeError: If enable_lazy_loading or enable_background_loading are not boolean
+        """
         if not isinstance(enable_lazy_loading, bool):
             raise TypeError("enable_lazy_loading must be a boolean")
         if not isinstance(enable_background_loading, bool):
@@ -2014,9 +2568,13 @@ class LLMManager:
     def __init__(self, enable_lazy_loading: bool = True, enable_background_loading: bool = True) -> None:
         """Initialize LLM Manager with lazy and background loading options.
 
+        Sets up internal state for managing LLM backends. Only runs once due to
+        singleton pattern. Initializes lazy loading and background loading managers
+        if enabled.
+
         Args:
-            enable_lazy_loading: Whether to enable lazy loading of models
-            enable_background_loading: Whether to enable background loading
+            enable_lazy_loading: Whether to enable lazy loading of models on first access
+            enable_background_loading: Whether to enable asynchronous background model loading
 
         """
         if self._initialized:
@@ -2053,7 +2611,23 @@ class LLMManager:
         logger.info("LLM Manager initialized")
 
     def register_llm(self, llm_id: str, config: LLMConfig, use_lazy_loading: bool | None = None) -> bool:
-        """Register an LLM configuration with optional lazy loading."""
+        """Register an LLM configuration with optional lazy loading.
+
+        Initializes an LLM backend and registers it with a unique identifier.
+        If lazy loading is enabled, the backend will be loaded on first use.
+        Sets the registered LLM as active if it's the first one registered.
+
+        Args:
+            llm_id: Unique identifier for this LLM backend
+            config: LLMConfig object with model settings and provider info
+            use_lazy_loading: Override manager's lazy loading setting (None = use default)
+
+        Returns:
+            True if LLM registered and initialized successfully, False otherwise
+
+        Raises:
+            ValueError: If unsupported LLM provider specified in config
+        """
         with self.lock:
             try:
                 # Determine if we should use lazy loading
@@ -2103,7 +2677,18 @@ class LLMManager:
 
     @staticmethod
     def _get_backend_class(provider: LLMProvider) -> type | None:
-        """Get the backend class for a given provider."""
+        """Get the backend class for a given LLM provider.
+
+        Maps LLMProvider enum values to their corresponding backend implementation classes.
+        Returns None if the provider is not supported.
+
+        Args:
+            provider: LLMProvider enum value specifying which backend to use
+
+        Returns:
+            Backend class type for the provider, or None if provider not supported
+
+        """
         backend_classes = {
             LLMProvider.OPENAI: OpenAIBackend,
             LLMProvider.ANTHROPIC: AnthropicBackend,
@@ -2121,7 +2706,18 @@ class LLMManager:
         return backend_classes.get(provider)
 
     def set_active_llm(self, llm_id: str) -> bool:
-        """Set the active LLM for inference."""
+        """Set the active LLM for inference.
+
+        Changes which registered LLM backend will be used for chat() calls when
+        no specific llm_id is provided. Must be a previously registered backend.
+
+        Args:
+            llm_id: Identifier of registered LLM to make active
+
+        Returns:
+            True if LLM set successfully, False if llm_id not registered
+
+        """
         with self.lock:
             if llm_id not in self.backends:
                 logger.error("LLM not registered: %s", llm_id)
@@ -2132,7 +2728,21 @@ class LLMManager:
             return True
 
     def chat(self, messages: list[LLMMessage], llm_id: str | None = None, tools: list[dict[str, Any]] | None = None) -> LLMResponse | None:
-        """Send chat messages to LLM."""
+        """Send chat messages to an LLM backend.
+
+        Sends a list of messages to the specified or active LLM backend and
+        returns the model's response. Automatically adds system prompt if configured
+        and not already present in messages.
+
+        Args:
+            messages: List of LLMMessage objects to send to the model
+            llm_id: Optional ID of specific LLM to use (uses active LLM if None)
+            tools: Optional list of tool/function definitions for function calling
+
+        Returns:
+            LLMResponse with generated content and metadata, or None on error
+
+        """
         with self.lock:
             backend_id = llm_id or self.active_backend
 
@@ -2171,14 +2781,34 @@ class LLMManager:
                 return None
 
     def get_available_llms(self) -> list[str]:
-        """Get list of available LLM IDs."""
+        """Get list of available LLM backend IDs.
+
+        Returns all registered LLM identifiers, including both immediately-loaded
+        and lazy-loaded backends.
+
+        Returns:
+            List of all registered LLM backend identifiers
+
+        """
         # Combine both immediate and lazy-loaded backends
         immediate_llms = set(self.backends.keys())
         lazy_llms = set(self.lazy_wrappers.keys())
         return list(immediate_llms.union(lazy_llms))
 
     def get_llm_info(self, llm_id: str) -> dict[str, Any] | None:
-        """Get information about an LLM."""
+        """Get information about a registered LLM backend.
+
+        Returns detailed information about an LLM including provider, model name,
+        initialization status, tool support, and lazy loading status.
+
+        Args:
+            llm_id: Identifier of the LLM to get information for
+
+        Returns:
+            Dictionary with LLM metadata (id, provider, model_name, is_initialized, etc.),
+            or None if llm_id not registered
+
+        """
         if llm_id not in self.configs:
             return None
 
@@ -2214,7 +2844,16 @@ class LLMManager:
         }
 
     def register_tools_for_llm(self, llm_id: str, tools: list[dict[str, Any]]) -> None:
-        """Register tools for a specific LLM."""
+        """Register tools/functions for a specific LLM backend.
+
+        Provides function calling capabilities to an LLM backend. Tools must be
+        in OpenAI function schema format with name, description, and parameters.
+
+        Args:
+            llm_id: Identifier of the LLM backend to register tools for
+            tools: List of tool/function definitions in OpenAI schema format
+
+        """
         if llm_id in self.backends:
             self.backends[llm_id].register_tools(tools)
             logger.info("Registered %d tools for LLM: %s", len(tools), llm_id)
@@ -2227,7 +2866,23 @@ class LLMManager:
         max_tokens: int = 4000,
         llm_id: str | None = None,
     ) -> str | None:
-        """Generate script content using LLM."""
+        """Generate script content using an LLM for bypass or analysis tasks.
+
+        Uses an LLM to generate complete, production-ready scripts for binary analysis,
+        protection bypass, or reverse engineering tasks. Includes context about binary
+        analysis data if provided. Enforces requirement for fully functional code.
+
+        Args:
+            prompt: User prompt describing desired script functionality
+            script_type: Programming language (e.g., 'python', 'javascript', 'frida')
+            context_data: Optional dictionary with binary analysis context (entropy, functions, etc.)
+            max_tokens: Maximum tokens to generate (default 4000)
+            llm_id: Identifier of specific LLM to use (uses active backend if None)
+
+        Returns:
+            Generated script content as string, or None if generation failed
+
+        """
         with self.lock:
             backend_id = llm_id or self.active_backend
 
@@ -2287,7 +2942,22 @@ Return ONLY the script code, no explanations or markdown formatting."""
         script_type: str,
         llm_id: str | None = None,
     ) -> str | None:
-        """Refine existing script based on test results and feedback."""
+        """Refine existing script based on test results and error feedback.
+
+        Iteratively improves a generated script by providing LLM with execution errors
+        and test results. Generates a complete refined version addressing all issues.
+
+        Args:
+            original_script: Original script to refine and fix
+            error_feedback: Error message or feedback from script execution
+            test_results: Dictionary with test execution results and metrics
+            script_type: Programming language of the script
+            llm_id: Identifier of specific LLM to use (uses active backend if None)
+
+        Returns:
+            Refined script content as string, or None if refinement failed
+
+        """
         with self.lock:
             backend_id = llm_id or self.active_backend
 
@@ -2338,7 +3008,21 @@ Please provide the complete refined script that fixes these issues."""
                 return None
 
     def analyze_protection_patterns(self, binary_data: dict[str, Any], llm_id: str | None = None) -> dict[str, Any] | None:
-        """Analyze binary data to identify protection patterns."""
+        """Analyze binary data to identify protection patterns and bypass strategies.
+
+        Uses an LLM to examine binary analysis data and identify licensing protections,
+        anti-debugging mechanisms, VM detection, cryptographic validations, and other
+        protection mechanisms. Returns detected patterns and recommended bypass approaches.
+
+        Args:
+            binary_data: Dictionary with binary analysis data (functions, strings, imports, etc.)
+            llm_id: Identifier of specific LLM to use (uses active backend if None)
+
+        Returns:
+            Dictionary with detected patterns and bypass strategies in JSON format,
+            or None if analysis failed
+
+        """
         with self.lock:
             backend_id = llm_id or self.active_backend
 
@@ -2393,14 +3077,44 @@ Please analyze this data and provide detailed protection pattern analysis in JSO
         context_data: dict[str, Any] | None = None,
         llm_id: str | None = None,
     ) -> str | None:
-        """Generate script with streaming support for long generation times."""
+        """Generate script with streaming for extended generation times.
+
+        Generates scripts with streaming enabled for better handling of long generation
+        times. Backends automatically stream tokens when available. Functionally equivalent
+        to generate_script_content() for backends that support streaming.
+
+        Args:
+            prompt: User prompt describing desired script functionality
+            script_type: Programming language (e.g., 'python', 'javascript', 'frida')
+            context_data: Optional dictionary with binary analysis context data
+            llm_id: Identifier of specific LLM to use (uses active backend if None)
+
+        Returns:
+            Generated script content as string, or None if generation failed
+
+        """
         # Direct streaming passthrough to standard generation for compatibility
         # All configured backends handle streaming internally when available
         logger.info("Streaming script generation requested, using backend streaming")
         return self.generate_script_content(prompt, script_type, context_data, llm_id=llm_id)
 
     def validate_script_syntax(self, script_content: str, script_type: str, llm_id: str | None = None) -> dict[str, Any]:
-        """Use LLM to validate script syntax and detect common issues."""
+        """Use LLM to validate script syntax and detect common issues.
+
+        Validates script syntax using LLM analysis. Checks for syntax errors,
+        API usage errors, logic errors, and security issues. Returns structured
+        validation results in JSON format.
+
+        Args:
+            script_content: Complete script content to validate
+            script_type: Programming language of the script
+            llm_id: Identifier of specific LLM to use (uses active backend if None)
+
+        Returns:
+            Dictionary with validation results including: valid (bool), errors (list),
+            warnings (list), suggestions (list), or error message if validation failed
+
+        """
         with self.lock:
             backend_id = llm_id or self.active_backend
 
@@ -2459,7 +3173,12 @@ Please analyze this script and return validation results in JSON format."""
                 return {"valid": False, "errors": [str(e)]}
 
     def shutdown(self) -> None:
-        """Shutdown all LLM backends."""
+        """Shutdown all LLM backends and cleanup resources.
+
+        Gracefully shuts down all registered LLM backends, stops background loading
+        if enabled, and clears internal state. Safe to call multiple times.
+
+        """
         with self.lock:
             # Shutdown background loader if enabled
             if self.background_loader:
@@ -2479,13 +3198,29 @@ Please analyze this script and return validation results in JSON format."""
 
     # Background loading methods
     def add_progress_callback(self, callback: ProgressCallback) -> None:
-        """Add a progress callback for model loading."""
+        """Add a progress callback for model loading events.
+
+        Registers a callback function that receives progress updates during
+        background model loading. Callback is invoked with progress percentage.
+
+        Args:
+            callback: Progress callback function (signature: callback(progress: float, message: str))
+
+        """
         if self.background_loader:
             self.background_loader.add_progress_callback(callback)
             self.progress_callbacks.append(callback)
 
     def add_queued_progress_callback(self, callback: ProgressCallback | QueuedProgressCallback) -> None:
-        """Add a queued progress callback that buffers progress updates."""
+        """Add a queued progress callback that buffers progress updates.
+
+        Registers a callback that queues progress updates instead of calling them
+        immediately. Useful for UI updates that need to batch requests.
+
+        Args:
+            callback: Progress callback function or existing QueuedProgressCallback instance
+
+        """
         if self.background_loader:
             queued_callback: QueuedProgressCallback
             if not isinstance(callback, QueuedProgressCallback):
@@ -2496,7 +3231,15 @@ Please analyze this script and return validation results in JSON format."""
             self.progress_callbacks.append(queued_callback)
 
     def remove_progress_callback(self, callback: ProgressCallback) -> None:
-        """Remove a progress callback."""
+        """Remove a progress callback.
+
+        Unregisters a previously added progress callback. Safe to call if callback
+        not registered (no error raised).
+
+        Args:
+            callback: Progress callback function to unregister
+
+        """
         if self.background_loader:
             self.background_loader.remove_progress_callback(callback)
             if callback in self.progress_callbacks:
@@ -2509,7 +3252,25 @@ Please analyze this script and return validation results in JSON format."""
         priority: int = 0,
         callback: ProgressCallback | None = None,
     ) -> LoadingTask | None:
-        """Load a model in the background with progress tracking."""
+        """Load an LLM model in background with progress tracking.
+
+        Initiates asynchronous model loading in a background thread. Allows
+        application to remain responsive while large models load. Returns a
+        LoadingTask that can be used to poll or wait for completion.
+
+        Args:
+            llm_id: Unique identifier for this LLM backend
+            config: LLMConfig with model settings and provider information
+            priority: Loading priority value (higher = earlier execution)
+            callback: Optional progress callback for loading updates
+
+        Returns:
+            LoadingTask for tracking progress and checking status,
+            or None if background loading is disabled
+
+        Raises:
+            ValueError: If unsupported LLM provider specified in config
+        """
         if not self.background_loader:
             logger.warning("Background loading not enabled")
             return None
@@ -2542,14 +3303,36 @@ Please analyze this script and return validation results in JSON format."""
                 return None
 
     def get_loading_progress(self, llm_id: str) -> LoadingTask | None:
-        """Get loading progress for a model."""
+        """Get loading progress for a model being loaded in the background.
+
+        Queries the current progress and status of a model that is loading
+        asynchronously. Returns the LoadingTask object with current state.
+
+        Args:
+            llm_id: Identifier of the model being loaded
+
+        Returns:
+            LoadingTask with progress info, or None if background loading disabled or not found
+
+        """
         if self.background_loader:
             result: LoadingTask | None = self.background_loader.get_loading_progress(llm_id)
             return result
         return None
 
     def cancel_loading(self, llm_id: str) -> bool:
-        """Cancel loading a model."""
+        """Cancel background loading of a model.
+
+        Stops background model loading in progress. Cleans up the loading task
+        from internal tracking.
+
+        Args:
+            llm_id: Identifier of the model to cancel loading
+
+        Returns:
+            True if loading was cancelled successfully, False if background loading disabled or task not found
+
+        """
         if self.background_loader:
             success: bool = self.background_loader.cancel_loading(llm_id)
             if success and llm_id in self.loading_tasks:
@@ -2558,14 +3341,30 @@ Please analyze this script and return validation results in JSON format."""
         return False
 
     def get_all_loading_tasks(self) -> dict[str, LoadingTask]:
-        """Get all loading tasks."""
+        """Get all current background loading tasks.
+
+        Returns all LoadingTask objects for models currently being loaded
+        in the background, indexed by LLM identifier.
+
+        Returns:
+            Dictionary mapping LLM IDs to LoadingTask objects
+
+        """
         if self.background_loader:
             result: dict[str, LoadingTask] = self.background_loader.get_all_loading_tasks()
             return result
         return {}
 
     def get_loading_statistics(self) -> dict[str, Any]:
-        """Get loading statistics."""
+        """Get background loading statistics.
+
+        Returns summary statistics about background model loading including
+        count of pending, active, and completed tasks plus overall success rate.
+
+        Returns:
+            Dictionary with keys: pending (int), active (int), completed (int), success_rate (float)
+
+        """
         if self.background_loader:
             result: dict[str, Any] = self.background_loader.get_statistics()
             return result
@@ -2577,7 +3376,19 @@ Please analyze this script and return validation results in JSON format."""
         }
 
     def register_background_loaded_model(self, llm_id: str, task: LoadingTask) -> bool:
-        """Register a model that was loaded in the background."""
+        """Register a model that was successfully loaded in the background.
+
+        Completes background loading workflow by registering the loaded model
+        and making it available for inference. Sets as active if first registered.
+
+        Args:
+            llm_id: Identifier for the loaded LLM backend
+            task: Completed LoadingTask containing the loaded backend
+
+        Returns:
+            True if model was successfully registered and is ready, False otherwise
+
+        """
         if task.state == LoadingState.COMPLETED and task.result:
             with self.lock:
                 self.backends[llm_id] = task.result
@@ -2591,7 +3402,19 @@ Please analyze this script and return validation results in JSON format."""
         return False
 
     def unload_llm(self, llm_id: str) -> bool:
-        """Unload a specific LLM to free memory."""
+        """Unload a specific LLM to free memory and resources.
+
+        Unloads either a lazy-wrapped or immediately-loaded LLM, releasing
+        associated memory and GPU resources. Automatically selects a new active
+        backend if the unloaded backend was active.
+
+        Args:
+            llm_id: Identifier of the LLM to unload
+
+        Returns:
+            True if LLM was unloaded successfully, False if not found
+
+        """
         with self.lock:
             if llm_id in self.lazy_wrappers:
                 self.lazy_wrappers[llm_id].unload()
@@ -2609,7 +3432,12 @@ Please analyze this script and return validation results in JSON format."""
             return False
 
     def unload_all_llms(self) -> None:
-        """Unload all LLMs to free memory."""
+        """Unload all LLMs to free memory and resources.
+
+        Unloads all registered LLM backends (both lazy and immediate).
+        Resets active backend state.
+
+        """
         with self.lock:
             # Unload lazy models
             for wrapper in self.lazy_wrappers.values():
@@ -2622,7 +3450,16 @@ Please analyze this script and return validation results in JSON format."""
             logger.info("Unloaded all LLMs")
 
     def get_memory_usage(self) -> dict[str, Any]:
-        """Get memory usage information for all models."""
+        """Get memory usage information for all registered models.
+
+        Returns information about which models are currently loaded and their
+        memory status. Includes counts of immediate and lazy-loaded models.
+
+        Returns:
+            Dictionary with keys: immediate_models (dict), lazy_models (dict),
+            total_loaded (int)
+
+        """
         immediate_models: dict[str, str] = {}
         lazy_models: dict[str, dict[str, Any]] = {}
         total_loaded = 0
@@ -2648,7 +3485,17 @@ Please analyze this script and return validation results in JSON format."""
         }
 
     def configure_lazy_loading(self, max_loaded_models: int = 3, idle_unload_time: int = 1800) -> None:
-        """Configure lazy loading parameters."""
+        """Configure lazy loading parameters for memory-efficient model management.
+
+        Adjusts lazy loading behavior to balance memory usage and performance.
+        Allows limiting the number of simultaneously-loaded models and setting
+        idle time before automatic unloading.
+
+        Args:
+            max_loaded_models: Maximum number of models to keep loaded in memory (default 3)
+            idle_unload_time: Time in seconds before unloading idle models (default 1800)
+
+        """
         if self.lazy_manager:
             self.lazy_manager.max_loaded_models = max_loaded_models
             self.lazy_manager.idle_unload_time = idle_unload_time
@@ -2659,7 +3506,18 @@ Please analyze this script and return validation results in JSON format."""
             )
 
     def preload_model(self, llm_id: str) -> bool:
-        """Manually preload a lazy model."""
+        """Manually preload a lazy-loaded model into memory.
+
+        Triggers immediate loading of a lazy-loaded model rather than waiting
+        for first use. Useful for ensuring model is ready before analysis begins.
+
+        Args:
+            llm_id: Identifier of the lazy-loaded model to preload
+
+        Returns:
+            True if model preloaded successfully, False if not found or already loaded
+
+        """
         if llm_id in self.lazy_wrappers:
             wrapper = self.lazy_wrappers[llm_id]
             backend = wrapper.get_backend()
@@ -2667,11 +3525,34 @@ Please analyze this script and return validation results in JSON format."""
         return False
 
     def add_llm(self, llm_id: str, config: LLMConfig) -> bool:
-        """Add an LLM with the given configuration (alias for ``register_llm``)."""
+        """Add an LLM with the given configuration (convenience alias for register_llm).
+
+        Registers a new LLM backend with the specified configuration. Identical to
+        register_llm() - provided for API consistency.
+
+        Args:
+            llm_id: Unique identifier for this LLM backend
+            config: LLMConfig object with model settings and provider
+
+        Returns:
+            True if LLM registered and initialized successfully, False otherwise
+
+        """
         return self.register_llm(llm_id, config)
 
     def get_llm(self, llm_id: str) -> LLMBackend | None:
-        """Get an LLM backend by ID."""
+        """Get an LLM backend instance by identifier.
+
+        Retrieves the backend object for a registered LLM. For lazy-loaded models,
+        triggers loading if not already loaded.
+
+        Args:
+            llm_id: Identifier of the LLM to retrieve
+
+        Returns:
+            LLMBackend instance if found and accessible, None otherwise
+
+        """
         with self.lock:
             if llm_id in self.backends:
                 return self.backends[llm_id]
@@ -2683,7 +3564,15 @@ Please analyze this script and return validation results in JSON format."""
             return None
 
     def list_llms(self) -> list[str]:
-        """List all available LLM IDs (alias for ``get_available_llms``)."""
+        """List all available LLM backend IDs (convenience alias for get_available_llms).
+
+        Returns all registered LLM identifiers including both immediately-loaded
+        and lazy-loaded backends.
+
+        Returns:
+            List of all registered LLM backend identifiers
+
+        """
         return self.get_available_llms()
 
     def add_provider(self, provider: LLMProvider, config: LLMConfig) -> bool:
@@ -2755,7 +3644,17 @@ Please analyze this script and return validation results in JSON format."""
 
 # Convenience functions for creating common configurations
 def create_openai_config(model_name: str = "gpt-4", api_key: str | None = None, **kwargs: Any) -> LLMConfig:
-    """Create OpenAI configuration."""
+    """Create OpenAI configuration.
+
+    Args:
+        model_name: OpenAI model name (default: gpt-4)
+        api_key: OpenAI API key (optional)
+        **kwargs: Additional LLMConfig parameters
+
+    Returns:
+        LLMConfig configured for OpenAI provider
+
+    """
     return LLMConfig(
         provider=LLMProvider.OPENAI,
         model_name=model_name,
@@ -2765,7 +3664,17 @@ def create_openai_config(model_name: str = "gpt-4", api_key: str | None = None, 
 
 
 def create_anthropic_config(model_name: str = "claude-3-5-sonnet-20241022", api_key: str | None = None, **kwargs: Any) -> LLMConfig:
-    """Create Anthropic configuration."""
+    """Create Anthropic configuration.
+
+    Args:
+        model_name: Anthropic model name (default: claude-3-5-sonnet-20241022)
+        api_key: Anthropic API key (optional)
+        **kwargs: Additional LLMConfig parameters
+
+    Returns:
+        LLMConfig configured for Anthropic provider
+
+    """
     return LLMConfig(
         provider=LLMProvider.ANTHROPIC,
         model_name=model_name,
@@ -2775,7 +3684,17 @@ def create_anthropic_config(model_name: str = "claude-3-5-sonnet-20241022", api_
 
 
 def create_google_config(model_name: str = "gemini-pro", api_key: str | None = None, **kwargs: Any) -> LLMConfig:
-    """Create Google AI configuration."""
+    """Create Google AI configuration.
+
+    Args:
+        model_name: Google model name (default: gemini-pro)
+        api_key: Google API key (optional)
+        **kwargs: Additional LLMConfig parameters
+
+    Returns:
+        LLMConfig configured for Google provider
+
+    """
     return LLMConfig(
         provider=LLMProvider.GOOGLE,
         model_name=model_name,
@@ -2785,7 +3704,17 @@ def create_google_config(model_name: str = "gemini-pro", api_key: str | None = N
 
 
 def create_gguf_config(model_path: str, model_name: str | None = None, **kwargs: Any) -> LLMConfig:
-    """Create GGUF model configuration."""
+    """Create GGUF model configuration.
+
+    Args:
+        model_path: Path to GGUF model file
+        model_name: Optional model name (defaults to filename)
+        **kwargs: Additional LLMConfig parameters
+
+    Returns:
+        LLMConfig configured for llama.cpp GGUF provider
+
+    """
     if not model_name:
         model_name = os.path.basename(model_path)
 
@@ -2798,7 +3727,17 @@ def create_gguf_config(model_path: str, model_name: str | None = None, **kwargs:
 
 
 def create_ollama_config(model_name: str, api_base: str | None = None, **kwargs: Any) -> LLMConfig:
-    """Create Ollama configuration."""
+    """Create Ollama configuration.
+
+    Args:
+        model_name: Ollama model name
+        api_base: Optional Ollama API base URL
+        **kwargs: Additional LLMConfig parameters
+
+    Returns:
+        LLMConfig configured for Ollama provider
+
+    """
     from intellicrack.utils.service_utils import get_service_url
 
     return LLMConfig(
@@ -2810,7 +3749,17 @@ def create_ollama_config(model_name: str, api_base: str | None = None, **kwargs:
 
 
 def create_pytorch_config(model_path: str, model_name: str | None = None, **kwargs: Any) -> LLMConfig:
-    """Create PyTorch model configuration."""
+    """Create PyTorch model configuration.
+
+    Args:
+        model_path: Path to PyTorch model file or directory
+        model_name: Optional model name (defaults to filename)
+        **kwargs: Additional LLMConfig parameters
+
+    Returns:
+        LLMConfig configured for PyTorch provider
+
+    """
     if not model_name:
         model_name = os.path.basename(model_path)
 
@@ -2823,7 +3772,17 @@ def create_pytorch_config(model_path: str, model_name: str | None = None, **kwar
 
 
 def create_tensorflow_config(model_path: str, model_name: str | None = None, **kwargs: Any) -> LLMConfig:
-    """Create TensorFlow model configuration."""
+    """Create TensorFlow model configuration.
+
+    Args:
+        model_path: Path to TensorFlow model file or SavedModel directory
+        model_name: Optional model name (defaults to filename)
+        **kwargs: Additional LLMConfig parameters
+
+    Returns:
+        LLMConfig configured for TensorFlow provider
+
+    """
     if not model_name:
         model_name = os.path.basename(model_path)
 
@@ -2836,7 +3795,17 @@ def create_tensorflow_config(model_path: str, model_name: str | None = None, **k
 
 
 def create_onnx_config(model_path: str, model_name: str | None = None, **kwargs: Any) -> LLMConfig:
-    """Create ONNX model configuration."""
+    """Create ONNX model configuration.
+
+    Args:
+        model_path: Path to ONNX model file
+        model_name: Optional model name (defaults to filename)
+        **kwargs: Additional LLMConfig parameters
+
+    Returns:
+        LLMConfig configured for ONNX provider
+
+    """
     if not model_name:
         model_name = os.path.basename(model_path)
 
@@ -2849,7 +3818,17 @@ def create_onnx_config(model_path: str, model_name: str | None = None, **kwargs:
 
 
 def create_safetensors_config(model_path: str, model_name: str | None = None, **kwargs: Any) -> LLMConfig:
-    """Create Safetensors model configuration."""
+    """Create Safetensors model configuration.
+
+    Args:
+        model_path: Path to Safetensors model file or directory
+        model_name: Optional model name (defaults to filename)
+        **kwargs: Additional LLMConfig parameters
+
+    Returns:
+        LLMConfig configured for Safetensors provider
+
+    """
     if not model_name:
         model_name = os.path.basename(model_path)
 
@@ -2862,7 +3841,17 @@ def create_safetensors_config(model_path: str, model_name: str | None = None, **
 
 
 def create_gptq_config(model_path: str, model_name: str | None = None, **kwargs: Any) -> LLMConfig:
-    """Create GPTQ model configuration."""
+    """Create GPTQ model configuration.
+
+    Args:
+        model_path: Path to GPTQ quantized model directory
+        model_name: Optional model name (defaults to filename)
+        **kwargs: Additional LLMConfig parameters
+
+    Returns:
+        LLMConfig configured for GPTQ provider
+
+    """
     if not model_name:
         model_name = os.path.basename(model_path)
 
@@ -2875,7 +3864,17 @@ def create_gptq_config(model_path: str, model_name: str | None = None, **kwargs:
 
 
 def create_huggingface_local_config(model_path: str, model_name: str | None = None, **kwargs: Any) -> LLMConfig:
-    """Create Hugging Face local model configuration."""
+    """Create Hugging Face local model configuration.
+
+    Args:
+        model_path: Path to Hugging Face model directory
+        model_name: Optional model name (defaults to dirname)
+        **kwargs: Additional LLMConfig parameters
+
+    Returns:
+        LLMConfig configured for Hugging Face local provider
+
+    """
     if not model_name:
         model_name = os.path.basename(model_path)
 
@@ -3034,7 +4033,12 @@ def _configure_default_llms(manager: LLMManager) -> None:
 
 
 def get_llm_manager() -> LLMManager:
-    """Get the global LLM manager instance."""
+    """Get the global LLM manager instance.
+
+    Returns:
+        Global LLMManager singleton, configured with default LLMs
+
+    """
     global _LLM_MANAGER  # pylint: disable=global-statement
     if _LLM_MANAGER is None:
         _LLM_MANAGER = LLMManager()
@@ -3050,14 +4054,14 @@ def get_llm_backend() -> LLMManager:
     as get_llm_manager().
 
     Returns:
-        LLMManager: The global LLM manager instance
+        The global LLMManager singleton instance
 
     """
     return get_llm_manager()
 
 
 def shutdown_llm_manager() -> None:
-    """Shutdown the global LLM manager."""
+    """Shutdown the global LLM manager and release all resources."""
     global _LLM_MANAGER  # pylint: disable=global-statement
     if _LLM_MANAGER:
         _LLM_MANAGER.shutdown()

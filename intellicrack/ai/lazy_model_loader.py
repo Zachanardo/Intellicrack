@@ -37,27 +37,64 @@ logger = logging.getLogger(__name__)
 
 
 class ModelLoadingStrategy(ABC):
-    """Abstract base class for different model loading strategies."""
+    """Abstract base class for different model loading strategies.
+
+    Defines the interface for determining whether models should be preloaded
+    and their loading priority based on application requirements.
+    """
 
     @abstractmethod
     def should_preload(self, config: "LLMConfig") -> bool:
-        """Determine if a model should be preloaded."""
+        """Determine if a model should be preloaded.
+
+        Args:
+            config: LLM configuration for the model.
+
+        Returns:
+            True if the model should be preloaded, False otherwise.
+        """
 
     @abstractmethod
     def get_load_priority(self, config: "LLMConfig") -> int:
-        """Get the loading priority (higher number = higher priority)."""
+        """Get the loading priority (higher number = higher priority).
+
+        Args:
+            config: LLM configuration for the model.
+
+        Returns:
+            Integer priority value where higher values indicate higher priority.
+        """
 
 
 class DefaultLoadingStrategy(ModelLoadingStrategy):
-    """Default loading strategy - load on first use."""
+    """Default loading strategy - load on first use.
+
+    Preloads only API-based models (OpenAI, Anthropic, Ollama) since they
+    initialize quickly and don't consume local GPU/CPU resources.
+    """
 
     def should_preload(self, config: "LLMConfig") -> bool:
-        """Don't preload by default, but allow API models for quick initialization."""
+        """Don't preload by default, but allow API models for quick initialization.
+
+        Args:
+            config: LLM configuration for the model.
+
+        Returns:
+            True only for fast-initializing API models (OpenAI, Anthropic, Ollama).
+        """
         # API models are quick to initialize and don't consume much local resources
         return bool(hasattr(config, "provider") and config.provider.value in ["openai", "anthropic", "ollama"])
 
     def get_load_priority(self, config: "LLMConfig") -> int:
-        """Get load priority based on provider type."""
+        """Get load priority based on provider type.
+
+        Args:
+            config: LLM configuration for the model.
+
+        Returns:
+            int: Priority value - 10 for OpenAI/Anthropic, 5 for Ollama/local_api, 0 otherwise.
+
+        """
         # Give API models higher priority since they're faster to initialize
         if hasattr(config, "provider"):
             if config.provider.value in ["openai", "anthropic"]:
@@ -68,7 +105,12 @@ class DefaultLoadingStrategy(ModelLoadingStrategy):
 
 
 class SmartLoadingStrategy(ModelLoadingStrategy):
-    """Smart loading strategy based on model size and usage patterns."""
+    """Smart loading strategy based on model size and usage patterns.
+
+    Intelligently preloads models based on their size and type (API vs local).
+    Smaller models are preloaded to reduce startup latency, while large models
+    are only loaded on demand to conserve memory.
+    """
 
     def __init__(
         self,
@@ -82,7 +124,6 @@ class SmartLoadingStrategy(ModelLoadingStrategy):
             preload_small_models: Whether to preload models below the size threshold.
             small_model_threshold_mb: Size threshold in MB for considering a model "small".
             preload_api_models: Whether to preload API-based models.
-
         """
         self.logger = logging.getLogger(f"{__name__}.SmartLoadingStrategy")
         self.preload_small_models = preload_small_models
@@ -90,7 +131,15 @@ class SmartLoadingStrategy(ModelLoadingStrategy):
         self.preload_api_models = preload_api_models
 
     def should_preload(self, config: "LLMConfig") -> bool:
-        """Preload small models and API-based models."""
+        """Preload small models and API-based models.
+
+        Args:
+            config: LLM configuration for the model.
+
+        Returns:
+            True if the model should be preloaded based on size and provider type.
+
+        """
         # API models are always quick to initialize
         if config.provider.value in ["openai", "anthropic", "ollama", "local_api"]:
             return self.preload_api_models
@@ -107,7 +156,19 @@ class SmartLoadingStrategy(ModelLoadingStrategy):
         return False
 
     def get_load_priority(self, config: "LLMConfig") -> int:
-        """Higher priority for API models and smaller local models."""
+        """Get loading priority based on provider type and model size.
+
+        Highest priority given to cloud providers, then local APIs, then
+        smaller local models (as size-dependent priority).
+
+        Args:
+            config: LLM configuration for the model.
+
+        Returns:
+            int: Priority value - 100 for OpenAI/Anthropic, 90 for Ollama/local_api,
+                50-80 for local models based on size, 50 default.
+
+        """
         if config.provider.value in ["openai", "anthropic"]:
             return 100
         if config.provider.value in ["ollama", "local_api"]:
@@ -168,26 +229,54 @@ class LazyModelWrapper:
 
     @property
     def is_loaded(self) -> bool:
-        """Check if the backend is loaded."""
+        """Check if the backend is loaded.
+
+        Returns:
+            True if the backend has been initialized and is available.
+        """
         return self._initialized and self._backend is not None
 
     @property
     def is_loading(self) -> bool:
-        """Check if the backend is currently loading."""
+        """Check if the backend is currently loading.
+
+        Returns:
+            True if the backend is in the process of being initialized.
+        """
         return self._loading
 
     @property
     def has_error(self) -> bool:
-        """Check if there was an error loading the backend."""
+        """Check if there was an error loading the backend.
+
+        Returns:
+            True if an error occurred during backend initialization.
+        """
         return self._load_error is not None
 
     @property
     def load_error(self) -> Exception | None:
-        """Get the loading error if any."""
+        """Get the loading error if any.
+
+        Returns:
+            The exception that occurred during loading, or None if no error.
+        """
         return self._load_error
 
     def _initialize_backend(self) -> bool:
-        """Initialize the backend (thread-safe)."""
+        """Initialize the backend (thread-safe).
+
+        Performs synchronized backend initialization ensuring only one thread
+        loads the backend at a time. Other threads wait for the load to complete
+        before returning.
+
+        Returns:
+            True if backend initialized successfully, False if an error occurred.
+
+        Raises:
+            RuntimeError: If backend initialization fails (caught internally).
+
+        """
         # Wait until we can start loading or until loading is complete
         while True:
             with self._initialization_lock:
@@ -240,7 +329,14 @@ class LazyModelWrapper:
                 self._loading = False
 
     def get_backend(self) -> "LLMBackend | None":
-        """Get the backend, initializing if necessary."""
+        """Get the backend, initializing if necessary.
+
+        Updates access tracking and triggers initialization if the backend
+        has not yet been loaded.
+
+        Returns:
+            The initialized LLMBackend instance, or None if initialization failed.
+        """
         self.last_access_time = time.time()
         self.access_count += 1
 
@@ -252,7 +348,11 @@ class LazyModelWrapper:
         return self._backend
 
     def unload(self) -> None:
-        """Unload the backend to free memory."""
+        """Unload the backend to free memory.
+
+        Calls the backend's cleanup method if available and releases all
+        resources associated with the loaded model.
+        """
         with self._initialization_lock:
             if self._backend:
                 # Call cleanup method if available
@@ -267,7 +367,15 @@ class LazyModelWrapper:
                 logger.info("Unloaded backend: %s", self.config.model_name)
 
     def get_info(self) -> dict[str, Any]:
-        """Get information about this lazy wrapper."""
+        """Get information about this lazy wrapper.
+
+        Returns comprehensive metadata about the model wrapper including load
+        status, provider type, access statistics, and memory usage estimation.
+
+        Returns:
+            Dictionary containing model name, provider, load status, error state,
+            access count, timing information, and memory usage estimate.
+        """
         return {
             "model_name": self.config.model_name,
             "provider": self.config.provider.value,
@@ -281,7 +389,15 @@ class LazyModelWrapper:
         }
 
     def _estimate_memory_usage(self) -> str:
-        """Estimate memory usage of the loaded model."""
+        """Estimate memory usage of the loaded model.
+
+        Attempts to retrieve actual memory usage from the backend if available,
+        falling back to file-size-based estimation for local models.
+
+        Returns:
+            String describing the estimated memory usage of the model.
+
+        """
         if not self.is_loaded:
             return "Not loaded"
 
@@ -340,11 +456,20 @@ class LazyModelManager:
             self._cleanup_thread = None
 
     def add_load_callback(self, callback: Callable[[str, bool], None]) -> None:
-        """Add a callback for loading progress updates."""
+        """Add a callback for loading progress updates.
+
+        Args:
+            callback: Function to call with (message, finished) when models load.
+        """
         self.load_callbacks.append(callback)
 
     def _notify_load_callback(self, message: str, finished: bool) -> None:
-        """Notify all load callbacks."""
+        """Notify all load callbacks.
+
+        Args:
+            message: Status message to send to callbacks.
+            finished: Whether the loading operation is complete.
+        """
         for callback in self.load_callbacks:
             try:
                 callback(message, finished)
@@ -352,7 +477,19 @@ class LazyModelManager:
                 logger.warning("Error in load callback: %s", e)
 
     def register_model(self, model_id: str, backend_class: type["LLMBackend"], config: "LLMConfig") -> LazyModelWrapper:
-        """Register a model for lazy loading."""
+        """Register a model for lazy loading.
+
+        Creates a new LazyModelWrapper for the model and registers it with
+        the manager. Preloading decision is determined by the loading strategy.
+
+        Args:
+            model_id: Unique identifier for the model.
+            backend_class: The LLM backend class to instantiate.
+            config: Configuration for the LLM backend.
+
+        Returns:
+            LazyModelWrapper instance managing this model.
+        """
         with self._access_lock:
             preload = self.loading_strategy.should_preload(config)
 
@@ -369,7 +506,17 @@ class LazyModelManager:
             return wrapper
 
     def get_model(self, model_id: str) -> "LLMBackend | None":
-        """Get a model backend, loading if necessary."""
+        """Get a model backend, loading if necessary.
+
+        Retrieves the requested model, initializing it if not yet loaded.
+        Triggers memory cleanup if too many models are loaded.
+
+        Args:
+            model_id: Unique identifier of the model to retrieve.
+
+        Returns:
+            LLMBackend instance if found and initialized, None otherwise.
+        """
         with self._access_lock:
             if model_id not in self.models:
                 logger.warning("Model not found: %s", model_id)
@@ -384,7 +531,14 @@ class LazyModelManager:
             return backend
 
     def unload_model(self, model_id: str) -> bool:
-        """Manually unload a specific model."""
+        """Manually unload a specific model.
+
+        Args:
+            model_id: Unique identifier of the model to unload.
+
+        Returns:
+            True if model was found and unloaded, False if model not found.
+        """
         with self._access_lock:
             if model_id not in self.models:
                 return False
@@ -401,26 +555,47 @@ class LazyModelManager:
             logger.info("Unloaded all models")
 
     def get_model_info(self, model_id: str | None = None) -> dict[str, Any] | list[dict[str, Any]]:
-        """Get information about models."""
+        """Get information about models.
+
+        Args:
+            model_id: Optional specific model ID. If provided, returns info for
+                     that model only. If None, returns list of all models.
+
+        Returns:
+            Dictionary with single model info if model_id specified, otherwise
+            list of dictionaries with info for all registered models.
+        """
         with self._access_lock:
             if model_id:
                 return self.models[model_id].get_info() if model_id in self.models else {}
             return [wrapper.get_info() for wrapper in self.models.values()]
 
     def get_loaded_models(self) -> list[str]:
-        """Get list of currently loaded model IDs."""
+        """Get list of currently loaded model IDs.
+
+        Returns:
+            List of model IDs for models that are currently initialized.
+        """
         with self._access_lock:
             return [model_id for model_id, wrapper in self.models.items() if wrapper.is_loaded]
 
     def _maybe_cleanup_memory(self) -> None:
-        """Check if memory cleanup is needed and perform it."""
+        """Check if memory cleanup is needed and perform it.
+
+        Automatically unloads least-recently-used models if the number of
+        loaded models exceeds the configured maximum.
+        """
         loaded_count = len(self.get_loaded_models())
 
         if loaded_count > self.max_loaded_models:
             self._cleanup_least_used_models(loaded_count - self.max_loaded_models)
 
     def _cleanup_least_used_models(self, count_to_unload: int) -> None:
-        """Unload the least recently used models."""
+        """Unload the least recently used models.
+
+        Args:
+            count_to_unload: Number of models to unload.
+        """
         loaded_models: list[tuple[float, str, LazyModelWrapper]] = [
             (wrapper.last_access_time, model_id, wrapper)
             for model_id, wrapper in self.models.items()
@@ -439,7 +614,11 @@ class LazyModelManager:
             logger.info("Auto-unloaded least used model: %s", model_id)
 
     def _background_cleanup(self) -> None:
-        """Background thread for periodic cleanup."""
+        """Background thread for periodic cleanup.
+
+        Runs in a daemon thread, checking every 5 minutes for idle models
+        that should be unloaded to free memory. Continues until the process exits.
+        """
         while True:
             try:
                 time.sleep(300)  # Check every 5 minutes
@@ -448,7 +627,11 @@ class LazyModelManager:
                 logger.exception("Error in background cleanup: %s", e)
 
     def _cleanup_idle_models(self) -> None:
-        """Unload models that have been idle for too long."""
+        """Unload models that have been idle for too long.
+
+        Compares the current time to each model's last access time and
+        unloads any models that have been idle longer than idle_unload_time.
+        """
         current_time: float = time.time()
 
         with self._access_lock:
@@ -467,7 +650,14 @@ _lazy_manager: LazyModelManager | None = None
 
 
 def get_lazy_manager() -> LazyModelManager:
-    """Get the global lazy model manager instance."""
+    """Get the global lazy model manager instance.
+
+    Creates the lazy model manager with a SmartLoadingStrategy on first
+    call, using singleton pattern for subsequent calls.
+
+    Returns:
+        Global LazyModelManager instance.
+    """
     global _lazy_manager
     if _lazy_manager is None:
         # Use smart loading strategy by default
@@ -481,7 +671,17 @@ def configure_lazy_loading(
     idle_unload_time: int = 1800,
     loading_strategy: ModelLoadingStrategy | None = None,
 ) -> None:
-    """Configure global lazy loading settings."""
+    """Configure global lazy loading settings.
+
+    Allows runtime configuration of the lazy model manager's behavior
+    including memory limits and loading strategies.
+
+    Args:
+        max_loaded_models: Maximum number of models to keep loaded simultaneously.
+        idle_unload_time: Seconds of inactivity before a model is auto-unloaded.
+        loading_strategy: Optional custom loading strategy. If None, keeps
+                         current strategy.
+    """
     manager = get_lazy_manager()
     manager.max_loaded_models = max_loaded_models
     manager.idle_unload_time = idle_unload_time
@@ -491,10 +691,32 @@ def configure_lazy_loading(
 
 
 def register_lazy_model(model_id: str, backend_class: type["LLMBackend"], config: "LLMConfig") -> LazyModelWrapper:
-    """Register a model for lazy loading."""
+    """Register a model for lazy loading.
+
+    Registers a new model with the global lazy model manager using the
+    default or configured loading strategy.
+
+    Args:
+        model_id: Unique identifier for the model.
+        backend_class: The LLM backend class to instantiate.
+        config: Configuration for the LLM backend.
+
+    Returns:
+        LazyModelWrapper instance managing this model.
+    """
     return get_lazy_manager().register_model(model_id, backend_class, config)
 
 
 def get_lazy_model(model_id: str) -> "LLMBackend | None":
-    """Get a lazy-loaded model."""
+    """Get a lazy-loaded model.
+
+    Retrieves a registered model from the global lazy model manager,
+    initializing it if necessary.
+
+    Args:
+        model_id: Unique identifier of the model to retrieve.
+
+    Returns:
+        LLMBackend instance if found and initialized, None otherwise.
+    """
     return get_lazy_manager().get_model(model_id)

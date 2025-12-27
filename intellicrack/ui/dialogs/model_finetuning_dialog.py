@@ -73,6 +73,7 @@ if TYPE_CHECKING:
     import numpy.typing as npt
     import torch as torch_module
     from torch import nn as nn_module
+    from transformers import PreTrainedModel
 
     TorchTensor = torch_module.Tensor
     TorchModule = torch_module.nn.Module
@@ -1389,7 +1390,8 @@ class TrainingThread(QThread):
                         target_modules=["q_proj", "v_proj"],
                         lora_dropout=0.1,
                     )
-                    self.model = cast("TorchModule | object", get_peft_model(cast("Any", self.model), lora_config))
+                    peft_model = cast("PreTrainedModel", self.model)
+                    self.model = cast("TorchModule | object", get_peft_model(peft_model, lora_config))
 
                 # Prepare training arguments
                 self.training_args = TrainingArguments(

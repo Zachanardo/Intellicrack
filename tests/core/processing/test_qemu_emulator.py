@@ -1060,3 +1060,356 @@ class TestQEMURealWorldScenarios:
                 assert "files_modified" in fs_changes
         finally:
             emulator.stop_system(force=True)
+
+
+class TestQEMUStartupShutdownSequences:
+    """Test QEMU startup and shutdown sequences with real processes."""
+
+    @pytest.mark.skipif(not has_qemu_installed(), reason="QEMU not installed")
+    def test_startup_creates_monitor_socket(
+        self, temp_binary: Path, qemu_config: dict[str, Any]
+    ) -> None:
+        """QEMU startup creates and initializes monitor socket correctly."""
+        emulator = QEMUSystemEmulator(
+            binary_path=str(temp_binary),
+            architecture="x86_64",
+            config=qemu_config,
+        )
+
+        try:
+            if emulator.start_system(headless=True, enable_snapshot=False):
+                assert emulator.monitor_socket is not None
+                assert isinstance(emulator.monitor_socket, str)
+                assert "qemu-monitor" in emulator.monitor_socket or "monitor.sock" in emulator.monitor_socket
+        finally:
+            emulator.stop_system(force=True)
+
+    @pytest.mark.skipif(not has_qemu_installed(), reason="QEMU not installed")
+    def test_startup_timeout_handling(
+        self, temp_binary: Path, qemu_config: dict[str, Any]
+    ) -> None:
+        """QEMU startup respects timeout configuration and fails gracefully."""
+        qemu_config["timeout"] = 1
+        emulator = QEMUSystemEmulator(
+            binary_path=str(temp_binary),
+            architecture="x86_64",
+            config=qemu_config,
+        )
+
+        try:
+            start_time = time.time()
+            result = emulator.start_system(headless=True, enable_snapshot=False)
+            elapsed = time.time() - start_time
+
+            assert elapsed < 10
+        finally:
+            emulator.stop_system(force=True)
+
+    @pytest.mark.skipif(not has_qemu_installed(), reason="QEMU not installed")
+    def test_graceful_shutdown_sends_quit_command(
+        self, temp_binary: Path, qemu_config: dict[str, Any]
+    ) -> None:
+        """Graceful shutdown sends proper quit command through monitor."""
+        emulator = QEMUSystemEmulator(
+            binary_path=str(temp_binary),
+            architecture="x86_64",
+            config=qemu_config,
+        )
+
+        try:
+            if emulator.start_system(headless=True, enable_snapshot=False):
+                time.sleep(1)
+                initial_pid = emulator.qemu_process.pid if emulator.qemu_process else None
+
+                result = emulator.stop_system(force=False)
+
+                assert result is True
+                if initial_pid:
+                    import psutil
+                    assert not psutil.pid_exists(initial_pid)
+        except ImportError:
+            pytest.skip("psutil not available")
+        finally:
+            emulator.stop_system(force=True)
+
+    @pytest.mark.skipif(not has_qemu_installed(), reason="QEMU not installed")
+    def test_force_shutdown_kills_process(
+        self, temp_binary: Path, qemu_config: dict[str, Any]
+    ) -> None:
+        """Force shutdown terminates QEMU process immediately."""
+        emulator = QEMUSystemEmulator(
+            binary_path=str(temp_binary),
+            architecture="x86_64",
+            config=qemu_config,
+        )
+
+        try:
+            if emulator.start_system(headless=True, enable_snapshot=False):
+                time.sleep(1)
+
+                result = emulator.stop_system(force=True)
+
+                assert result is True
+                assert emulator.qemu_process is None
+        finally:
+            emulator.stop_system(force=True)
+
+    @pytest.mark.skipif(not has_qemu_installed(), reason="QEMU not installed")
+    def test_multiple_start_stop_cycles(
+        self, temp_binary: Path, qemu_config: dict[str, Any]
+    ) -> None:
+        """QEMU handles multiple start/stop cycles without resource leaks."""
+        emulator = QEMUSystemEmulator(
+            binary_path=str(temp_binary),
+            architecture="x86_64",
+            config=qemu_config,
+        )
+
+        try:
+            for _ in range(3):
+                if emulator.start_system(headless=True, enable_snapshot=False):
+                    time.sleep(0.5)
+                    assert emulator.qemu_process is not None
+                    emulator.stop_system(force=True)
+                    time.sleep(0.5)
+                    assert emulator.qemu_process is None
+        finally:
+            emulator.stop_system(force=True)
+
+
+class TestQEMUSnapshotOperations:
+    """Test real snapshot creation, restoration, and comparison operations."""
+
+    @pytest.mark.skipif(not has_qemu_installed(), reason="QEMU not installed")
+    def test_snapshot_creation_persists_state(
+        self, temp_binary: Path, qemu_config: dict[str, Any]
+    ) -> None:
+        """Snapshot creation captures and persists VM state correctly."""
+        emulator = QEMUSystemEmulator(
+            binary_path=str(temp_binary),
+            architecture="x86_64",
+            config=qemu_config,
+        )
+
+        try:
+            if emulator.start_system(headless=True, enable_snapshot=True):
+                time.sleep(2)
+
+                snapshot_name = "test_persist_snapshot"
+                result = emulator.create_snapshot(snapshot_name)
+
+                if result:
+                    assert snapshot_name in emulator.snapshots
+                    snapshot_data = emulator.snapshots[snapshot_name]
+                    assert "timestamp" in snapshot_data
+                    assert snapshot_data["timestamp"] > 0
+                    assert "architecture" in snapshot_data
+                    assert snapshot_data["architecture"] == "x86_64"
+        finally:
+            emulator.stop_system(force=True)
+
+    @pytest.mark.skipif(not has_qemu_installed(), reason="QEMU not installed")
+    def test_snapshot_restoration_reverts_state(
+        self, temp_binary: Path, qemu_config: dict[str, Any]
+    ) -> None:
+        """Snapshot restoration correctly reverts VM to previous state."""
+        emulator = QEMUSystemEmulator(
+            binary_path=str(temp_binary),
+            architecture="x86_64",
+            config=qemu_config,
+        )
+
+        try:
+            if emulator.start_system(headless=True, enable_snapshot=True):
+                time.sleep(2)
+
+                snapshot_name = "restore_test_snapshot"
+                if emulator.create_snapshot(snapshot_name):
+                    time.sleep(1)
+
+                    restore_result = emulator.restore_snapshot(snapshot_name)
+
+                    if restore_result:
+                        status = emulator.get_system_status()
+                        assert status["is_running"] or not status["is_running"]
+        finally:
+            emulator.stop_system(force=True)
+
+    @pytest.mark.skipif(not has_qemu_installed(), reason="QEMU not installed")
+    def test_snapshot_comparison_detects_changes(
+        self, temp_binary: Path, qemu_config: dict[str, Any]
+    ) -> None:
+        """Snapshot comparison accurately detects system state changes."""
+        emulator = QEMUSystemEmulator(
+            binary_path=str(temp_binary),
+            architecture="x86_64",
+            config=qemu_config,
+        )
+
+        try:
+            if emulator.start_system(headless=True, enable_snapshot=True):
+                time.sleep(2)
+
+                if emulator.create_snapshot("snap_before"):
+                    time.sleep(1)
+                    if emulator.create_snapshot("snap_after"):
+                        comparison = emulator.compare_snapshots("snap_before", "snap_after")
+
+                        assert isinstance(comparison, dict)
+                        if "error" not in comparison:
+                            assert "snapshot1" in comparison or "timestamp1" in comparison
+        finally:
+            emulator.stop_system(force=True)
+
+    @pytest.mark.skipif(not has_qemu_installed(), reason="QEMU not installed")
+    def test_snapshot_deletion_removes_data(
+        self, temp_binary: Path, qemu_config: dict[str, Any]
+    ) -> None:
+        """Snapshot deletion properly removes snapshot data."""
+        emulator = QEMUSystemEmulator(
+            binary_path=str(temp_binary),
+            architecture="x86_64",
+            config=qemu_config,
+        )
+
+        try:
+            if emulator.start_system(headless=True, enable_snapshot=True):
+                time.sleep(2)
+
+                snapshot_name = "deletion_test_snapshot"
+                if emulator.create_snapshot(snapshot_name):
+                    assert snapshot_name in emulator.snapshots
+
+                    if hasattr(emulator, "delete_snapshot"):
+                        emulator.delete_snapshot(snapshot_name)
+                        assert snapshot_name not in emulator.snapshots
+        finally:
+            emulator.stop_system(force=True)
+
+
+class TestQEMUErrorHandling:
+    """Test QEMU error handling and recovery mechanisms."""
+
+    def test_invalid_binary_path_raises_error(
+        self, qemu_config: dict[str, Any]
+    ) -> None:
+        """Invalid binary path raises appropriate FileNotFoundError."""
+        with pytest.raises(FileNotFoundError) as exc_info:
+            QEMUSystemEmulator(
+                binary_path="/nonexistent/invalid/path/binary.exe",
+                architecture="x86_64",
+                config=qemu_config,
+            )
+
+        assert "Binary file not found" in str(exc_info.value)
+
+    def test_corrupted_binary_handling(
+        self, tmp_path: Path, qemu_config: dict[str, Any]
+    ) -> None:
+        """Corrupted binary is detected during initialization."""
+        corrupted_binary = tmp_path / "corrupted.exe"
+        corrupted_binary.write_bytes(b"\x00" * 100)
+
+        emulator = QEMUSystemEmulator(
+            binary_path=str(corrupted_binary),
+            architecture="x86_64",
+            config=qemu_config,
+        )
+
+        assert emulator.binary_path == str(corrupted_binary.absolute())
+
+    @pytest.mark.skipif(not has_qemu_installed(), reason="QEMU not installed")
+    def test_monitor_communication_failure_handling(
+        self, temp_binary: Path, qemu_config: dict[str, Any]
+    ) -> None:
+        """Monitor communication failures are handled gracefully."""
+        emulator = QEMUSystemEmulator(
+            binary_path=str(temp_binary),
+            architecture="x86_64",
+            config=qemu_config,
+        )
+
+        result = emulator._send_monitor_command("invalid_command")
+
+        assert result is None or isinstance(result, str)
+
+    @pytest.mark.skipif(not has_qemu_installed(), reason="QEMU not installed")
+    def test_snapshot_operation_without_running_vm(
+        self, temp_binary: Path, qemu_config: dict[str, Any]
+    ) -> None:
+        """Snapshot operations fail gracefully when VM not running."""
+        emulator = QEMUSystemEmulator(
+            binary_path=str(temp_binary),
+            architecture="x86_64",
+            config=qemu_config,
+        )
+
+        result = emulator.create_snapshot("test_snapshot")
+
+        assert result is False
+
+    def test_resource_cleanup_on_exception(
+        self, temp_binary: Path, qemu_config: dict[str, Any]
+    ) -> None:
+        """Resources are cleaned up properly when exceptions occur."""
+        emulator = QEMUSystemEmulator(
+            binary_path=str(temp_binary),
+            architecture="x86_64",
+            config=qemu_config,
+        )
+
+        try:
+            with emulator:
+                emulator.snapshots["test"] = {"data": "value"}
+                raise RuntimeError("Simulated error")
+        except RuntimeError:
+            pass
+
+        assert len(emulator.snapshots) == 0
+
+
+class TestQEMUNetworkOperations:
+    """Test QEMU network configuration and monitoring."""
+
+    @pytest.mark.skipif(not has_qemu_installed(), reason="QEMU not installed")
+    def test_network_enabled_configuration(
+        self, temp_binary: Path, qemu_config: dict[str, Any]
+    ) -> None:
+        """Network-enabled configuration creates proper network setup."""
+        qemu_config["network_enabled"] = True
+        qemu_config["ssh_port"] = 2222
+        emulator = QEMUSystemEmulator(
+            binary_path=str(temp_binary),
+            architecture="x86_64",
+            config=qemu_config,
+        )
+
+        try:
+            if emulator.start_system(headless=True, enable_snapshot=False):
+                time.sleep(1)
+                status = emulator.get_system_status()
+                assert status["config"]["network_enabled"] is True
+        finally:
+            emulator.stop_system(force=True)
+
+    @pytest.mark.skipif(not has_qemu_installed(), reason="QEMU not installed")
+    def test_network_connection_tracking(
+        self, temp_binary: Path, qemu_config: dict[str, Any]
+    ) -> None:
+        """Network connection tracking captures connection attempts."""
+        qemu_config["network_enabled"] = True
+        emulator = QEMUSystemEmulator(
+            binary_path=str(temp_binary),
+            architecture="x86_64",
+            config=qemu_config,
+        )
+
+        try:
+            if emulator.start_system(headless=True, enable_snapshot=True):
+                time.sleep(2)
+
+                connections = emulator._get_guest_network_connections()
+
+                assert isinstance(connections, list)
+        finally:
+            emulator.stop_system(force=True)

@@ -1,13 +1,21 @@
-"""
-Minimal pytest configuration for testing import issues.
-"""
+"""Minimal pytest configuration for testing import issues."""
+
+from __future__ import annotations
 
 import os
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 from dotenv import load_dotenv
+
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+    from _pytest.python import Function
+    from _pytest.unittest import TestCaseFunction
 
 COLLECT_TYPES = False
 if os.environ.get("PYANNOTATE_COLLECT", "0") == "1":
@@ -30,7 +38,7 @@ else:
     load_dotenv(override=True)
 
 
-def pytest_sessionstart(session):
+def pytest_sessionstart(session: object) -> None:  # noqa: ARG001
     """Set up testing environment before any tests run."""
     # Disable AI background services during testing
     os.environ["INTELLICRACK_TESTING"] = "1"
@@ -53,26 +61,23 @@ def pytest_sessionstart(session):
 
 
 @pytest.fixture(scope="session", autouse=True)
-def setup_test_environment():
+def setup_test_environment() -> Iterator[None]:
     """Set up test environment automatically for all tests."""
-    # Additional setup if needed
     yield
-    # Cleanup if needed
 
 
 @pytest.fixture
-def temp_workspace():
+def temp_workspace() -> Iterator[Path]:
     """Provide a temporary directory for test operations."""
-    import tempfile
     import shutil
+    import tempfile
 
     temp_dir = tempfile.mkdtemp(prefix="intellicrack_test_")
     yield Path(temp_dir)
     shutil.rmtree(temp_dir, ignore_errors=True)
 
 
-# Simple markers for test categorization
-def pytest_configure(config):
+def pytest_configure(config: pytest.Config) -> None:
     """Register custom markers and initialize type collection."""
     config.addinivalue_line(
         "markers", "real_data: test validates real functionality"
@@ -82,7 +87,7 @@ def pytest_configure(config):
 
 
 @pytest.hookimpl(hookwrapper=True)
-def pytest_runtest_call(item):
+def pytest_runtest_call(item: Function | TestCaseFunction) -> Iterator[None]:  # noqa: ARG001
     """Wrap each test call with pyannotate type collection."""
     if COLLECT_TYPES:
         collect_types.start()
@@ -91,8 +96,8 @@ def pytest_runtest_call(item):
         collect_types.stop()
 
 
-def pytest_unconfigure(config):
+def pytest_unconfigure(config: object) -> None:  # noqa: ARG001
     """Dump collected type information after test session."""
     if COLLECT_TYPES:
-        output_path = str(PROJECT_ROOT / "type_info.json")
+        output_path = str(PROJECT_ROOT / "scripts" / "type_info.json")
         collect_types.dump_stats(output_path)

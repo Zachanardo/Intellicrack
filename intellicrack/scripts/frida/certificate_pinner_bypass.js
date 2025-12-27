@@ -146,14 +146,14 @@ const CertificatePinnerBypass = {
         };
 
         // Check for .NET
-        Process.enumerateModules().forEach(function (module) {
+        Process.enumerateModules().forEach(module => {
             if (
                 module.name.toLowerCase().includes('clr.dll')
                 || module.name.toLowerCase().includes('coreclr.dll')
             ) {
                 this.platform.dotnet = true;
             }
-        }, this);
+        });
 
         send({
             type: 'info',
@@ -976,7 +976,7 @@ const CertificatePinnerBypass = {
 
         // NSURLSession
         try {
-            const { NSURLSession } = ObjC.classes;
+            const { NSURLSession, NSURLSessionDelegate, NSURLCredential } = ObjC.classes;
 
             Interceptor.attach(
                 NSURLSession['- dataTaskWithRequest:completionHandler:'].implementation,
@@ -994,26 +994,21 @@ const CertificatePinnerBypass = {
             );
 
             // Hook delegate methods
-            if (ObjC.classes.NSURLSessionDelegate) {
+            if (NSURLSessionDelegate) {
                 const origMethod
-                    = ObjC.classes.NSURLSessionDelegate[
+                    = NSURLSessionDelegate[
                         '- URLSession:didReceiveChallenge:completionHandler:'
                     ];
                 if (origMethod) {
                     Interceptor.attach(origMethod.implementation, {
                         onEnter: args => {
                             const completionHandler = new ObjC.Object(args[4]);
-                            const NSURLSessionAuthChallengeDisposition = {
-                                UseCredential: 0,
-                                PerformDefaultHandling: 1,
-                                CancelAuthenticationChallenge: 2,
-                                RejectProtectionSpace: 3,
-                            };
+                            const useCredential = 0;
 
                             // Call completion handler with UseCredential
                             completionHandler.call([
-                                NSURLSessionAuthChallengeDisposition.UseCredential,
-                                ObjC.classes.NSURLCredential.credentialForTrust_(ptr(0)),
+                                useCredential,
+                                NSURLCredential.credentialForTrust_(ptr(0)),
                             ]);
 
                             send({
@@ -2093,7 +2088,7 @@ const CertificatePinnerBypass = {
         // Hook NSURLSession SCT validation (iOS)
         if (ObjC.available) {
             try {
-                const { NSURLSession } = ObjC.classes;
+                const { NSURLSession, NSURLCredential: NSURLCredentialClass } = ObjC.classes;
                 if (NSURLSession) {
                     const sctValidation
                         = NSURLSession['- URLSession:task:didReceiveChallenge:completionHandler:'];
@@ -2108,12 +2103,10 @@ const CertificatePinnerBypass = {
 
                                 if (authMethod.includes('ServerTrust')) {
                                     const completionHandler = new ObjC.Object(args[5]);
-                                    const NSURLSessionAuthChallengeDisposition = {
-                                        UseCredential: 0,
-                                    };
+                                    const useCredential = 0;
                                     completionHandler.call([
-                                        NSURLSessionAuthChallengeDisposition.UseCredential,
-                                        ObjC.classes.NSURLCredential.credentialForTrust_(
+                                        useCredential,
+                                        NSURLCredentialClass.credentialForTrust_(
                                             protectionSpace.serverTrust()
                                         ),
                                     ]);
@@ -2648,36 +2641,37 @@ const CertificatePinnerBypass = {
             Java.perform(() => {
                 try {
                     const OCSPValidator = Java.use('sun.security.provider.certpath.OCSPChecker');
-                    OCSPValidator.check.implementation = (
-                        cert,
-                        unresolvedCritExts,
-                        issuerCert,
-                        responderCert,
-                        responderURI,
-                        trustAnchors,
-                        certStores,
-                        responseLifetime,
-                        useNonce,
-                        responseMap
-                    ) => {
-                        this.stats.onlineCertificateStatusProtocolBypassEvents++;
+                    const self = this;
+                    OCSPValidator.check.implementation = function (...args) {
+                        const ocspParams = {
+                            cert: args[0],
+                            unresolvedCritExts: args[1],
+                            issuerCert: args[2],
+                            responderCert: args[3],
+                            responderURI: args[4],
+                            trustAnchors: args[5],
+                            certStores: args[6],
+                            responseLifetime: args[7],
+                            useNonce: args[8],
+                            responseMap: args[9],
+                        };
+                        self.stats.onlineCertificateStatusProtocolBypassEvents++;
                         send({
                             type: 'bypass',
                             target: 'certificate_pinner_bypass',
                             action: 'ocsp_must_staple_bypassed',
                             method: 'java_ocsp_checker',
-                            hasCert: cert !== null,
-                            hasIssuerCert: issuerCert !== null,
-                            hasResponderCert: responderCert !== null,
-                            responderURI,
-                            responseLifetime,
-                            useNonce,
-                            hasTrustAnchors: trustAnchors !== null,
-                            hasCertStores: certStores !== null,
-                            hasUnresolvedCritExts: unresolvedCritExts !== null,
-                            hasResponseMap: responseMap !== null,
+                            hasCert: ocspParams.cert !== null,
+                            hasIssuerCert: ocspParams.issuerCert !== null,
+                            hasResponderCert: ocspParams.responderCert !== null,
+                            responderURI: ocspParams.responderURI,
+                            responseLifetime: ocspParams.responseLifetime,
+                            useNonce: ocspParams.useNonce,
+                            hasTrustAnchors: ocspParams.trustAnchors !== null,
+                            hasCertStores: ocspParams.certStores !== null,
+                            hasUnresolvedCritExts: ocspParams.unresolvedCritExts !== null,
+                            hasResponseMap: ocspParams.responseMap !== null,
                         });
-                        // Return without throwing exception (successful validation)
                     };
                     this.stats.hooksInstalled++;
                 } catch (error) {

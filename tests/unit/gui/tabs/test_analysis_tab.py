@@ -9,13 +9,31 @@ import pytest
 import tempfile
 import os
 from unittest.mock import patch
-from PyQt6.QtWidgets import QApplication, QWidget, QTextEdit, QProgressBar, QPushButton, QTabWidget, QCheckBox
-from intellicrack.ui.dialogs.common_imports import QGraphicsView, QTest, Qt
-from intellicrack.core.analysis.analysis_orchestrator import AnalysisOrchestrator
-from intellicrack.protection.protection_detector import ProtectionDetector
 
+try:
+    from PyQt6.QtWidgets import QApplication, QWidget, QTextEdit, QProgressBar, QPushButton, QTabWidget, QCheckBox
+    from intellicrack.ui.dialogs.common_imports import QGraphicsView, QTest, Qt
+    from intellicrack.core.analysis.analysis_orchestrator import AnalysisOrchestrator
+    from intellicrack.protection.protection_detector import ProtectionDetector
+    from intellicrack.ui.tabs.analysis_tab import AnalysisTab
+    GUI_AVAILABLE = True
+except ImportError:
+    QApplication = None
+    QWidget = None
+    QTextEdit = None
+    QProgressBar = None
+    QPushButton = None
+    QTabWidget = None
+    QCheckBox = None
+    QGraphicsView = None
+    QTest = None
+    Qt = None
+    AnalysisOrchestrator = None
+    ProtectionDetector = None
+    AnalysisTab = None
+    GUI_AVAILABLE = False
 
-from intellicrack.ui.tabs.analysis_tab import AnalysisTab
+pytestmark = pytest.mark.skipif(not GUI_AVAILABLE, reason="GUI modules not available")
 
 
 class TestAnalysisTab:

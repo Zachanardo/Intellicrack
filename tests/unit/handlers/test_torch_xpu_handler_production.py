@@ -16,6 +16,19 @@ from unittest.mock import patch
 
 import pytest
 
+try:
+    from intellicrack.handlers import torch_xpu_handler
+    TORCH_XPU_HANDLER_AVAILABLE = True
+except ImportError:
+    torch_xpu_handler = None
+    TORCH_XPU_HANDLER_AVAILABLE = False
+
+
+pytestmark = pytest.mark.skipif(
+    not TORCH_XPU_HANDLER_AVAILABLE,
+    reason="torch_xpu_handler not available"
+)
+
 
 class TestXPUHandlerImport:
     """Test XPU handler import behavior."""

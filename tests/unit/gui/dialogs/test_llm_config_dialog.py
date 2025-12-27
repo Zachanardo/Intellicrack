@@ -9,14 +9,31 @@ import pytest
 import tempfile
 import os
 from unittest.mock import patch
-from PyQt6.QtWidgets import QApplication, QDialog, QComboBox, QLineEdit, QPushButton
-from intellicrack.ui.dialogs.common_imports import QTest, QThread, Qt
-from intellicrack.ai.llm_config_manager import LLMConfigManager
-from intellicrack.ai.llm_backends import LLMManager
-from intellicrack.ai.model_manager_module import ModelManager
 
+try:
+    from PyQt6.QtWidgets import QApplication, QDialog, QComboBox, QLineEdit, QPushButton
+    from intellicrack.ui.dialogs.common_imports import QTest, QThread, Qt
+    from intellicrack.ai.llm_config_manager import LLMConfigManager
+    from intellicrack.ai.llm_backends import LLMManager
+    from intellicrack.ai.model_manager_module import ModelManager
+    from intellicrack.ui.dialogs.llm_config_dialog import LLMConfigDialog
+    GUI_AVAILABLE = True
+except ImportError:
+    QApplication = None
+    QDialog = None
+    QComboBox = None
+    QLineEdit = None
+    QPushButton = None
+    QTest = None
+    QThread = None
+    Qt = None
+    LLMConfigManager = None
+    LLMManager = None
+    ModelManager = None
+    LLMConfigDialog = None
+    GUI_AVAILABLE = False
 
-from intellicrack.ui.dialogs.llm_config_dialog import LLMConfigDialog
+pytestmark = pytest.mark.skipif(not GUI_AVAILABLE, reason="GUI modules not available")
 
 
 class TestLLMConfigDialog:

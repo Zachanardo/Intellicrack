@@ -7,9 +7,10 @@ network communications used by commercial software protection systems.
 
 import os
 import struct
-import pytest
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any, Dict, List
+
+import pytest
 
 from intellicrack.core.network.generic_protocol_handler import GenericProtocolHandler
 
@@ -34,7 +35,7 @@ class TestGenericProtocolHandlerRealNetworkCaptures:
         }
         return GenericProtocolHandler(config)
 
-    def test_flexlm_capture_analysis(self, protocol_handler, network_captures_path):
+    def test_flexlm_capture_analysis(self, protocol_handler: GenericProtocolHandler, network_captures_path: Path) -> None:
         """Validate analysis of real FlexLM protocol captures."""
         flexlm_capture = network_captures_path / 'flexlm_capture.pcap'
 
@@ -62,7 +63,7 @@ class TestGenericProtocolHandlerRealNetworkCaptures:
         analysis_rate = successful_analyses / len(protocol_messages) if protocol_messages else 0
         assert analysis_rate > 0.3, f"Must successfully analyze real protocol data, got {analysis_rate:.2%}"
 
-    def test_hasp_capture_analysis(self, protocol_handler, network_captures_path):
+    def test_hasp_capture_analysis(self, protocol_handler: GenericProtocolHandler, network_captures_path: Path) -> None:
         """Validate analysis of real HASP Sentinel protocol captures."""
         hasp_capture = network_captures_path / 'hasp_capture.pcap'
 
@@ -87,7 +88,7 @@ class TestGenericProtocolHandlerRealNetworkCaptures:
             r for r in hasp_responses if r is not None
         ], "Must handle real HASP protocol communications"
 
-    def test_adobe_license_capture_analysis(self, protocol_handler, network_captures_path):
+    def test_adobe_license_capture_analysis(self, protocol_handler: GenericProtocolHandler, network_captures_path: Path) -> None:
         """Validate analysis of Adobe licensing protocol captures."""
         adobe_capture = network_captures_path / 'adobe_capture.pcap'
 
@@ -112,7 +113,7 @@ class TestGenericProtocolHandlerRealNetworkCaptures:
             success_rate = len(adobe_analyses) / len(adobe_messages)
             assert success_rate > 0.2, f"Must analyze Adobe protocols effectively, got {success_rate:.2%}"
 
-    def test_mixed_protocols_capture_analysis(self, protocol_handler, network_captures_path):
+    def test_mixed_protocols_capture_analysis(self, protocol_handler: GenericProtocolHandler, network_captures_path: Path) -> None:
         """Validate analysis of mixed licensing protocol captures."""
         mixed_capture = network_captures_path / 'mixed_protocols_capture.pcap'
 
@@ -155,7 +156,7 @@ class TestGenericProtocolHandlerRealNetworkCaptures:
             success_rate = protocol_stats['successful_analyses'] / total_processed
             assert success_rate > 0.25, f"Must handle mixed protocols effectively, got {success_rate:.2%}"
 
-    def test_encrypted_protocol_detection(self, protocol_handler, network_captures_path):
+    def test_encrypted_protocol_detection(self, protocol_handler: GenericProtocolHandler, network_captures_path: Path) -> None:
         """Validate detection and handling of encrypted protocol communications."""
         # Test with multiple capture files that might contain encrypted data
         capture_files = ['adobe_capture.pcap', 'custom_drm_capture.pcap', 'kms_capture.pcap']
@@ -199,21 +200,21 @@ class TestGenericProtocolHandlerRealNetworkCaptures:
             # Look for potential packet headers or protocol markers
 
             # Check for common protocol patterns
-            if capture_data[offset:offset+4] in [b'HTTP', b'POST', b'GET ', b'HASP']:
+            if capture_data[offset:offset + 4] in [b'HTTP', b'POST', b'GET ', b'HASP']:
                 # Text-based protocol
                 end_marker = capture_data.find(b'\r\n\r\n', offset)
                 if end_marker != -1:
-                    messages.append(capture_data[offset:end_marker+4])
+                    messages.append(capture_data[offset:end_marker + 4])
                     offset = end_marker + 4
                 else:
                     offset += 1
-            elif self._looks_like_binary_protocol(capture_data[offset:offset+16]):
+            elif self._looks_like_binary_protocol(capture_data[offset:offset + 16]):
                 # Binary protocol - try to extract based on length field
                 try:
                     # Try common length field positions
                     for length_offset in [0, 2, 4, 8]:
                         if offset + length_offset + 4 < len(capture_data):
-                            msg_len = struct.unpack('<I', capture_data[offset+length_offset:offset+length_offset+4])[0]
+                            msg_len = struct.unpack('<I', capture_data[offset + length_offset:offset + length_offset + 4])[0]
                             if 10 <= msg_len <= 10000:  # Reasonable message size
                                 end_pos = min(offset + length_offset + 4 + msg_len, len(capture_data))
                                 messages.append(capture_data[offset:end_pos])
@@ -301,7 +302,7 @@ class TestGenericProtocolHandlerRealBinaryAnalysis:
         }
         return GenericProtocolHandler(config)
 
-    def test_license_protected_binary_communication_simulation(self, protocol_handler, protected_binaries_path):
+    def test_license_protected_binary_communication_simulation(self, protocol_handler: GenericProtocolHandler, protected_binaries_path: Path) -> None:
         """Test protocol reconstruction from license-protected binaries."""
         # Test with various protected binaries
         protected_files = [
@@ -341,7 +342,7 @@ class TestGenericProtocolHandlerRealBinaryAnalysis:
             assert pattern['response_size'] >= pattern['request_size'] * 0.5, \
                        "Responses must be substantial relative to requests"
 
-    def test_enterprise_license_server_simulation(self, protocol_handler, protected_binaries_path):
+    def test_enterprise_license_server_simulation(self, protocol_handler: GenericProtocolHandler, protected_binaries_path: Path) -> None:
         """Test simulation of enterprise license server communications."""
         enterprise_binary = protected_binaries_path / 'enterprise_license_check.exe'
 
@@ -366,7 +367,7 @@ class TestGenericProtocolHandlerRealBinaryAnalysis:
         assert len(valid_responses) >= len(enterprise_protocols) * 0.75, \
                "Must handle majority of enterprise license protocols"
 
-    def test_hardware_fingerprint_protocol_analysis(self, protocol_handler, protected_binaries_path):
+    def test_hardware_fingerprint_protocol_analysis(self, protocol_handler: GenericProtocolHandler, protected_binaries_path: Path) -> None:
         """Test analysis of hardware fingerprinting protocols."""
         dongle_binary = protected_binaries_path / 'dongle_protected_app.exe'
 

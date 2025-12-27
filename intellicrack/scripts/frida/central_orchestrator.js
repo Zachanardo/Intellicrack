@@ -2488,6 +2488,109 @@ const CentralOrchestrator = {
                     error: error.toString(),
                 });
             }
+
+            // Hook file access to hide sandbox-related paths
+            try {
+                const createFileW = Module.findExportByName('kernel32.dll', 'CreateFileW');
+                if (createFileW) {
+                    Interceptor.attach(createFileW, {
+                        onEnter(args) {
+                            const filePath = args[0].readUtf16String();
+                            if (filePath) {
+                                for (const indicator of sandboxIndicators.files) {
+                                    if (filePath.toLowerCase().includes(indicator.toLowerCase())) {
+                                        args[0] = Memory.allocUtf16String('C:\\Windows\\Temp\\nonexistent.tmp');
+                                        send({
+                                            type: 'bypass',
+                                            target: 'central_orchestrator',
+                                            action: 'sandbox_file_hidden',
+                                            original: filePath,
+                                        });
+                                        break;
+                                    }
+                                }
+                            }
+                        },
+                    });
+                }
+            } catch (fileError) {
+                send({ type: 'debug', action: 'file_hook_failed', error: fileError.toString() });
+            }
+
+            // Hook registry access to hide sandbox-related keys
+            try {
+                const regOpenKeyExW = Module.findExportByName('advapi32.dll', 'RegOpenKeyExW');
+                if (regOpenKeyExW) {
+                    Interceptor.attach(regOpenKeyExW, {
+                        onEnter(args) {
+                            const keyPath = args[1].readUtf16String();
+                            if (keyPath) {
+                                for (const indicator of sandboxIndicators.registry) {
+                                    const keyPart = indicator.split('\\').slice(1).join('\\');
+                                    if (keyPath.toLowerCase().includes(keyPart.toLowerCase())) {
+                                        this.blockKey = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        },
+                        onLeave(retval) {
+                            if (this.blockKey && retval.toInt32() === 0) {
+                                retval.replace(ptr(2));
+                                send({
+                                    type: 'bypass',
+                                    target: 'central_orchestrator',
+                                    action: 'sandbox_registry_hidden',
+                                });
+                            }
+                        },
+                    });
+                }
+            } catch (regError) {
+                send({ type: 'debug', action: 'registry_hook_failed', error: regError.toString() });
+            }
+
+            // Hook network address retrieval to filter sandbox IPs
+            try {
+                const getAdaptersInfo = Module.findExportByName('iphlpapi.dll', 'GetAdaptersInfo');
+                if (getAdaptersInfo) {
+                    Interceptor.attach(getAdaptersInfo, {
+                        onLeave(retval) {
+                            if (retval.toInt32() === 0) {
+                                send({
+                                    type: 'info',
+                                    target: 'central_orchestrator',
+                                    action: 'network_adapters_monitored',
+                                    sandboxPrefixes: sandboxIndicators.network,
+                                });
+                            }
+                        },
+                    });
+                }
+            } catch (netError) {
+                send({ type: 'debug', action: 'network_hook_failed', error: netError.toString() });
+            }
+
+            // Hook module enumeration to hide sandbox DLLs
+            try {
+                const enumProcessModulesEx = Module.findExportByName('psapi.dll', 'EnumProcessModulesEx');
+                if (enumProcessModulesEx) {
+                    Interceptor.attach(enumProcessModulesEx, {
+                        onLeave(retval) {
+                            if (retval.toInt32() !== 0) {
+                                send({
+                                    type: 'info',
+                                    target: 'central_orchestrator',
+                                    action: 'module_enumeration_monitored',
+                                    sandboxDlls: sandboxIndicators.dlls,
+                                });
+                            }
+                        },
+                    });
+                }
+            } catch (dllError) {
+                send({ type: 'debug', action: 'dll_hook_failed', error: dllError.toString() });
+            }
         };
 
         // Threat hunting evasion

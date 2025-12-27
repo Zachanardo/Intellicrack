@@ -130,7 +130,17 @@ class AICoordinationLayer:
         shared_context: "AISharedContext | None" = None,
         event_bus: "AIEventBus | None" = None,
     ) -> None:
-        """Initialize the coordination layer."""
+        """Initialize the coordination layer.
+
+        Args:
+            shared_context: Optional shared context for state management across
+                AI components. If None, creates a new AISharedContext instance
+                when orchestrator is available.
+            event_bus: Optional event bus for inter-component communication.
+                If None, creates a new AIEventBus instance when orchestrator
+                is available.
+
+        """
         logger.info("Initializing AI Coordination Layer...")
 
         self.shared_context: Any
@@ -182,24 +192,50 @@ class AICoordinationLayer:
             logger.exception("Failed to initialize Model Manager: %s", e)
 
     def _get_cache_key(self, request: AnalysisRequest) -> str:
-        """Generate cache key for analysis request."""
+        """Generate cache key for analysis request.
+
+        Args:
+            request: Analysis request to generate key for.
+
+        Returns:
+            Hexadecimal hash string serving as cache key.
+        """
         key_data = f"{request.binary_path}_{request.analysis_type}_{request.strategy}"
         return hashlib.sha256(key_data.encode()).hexdigest()
 
     def _is_cache_valid(self, cache_entry: CacheEntry) -> bool:
-        """Check if cache entry is still valid."""
+        """Check if cache entry is still valid.
+
+        Args:
+            cache_entry: Cache entry to validate.
+
+        Returns:
+            True if cache entry has not exceeded TTL, False otherwise.
+        """
         cached_time = cache_entry["timestamp"]
         return datetime.now() - cached_time < self.cache_ttl
 
     def _cache_result(self, cache_key: str, result: CoordinatedResult) -> None:
-        """Cache analysis result."""
+        """Cache analysis result.
+
+        Args:
+            cache_key: Unique identifier for the cached result.
+            result: Coordinated analysis result to cache.
+        """
         self.analysis_cache[cache_key] = {
             "result": result,
             "timestamp": datetime.now(),
         }
 
     def _choose_strategy(self, request: AnalysisRequest) -> AnalysisStrategy:
-        """Choose analysis strategy based on request characteristics."""
+        """Choose analysis strategy based on request characteristics.
+
+        Args:
+            request: Analysis request with strategy preferences.
+
+        Returns:
+            Selected analysis strategy for the request.
+        """
         if request.strategy != AnalysisStrategy.ADAPTIVE:
             return request.strategy
 
@@ -227,6 +263,12 @@ class AICoordinationLayer:
 
         This method intelligently combines fast ML prediction with deep
         LLM reasoning to provide comprehensive vulnerability analysis.
+
+        Args:
+            request: Analysis request with configuration parameters.
+
+        Returns:
+            Coordinated analysis result with combined ML and LLM insights.
         """
         start_time = time.time()
         strategy = self._choose_strategy(request)
@@ -289,7 +331,15 @@ class AICoordinationLayer:
             return result
 
     def _ml_first_analysis(self, request: AnalysisRequest, result: CoordinatedResult) -> CoordinatedResult:
-        """Execute LLM-only analysis (ML functionality removed)."""
+        """Execute LLM-only analysis (ML functionality removed).
+
+        Args:
+            request: Analysis request with configuration.
+            result: Coordinated result object to populate.
+
+        Returns:
+            Updated coordinated result with LLM analysis.
+        """
         logger.debug("ML functionality has been removed, using LLM-only analysis")
 
         # Since ML is removed, go directly to LLM analysis
@@ -302,7 +352,15 @@ class AICoordinationLayer:
         return result
 
     def _llm_first_analysis(self, request: AnalysisRequest, result: CoordinatedResult) -> CoordinatedResult:
-        """Execute LLM-first analysis strategy."""
+        """Execute LLM-first analysis strategy.
+
+        Args:
+            request: Analysis request with configuration.
+            result: Coordinated result object to populate.
+
+        Returns:
+            Updated coordinated result with LLM analysis.
+        """
         logger.debug("Executing LLM-first analysis strategy")
 
         # Deep LLM analysis
@@ -318,12 +376,25 @@ class AICoordinationLayer:
         return result
 
     def _parallel_analysis(self, request: AnalysisRequest, result: CoordinatedResult) -> CoordinatedResult:
-        """Execute parallel analysis (delegates to LLM since ML removed)."""
+        """Execute parallel analysis (delegates to LLM since ML removed).
+
+        Args:
+            request: Analysis request with configuration.
+            result: Coordinated result object to populate.
+
+        Returns:
+            Updated coordinated result with LLM analysis.
+        """
         logger.debug("ML functionality has been removed, delegating to LLM-only analysis")
         return self._llm_only_analysis(request, result)
 
     def _llm_thread_worker(self, request: AnalysisRequest, llm_queue: queue.Queue[tuple[str, Any]]) -> None:
-        """Worker function for LLM analysis thread."""
+        """Worker function for LLM analysis thread.
+
+        Args:
+            request: Analysis request to process.
+            llm_queue: Queue to put LLM results in.
+        """
         if self.model_manager:
             try:
                 llm_results = self._perform_llm_analysis(request)
@@ -341,7 +412,14 @@ class AICoordinationLayer:
         ml_queue: queue.Queue[tuple[str, Any]],
         llm_queue: queue.Queue[tuple[str, Any]],
     ) -> None:
-        """Collect results from parallel analysis threads."""
+        """Collect results from parallel analysis threads.
+
+        Args:
+            request: Analysis request with timeout configuration.
+            result: Result object to populate with collected data.
+            ml_queue: Queue containing ML analysis results.
+            llm_queue: Queue containing LLM analysis results.
+        """
         try:
             # Get ML results
             ml_status, ml_data = ml_queue.get(timeout=request.max_processing_time / 2)
@@ -360,7 +438,11 @@ class AICoordinationLayer:
             logger.warning("Parallel analysis timed out")
 
     def _combine_parallel_results(self, result: CoordinatedResult) -> None:
-        """Combine ML and LLM results with confidence scoring."""
+        """Combine ML and LLM results with confidence scoring.
+
+        Args:
+            result: Result object containing ML and LLM results to combine.
+        """
         if result.ml_results and result.llm_results:
             ml_conf = result.ml_results.get("confidence", 0.0)
             llm_conf = result.llm_results.get("confidence", 0.0)
@@ -371,13 +453,25 @@ class AICoordinationLayer:
             result.combined_confidence = result.llm_results.get("confidence", 0.0)
 
     def _cleanup_threads(self, threads: tuple[Any, Any]) -> None:
-        """Ensure all threads complete gracefully."""
+        """Ensure all threads complete gracefully.
+
+        Args:
+            threads: Tuple containing ML and LLM thread objects.
+        """
         ml_thread_obj, llm_thread_obj = threads
         ml_thread_obj.join(timeout=1)
         llm_thread_obj.join(timeout=1)
 
     def _ml_only_analysis(self, request: AnalysisRequest, result: CoordinatedResult) -> CoordinatedResult:
-        """ML functionality has been removed - fallback to LLM."""
+        """ML functionality has been removed - fallback to LLM.
+
+        Args:
+            request: Analysis request with configuration.
+            result: Coordinated result object to populate.
+
+        Returns:
+            Updated coordinated result with LLM analysis.
+        """
         logger.debug("ML functionality has been removed, falling back to LLM analysis")
 
         if self.model_manager:
@@ -389,7 +483,15 @@ class AICoordinationLayer:
         return result
 
     def _llm_only_analysis(self, request: AnalysisRequest, result: CoordinatedResult) -> CoordinatedResult:
-        """Execute LLM-only analysis strategy."""
+        """Execute LLM-only analysis strategy.
+
+        Args:
+            request: Analysis request with configuration.
+            result: Coordinated result object to populate.
+
+        Returns:
+            Updated coordinated result with LLM analysis.
+        """
         logger.debug("Executing LLM-only analysis strategy")
 
         if self.model_manager:
@@ -398,7 +500,15 @@ class AICoordinationLayer:
         return result
 
     def _add_llm_analysis(self, request: AnalysisRequest, result: CoordinatedResult) -> CoordinatedResult:
-        """Add LLM analysis to the result."""
+        """Add LLM analysis to the result.
+
+        Args:
+            request: Analysis request with configuration.
+            result: Coordinated result object to populate.
+
+        Returns:
+            Updated coordinated result with LLM analysis added.
+        """
         if not self.model_manager:
             return result
 
@@ -428,7 +538,14 @@ class AICoordinationLayer:
         return result
 
     def _perform_llm_analysis(self, request: AnalysisRequest) -> dict[str, Any]:
-        """Perform LLM-based analysis using available language models."""
+        """Perform LLM-based analysis using available language models.
+
+        Args:
+            request: Analysis request with configuration.
+
+        Returns:
+            Dictionary containing LLM analysis results with confidence, vulnerabilities, and recommendations.
+        """
         try:
             from .llm_backends import LLMManager, LLMMessage
 
@@ -481,7 +598,14 @@ class AICoordinationLayer:
             return self._fallback_analysis(request)
 
     def _create_binary_analysis_prompt(self, request: AnalysisRequest) -> str:
-        """Create analysis prompt for LLM based on binary information."""
+        """Create analysis prompt for LLM based on binary information.
+
+        Args:
+            request: Analysis request with binary path and analysis type.
+
+        Returns:
+            Formatted analysis prompt string for the LLM.
+        """
         # Read basic binary information
         binary_info: list[str] = []
 
@@ -572,7 +696,15 @@ class AICoordinationLayer:
         """
 
     def _parse_llm_response(self, response_content: str, request: AnalysisRequest) -> dict[str, Any]:
-        """Parse LLM response into structured analysis result."""
+        """Parse LLM response into structured analysis result.
+
+        Args:
+            response_content: Raw LLM response content to parse.
+            request: Original analysis request for context.
+
+        Returns:
+            Dictionary with parsed vulnerabilities, attack vectors, recommendations, and confidence score.
+        """
         # Extract key information from LLM response
         # Parse using common AI response parser
         from .response_parser import parse_attack_vector_response
@@ -597,7 +729,14 @@ class AICoordinationLayer:
         }
 
     def _fallback_analysis(self, request: AnalysisRequest) -> dict[str, Any]:
-        """Fallback analysis when LLM is not available."""
+        """Fallback analysis when LLM is not available.
+
+        Args:
+            request: Analysis request that could not be completed.
+
+        Returns:
+            Dictionary with fallback analysis results and recommendations.
+        """
         return {
             "analysis_type": "fallback_static_analysis",
             "binary_path": request.binary_path,
@@ -617,11 +756,19 @@ class AICoordinationLayer:
         }
 
     def _get_timestamp(self) -> str:
-        """Get current timestamp for analysis."""
+        """Get current timestamp for analysis.
+
+        Returns:
+            ISO format timestamp string.
+        """
         return datetime.now().isoformat()
 
     def get_performance_stats(self) -> dict[str, Any]:
-        """Get coordination layer performance statistics."""
+        """Get coordination layer performance statistics.
+
+        Returns:
+            Dictionary with performance metrics including call counts, timings, and cache statistics.
+        """
         return {
             "ml_calls": self.performance_stats["ml_calls"],
             "llm_calls": self.performance_stats["llm_calls"],
@@ -641,7 +788,15 @@ class AICoordinationLayer:
         logger.info("Analysis cache cleared")
 
     def suggest_strategy(self, binary_path: str, analysis_type: str) -> AnalysisStrategy:
-        """Suggest the best analysis strategy for a given binary."""
+        """Suggest the best analysis strategy for a given binary.
+
+        Args:
+            binary_path: Path to the binary file to analyze.
+            analysis_type: Type of analysis to perform.
+
+        Returns:
+            Recommended analysis strategy based on file characteristics.
+        """
         try:
             import os
 
@@ -665,7 +820,15 @@ class AICoordinationLayer:
 
 # Convenience functions for _easy integration
 def quick_vulnerability_scan(binary_path: str, confidence_threshold: float = 0.7) -> CoordinatedResult:
-    """Quick vulnerability scan using coordination layer."""
+    """Quick vulnerability scan using coordination layer.
+
+    Args:
+        binary_path: Path to the binary file to scan.
+        confidence_threshold: Minimum confidence level for results (default: 0.7).
+
+    Returns:
+        Coordinated analysis result from the scan.
+    """
     coordinator = AICoordinationLayer()
     request = AnalysisRequest(
         binary_path=binary_path,
@@ -677,7 +840,14 @@ def quick_vulnerability_scan(binary_path: str, confidence_threshold: float = 0.7
 
 
 def comprehensive_analysis(binary_path: str) -> CoordinatedResult:
-    """Comprehensive analysis using all available AI resources."""
+    """Comprehensive analysis using all available AI resources.
+
+    Args:
+        binary_path: Path to the binary file to analyze.
+
+    Returns:
+        Coordinated analysis result with comprehensive findings.
+    """
     coordinator = AICoordinationLayer()
     request = AnalysisRequest(
         binary_path=binary_path,

@@ -102,7 +102,12 @@ class CLIInterfaceProtocol(Protocol):
     """Protocol for CLI interface instances to avoid circular imports."""
 
     def print_info(self, message: str) -> None:
-        """Print informational message to CLI."""
+        """Print informational message to CLI.
+
+        Args:
+            message: The informational message to print
+
+        """
         print(f"[INFO] {message}")
 
 
@@ -222,7 +227,15 @@ class AIAgent:
     def process_request(self, user_request: str) -> dict[str, Any]:
         """Process a user request autonomously, similar to Claude Code.
 
-        Example: "Create a Frida script to bypass the license check in app.exe"
+        Args:
+            user_request: User request describing the script generation task
+
+        Returns:
+            dict[str, Any]: Result containing generated scripts and execution results
+
+        Example:
+            "Create a Frida script to bypass the license check in app.exe"
+
         """
         try:
             self.workflow_state = WorkflowState.ANALYZING
@@ -577,16 +590,15 @@ class AIAgent:
         """Extract strings using subprocess command.
 
         Args:
-            binary_path: Description.
-            license_related: Description.
+            binary_path: Path to the binary file
+            license_related: List of license-related keywords to filter
 
         Returns:
-            Description of return value.
+            list[str]: Filtered list of license-related strings from the binary
 
         Raises:
-            OSError: Description.
-            ValueError: Description.
-            ValueError: Description.
+            ValueError: If binary path is invalid or unsafe
+
         """
         import shutil
         import subprocess
@@ -1520,11 +1532,11 @@ class AIAgent:
         """Generate initial scripts based on analysis.
 
         Args:
-            analysis: Description.
-            Any]: Description.
+            analysis: Binary analysis results containing strings, functions, and protections
 
         Returns:
-            Description of return value.
+            list[GeneratedScript]: List of generated scripts for testing
+
         """
         scripts: list[GeneratedScript] = []
 
@@ -1557,12 +1569,12 @@ class AIAgent:
         """Test and refine the script iteratively until it works.
 
         Args:
-            script: Description.
-            analysis: Description.
-            Any]: Description.
+            script: Generated script to test and refine
+            analysis: Binary analysis results containing protections and functions
 
         Returns:
-            Description of return value.
+            GeneratedScript | None: Refined script if successful, None otherwise
+
         """
         current_script = script
         self.iteration_count = 0
@@ -1947,12 +1959,12 @@ class AIAgent:
         """Test script in QEMU environment using real VM execution.
 
         Args:
-            script: Description.
-            analysis: Description.
-            Any]: Description.
+            script: Generated script to test
+            analysis: Binary analysis results for environment configuration
 
         Returns:
-            Description of return value.
+            ExecutionResult: Result containing success status and output
+
         """
         self._log_to_user("Preparing QEMU test environment...")
 
@@ -2037,12 +2049,12 @@ class AIAgent:
         """Test script in sandbox environment using real sandboxing.
 
         Args:
-            script: Description.
-            analysis: Description.
-            Any]: Description.
+            script: Generated script to test
+            analysis: Binary analysis results for environment configuration
 
         Returns:
-            Description of return value.
+            ExecutionResult: Result containing success status and output
+
         """
         binary_path = analysis.get("binary_path", "unknown")
         network_activity = analysis.get("network_activity", {})
@@ -2235,16 +2247,15 @@ class AIAgent:
         """Fallback execution in restricted environment.
 
         Args:
-            script: Description.
-            binary_path: Description.
+            script: Generated script to execute
+            binary_path: Path to the binary target
 
         Returns:
-            Description of return value.
+            ExecutionResult: Result containing execution success status and output
 
         Raises:
-            Exception: Description.
-            ValueError: Description.
-            ValueError: Description.
+            ValueError: If script path escapes temp directory (caught internally).
+
         """
         import subprocess
         import tempfile
@@ -2293,12 +2304,12 @@ class AIAgent:
         """Test script directly (high risk).
 
         Args:
-            script: Description.
-            analysis: Description.
-            Any]: Description.
+            script: Generated script to test directly
+            analysis: Binary analysis results containing protections and configuration
 
         Returns:
-            Description of return value.
+            ExecutionResult: Result containing execution success status and output
+
         """
         binary_path = analysis.get("binary_path", "unknown")
         protections = analysis.get("protections", [])
@@ -2359,12 +2370,12 @@ class AIAgent:
         """Verify that the script actually bypassed the protection.
 
         Args:
-            validation_result: Description.
-            analysis: Description.
-            Any]: Description.
+            validation_result: Execution result to validate
+            analysis: Binary analysis results containing protections and indicators
 
         Returns:
-            Description of return value.
+            bool: True if bypass was successful, False otherwise
+
         """
         if not validation_result.success:
             return False
@@ -2438,8 +2449,14 @@ class AIAgent:
     ) -> GeneratedScript | None:
         """Refine the script based on test results and analysis.
 
+        Args:
+            script: Original generated script to refine
+            validation_result: Test execution result
+            analysis: Binary analysis results containing protections and functions
+
         Returns:
-            Description of return value.
+            GeneratedScript | None: Refined script if successful, None otherwise
+
         """
         try:
             protections = analysis.get("protections", [])
@@ -2484,8 +2501,14 @@ class AIAgent:
     ) -> tuple[str, list[str]]:
         """Apply refinements based on test failures.
 
+        Args:
+            script: Generated script being refined
+            validation_result: Test execution result with failure details
+            content: Current script content
+
         Returns:
-            Description of return value.
+            tuple[str, list[str]]: Updated content and list of refinement notes applied
+
         """
         refinement_notes = []
 
@@ -2719,10 +2742,8 @@ class AIAgent:
         """Log progress to user via CLI or UI.
 
         Args:
-            message: Description.
+            message: Message to log to user
 
-        Returns:
-            Description of return value.
         """
         timestamp = datetime.now().strftime("%H:%M:%S")
         formatted_message = f"[{timestamp}] {message}"
@@ -3126,13 +3147,11 @@ class AIAgent:
         """Append Frida script output with line limit.
 
         Args:
-            output: Description.
-            output_lines: Description.
-            max_lines: Description.
-            prefix: Description.
+            output: Script output string to append
+            output_lines: List to append formatted output lines to
+            max_lines: Maximum number of output lines to include
+            prefix: Prefix label for output section
 
-        Returns:
-            Description of return value.
         """
         output_lines.append(f"\n{prefix}")
         lines = output.split("\n")
@@ -3224,13 +3243,11 @@ class AIAgent:
         """Log library script execution details.
 
         Args:
-            script_name: Description.
-            target_binary: Description.
-            mode: Description.
-            output_lines: Description.
+            script_name: Name of the library script being executed
+            target_binary: Path to the target binary
+            mode: Execution mode (frida, qemu, sandbox, etc.)
+            output_lines: List to append execution details to
 
-        Returns:
-            Description of return value.
         """
         logger.info("Executing library script '%s' against %s", script_name, target_binary)
         output_lines.append(f"Executing: {script_name}")
@@ -3324,8 +3341,17 @@ class AIAgent:
     ) -> str:
         """Generate comprehensive output for execution results.
 
+        Args:
+            target_binary: Path to the target binary tested
+            script: The script content that was executed
+            runtime_ms: Execution time in milliseconds
+            temp_dir: Temporary directory used during execution
+            output_lines: List of output lines from execution
+            success: Whether execution was successful
+
         Returns:
-            Description of return value.
+            str: Formatted execution output summary
+
         """
         return "\n".join(
             [
@@ -3405,11 +3431,11 @@ class AIAgent:
         """Execute an autonomous task based on configuration.
 
         Args:
-            task_config: Description.
-            Any]: Description.
+            task_config: Configuration dictionary for the task with type and parameters
 
         Returns:
-            Description of return value.
+            dict[str, Any]: Task execution results and status
+
         """
         try:
             logger.info("Starting autonomous task: %s", task_config.get("type", "unknown"))
@@ -3486,18 +3512,14 @@ class AIAgent:
         """Save complete session data to JSON file.
 
         Args:
-            output_path: Description.
+            output_path: Optional path to save session data to, defaults to temp file
 
         Returns:
-            Description of return value.
+            str: Path where session data was saved
 
         Raises:
-            Exception: Description.
-            OSError: Description.
-            RuntimeError: Description.
-            TypeError: Description.
-            ValueError: Description.
-            RuntimeError: Description.
+            RuntimeError: If session data cannot be saved or serialized
+
         """
         try:
             session_data = {
@@ -3544,14 +3566,9 @@ class AIAgent:
     def _initialize_qemu_manager(self) -> None:
         """Initialize QEMU manager with proper configuration.
 
-        Returns:
-            Description of return value.
-
         Raises:
-            Exception: Description.
-            ImportError: Description.
-            RuntimeError: Description.
-            RuntimeError: Description.
+            RuntimeError: If QEMU manager cannot be imported or initialized
+
         """
         try:
             from .qemu_manager import QEMUManager
@@ -3591,7 +3608,11 @@ class AIAgent:
                 - arch: Architecture (x86_64, arm64, etc.)
 
         Returns:
-            VM ID for tracking
+            str: VM ID for tracking
+
+        Raises:
+            ValueError: If required configuration parameters are missing
+            RuntimeError: If QEMU manager is not initialized
 
         """
         # Ensure QEMU manager is initialized
@@ -3893,11 +3914,7 @@ class AIAgent:
             return False
 
     def _cleanup_all_vms(self) -> None:
-        """Clean up all active VMs.
-
-        Returns:
-            Description of return value.
-        """
+        """Clean up all active VMs."""
         vm_ids = list(self._active_vms.keys())  # Copy to avoid modification during iteration
 
         for vm_id in vm_ids:
@@ -4017,11 +4034,7 @@ class AIAgent:
             return secrets.randbelow(16384) + 49152
 
     def __del__(self) -> None:
-        """Cleanup on deletion.
-
-        Returns:
-            Description of return value.
-        """
+        """Cleanup on deletion."""
         try:
             self._cleanup_all_vms()
         except Exception as e:

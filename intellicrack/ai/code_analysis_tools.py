@@ -55,7 +55,21 @@ class AIAssistant:
         self._llm_manager: LLMManager | None = None
 
     def analyze_code(self, code: str, language: str = "auto") -> dict[str, Any]:
-        """Analyze code and provide detailed insights using AI and static analysis."""
+        """Analyze code and provide detailed insights using AI and static analysis.
+
+        Performs both static code analysis and AI-enhanced analysis to identify potential
+        vulnerabilities, complexity metrics, and actionable suggestions for the analyzed code.
+
+        Args:
+            code: Source code to analyze as a string
+            language: Programming language identifier or "auto" for auto-detection
+
+        Returns:
+            Dictionary with analysis results including status, language, lines_of_code,
+            complexity level, detected insights, suggestions, security_issues, patterns,
+            ai_enabled status, and analysis_timestamp
+
+        """
         try:
             # Detect language if auto
             if language == "auto":
@@ -85,7 +99,20 @@ class AIAssistant:
             return {"status": "error", "error": str(e)}
 
     def _detect_language(self, code: str) -> str:
-        """Detect programming language from code."""
+        """Detect programming language from code.
+
+        Uses heuristic-based keyword detection to identify the programming language
+        of the provided code snippet. Supports C, C++, Python, JavaScript, Assembly,
+        Java, and C#.
+
+        Args:
+            code: Source code string to analyze for language detection
+
+        Returns:
+            str: Language identifier "c", "cpp", "python", "javascript", "assembly",
+            "java", "csharp", or "unknown" if language cannot be determined
+
+        """
         # Simple heuristic-based detection
         if any(keyword in code for keyword in [INCLUDE_KEYWORD, "void main", "printf"]):
             return "c"
@@ -104,7 +131,20 @@ class AIAssistant:
         return "unknown"
 
     def _perform_basic_analysis(self, code: str, language: str) -> dict[str, Any]:
-        """Perform basic static analysis on code."""
+        """Perform basic static analysis on code.
+
+        Executes language-specific and general code analysis to detect patterns,
+        security issues, and provide actionable insights.
+
+        Args:
+            code: Source code string to analyze
+            language: Programming language identifier for targeted analysis
+
+        Returns:
+            Dictionary containing complexity level, insights, suggestions, security_issues,
+            and patterns detected during analysis
+
+        """
         lines = code.split("\n")
         complexity = self._calculate_complexity(code, language)
 
@@ -122,7 +162,20 @@ class AIAssistant:
         }
 
     def _analyze_language_specific(self, code: str, language: str) -> dict[str, Any]:
-        """Analyze code for language-specific patterns and issues."""
+        """Analyze code for language-specific patterns and issues.
+
+        Performs targeted analysis based on the detected or specified programming language
+        to identify vulnerable patterns, best practice violations, and design issues.
+
+        Args:
+            code: Source code string to analyze
+            language: Programming language identifier to apply language-specific checks
+
+        Returns:
+            Dictionary containing insights, suggestions, security_issues, and patterns
+            specific to the analyzed language
+
+        """
         insights: list[str] = []
         suggestions: list[str] = []
         security_issues: list[str] = []
@@ -143,7 +196,18 @@ class AIAssistant:
         }
 
     def _analyze_c_cpp(self, code: str, security_issues: list[str], suggestions: list[str], patterns: list[str]) -> None:
-        """Analyze C/C++ code for common issues."""
+        """Analyze C/C++ code for common issues.
+
+        Detects unsafe memory operations, dangerous function calls, and other common
+        C/C++ vulnerabilities by scanning code for vulnerable patterns and unsafe APIs.
+
+        Args:
+            code: Source code string to analyze for C/C++ vulnerabilities
+            security_issues: Mutable list to append identified security vulnerabilities
+            suggestions: Mutable list to append remediation suggestions
+            patterns: Mutable list to append detected buffer management patterns
+
+        """
         if "strcpy" in code or "sprintf" in code:
             security_issues.append("Use of unsafe string functions (strcpy, sprintf)")
             suggestions.append("Replace with safer alternatives like strncpy, snprintf")
@@ -156,7 +220,18 @@ class AIAssistant:
         patterns.append("C/C++ buffer management patterns detected")
 
     def _analyze_python(self, code: str, security_issues: list[str], suggestions: list[str], patterns: list[str]) -> None:
-        """Analyze Python code for common issues."""
+        """Analyze Python code for common issues.
+
+        Detects dangerous dynamic code execution, insecure deserialization, and other
+        common Python security vulnerabilities.
+
+        Args:
+            code: Source code string to analyze for Python vulnerabilities
+            security_issues: Mutable list to append identified security vulnerabilities
+            suggestions: Mutable list to append remediation suggestions
+            patterns: Mutable list to append detected dynamic execution patterns
+
+        """
         if "eval(" in code or "exec(" in code:
             security_issues.append("Use of eval() or exec() (code injection risk)")
             suggestions.append("Avoid dynamic code execution")
@@ -166,7 +241,18 @@ class AIAssistant:
         patterns.append("Python dynamic execution patterns detected")
 
     def _analyze_assembly(self, code: str, insights: list[str], suggestions: list[str], patterns: list[str]) -> None:
-        """Analyze assembly code for common issues."""
+        """Analyze assembly code for common issues.
+
+        Detects control flow instructions, data movement patterns, and system calls
+        in assembly code to identify potential security implications and code behavior.
+
+        Args:
+            code: Assembly code string to analyze
+            insights: Mutable list to append identified code behavior insights
+            suggestions: Mutable list to append analysis recommendations
+            patterns: Mutable list to append detected instruction patterns
+
+        """
         if any(instr in code.lower() for instr in ["call", "jmp", "ret"]):
             patterns.append("Control flow instructions detected")
             insights.append("Assembly code contains control flow modifications")
@@ -177,7 +263,18 @@ class AIAssistant:
             suggestions.append("Review system call usage for security implications")
 
     def _analyze_general_code(self, lines: list[str]) -> dict[str, Any]:
-        """Perform general code analysis."""
+        """Perform general code analysis.
+
+        Analyzes code structure including comment coverage and documentation ratios
+        to provide insights on code maintainability and documentation quality.
+
+        Args:
+            lines: List of code lines to analyze
+
+        Returns:
+            Dictionary containing insights, suggestions, and comment_ratio metrics
+
+        """
         insights = []
         suggestions = []
         comment_lines = len([line for line in lines if line.strip().startswith(("#", "//", "/*"))])
@@ -199,7 +296,19 @@ class AIAssistant:
         }
 
     def _calculate_complexity(self, code: str, language: str) -> str:
-        """Calculate code complexity."""
+        """Calculate code complexity.
+
+        Evaluates code complexity based on line count and control flow structure density
+        to provide an assessment of code maintainability difficulty.
+
+        Args:
+            code: Source code string to evaluate
+            language: Programming language for language-specific complexity calculation
+
+        Returns:
+            str: Complexity rating "low", "medium", or "high"
+
+        """
         lines = code.split("\n")
         code_lines = len([line for line in lines if line.strip() and not line.strip().startswith(("#", "//", "/*"))])
 
@@ -218,7 +327,20 @@ class AIAssistant:
         return "high"
 
     def _perform_ai_code_analysis(self, code: str, language: str) -> dict[str, Any]:
-        """Perform AI-enhanced code analysis using LLM if available."""
+        """Perform AI-enhanced code analysis using LLM if available.
+
+        Sends code to configured LLM backend for advanced security analysis, code quality
+        evaluation, and actionable recommendations beyond static pattern detection.
+
+        Args:
+            code: Source code string to analyze
+            language: Programming language identifier for targeted AI analysis
+
+        Returns:
+            Dictionary containing ai_enabled status, insights list, suggestions list,
+            and raw_response excerpt from LLM if analysis succeeded
+
+        """
         try:
             from .llm_backends import LLMManager, LLMMessage
 
@@ -277,20 +399,49 @@ class AIAssistant:
         return {"ai_enabled": False, "insights": [], "suggestions": []}
 
     def _parse_ai_code_response(self, response: str) -> tuple[list[str], list[str]]:
-        """Parse AI response to extract insights and suggestions."""
+        """Parse AI response to extract insights and suggestions.
+
+        Extracts actionable insights and recommendations from LLM-generated code analysis
+        response text, limiting results to top findings.
+
+        Args:
+            response: LLM response text containing analysis insights and suggestions
+
+        Returns:
+            Tuple of (insights_list, suggestions_list) limited to top 5 items each
+
+        """
         from .response_parser import parse_security_analysis_response
 
         insights, suggestions = parse_security_analysis_response(response)
         return insights[:5], suggestions[:5]  # Limit to top 5 each
 
     def _get_timestamp(self) -> str:
-        """Get current timestamp for analysis."""
+        """Get current timestamp for analysis.
+
+        Returns current system time in ISO 8601 format for timestamping analysis results.
+
+        Returns:
+            ISO 8601 formatted timestamp string
+
+        """
         import datetime
 
         return datetime.datetime.now().isoformat()
 
     def get_suggestions(self, context: str) -> list[str]:
-        """Get AI suggestions for given context."""
+        """Get AI suggestions for given context.
+
+        Analyzes provided context keywords to deliver domain-specific analysis suggestions
+        for licensing, protection, network, vulnerability, or general analysis scenarios.
+
+        Args:
+            context: Context string containing keywords indicating analysis domain
+
+        Returns:
+            List of up to 5 actionable analysis suggestions tailored to the context
+
+        """
         # Analyze context to provide targeted suggestions
         context_lower = context.lower()
         suggestions = []
@@ -366,12 +517,35 @@ class AIAssistant:
             return f"Unable to process question: {question}"
 
     def _is_llm_manager_available(self) -> bool:
+        """Check if modern LLM manager is available.
+
+        Returns:
+            True if _llm_manager attribute exists and is initialized, False otherwise
+
+        """
         return bool(hasattr(self, "_llm_manager") and self._llm_manager)
 
     def _is_legacy_llm_manager_available(self) -> bool:
+        """Check if legacy LLM manager is available.
+
+        Returns:
+            True if llm_manager attribute exists and is initialized, False otherwise
+
+        """
         return bool(hasattr(self, "llm_manager") and self.llm_manager)
 
     def _handle_llm_manager_question(self, question: str) -> str:
+        """Handle question using modern LLM manager.
+
+        Sends question to _llm_manager for processing and returns the generated response.
+
+        Args:
+            question: Question string to send to LLM manager
+
+        Returns:
+            LLM response content or fallback message if response generation fails
+
+        """
         if self._llm_manager is not None and hasattr(self._llm_manager, "chat"):
             from .llm_backends import LLMMessage
 
@@ -382,6 +556,17 @@ class AIAssistant:
         return f"AI response to: {question}"
 
     def _handle_legacy_llm_manager_question(self, question: str) -> str:
+        """Handle question using legacy LLM manager.
+
+        Sends question to legacy llm_manager for processing and returns the generated response.
+
+        Args:
+            question: Question string to send to legacy LLM manager
+
+        Returns:
+            LLM response content or fallback message if response generation fails
+
+        """
         if self.llm_manager is not None and hasattr(self.llm_manager, "chat"):
             from .llm_backends import LLMMessage
 
@@ -392,6 +577,18 @@ class AIAssistant:
         return f"AI response to: {question}"
 
     def _handle_vulnerability_engine_question(self, question: str) -> str:
+        """Handle question using vulnerability analysis engine.
+
+        Attempts to analyze questions using the vulnerability engine with binary
+        analysis context for detailed security recommendations.
+
+        Args:
+            question: Question string to analyze with vulnerability engine
+
+        Returns:
+            Analysis response from vulnerability engine or fallback recommendation text
+
+        """
         from ..core.analysis.vulnerability_engine import VulnerabilityEngine
 
         try:
@@ -403,14 +600,38 @@ class AIAssistant:
             return f"To answer '{question}', I recommend starting with binary structure analysis and examining protection mechanisms."
 
     def _get_binary_analysis_context(self) -> str:
+        """Get binary analysis context for enhanced question answering.
+
+        Retrieves current binary file analysis results if available to provide
+        context-aware answers from the vulnerability engine.
+
+        Returns:
+            Context string with binary analysis summary or empty string if unavailable
+
+        """
         if binary_path := getattr(self, "_current_binary", None):
             from ..utils.analysis.binary_analysis import analyze_binary
 
             analysis_results = analyze_binary(binary_path)
-            return f"Binary analysis context: {analysis_results.get('summary', 'No analysis available')}\n"
+            summary = getattr(analysis_results, 'summary', 'No analysis available')
+            return f"Binary analysis context: {summary}\n"
         return ""
 
     def _analyze_question_with_vulnerability_engine(self, question: str, context: str, vuln_engine: Any) -> str:
+        """Analyze question using vulnerability engine based on question content.
+
+        Routes questions to appropriate vulnerability engine analyzers based on detected
+        keywords in the question (license, protection, vulnerability, network).
+
+        Args:
+            question: Question string to analyze
+            context: Binary analysis context for enhanced analysis
+            vuln_engine: VulnerabilityEngine instance for running specialized analyzers
+
+        Returns:
+            Analysis response from appropriate engine analyzer or fallback recommendation
+
+        """
         question_lower = question.lower()
         if "license" in question_lower or "activation" in question_lower:
             if hasattr(vuln_engine, "analyze_license_patterns"):
@@ -466,7 +687,21 @@ class CodeAnalyzer:
         return self.ai_assistant.analyze_code(code, language)  # scanner-ignore
 
     def analyze_binary(self, file_path: str) -> dict[str, Any]:
-        """Analyze binary file using comprehensive static and AI analysis."""
+        """Analyze binary file using comprehensive static and AI analysis.
+
+        Performs multi-stage binary analysis including format detection, static analysis,
+        protection mechanism identification, and AI-enhanced insights to detect licensing
+        mechanisms, protection schemes, and security issues.
+
+        Args:
+            file_path: Path to binary file to analyze
+
+        Returns:
+            Dictionary containing file_path, analysis_type, file_size, findings list,
+            security_issues list, protection_mechanisms list, recommendations list,
+            metadata dict, confidence score, analysis_timestamp, and optional ai_insights
+
+        """
         try:
             import os
 
@@ -534,7 +769,22 @@ class CodeAnalyzer:
             return {"error": str(e), "file_path": file_path}
 
     def analyze_assembly(self, assembly_code: str) -> dict[str, Any]:
-        """Analyze assembly code for patterns and vulnerabilities."""
+        """Analyze assembly code for patterns and vulnerabilities.
+
+        Performs comprehensive assembly code analysis including pattern detection,
+        vulnerability identification, control flow analysis, and AI-enhanced insights
+        to support reverse engineering and security research workflows.
+
+        Args:
+            assembly_code: Assembly code string to analyze
+
+        Returns:
+            Dictionary containing code_type, instruction_count, patterns list,
+            vulnerabilities list, control_flow list, data_operations list,
+            system_calls list, recommendations list, confidence score, analysis_timestamp,
+            and optional ai_insights
+
+        """
         try:
             lines = assembly_code.split("\n")
             instruction_count = len([line for line in lines if line.strip() and not line.strip().startswith(";")])
@@ -665,13 +915,32 @@ class CodeAnalyzer:
             return ["Continue with manual analysis"]
 
     def _get_timestamp(self) -> str:
-        """Get current timestamp for analysis."""
+        """Get current timestamp for analysis.
+
+        Returns current system time in ISO 8601 format for timestamping analysis results.
+
+        Returns:
+            ISO 8601 formatted timestamp string
+
+        """
         import datetime
 
         return datetime.datetime.now().isoformat()
 
     def _perform_basic_binary_analysis(self, file_path: str) -> dict[str, Any]:
-        """Perform basic binary file analysis."""
+        """Perform basic binary file analysis.
+
+        Analyzes binary file header and initial content to detect file format,
+        licensing strings, and development-related indicators.
+
+        Args:
+            file_path: Path to binary file to analyze
+
+        Returns:
+            Dictionary containing findings list, security_issues list, protection_mechanisms
+            list, metadata dict with format information, and confidence score
+
+        """
         result: dict[str, Any] = {
             "findings": [],
             "security_issues": [],
@@ -736,7 +1005,19 @@ class CodeAnalyzer:
             return result
 
     def _perform_format_specific_analysis(self, file_path: str) -> dict[str, Any]:
-        """Perform format-specific binary analysis."""
+        """Perform format-specific binary analysis.
+
+        Executes targeted analysis for detected binary formats (PE, ELF, Mach-O) to
+        identify imports, sections, and protection mechanisms specific to each format.
+
+        Args:
+            file_path: Path to binary file to analyze
+
+        Returns:
+            Dictionary containing findings list, security_issues list, and protection_mechanisms
+            list populated with format-specific analysis results
+
+        """
         result: dict[str, Any] = {
             "findings": [],
             "security_issues": [],
@@ -753,7 +1034,16 @@ class CodeAnalyzer:
         return result
 
     def _analyze_pe_format(self, file_path: str, result: dict[str, Any]) -> None:
-        """Analyze PE format for findings and protections."""
+        """Analyze PE format for findings and protections.
+
+        Parses Windows PE (Portable Executable) format binaries to extract imports,
+        sections, and identify protection mechanisms and licensing libraries.
+
+        Args:
+            file_path: Path to PE binary file to analyze
+            result: Mutable dictionary to append PE-specific analysis findings
+
+        """
         try:
             from ..utils.core.import_patterns import PEFILE_AVAILABLE, pefile
 
@@ -770,7 +1060,16 @@ class CodeAnalyzer:
             result["errors"].append("PE section analysis failed")
 
     def _analyze_pe_imports(self, pe: Any, result: dict[str, Any]) -> None:
-        """Analyze PE imports for protections."""
+        """Analyze PE imports for protections.
+
+        Extracts and analyzes imported DLL names from PE binary to identify cryptographic
+        libraries, debugging capabilities, and protection-related dependencies.
+
+        Args:
+            pe: Parsed PE binary object from pefile library
+            result: Mutable dictionary to append protection mechanism findings
+
+        """
         if not hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
             return
         imports_list = []
@@ -788,7 +1087,16 @@ class CodeAnalyzer:
             result["findings"].append("Debugging libraries imported")
 
     def _analyze_pe_sections(self, pe: Any, result: dict[str, Any]) -> None:
-        """Analyze PE sections for security issues."""
+        """Analyze PE sections for security issues.
+
+        Examines PE binary sections for suspicious characteristics like writable and
+        executable sections that may indicate code injection or protection bypasses.
+
+        Args:
+            pe: Parsed PE binary object from pefile library
+            result: Mutable dictionary to append security issue findings
+
+        """
         if hasattr(pe, "sections"):
             for section in pe.sections:
                 if (
@@ -804,7 +1112,16 @@ class CodeAnalyzer:
                     result["security_issues"].append(f"Writable and executable section: {section_name}")
 
     def _analyze_cross_platform_format(self, file_path: str, result: dict[str, Any]) -> None:
-        """Analyze cross-platform binary formats."""
+        """Analyze cross-platform binary formats.
+
+        Uses LIEF library to analyze cross-platform binary formats (ELF, Mach-O, PE) in
+        a unified way to extract functions, imports, and protection mechanisms.
+
+        Args:
+            file_path: Path to binary file to analyze
+            result: Mutable dictionary to append cross-platform analysis findings
+
+        """
         try:
             from ..utils.core.import_patterns import LIEF_AVAILABLE, lief
 
@@ -818,7 +1135,16 @@ class CodeAnalyzer:
             result["errors"].append("Cross-platform binary analysis failed")
 
     def _process_binary_format(self, binary: Any, result: dict[str, Any]) -> None:
-        """Process binary format and update results."""
+        """Process binary format and update results.
+
+        Extracts binary format information and processes imported functions for security
+        analysis from LIEF-parsed binary object.
+
+        Args:
+            binary: Parsed binary object from LIEF library
+            result: Mutable dictionary to append binary format analysis findings
+
+        """
         if hasattr(binary, "format"):
             result["findings"].append(f"Binary type: {binary.format}")
 
@@ -826,13 +1152,35 @@ class CodeAnalyzer:
             self._process_imported_functions(binary.imported_functions, result)
 
     def _process_imported_functions(self, imported_functions: Any, result: dict[str, Any]) -> None:
-        """Process imported functions and update results."""
+        """Process imported functions and update results.
+
+        Scans first 10 imported functions for cryptographic, hashing, and security-related
+        APIs that may indicate licensing or protection mechanisms.
+
+        Args:
+            imported_functions: List of imported function names from binary
+            result: Mutable dictionary to append identified security functions
+
+        """
         for func in imported_functions[:10]:
             if any(keyword in func.lower() for keyword in ["crypt", "hash", "verify"]):
                 result["protection_mechanisms"].append(f"Security function: {func}")
 
     def _perform_ai_binary_analysis(self, file_path: str, basic_result: dict[str, Any]) -> dict[str, Any]:
-        """Perform AI-enhanced binary analysis using AI assistant."""
+        """Perform AI-enhanced binary analysis using AI assistant.
+
+        Leverages AI assistant and optional LLM backend to provide deep security analysis,
+        protection mechanism assessment, and actionable recommendations for identified binaries.
+
+        Args:
+            file_path: Path to binary file being analyzed
+            basic_result: Dictionary containing basic analysis results to provide context
+
+        Returns:
+            Dictionary with ai_enabled status, findings list, recommendations list,
+            confidence score, and optional insights from AI analysis
+
+        """
         try:
             # First try to use AI assistant for suggestions
             context = f"binary file analysis for {basic_result.get('metadata', {}).get('format', 'Unknown')} format"
@@ -922,14 +1270,36 @@ class CodeAnalyzer:
         return {"ai_enabled": False}
 
     def _parse_ai_binary_response(self, response: str) -> tuple[list[str], list[str]]:
-        """Parse AI response for binary analysis."""
+        """Parse AI response for binary analysis.
+
+        Extracts findings and recommendations from LLM-generated binary analysis response.
+
+        Args:
+            response: LLM response text containing binary analysis findings and recommendations
+
+        Returns:
+            Tuple of (findings_list limited to 8, recommendations_list limited to 6)
+
+        """
         from .response_parser import parse_simple_response
 
         findings, recommendations = parse_simple_response(response)
         return findings[:8], recommendations[:6]
 
     def _analyze_assembly_patterns(self, assembly_code: str) -> dict[str, Any]:
-        """Analyze assembly code patterns."""
+        """Analyze assembly code patterns.
+
+        Performs comprehensive pattern analysis on assembly code to identify control flow,
+        data operations, system calls, and stack manipulation patterns.
+
+        Args:
+            assembly_code: Assembly code string to analyze
+
+        Returns:
+            Dictionary containing patterns list, control_flow list, data_operations list,
+            and system_calls list populated with detected instruction patterns
+
+        """
         lines = assembly_code.lower().split("\n")
         patterns: list[str] = []
         control_flow: list[str] = []
@@ -954,7 +1324,17 @@ class CodeAnalyzer:
         }
 
     def _analyze_control_flow(self, line: str, control_flow: list[str], patterns: list[str]) -> None:
-        """Analyze control flow instructions."""
+        """Analyze control flow instructions.
+
+        Detects control flow instructions in assembly and categorizes them as function
+        calls or jumps, updating provided lists with findings.
+
+        Args:
+            line: Single assembly instruction line to analyze
+            control_flow: Mutable list to append control flow instruction analysis
+            patterns: Mutable list to append detected control flow patterns
+
+        """
         if any(instr in line for instr in ["jmp", "je", "jne", "jz", "jnz", "call", "ret"]):
             control_flow.append(f"Control flow: {line}")
             if "call" in line:
@@ -963,24 +1343,64 @@ class CodeAnalyzer:
                 patterns.append("Conditional/unconditional jump detected")
 
     def _analyze_data_movement(self, line: str, data_operations: list[str], patterns: list[str]) -> None:
-        """Analyze data movement instructions."""
+        """Analyze data movement instructions.
+
+        Detects data movement instructions in assembly code to identify memory operations
+        and register manipulations.
+
+        Args:
+            line: Single assembly instruction line to analyze
+            data_operations: Mutable list to append detected data movement operations
+            patterns: Mutable list to append data movement patterns
+
+        """
         if any(instr in line for instr in ["mov", "lea", "push", "pop"]):
             data_operations.append(f"Data operation: {line}")
             patterns.append("Data movement instruction")
 
     def _analyze_system_calls(self, line: str, system_calls: list[str], patterns: list[str]) -> None:
-        """Analyze system call instructions."""
+        """Analyze system call instructions.
+
+        Detects system call invocations in assembly code using int 0x80, syscall,
+        or sysenter instructions.
+
+        Args:
+            line: Single assembly instruction line to analyze
+            system_calls: Mutable list to append detected system call instructions
+            patterns: Mutable list to append system call patterns
+
+        """
         if any(instr in line for instr in [SYSCALL_INT_LITERAL, "syscall", "sysenter"]):
             system_calls.append(f"System call: {line}")
             patterns.append("System call detected")
 
     def _analyze_stack_operations(self, line: str, patterns: list[str]) -> None:
-        """Analyze stack operations."""
+        """Analyze stack operations.
+
+        Detects stack manipulation instructions in assembly code including push, pop,
+        and stack pointer/base pointer operations.
+
+        Args:
+            line: Single assembly instruction line to analyze
+            patterns: Mutable list to append detected stack operation patterns
+
+        """
         if any(instr in line for instr in ["push", "pop", "esp", "ebp"]):
             patterns.append("Stack manipulation")
 
     def _analyze_assembly_vulnerabilities(self, assembly_code: str) -> list[str]:
-        """Analyze assembly code for potential vulnerabilities."""
+        """Analyze assembly code for potential vulnerabilities.
+
+        Scans assembly code for common vulnerability patterns including buffer overflows,
+        stack-based attacks, format string issues, and privilege escalation attempts.
+
+        Args:
+            assembly_code: Assembly code string to analyze for vulnerability patterns
+
+        Returns:
+            List of detected vulnerability descriptions with deduplication
+
+        """
         vulnerabilities = []
         lines = assembly_code.lower().split("\n")
 
@@ -1008,7 +1428,19 @@ class CodeAnalyzer:
         return list(set(vulnerabilities))
 
     def _perform_ai_assembly_analysis(self, assembly_code: str) -> dict[str, Any]:
-        """Perform AI-enhanced assembly analysis using AI assistant."""
+        """Perform AI-enhanced assembly analysis using AI assistant.
+
+        Leverages AI assistant and LLM backend to perform deep assembly code analysis,
+        vulnerability assessment, and security recommendations.
+
+        Args:
+            assembly_code: Assembly code string to analyze
+
+        Returns:
+            Dictionary with ai_enabled status, patterns list, vulnerabilities list,
+            recommendations list, and optional insights from AI analysis
+
+        """
         try:
             # Use AI assistant to analyze the assembly code
             ai_analysis = self.ai_assistant.analyze_code(assembly_code, language="assembly")
@@ -1096,7 +1528,19 @@ class CodeAnalyzer:
         return {"ai_enabled": False}
 
     def _parse_ai_assembly_response(self, response: str) -> tuple[list[str], list[str], list[str]]:
-        """Parse AI response for assembly analysis."""
+        """Parse AI response for assembly analysis.
+
+        Extracts patterns, vulnerabilities, and recommendations from LLM-generated assembly
+        analysis response using section keyword detection and item filtering.
+
+        Args:
+            response: LLM response text containing assembly analysis results
+
+        Returns:
+            Tuple of (patterns_list limited to 6, vulnerabilities_list limited to 6,
+            recommendations_list limited to 5)
+
+        """
         from .parsing_utils import ResponseLineParser
 
         # Define section keywords
@@ -1108,6 +1552,16 @@ class CodeAnalyzer:
 
         # Custom line processor for list items
         def process_line(line: str, section: str) -> str | None:
+            """Process individual response line for content extraction.
+
+            Args:
+                line: Individual line from LLM response
+                section: Section type name for filtering
+
+            Returns:
+                Extracted content string or None if line doesn't match criteria
+
+            """
             # Use section parameter to filter content based on section type
             if section == "vulnerabilities" and "CVE" in line:
                 # Prioritize CVE references in vulnerability sections
@@ -1133,7 +1587,19 @@ class CodeAnalyzer:
 
 
 def analyze_with_ai(data: object, analysis_type: str = "general") -> dict[str, Any]:
-    """Analyze data using AI capabilities."""
+    """Analyze data using AI capabilities.
+
+    Routes data to appropriate analyzer based on analysis_type parameter. Supports
+    binary file analysis and assembly code analysis with AI enhancements.
+
+    Args:
+        data: Data to analyze (file path string for binary/assembly analysis)
+        analysis_type: Type of analysis - "binary", "assembly", or "general"
+
+    Returns:
+        Dictionary with analysis results from CodeAnalyzer or status/error information
+
+    """
     try:
         analyzer = CodeAnalyzer()
 
@@ -1153,7 +1619,19 @@ def analyze_with_ai(data: object, analysis_type: str = "general") -> dict[str, A
 
 
 def get_ai_suggestions(context: str, domain: str = "security") -> list[str]:
-    """Get AI-powered suggestions for given context."""
+    """Get AI-powered suggestions for given context.
+
+    Provides domain-specific analysis suggestions based on context and domain parameters.
+    Supports security, reverse_engineering, and license_bypass analysis domains.
+
+    Args:
+        context: Context string for which to provide suggestions
+        domain: Analysis domain - "security", "reverse_engineering", or "license_bypass"
+
+    Returns:
+        List of domain-specific analysis suggestions tailored to the context
+
+    """
     try:
         assistant = AIAssistant()
         base_suggestions = assistant.get_suggestions(context)
@@ -1187,7 +1665,20 @@ def get_ai_suggestions(context: str, domain: str = "security") -> list[str]:
 
 
 def explain_code(code: str, language: str = "auto", detail_level: str = "medium") -> str:
-    """Explain code functionality using AI and static analysis."""
+    """Explain code functionality using AI and static analysis.
+
+    Provides human-readable explanation of code functionality with language detection,
+    static analysis, and optional AI-enhanced insights at varying detail levels.
+
+    Args:
+        code: Source code string to explain
+        language: Programming language or "auto" for auto-detection
+        detail_level: Explanation detail - "low", "medium", or "high"
+
+    Returns:
+        Formatted explanation string with code structure and functionality insights
+
+    """
     try:
         # Detect language if auto
         if language == "auto":
@@ -1218,12 +1709,37 @@ def explain_code(code: str, language: str = "auto", detail_level: str = "medium"
 
 
 def _build_explanation_header(language: str, lines: list[str], line_count: int) -> str:
-    """Build the header for the code explanation."""
+    """Build the header for the code explanation.
+
+    Constructs formatted header text for code explanation output.
+
+    Args:
+        language: Programming language identifier
+        lines: List of all code lines including comments and blank lines
+        line_count: Count of non-comment, non-blank code lines
+
+    Returns:
+        Formatted header string with language and line count information
+
+    """
     return f"Code Explanation ({language}):\nTotal lines: {len(lines)} (code: {line_count})\n\n"
 
 
 def _build_detailed_analysis(language: str, static_insights: dict[str, Any], code: str) -> str:
-    """Build detailed analysis for the code."""
+    """Build detailed analysis for the code.
+
+    Constructs comprehensive code explanation including complexity, function count,
+    imports, key functions, and AI-powered analysis insights.
+
+    Args:
+        language: Programming language identifier
+        static_insights: Dictionary containing code structure analysis results
+        code: Source code string for AI analysis
+
+    Returns:
+        Formatted detailed analysis string with all insights and recommendations
+
+    """
     explanation = "Detailed Analysis:\n"
     explanation += f"- Language: {language}\n"
     explanation += f"- Code complexity: {static_insights.get('complexity', 'unknown')}\n"
@@ -1246,7 +1762,19 @@ def _build_detailed_analysis(language: str, static_insights: dict[str, Any], cod
 
 
 def _build_summary_analysis(language: str, static_insights: dict[str, Any]) -> str:
-    """Build summary analysis for the code."""
+    """Build summary analysis for the code.
+
+    Constructs condensed code explanation including complexity, main purpose,
+    key patterns, and security considerations.
+
+    Args:
+        language: Programming language identifier
+        static_insights: Dictionary containing code structure analysis results
+
+    Returns:
+        Formatted summary analysis string with high-level insights
+
+    """
     explanation = "Summary:\n"
     explanation += f"- Language: {language}\n"
     explanation += f"- Complexity: {static_insights.get('complexity', 'unknown')}\n"
@@ -1264,7 +1792,19 @@ def _build_summary_analysis(language: str, static_insights: dict[str, Any]) -> s
 
 
 def _build_basic_analysis(language: str, static_insights: dict[str, Any], line_count: int) -> str:
-    """Build basic analysis for the code."""
+    """Build basic analysis for the code.
+
+    Constructs minimal code explanation including basic line count and main purpose.
+
+    Args:
+        language: Programming language identifier
+        static_insights: Dictionary containing code structure analysis results
+        line_count: Count of non-comment, non-blank code lines
+
+    Returns:
+        Formatted basic analysis string with essential information only
+
+    """
     explanation = f"Basic Analysis: {line_count} lines of {language} code\n"
     if static_insights.get("main_purpose"):
         explanation += f"Purpose: {static_insights['main_purpose']}\n"
@@ -1272,7 +1812,18 @@ def _build_basic_analysis(language: str, static_insights: dict[str, Any], line_c
 
 
 def retrieve_few_shot_examples(num_examples: int = 3) -> str:
-    """Retrieve few-shot examples for the AI model."""
+    """Retrieve few-shot examples for the AI model.
+
+    Provides example patterns for licensing bypass, trial period circumvention, and
+    online activation defeat to teach AI models relevant protection cracking techniques.
+
+    Args:
+        num_examples: Number of examples to return, limited to available examples
+
+    Returns:
+        Concatenated string containing requested few-shot examples for protection analysis
+
+    """
     # These examples teach the AI model common patterns for cracking protection schemes
     examples = [
         """
@@ -1332,7 +1883,19 @@ This patch bypasses the online activation check by forcing a successful response
 
 
 def _detect_code_language(code: str) -> str:
-    """Detect programming language from code."""
+    """Detect programming language from code.
+
+    Uses heuristic-based keyword detection to identify programming language from code
+    snippet. Supports C, C++, Python, JavaScript, Assembly, Java, and C#.
+
+    Args:
+        code: Source code string to analyze for language detection
+
+    Returns:
+        str: Language identifier "c", "cpp", "python", "javascript", "assembly",
+        "java", "csharp", or "unknown" if language cannot be determined
+
+    """
     # Simple heuristic-based detection
     if any(keyword in code for keyword in [INCLUDE_KEYWORD, "void main", "printf"]):
         return "c"
@@ -1352,7 +1915,20 @@ def _detect_code_language(code: str) -> str:
 
 
 def _analyze_code_structure(code: str, language: str) -> dict[str, Any]:
-    """Analyze code structure and extract insights."""
+    """Analyze code structure and extract insights.
+
+    Performs language-specific code structure analysis to extract complexity metrics,
+    function information, import statements, and security-relevant patterns.
+
+    Args:
+        code: Source code string to analyze
+        language: Programming language identifier for targeted analysis
+
+    Returns:
+        Dictionary containing complexity, function_count, control_structures, imports,
+        functions, key_patterns, security_notes, and main_purpose
+
+    """
     lines = code.split("\n")
     result = _initialize_analysis_result()
 
@@ -1374,7 +1950,14 @@ def _analyze_code_structure(code: str, language: str) -> dict[str, Any]:
 
 
 def _initialize_analysis_result() -> dict[str, Any]:
-    """Initialize the result dictionary for code analysis."""
+    """Initialize the result dictionary for code analysis.
+
+    Creates initial dictionary structure with default values for code analysis results.
+
+    Returns:
+        Dictionary with initialized fields for code analysis results
+
+    """
     return {
         "complexity": "low",
         "function_count": 0,
@@ -1388,7 +1971,16 @@ def _initialize_analysis_result() -> dict[str, Any]:
 
 
 def _analyze_python_code(lines: list[str], result: dict[str, Any]) -> None:
-    """Analyze Python code structure."""
+    """Analyze Python code structure.
+
+    Extracts Python-specific code elements including function definitions, import
+    statements, and determines main purpose based on detected libraries.
+
+    Args:
+        lines: List of code lines from Python source file
+        result: Mutable dictionary to populate with analysis results
+
+    """
     result["functions"] = [line.strip() for line in lines if line.strip().startswith("def ")]
     result["function_count"] = len(result["functions"])
     result["imports"] = [line.strip() for line in lines if line.strip().startswith((IMPORT_KEYWORD, "from "))]
@@ -1402,7 +1994,16 @@ def _analyze_python_code(lines: list[str], result: dict[str, Any]) -> None:
 
 
 def _analyze_c_cpp_code(lines: list[str], result: dict[str, Any]) -> None:
-    """Analyze C/C++ code structure."""
+    """Analyze C/C++ code structure.
+
+    Extracts C/C++ code elements including function declarations, include statements,
+    and identifies unsafe string function usage and memory management patterns.
+
+    Args:
+        lines: List of code lines from C/C++ source file
+        result: Mutable dictionary to populate with analysis results
+
+    """
     result["functions"] = [
         line.strip() for line in lines if "(" in line and ")" in line and any(ret in line for ret in ["int ", "void ", "char ", "float "])
     ]
@@ -1416,7 +2017,16 @@ def _analyze_c_cpp_code(lines: list[str], result: dict[str, Any]) -> None:
 
 
 def _analyze_assembly_code(lines: list[str], result: dict[str, Any]) -> None:
-    """Analyze assembly code structure."""
+    """Analyze assembly code structure.
+
+    Extracts assembly code patterns including system calls, function calls, and
+    stack operations to identify code behavior and functionality.
+
+    Args:
+        lines: List of code lines from assembly source file
+        result: Mutable dictionary to populate with analysis results
+
+    """
     result["main_purpose"] = "Low-level system code"
     asm_lines = [line.strip().lower() for line in lines if line.strip() and not line.strip().startswith(";")]
 
@@ -1429,7 +2039,17 @@ def _analyze_assembly_code(lines: list[str], result: dict[str, Any]) -> None:
 
 
 def _count_control_structures(code: str, language: str, result: dict[str, Any]) -> None:
-    """Count control structures in the code."""
+    """Count control structures in the code.
+
+    Counts language-specific control flow structures to assess code complexity and
+    branching patterns.
+
+    Args:
+        code: Source code string to analyze
+        language: Programming language identifier for targeted keyword detection
+        result: Mutable dictionary to populate with control structure count
+
+    """
     control_keywords = ["if", "else", "while", "for", "switch", "case", "try", "catch"]
     if language == "assembly":
         control_keywords = ["jmp", "je", "jne", "jz", "jnz", "call", "ret"]
@@ -1438,7 +2058,16 @@ def _count_control_structures(code: str, language: str, result: dict[str, Any]) 
 
 
 def _determine_complexity(lines: list[str], result: dict[str, Any]) -> None:
-    """Determine the complexity of the code."""
+    """Determine the complexity of the code.
+
+    Assesses code complexity based on line count and control structure density to
+    classify code as low, medium, or high complexity.
+
+    Args:
+        lines: List of code lines to analyze
+        result: Mutable dictionary containing control_structures count for complexity calculation
+
+    """
     code_lines = len([line for line in lines if line.strip() and not line.strip().startswith(("#", "//", "/*"))])
     if code_lines > 100 or result["control_structures"] > 15:
         result["complexity"] = "high"
@@ -1447,7 +2076,19 @@ def _determine_complexity(lines: list[str], result: dict[str, Any]) -> None:
 
 
 def _get_ai_code_explanation(code: str, language: str) -> str:
-    """Get AI-powered code explanation."""
+    """Get AI-powered code explanation.
+
+    Sends code to LLM backend for AI-generated explanation of code functionality,
+    algorithms, and notable patterns at a high level.
+
+    Args:
+        code: Source code string to explain
+        language: Programming language identifier for context
+
+    Returns:
+        LLM-generated explanation string or empty string if LLM unavailable or fails
+
+    """
     try:
         from .llm_backends import LLMManager, LLMMessage
 

@@ -72,7 +72,14 @@ class ModelHealth:
     total_requests: int = 0
 
     def get_success_rate(self, window_hours: int = 24) -> float:
-        """Get success rate within a time window."""
+        """Get success rate within a time window.
+
+        Args:
+            window_hours: Number of hours to consider for success rate calculation.
+
+        Returns:
+            Success rate as a float between 0.0 and 1.0.
+        """
         cutoff = datetime.now() - timedelta(hours=window_hours)
 
         recent_successes = self.success_count
@@ -85,7 +92,11 @@ class ModelHealth:
         return recent_successes / total if total > 0 else 1.0
 
     def should_retry(self) -> bool:
-        """Check if the model should be retried based on circuit breaker logic."""
+        """Check if the model should be retried based on circuit breaker logic.
+
+        Returns:
+            True if the model should be retried, False otherwise.
+        """
         if not self.is_circuit_open:
             return True
 
@@ -144,7 +155,11 @@ class FallbackChain:
         logger.info("Initialized fallback chain '%s' with %d models", chain_id, len(model_configs))
 
     def _register_models(self) -> None:
-        """Register all models in the chain with the LLM manager."""
+        """Register all models in the chain with the LLM manager.
+
+        Registers each model configuration with the global LLM manager. Non-fatal
+        errors during registration are logged but do not stop the chain initialization.
+        """
         for model_id, config in self.model_configs:
             try:
                 self.llm_manager.register_llm(model_id, config)
@@ -153,7 +168,14 @@ class FallbackChain:
                 logger.warning("Failed to register model %s: %s", model_id, e)
 
     def _classify_error(self, error: Exception) -> FailureType:
-        """Classify the type of error for appropriate handling."""
+        """Classify the type of error for appropriate handling.
+
+        Args:
+            error: Exception to classify.
+
+        Returns:
+            FailureType classification for the exception.
+        """
         error_str = str(error).lower()
 
         # Rate limiting
@@ -175,7 +197,14 @@ class FallbackChain:
         return FailureType.UNKNOWN
 
     def _update_health_stats(self, model_id: str, success: bool, response_time: float = 0.0, error: Exception | None = None) -> None:
-        """Update health statistics for a model."""
+        """Update health statistics for a model.
+
+        Args:
+            model_id: The model identifier to update statistics for.
+            success: Whether the request was successful.
+            response_time: Time taken for the request in seconds.
+            error: Exception object if the request failed.
+        """
         with self.lock:
             health = self.health_stats[model_id]
             health.total_requests += 1
@@ -217,7 +246,12 @@ class FallbackChain:
                         logger.warning("Circuit breaker opened for model %s after %d failures", model_id, recent_failures)
 
     def _get_ordered_models(self) -> list[tuple[str, LLMConfig]]:
-        """Get models ordered by current performance if adaptive ordering is enabled."""
+        """Get models ordered by current performance if adaptive ordering is enabled.
+
+        Returns:
+            List of (model_id, config) tuples sorted by health metrics if adaptive
+            ordering is enabled, otherwise returns original configuration order.
+        """
         if not self.enable_adaptive_ordering:
             return self.model_configs
 
@@ -247,7 +281,19 @@ class FallbackChain:
         return available_models
 
     async def chat_async(self, messages: list[LLMMessage], tools: list[dict[str, Any]] | None = None) -> LLMResponse | None:
-        """Async version of chat with fallback logic."""
+        """Async version of chat with fallback logic.
+
+        Args:
+            messages: List of chat messages to send to the LLM.
+            tools: Optional list of tools available for function calling.
+
+        Returns:
+            LLMResponse if any model succeeds, None if all models fail.
+
+        Raises:
+            RuntimeError: If LLM returns None response (caught internally).
+
+        """
         ordered_models = self._get_ordered_models()
 
         if not ordered_models:
@@ -309,7 +355,15 @@ class FallbackChain:
         return None
 
     def chat(self, messages: list[LLMMessage], tools: list[dict[str, Any]] | None = None) -> LLMResponse | None:
-        """Chat with fallback logic synchronously."""
+        """Chat with fallback logic synchronously.
+
+        Args:
+            messages: List of chat messages to send to the LLM.
+            tools: Optional list of tools available for function calling.
+
+        Returns:
+            LLMResponse if any model succeeds, None if all models fail.
+        """
         try:
             # Run async version in event loop
             loop = asyncio.new_event_loop()
@@ -323,7 +377,12 @@ class FallbackChain:
             return None
 
     def get_health_report(self) -> dict[str, Any]:
-        """Get a comprehensive health report for the chain."""
+        """Get a comprehensive health report for the chain.
+
+        Returns:
+            Dictionary containing chain health metrics including success rates,
+            failure counts, response times, and circuit breaker status for all models.
+        """
         with self.lock:
             report: dict[str, Any] = {
                 "chain_id": self.chain_id,
@@ -351,7 +410,11 @@ class FallbackChain:
             return report
 
     def reset_health_stats(self, model_id: str | None = None) -> None:
-        """Reset health statistics for specific model or all models."""
+        """Reset health statistics for specific model or all models.
+
+        Args:
+            model_id: Specific model ID to reset, or None to reset all models in the chain.
+        """
         with self.lock:
             if model_id:
                 if model_id in self.health_stats:
@@ -367,7 +430,11 @@ class FallbackManager:
     """Manages multiple fallback chains for different use cases."""
 
     def __init__(self) -> None:
-        """Initialize the fallback manager."""
+        """Initialize the fallback manager.
+
+        Creates a new instance with no chains registered. Use create_chain() or
+        create_chain_from_config() to add fallback chains.
+        """
         self.chains: dict[str, FallbackChain] = {}
         self.default_chain_id: str | None = None
         self.lock = threading.RLock()
@@ -396,6 +463,8 @@ class FallbackManager:
         Returns:
             Created FallbackChain instance
 
+        Raises:
+            ValueError: If a chain with the given ID already exists.
         """
         with self.lock:
             if chain_id in self.chains:
@@ -419,11 +488,25 @@ class FallbackManager:
             return chain
 
     def get_chain(self, chain_id: str) -> FallbackChain | None:
-        """Get a fallback chain by ID."""
+        """Get a fallback chain by ID.
+
+        Args:
+            chain_id: The chain identifier to retrieve.
+
+        Returns:
+            The FallbackChain instance if found, None otherwise.
+        """
         return self.chains.get(chain_id)
 
     def set_default_chain(self, chain_id: str) -> None:
-        """Set the default fallback chain."""
+        """Set the default fallback chain.
+
+        Args:
+            chain_id: The chain identifier to set as default.
+
+        Raises:
+            ValueError: If the specified chain does not exist.
+        """
         if chain_id not in self.chains:
             raise ValueError(f"Chain {chain_id} does not exist")
 
@@ -466,7 +549,16 @@ class FallbackManager:
         chain_id: str | None = None,
         tools: list[dict[str, Any]] | None = None,
     ) -> LLMResponse | None:
-        """Async chat using fallback chains."""
+        """Async chat using fallback chains.
+
+        Args:
+            messages: Chat messages to send to the LLM.
+            chain_id: Chain to use (uses default if None).
+            tools: Available tools for function calling.
+
+        Returns:
+            LLM response or None if all models fail.
+        """
         target_chain_id = chain_id or self.default_chain_id
 
         if not target_chain_id:
@@ -481,11 +573,19 @@ class FallbackManager:
         return await chain.chat_async(messages, tools)
 
     def list_chains(self) -> list[str]:
-        """List all available chain IDs."""
+        """List all available chain IDs.
+
+        Returns:
+            List of all registered chain identifiers.
+        """
         return list(self.chains.keys())
 
     def get_global_health_report(self) -> dict[str, Any]:
-        """Get health report for all chains."""
+        """Get health report for all chains.
+
+        Returns:
+            Dictionary containing health metrics for all registered chains and their models.
+        """
         report: dict[str, Any] = {
             "total_chains": len(self.chains),
             "default_chain": self.default_chain_id,
@@ -577,7 +677,12 @@ class FallbackManager:
         )
 
     def export_configuration(self) -> dict[str, Any]:
-        """Export all chains configuration to a dictionary."""
+        """Export all chains configuration to a dictionary.
+
+        Returns:
+            Dictionary containing all chain configurations that can be saved
+            and later imported using import_configuration().
+        """
         config: dict[str, Any] = {
             "version": "1.0",
             "default_chain": self.default_chain_id,
@@ -624,7 +729,6 @@ class FallbackManager:
         Args:
             config: Configuration dictionary
             replace: Whether to replace existing chains
-
         """
         if replace:
             self.chains.clear()
@@ -648,7 +752,11 @@ _FALLBACK_MANAGER = None
 
 
 def get_fallback_manager() -> FallbackManager:
-    """Get the global fallback manager instance."""
+    """Get the global fallback manager instance.
+
+    Returns:
+        The global FallbackManager instance, creating it if necessary.
+    """
     global _FALLBACK_MANAGER
     if _FALLBACK_MANAGER is None:
         _FALLBACK_MANAGER = FallbackManager()

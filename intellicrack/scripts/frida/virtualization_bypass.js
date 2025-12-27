@@ -428,7 +428,7 @@ const virtualizationBypass = {
                                 Math.min(this.bufferSize, 1024)
                             );
                             const biosString = [...new Uint8Array(biosData)]
-                                .map(b => String.fromCharCode(b))
+                                .map(b => String.fromCodePoint(b))
                                 .join('');
 
                             // Check for VirtualBox BIOS signatures
@@ -450,7 +450,7 @@ const virtualizationBypass = {
                                 ) {
                                     this.firmwareTableBuffer
                                         .add(i)
-                                        .writeU8(spoofedBios.charCodeAt(i));
+                                        .writeU8(spoofedBios.codePointAt(i));
                                 }
 
                                 send({
@@ -671,7 +671,7 @@ const virtualizationBypass = {
         const getSystemInfo = Module.findExportByName('kernel32.dll', 'GetSystemInfo');
         if (getSystemInfo) {
             Interceptor.attach(getSystemInfo, {
-                onLeave(retval) {
+                onLeave(_retval) {
                     const systemInfo = this.context.rcx;
                     if (systemInfo && !systemInfo.isNull()) {
                         send({
@@ -1590,7 +1590,7 @@ const virtualizationBypass = {
                 onEnter(args) {
                     this.lpPerformanceCount = args[0];
                 },
-                onLeave(retval) {
+                onLeave(_retval) {
                     if (this.lpPerformanceCount && !this.lpPerformanceCount.isNull()) {
                         // Normalize timing to prevent VM detection by adjusting to native CPU frequency
                         const normalizedTime = baseTime + (Date.now() - baseTime) * 2.4;
@@ -1654,7 +1654,7 @@ const virtualizationBypass = {
                     this.performanceCounter = args[0];
                     this.performanceFrequency = args[1];
                 },
-                onLeave(retval) {
+                onLeave(_retval) {
                     if (this.performanceCounter && !this.performanceCounter.isNull()) {
                         // Provide consistent performance counter values scaled to high-frequency range
                         const normalizedCounter = Date.now() * 3000;
@@ -2459,9 +2459,8 @@ const virtualizationBypass = {
                         try {
                             // Hook CPUID instruction (0F A2)
                             Interceptor.attach(address, {
-                                onEnter(args) {
-                                    const { eax } = this.context;
-                                    const _ecx = this.context.ecx;
+                                onEnter(_args) {
+                                    const { eax, ecx: _ecx } = this.context;
 
                                     // Hypervisor detection leaf
                                     if (eax === 0x40_00_00_00) {
@@ -2478,7 +2477,7 @@ const virtualizationBypass = {
                                         this.spoofFeatures = true;
                                     }
                                 },
-                                onLeave(retval) {
+                                onLeave(_retval) {
                                     if (this.spoofHypervisor) {
                                         // Clear hypervisor signature
                                         this.context.eax = 0;
@@ -2539,7 +2538,7 @@ const virtualizationBypass = {
                                         });
                                         this.idtAddress = args[0];
                                     },
-                                    onLeave(retval) {
+                                    onLeave(_retval) {
                                         if (this.idtAddress && !this.idtAddress.isNull()) {
                                             // Spoof IDT base to look like bare metal
                                             // Typical bare metal IDT base: 0x80xxxxxx
@@ -2603,7 +2602,7 @@ const virtualizationBypass = {
                                         });
                                         this.ldtAddress = args[0];
                                     },
-                                    onLeave(retval) {
+                                    onLeave(_retval) {
                                         if (this.ldtAddress && !this.ldtAddress.isNull()) {
                                             // Spoof LDT selector to 0 (typical for bare metal)
                                             this.ldtAddress.writeU16(0);
@@ -2653,7 +2652,7 @@ const virtualizationBypass = {
                 onEnter(args) {
                     this.systemTimePtr = args[0];
                 },
-                onLeave(retval) {
+                onLeave(_retval) {
                     if (this.systemTimePtr && !this.systemTimePtr.isNull()) {
                         // Normalize timing to prevent VMEXIT detection
                         const elapsed = Date.now() * 10_000 - baseSystemTime;
@@ -2738,7 +2737,7 @@ const virtualizationBypass = {
         const httpSendRequest = Module.findExportByName('winhttp.dll', 'WinHttpSendRequest');
         if (httpSendRequest) {
             Interceptor.attach(httpSendRequest, {
-                onEnter(args) {
+                onEnter(_args) {
                     // Block requests to AWS metadata endpoints
                     this.blockAwsRequest = true;
                 },
@@ -2928,7 +2927,7 @@ const virtualizationBypass = {
                     onMatch: (address, _size) => {
                         try {
                             Interceptor.attach(address, {
-                                onEnter: args => {
+                                onEnter: _args => {
                                     send({
                                         type: 'bypass',
                                         target: 'vm_bypass',
@@ -2936,7 +2935,7 @@ const virtualizationBypass = {
                                         address: address.toString(),
                                     });
                                 },
-                                onLeave(retval) {
+                                onLeave(_retval) {
                                     // Normalize TSC values to prevent timing analysis
                                     const elapsed = Date.now() * 1_000_000 - rdtscBase;
                                     const normalizedTsc = rdtscBase + elapsed * 2.4; // Scale to 2.4GHz CPU frequency
@@ -2968,7 +2967,7 @@ const virtualizationBypass = {
                     onMatch: (address, _size) => {
                         try {
                             Interceptor.attach(address, {
-                                onLeave(retval) {
+                                onLeave(_retval) {
                                     // Normalize RDTSCP values
                                     const elapsed = Date.now() * 1_000_000 - rdtscBase;
                                     const normalizedTsc = rdtscBase + elapsed * 2.4;
@@ -3013,7 +3012,7 @@ const virtualizationBypass = {
                     onMatch: (address, _size) => {
                         try {
                             Interceptor.attach(address, {
-                                onEnter(args) {
+                                onEnter(_args) {
                                     send({
                                         type: 'bypass',
                                         target: 'vm_bypass',
@@ -3021,7 +3020,7 @@ const virtualizationBypass = {
                                     });
                                     this.blockVmxon = true;
                                 },
-                                onLeave(retval) {
+                                onLeave(_retval) {
                                     if (this.blockVmxon) {
                                         // Set carry flag to indicate failure
                                         this.context.eflags |= 1;
@@ -3272,7 +3271,7 @@ const virtualizationBypass = {
         const dhcpRequestParams = Module.findExportByName('dhcpcsvc.dll', 'DhcpRequestParams');
         if (dhcpRequestParams) {
             Interceptor.attach(dhcpRequestParams, {
-                onEnter: args => {
+                onEnter: _args => {
                     send({
                         type: 'bypass',
                         target: 'vm_bypass',
@@ -3560,14 +3559,14 @@ const virtualizationBypass = {
                     onMatch: (address, _size) => {
                         try {
                             Interceptor.attach(address, {
-                                onEnter: args => {
+                                onEnter: _args => {
                                     send({
                                         type: 'bypass',
                                         target: 'vm_bypass',
                                         action: 'tsx_xbegin_intercepted',
                                     });
                                 },
-                                onLeave(retval) {
+                                onLeave(_retval) {
                                     // Force transaction abort to hide TSX support
                                     this.context.eax = 0xFF_FF_FF_FF; // Transaction abort
                                 },
@@ -3658,7 +3657,7 @@ const virtualizationBypass = {
                 action: 'active_protection_summary_start',
             });
 
-            const { config } = this;
+            const { config, hooksInstalled } = this;
             if (config.vmDetection.enabled) {
                 send({
                     type: 'summary',
@@ -3763,7 +3762,7 @@ const virtualizationBypass = {
                 target: 'vm_bypass',
                 action: 'installation_complete',
                 version: '3.0.0',
-                total_hooks: Object.keys(this.hooksInstalled).length,
+                total_hooks: Object.keys(hooksInstalled).length,
                 new_features: [
                     'container_detection_bypass',
                     'wsl_detection_prevention',
@@ -3836,7 +3835,7 @@ const virtualizationBypass = {
         // Analyze memory access patterns for VM detection
         Process.setExceptionHandler(details => {
             if (details.type === 'access-violation') {
-                const { address } = details;
+                const { address, memory } = details;
                 // Check if this is a VM-specific memory region
                 const vmRegions = [
                     {
@@ -3860,7 +3859,7 @@ const virtualizationBypass = {
                     if (address.compare(region.start) >= 0 && address.compare(region.end) <= 0) {
                         // Redirect to legitimate memory
                         const realMemory = Memory.alloc(Process.pageSize);
-                        details.memory.address = realMemory;
+                        memory.address = realMemory;
                         return true; // Continue execution
                     }
                 }
@@ -3891,9 +3890,7 @@ const virtualizationBypass = {
 
         // Hook CPUID instruction execution
         const _cpuidHook = function (context) {
-            const { eax } = context;
-            const { ecx } = context;
-            const key = `${eax}:${ecx}`;
+            const key = `${context.eax}:${context.ecx}`;
 
             if (this.instructionEmulator.cpuidCache.has(key)) {
                 const cached = this.instructionEmulator.cpuidCache.get(key);
@@ -3903,7 +3900,7 @@ const virtualizationBypass = {
                 context.edx = cached.edx;
             } else {
                 // Emulate real hardware response
-                switch (eax) {
+                switch (context.eax) {
                     case 0x1: {
                         // Processor Info
                         context.ecx &= ~(1 << 31); // Clear hypervisor bit
@@ -3922,14 +3919,14 @@ const virtualizationBypass = {
                     case 0x80_00_00_04: {
                         // Return genuine Intel/AMD string
                         const brand = 'Intel(R) Core(TM) i9-12900K';
-                        const offset = (eax - 0x80_00_00_02) * 16;
-                        const chunk = brand.substr(offset, 16);
+                        const offset = (context.eax - 0x80_00_00_02) * 16;
+                        const chunk = brand.slice(offset, offset + 16);
                         // Write to registers
                         for (let i = 0; i < 4; i++) {
-                            const char4 = chunk.substr(i * 4, 4);
+                            const char4 = chunk.slice(i * 4, i * 4 + 4);
                             let value = 0;
                             for (let j = 0; j < 4; j++) {
-                                value |= (char4.charCodeAt(j) || 0) << (j * 8);
+                                value |= (char4.codePointAt(j) || 0) << (j * 8);
                             }
                             switch (i) {
                                 case 0: {
@@ -3948,8 +3945,14 @@ const virtualizationBypass = {
                                     context.edx = value;
                                     break;
                                 }
+                                default: {
+                                    break;
+                                }
                             }
                         }
+                        break;
+                    }
+                    default: {
                         break;
                     }
                 }
@@ -4091,7 +4094,7 @@ const virtualizationBypass = {
                         instructionSize: size,
                     });
                     Interceptor.attach(address, {
-                        onEnter: function (args) {
+                        onEnter: function (_args) {
                             // Emulate VMREAD to hide nested virtualization
                             const field = this.context.rax;
                             const value = this.nestedVirtualization.vmcsRegions.get(field) || 0;
@@ -4137,7 +4140,7 @@ const virtualizationBypass = {
                                 module: module.name,
                             });
                             Interceptor.attach(address, {
-                                onEnter: function (args) {
+                                onEnter: function (_args) {
                                     const exitReason = this.context.rax & 0xFF_FF;
                                     const count
                                         = this.nestedVirtualization.vmexitReasons.get(exitReason)
@@ -4412,18 +4415,16 @@ const virtualizationBypass = {
                                     `i-${Math.random().toString(36).slice(2, 19)}`
                                 );
                                 this.cloudFingerprints.aws.instanceId = 'spoofed';
-                            }
-                            // Azure VM ID
-                            else if (this.valueName.includes('vmId')) {
+                            } else if (this.valueName.includes('vmId')) {
+                                // Azure VM ID
                                 const spoofedId = Array.from({ length: 32 })
                                     .fill(0)
                                     .map(() => Math.floor(Math.random() * 16).toString(16))
                                     .join('');
                                 this.dataBuffer.writeUtf16String(spoofedId);
                                 this.cloudFingerprints.azure.vmId = 'spoofed';
-                            }
-                            // GCP instance ID
-                            else if (this.valueName.includes('instance-id')) {
+                            } else if (this.valueName.includes('instance-id')) {
+                                // GCP instance ID
                                 this.dataBuffer.writeUtf16String(
                                     Math.floor(Math.random() * 1e15).toString()
                                 );
@@ -4474,39 +4475,44 @@ const virtualizationBypass = {
             }
         };
 
-        // Mask cloud-specific hardware characteristics
-        const maskCloudHardware = () => {
-            // Cloud providers use specific CPU models
-            const _cloudCpuModels = [
-                'Intel(R) Xeon(R) Platinum',
-                'Intel(R) Xeon(R) Gold',
-                'AMD EPYC',
-                'Ampere Altra',
-            ];
+        // Mask cloud-specific hardware characteristics - inline execution
+        // Cloud providers use specific CPU models
+        const cloudCpuModels = [
+            'Intel(R) Xeon(R) Platinum',
+            'Intel(R) Xeon(R) Gold',
+            'AMD EPYC',
+            'Ampere Altra',
+        ];
 
-            // Hook WMI queries for processor information
-            const sysInfo = Module.findExportByName('kernel32.dll', 'GetSystemInfo');
-            if (sysInfo) {
-                Interceptor.attach(sysInfo, {
-                    onLeave(retval) {
-                        // Modify processor architecture to appear as desktop
-                        const sysInfoStruct = this.context.rcx;
-                        if (sysInfoStruct) {
-                            // dwNumberOfProcessors - limit to desktop range
-                            const numProcs = sysInfoStruct.add(32).readU32();
-                            if (numProcs > 16) {
-                                sysInfoStruct.add(32).writeU32(8); // Typical desktop
-                            }
+        // Hook WMI queries for processor information
+        const sysInfo = Module.findExportByName('kernel32.dll', 'GetSystemInfo');
+        if (sysInfo) {
+            Interceptor.attach(sysInfo, {
+                onLeave(_retval) {
+                    // Modify processor architecture to appear as desktop
+                    const sysInfoStruct = this.context.rcx;
+                    if (sysInfoStruct) {
+                        // dwNumberOfProcessors - limit to desktop range
+                        const numProcs = sysInfoStruct.add(32).readU32();
+                        if (numProcs > 16) {
+                            sysInfoStruct.add(32).writeU32(8); // Typical desktop
+                            send({
+                                type: 'cloud',
+                                target: 'hardware',
+                                action: 'masked_processor_count',
+                                original: numProcs,
+                                spoofed: 8,
+                                cloud_cpu_patterns: cloudCpuModels.length,
+                            });
                         }
-                    },
-                });
-            }
-        };
+                    }
+                },
+            });
+        }
 
         blockMetadataService();
         spoofInstanceIds();
         hideCloudServices();
-        maskCloudHardware();
 
         this.hooksInstalled.cloud_fingerprinting = true;
     },
@@ -4609,7 +4615,7 @@ const virtualizationBypass = {
             timingSensitiveInstructions.forEach(inst => {
                 Process.enumerateModules().forEach(module => {
                     Memory.scan(module.base, module.size, inst.pattern, {
-                        onMatch: function (address, size) {
+                        onMatch: function (address, _size) {
                             // Track timing of these instructions
                             const timing
                                 = this.timingCalibration.instructionTimings.get(inst.name) || [];
@@ -4618,7 +4624,7 @@ const virtualizationBypass = {
 
                             // Inject timing normalization
                             Interceptor.attach(address, {
-                                onLeave: function (retval) {
+                                onLeave: function (_retval) {
                                     // Normalize timing to hide VM characteristics
                                     if (inst.name === 'RDTSC' || inst.name === 'RDTSCP') {
                                         const adjustment = this.timingCalibration.cpuFrequency * 10;
@@ -4691,6 +4697,9 @@ const virtualizationBypass = {
                         result.ebx = 0;
                         result.ecx = 0;
                         result.edx = 0;
+                        break;
+                    }
+                    default: {
                         break;
                     }
                 }
@@ -4828,12 +4837,12 @@ const virtualizationBypass = {
             if (ntoskrnl) {
                 kppPatterns.forEach(kpp => {
                     Memory.scan(ntoskrnl.base, ntoskrnl.size, kpp.pattern, {
-                        onMatch: function (address, size) {
+                        onMatch: function (address, _size) {
                             this.patchGuardBypass.kppRoutines.set(kpp.name, address);
 
                             // Hook the routine to bypass checks
                             Interceptor.attach(address, {
-                                onEnter: args => {
+                                onEnter: _args => {
                                     // Log PatchGuard activity
                                     send({
                                         type: 'patchguard',
@@ -5007,9 +5016,9 @@ const virtualizationBypass = {
                     || module.name.toLowerCase().includes('vmm')
                 ) {
                     Memory.scan(module.base, module.size, vmExitPattern, {
-                        onMatch: function (address, size) {
+                        onMatch: function (address, _size) {
                             Interceptor.attach(address, {
-                                onEnter: function (args) {
+                                onEnter: function (_args) {
                                     // Read VM exit reason
                                     const exitReason = this.context.rax & 0xFF_FF;
                                     const exitQualification = this.context.rbx;
@@ -5047,6 +5056,9 @@ const virtualizationBypass = {
                                             // EPT_VIOLATION
                                             // Handle EPT violations
                                             this.handleEptViolation(exitQualification);
+                                            break;
+                                        }
+                                        default: {
                                             break;
                                         }
                                     }
@@ -5297,7 +5309,7 @@ const virtualizationBypass = {
             const miniDumpWriteDump = Module.findExportByName('dbghelp.dll', 'MiniDumpWriteDump');
             if (miniDumpWriteDump) {
                 Interceptor.attach(miniDumpWriteDump, {
-                    onEnter: function (args) {
+                    onEnter: function (_args) {
                         // Scramble sensitive memory regions before dump
                         this.memoryProtection.protectedRegions.forEach((protection, region) => {
                             // XOR scramble the memory
@@ -5316,7 +5328,7 @@ const virtualizationBypass = {
                             });
                         });
                     }.bind(this),
-                    onLeave: function (retval) {
+                    onLeave: function (_retval) {
                         // Restore scrambled memory
                         this.memoryProtection.protectedRegions.forEach((protection, region) => {
                             // Restore from shadow

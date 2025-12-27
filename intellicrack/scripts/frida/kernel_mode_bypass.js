@@ -303,22 +303,19 @@ const KernelModeBypass = {
                 },
 
                 spoofHandleInformation() {
-                    // Filter out suspicious handles
                     if (this.systemInformationLength >= 8) {
                         const handleInfo = this.systemInformation;
 
                         if (this.systemInformationClass === 16) {
-                            // SYSTEM_HANDLE_INFORMATION
-                            var numberOfHandles = handleInfo.readU32();
-                            var handles = handleInfo.add(4);
+                            const numberOfHandles = handleInfo.readU32();
+                            const handles = handleInfo.add(4);
 
-                            this.filterSuspiciousHandles(handles, numberOfHandles, 16); // 16 bytes per handle
+                            this.filterSuspiciousHandles(handles, numberOfHandles, 16);
                         } else {
-                            // SYSTEM_EXTENDED_HANDLE_INFORMATION
-                            var numberOfHandles = handleInfo.readPointer().toInt32();
-                            var handles = handleInfo.add(8);
+                            const numberOfHandles = handleInfo.readPointer().toInt32();
+                            const handles = handleInfo.add(8);
 
-                            this.filterSuspiciousHandles(handles, numberOfHandles, 40); // 40 bytes per extended handle
+                            this.filterSuspiciousHandles(handles, numberOfHandles, 40);
                         }
                     }
                 },
@@ -1799,9 +1796,10 @@ const KernelModeBypass = {
                 if (this.isPatchGuardTimer) {
                     const checksumRoutine = retval.readPointer();
                     if (checksumRoutine) {
-                        Memory.protect(checksumRoutine, 0x10_00, 'r-x');
-                        const decoyPage = Memory.alloc(0x10_00);
-                        Memory.copy(decoyPage, checksumRoutine, 0x10_00);
+                        const allocSize = pgContext.contextSize;
+                        Memory.protect(checksumRoutine, allocSize, 'r-x');
+                        const decoyPage = Memory.alloc(allocSize);
+                        Memory.copy(decoyPage, checksumRoutine, allocSize);
                         pgContext.decoyPages.push(decoyPage);
 
                         Interceptor.replace(
@@ -1832,6 +1830,7 @@ const KernelModeBypass = {
                         Memory.copy(symbol.address, shadowCopy, 0x10_00);
                         return true;
                     }
+                    return false;
                 });
             }
         });
@@ -2007,7 +2006,9 @@ const KernelModeBypass = {
                 this.bar.add(8).writeU32(size);
                 this.bar.add(12).writeU32(0x01);
 
-                while (this.bar.add(16).readU32() !== 0x02) {}
+                while (this.bar.add(16).readU32() !== 0x02) {
+                    /* Spin-wait for DMA read completion */
+                }
 
                 return this.bar.add(0x10_00).readByteArray(size);
             },
@@ -2020,7 +2021,9 @@ const KernelModeBypass = {
                 this.bar.add(0x10_00).writeByteArray(data);
                 this.bar.add(12).writeU32(0x03);
 
-                while (this.bar.add(16).readU32() !== 0x04) {}
+                while (this.bar.add(16).readU32() !== 0x04) {
+                    /* Spin-wait for DMA write completion */
+                }
                 return true;
             },
         };
@@ -2087,12 +2090,12 @@ const KernelModeBypass = {
                 callbacks.push({ handler, context, index: i });
 
                 const replacement = new NativeCallback(
-                    function (a1, a2, a3) {
-                        const shouldBlock = this.evaluateCallbackContext(arguments);
+                    function (...args) {
+                        const shouldBlock = this.evaluateCallbackContext(args);
                         if (shouldBlock) {
                             return 0;
                         }
-                        return handler(a1, a2, a3);
+                        return handler(...args);
                     },
                     'int',
                     ['pointer', 'pointer', 'pointer']
@@ -2466,14 +2469,14 @@ const KernelModeBypass = {
 
             const _detour = Memory.alloc(0x1_00);
             const detector = new NativeCallback(
-                function () {
+                function (...args) {
                     const caller = this.context.lr || this.context.rip;
 
                     if (this.isAnalysisTool(caller)) {
-                        return Reflect.apply(original, this, arguments);
+                        return Reflect.apply(original, this, args);
                     }
 
-                    return Reflect.apply(func, this, arguments);
+                    return Reflect.apply(func, this, args);
                 },
                 'pointer',
                 ['pointer', 'pointer', 'pointer']
@@ -2494,6 +2497,7 @@ const KernelModeBypass = {
                     if (this.isAnalysisTool(caller)) {
                         return ssdtShadow;
                     }
+                    return undefined;
                 },
             });
         }

@@ -1,5 +1,4 @@
-"""
-Comprehensive tests for DynamicResponseGenerator - Production-ready network exploitation validation.
+"""Comprehensive tests for DynamicResponseGenerator - Production-ready network exploitation validation.
 
 These tests validate real dynamic response generation capabilities for licensing protocol
 manipulation, essential for security research and license system robustness testing.
@@ -11,39 +10,99 @@ TESTING METHODOLOGY:
 - Uses real cryptographic operations and protocol compliance validation
 """
 
-import pytest
-import socket
-import struct
-import time
-import threading
-import ssl
-import os
-import sys
+from __future__ import annotations
+
+import base64
 import hashlib
-import secrets
+import hmac
 import json
-import xml.etree.ElementTree as ET
-from pathlib import Path
-from typing import List, Dict, Any, Optional, Tuple, Union
+import os
+import secrets
+import socket
+import ssl
+import struct
+import sys
+import threading
+import time
+import xml.etree.ElementTree as ET  # noqa: S405 - Required for license protocol XML testing
+import zlib
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-import base64
-import hmac
-import zlib
+from pathlib import Path
+from typing import Any, Optional, Union
+
+import pytest
+
+
+# Protocol version constants
+FLEXLM_VERSION_11 = 0x0b00
+FLEXLM_VERSION_9 = 0x0900
+FLEXLM_VERSION_14 = 0x0e00
+KMS_VERSION_6 = 0x0006
+
+# Response type constants
+FLEXLM_LICENSE_REQUEST = 0x0001
+FLEXLM_LICENSE_GRANT = 0x0002
+KMS_ACTIVATION_REQUEST = 0x0001
+KMS_ACTIVATION_RESPONSE = 0x0002
+
+# Detection and validation thresholds
+MIN_DETECTION_CONFIDENCE = 0.85
+MIN_AVG_DETECTION_ACCURACY = 0.90
+MIN_FEATURE_COUNT = 3
+MIN_RESPONSE_VARIATION_RATIO = 0.8
+MIN_TIMING_VARIATION_RATIO = 0.1
+MAX_CACHED_RESPONSE_TIME = 0.01
+MAX_DETECTION_RISK = 0.3
+MIN_COMPLIANCE_SCORE = 0.9
+
+# Cryptographic length constants
+MIN_SIGNATURE_LENGTH = 64
+MIN_ACTIVATION_ID_LENGTH = 32
+MIN_LICENSE_TOKEN_LENGTH = 64
+MIN_AUTH_TOKEN_LENGTH = 32
+MIN_CHALLENGE_RESPONSE_LENGTH = 16
+MIN_ACTIVATION_CODE_LENGTH = 20
+MIN_PID_LENGTH = 20
+MIN_CONFIRMATION_ID_LENGTH = 16
+
+# Performance benchmark constants
+BENCHMARK_NUM_REQUESTS = 1000
+MIN_THROUGHPUT_RPS = 500
+MIN_SUCCESS_RATE = 0.99
+MIN_RESPONSE_SIZE_BYTES = 50
+MAX_MEMORY_MB = 500
+
+# Concurrent test constants
+NUM_CONCURRENT_THREADS = 20
+
+# Response generation constants
+NUM_ANTI_DETECTION_SAMPLES = 10
+NUM_TIMING_SAMPLES = 5
+MAX_OLDER_VERSION_RESPONSE_SIZE = 200
+EXPECTED_REQUEST_COUNT_AFTER_RENEWAL = 2
+
+# Protocol structure size constants
+MIN_FLEXLM_RESPONSE_LENGTH = 16
+MIN_HASP_RESPONSE_LENGTH = 20
+MIN_KMS_RESPONSE_LENGTH = 32
+MIN_ACTIVATION_ID_LENGTH_SHORT = 16
+MIN_CERTIFICATE_DATA_LENGTH = 100
+
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent))
 
 try:
+    import netifaces
     import requests
-    from cryptography.hazmat.primitives import hashes, serialization
-    from cryptography.hazmat.primitives.asymmetric import rsa, padding
-    from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-    from cryptography import x509
-    from cryptography.x509.oid import NameOID
     import scapy.all as scapy
+    from cryptography import x509
+    from cryptography.hazmat.primitives import hashes, serialization
+    from cryptography.hazmat.primitives.asymmetric import padding, rsa
+    from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+    from cryptography.x509.oid import NameOID
     from scapy.layers.inet import IP, TCP, UDP
     from scapy.layers.l2 import Ether
-    import netifaces
     NETWORK_LIBS_AVAILABLE = True
 except ImportError:
     requests = None
@@ -66,14 +125,14 @@ except ImportError:
 
 try:
     from intellicrack.core.network.dynamic_response_generator import (
-        DynamicResponseGenerator,
-        ResponseContext,
-        GeneratedResponse,
-        FlexLMProtocolHandler,
-        HASPProtocolHandler,
         AdobeProtocolHandler,
+        AutodeskProtocolHandler,
+        DynamicResponseGenerator,
+        FlexLMProtocolHandler,
+        GeneratedResponse,
+        HASPProtocolHandler,
         MicrosoftKMSHandler,
-        AutodeskProtocolHandler
+        ResponseContext,
     )
     MODULE_AVAILABLE = True
 except ImportError:
@@ -116,8 +175,7 @@ class ProtocolTestVector:
 
 
 class TestDynamicResponseGenerator:
-    """
-    Comprehensive tests for DynamicResponseGenerator.
+    """Comprehensive tests for DynamicResponseGenerator.
 
     Validates sophisticated dynamic response generation capabilities for network
     exploitation scenarios involving licensing protocol manipulation.
@@ -277,26 +335,33 @@ class TestDynamicResponseGenerator:
     def real_autodesk_request(self):
         """Generate a realistic Autodesk licensing request."""
         # Autodesk AdLM request (XML-based)
+        # MD5 required for Autodesk license protocol compatibility
+        host_id = hashlib.md5(socket.gethostname().encode()).hexdigest()  # noqa: S324
+        request_id = secrets.token_hex(16)
+        timestamp_str = datetime.now().isoformat()
+        request_code = secrets.token_hex(20)
+        signature = base64.b64encode(secrets.token_bytes(64)).decode()
+
         request_xml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <AdskLicensingRequest version="2.0">
     <Header>
-        <RequestId>{secrets.token_hex(16)}</RequestId>
-        <Timestamp>{datetime.now().isoformat()}</Timestamp>
+        <RequestId>{request_id}</RequestId>
+        <Timestamp>{timestamp_str}</Timestamp>
         <Product>AutoCAD</Product>
         <Version>2024.1</Version>
         <Language>en-US</Language>
     </Header>
     <License>
         <SerialNumber>123-12345678</SerialNumber>
-        <RequestCode>{secrets.token_hex(20)}</RequestCode>
+        <RequestCode>{request_code}</RequestCode>
         <ProductKey>001M1</ProductKey>
     </License>
     <Machine>
-        <HostId>{hashlib.md5(socket.gethostname().encode()).hexdigest()}</HostId>
+        <HostId>{host_id}</HostId>
         <Platform>Windows</Platform>
         <Architecture>x64</Architecture>
     </Machine>
-    <Signature>{base64.b64encode(secrets.token_bytes(64)).decode()}</Signature>
+    <Signature>{signature}</Signature>
 </AdskLicensingRequest>"""
 
         return LicenseRequest(
@@ -362,14 +427,14 @@ class TestDynamicResponseGenerator:
 
             assert detected_protocol == expected_protocol, \
                    f"Protocol misdetection: expected {expected_protocol}, got {detected_protocol}"
-            assert confidence >= 0.85, \
+            assert confidence >= MIN_DETECTION_CONFIDENCE, \
                    f"Low detection confidence for {expected_protocol}: {confidence}"
 
             detection_accuracy.append(confidence)
 
             # Must extract sophisticated protocol features
             features = analysis['features']
-            assert len(features) > 3, f"Insufficient feature extraction for {expected_protocol}"
+            assert len(features) > MIN_FEATURE_COUNT, f"Insufficient feature extraction for {expected_protocol}"
 
             # Protocol-specific feature validation
             if expected_protocol == 'flexlm':
@@ -392,7 +457,7 @@ class TestDynamicResponseGenerator:
 
         # Overall detection quality must be high
         avg_accuracy = sum(detection_accuracy) / len(detection_accuracy)
-        assert avg_accuracy >= 0.90, f"Insufficient overall detection accuracy: {avg_accuracy:.2%}"
+        assert avg_accuracy >= MIN_AVG_DETECTION_ACCURACY, f"Insufficient overall detection accuracy: {avg_accuracy:.2%}"
 
     def test_flexlm_response_generation_with_cryptographic_validation(self, response_generator, real_flexlm_request):
         """Test FlexLM response generation with cryptographic validation."""
@@ -416,17 +481,17 @@ class TestDynamicResponseGenerator:
         raw_data = response.raw_data
 
         # Check FlexLM response structure
-        assert len(raw_data) >= 16, "Response too short for FlexLM protocol"
+        assert len(raw_data) >= MIN_FLEXLM_RESPONSE_LENGTH, "Response too short for FlexLM protocol"
 
         # Validate magic number and version
         magic = raw_data[:4]
         assert magic == b'\x00\x00\x00\x0c', "Invalid FlexLM magic number in response"
 
         version = struct.unpack('>H', raw_data[4:6])[0]
-        assert version >= 0x0b00, "Invalid FlexLM version in response"
+        assert version >= FLEXLM_VERSION_11, "Invalid FlexLM version in response"
 
         message_type = struct.unpack('>H', raw_data[6:8])[0]
-        assert message_type == 0x0002, "Expected license grant response type"
+        assert message_type == FLEXLM_LICENSE_GRANT, "Expected license grant response type"
 
         # Verify response contains license grant
         assert response.license_granted, "License not granted in response"
@@ -436,7 +501,7 @@ class TestDynamicResponseGenerator:
         # Cryptographic validation
         if 'signature' in response.metadata:
             signature = response.metadata['signature']
-            assert len(signature) >= 64, "Signature too short"
+            assert len(signature) >= MIN_SIGNATURE_LENGTH, "Signature too short"
 
             # Verify signature format (production-ready RSA/ECDSA signatures)
             assert isinstance(signature, (bytes, str)), "Invalid signature format"
@@ -457,7 +522,7 @@ class TestDynamicResponseGenerator:
 
         # HASP response structure validation
         raw_data = response.raw_data
-        assert len(raw_data) >= 20, "HASP response too short"
+        assert len(raw_data) >= MIN_HASP_RESPONSE_LENGTH, "HASP response too short"
 
         # Check HASP magic and response code
         magic = raw_data[:4]
@@ -469,7 +534,7 @@ class TestDynamicResponseGenerator:
         # Verify challenge was processed
         assert 'challenge_response' in response.metadata, "Missing challenge response"
         challenge_response = response.metadata['challenge_response']
-        assert len(challenge_response) >= 16, "Challenge response too short"
+        assert len(challenge_response) >= MIN_CHALLENGE_RESPONSE_LENGTH, "Challenge response too short"
 
         # Session ID should be assigned
         assert 'session_id' in response.metadata, "Missing session ID"
@@ -479,7 +544,7 @@ class TestDynamicResponseGenerator:
         # Verify authentication token
         assert 'auth_token' in response.metadata, "Missing authentication token"
         auth_token = response.metadata['auth_token']
-        assert len(auth_token) >= 32, "Authentication token too short"
+        assert len(auth_token) >= MIN_AUTH_TOKEN_LENGTH, "Authentication token too short"
 
     def test_adobe_response_generation_with_json_structure(self, response_generator, real_adobe_request):
         """Test Adobe response generation with proper JSON structure and signatures."""
@@ -511,16 +576,16 @@ class TestDynamicResponseGenerator:
 
         # Activation ID validation
         activation_id = response_data['activation_id']
-        assert len(activation_id) >= 32, "Activation ID too short"
+        assert len(activation_id) >= MIN_ACTIVATION_ID_LENGTH, "Activation ID too short"
         assert activation_id.replace('-', '').isalnum(), "Invalid activation ID format"
 
         # License token validation
         license_token = response_data['license_token']
-        assert len(license_token) >= 64, "License token too short"
+        assert len(license_token) >= MIN_LICENSE_TOKEN_LENGTH, "License token too short"
 
         # Signature validation
         signature = response_data['signature']
-        assert len(signature) >= 64, "Signature too short"
+        assert len(signature) >= MIN_SIGNATURE_LENGTH, "Signature too short"
 
         # Verify signature authenticity (should use proper HMAC/RSA)
         payload_to_sign = {k: v for k, v in response_data.items() if k != 'signature'}
@@ -549,17 +614,17 @@ class TestDynamicResponseGenerator:
 
         # KMS response structure validation
         raw_data = response.raw_data
-        assert len(raw_data) >= 32, "KMS response too short"
+        assert len(raw_data) >= MIN_KMS_RESPONSE_LENGTH, "KMS response too short"
 
         # Check KMS magic and version
         magic = raw_data[:4]
         assert magic == b'\x4b\x4d\x53\x00', "Invalid KMS magic in response"
 
         version = struct.unpack('<H', raw_data[4:6])[0]
-        assert version == 0x0006, "Invalid KMS version in response"
+        assert version == KMS_VERSION_6, "Invalid KMS version in response"
 
         response_type = struct.unpack('<H', raw_data[6:8])[0]
-        assert response_type == 0x0002, "Expected activation response type"
+        assert response_type == KMS_ACTIVATION_RESPONSE, "Expected activation response type"
 
         # Validate activation data
         assert 'activation_id' in response.metadata, "Missing activation ID"
@@ -567,14 +632,14 @@ class TestDynamicResponseGenerator:
         assert 'pid' in response.metadata, "Missing PID"
 
         activation_id = response.metadata['activation_id']
-        assert len(activation_id) >= 16, "Activation ID too short"
+        assert len(activation_id) >= MIN_ACTIVATION_ID_LENGTH_SHORT, "Activation ID too short"
 
         confirmation_id = response.metadata['confirmation_id']
-        assert len(confirmation_id) >= 16, "Confirmation ID too short"
+        assert len(confirmation_id) >= MIN_CONFIRMATION_ID_LENGTH, "Confirmation ID too short"
 
         # PID validation (Product ID)
         pid = response.metadata['pid']
-        assert len(pid) >= 20, "PID too short"
+        assert len(pid) >= MIN_PID_LENGTH, "PID too short"
 
     def test_autodesk_response_generation_with_xml_structure(self, response_generator, real_autodesk_request):
         """Test Autodesk response generation with proper XML structure."""
@@ -592,7 +657,7 @@ class TestDynamicResponseGenerator:
 
         # Parse XML response
         try:
-            root = ET.fromstring(response.raw_data.decode())
+            root = ET.fromstring(response.raw_data.decode())  # noqa: S314 - Testing license protocol XML
         except ET.ParseError:
             pytest.fail("Response is not valid XML")
 
@@ -614,12 +679,12 @@ class TestDynamicResponseGenerator:
 
         activation_code = response_elem.find('ActivationCode')
         assert activation_code is not None, "Missing ActivationCode"
-        assert len(activation_code.text) >= 20, "Activation code too short"
+        assert len(activation_code.text) >= MIN_ACTIVATION_CODE_LENGTH, "Activation code too short"
 
         # Signature validation
         signature = root.find('Signature')
         assert signature is not None, "Missing digital signature"
-        assert len(signature.text) >= 64, "Signature too short"
+        assert len(signature.text) >= MIN_SIGNATURE_LENGTH, "Signature too short"
 
     def test_state_management_across_multiple_requests(self, response_generator, real_flexlm_request):
         """Test state management across multiple license validation requests."""
@@ -657,7 +722,7 @@ class TestDynamicResponseGenerator:
 
         # Verify state continuity
         updated_state = state_manager.get_session_state('test_session_001')
-        assert updated_state['request_count'] == 2, "Request count not incremented"
+        assert updated_state['request_count'] == EXPECTED_REQUEST_COUNT_AFTER_RENEWAL, "Request count not incremented"
         assert updated_state['timestamp'] > session_state['timestamp'], "Timestamp not updated"
 
         # Third request - license check (should use cached state)
@@ -672,16 +737,16 @@ class TestDynamicResponseGenerator:
         assert response3.success, "Status check failed"
 
         # Response should be consistent with maintained state
-        assert 'cached_response' in response3.metadata or response3.response_time < 0.01, \
+        assert 'cached_response' in response3.metadata or response3.response_time < MAX_CACHED_RESPONSE_TIME, \
                "State-based optimization not working"
 
     def test_protocol_version_adaptation(self, response_generator):
         """Test dynamic adaptation to different protocol versions."""
         # Test FlexLM version variations
         test_versions = [
-            ('flexlm', '9.0', b'\x00\x00\x00\x0c' + struct.pack('>H', 0x0900)),
-            ('flexlm', '11.0', b'\x00\x00\x00\x0c' + struct.pack('>H', 0x0b00)),
-            ('flexlm', '14.0', b'\x00\x00\x00\x0c' + struct.pack('>H', 0x0e00)),
+            ('flexlm', '9.0', b'\x00\x00\x00\x0c' + struct.pack('>H', FLEXLM_VERSION_9)),
+            ('flexlm', '11.0', b'\x00\x00\x00\x0c' + struct.pack('>H', FLEXLM_VERSION_11)),
+            ('flexlm', '14.0', b'\x00\x00\x00\x0c' + struct.pack('>H', FLEXLM_VERSION_14)),
         ]
 
         for protocol, version, request_header in test_versions:
@@ -713,7 +778,7 @@ class TestDynamicResponseGenerator:
 
             elif version == '9.0':
                 # Older version should use simpler response format
-                assert len(response.raw_data) < 200, "Response too complex for older version"
+                assert len(response.raw_data) < MAX_OLDER_VERSION_RESPONSE_SIZE, "Response too complex for older version"
             # Version should be reflected in response
             version_in_response = struct.unpack('>H', response.raw_data[4:6])[0]
             expected_version = int(float(version) * 256)  # Convert to hex format
@@ -740,13 +805,13 @@ class TestDynamicResponseGenerator:
         assert 'key_exchange' in response.metadata, "Missing key exchange info"
 
         encryption_method = response.metadata['encryption_method']
-        assert encryption_method in ['AES-256-GCM', 'AES-256-CBC', 'ChaCha20-Poly1305'], \
+        assert encryption_method in {'AES-256-GCM', 'AES-256-CBC', 'ChaCha20-Poly1305'}, \
                f"Weak encryption method: {encryption_method}"
 
         # Test certificate generation for TLS
         if 'certificate' in response.metadata:
             cert_data = response.metadata['certificate']
-            assert len(cert_data) > 100, "Certificate data too short"
+            assert len(cert_data) > MIN_CERTIFICATE_DATA_LENGTH, "Certificate data too short"
 
             # Try to parse certificate
             try:
@@ -768,7 +833,7 @@ class TestDynamicResponseGenerator:
         responses = []
 
         # Generate multiple responses for the same request
-        for i in range(10):
+        for i in range(NUM_ANTI_DETECTION_SAMPLES):
             context = ResponseContext(
                 request=real_flexlm_request,
                 target_behavior='approve_license',
@@ -778,7 +843,7 @@ class TestDynamicResponseGenerator:
             )
 
             response = response_generator.generate_response(context)
-            assert response.success, f"Response {i+1} generation failed"
+            assert response.success, f"Response {i + 1} generation failed"
 
             responses.append(response.raw_data)
 
@@ -786,11 +851,11 @@ class TestDynamicResponseGenerator:
         unique_responses = set(responses)
         variation_ratio = len(unique_responses) / len(responses)
 
-        assert variation_ratio >= 0.8, f"Insufficient response variation: {variation_ratio:.1%}"
+        assert variation_ratio >= MIN_RESPONSE_VARIATION_RATIO, f"Insufficient response variation: {variation_ratio:.1%}"
 
         # Check for timing variations
         timing_values = []
-        for _ in range(5):
+        for _ in range(NUM_TIMING_SAMPLES):
             start_time = time.time()
 
             context = ResponseContext(
@@ -807,9 +872,9 @@ class TestDynamicResponseGenerator:
         max_time = max(timing_values)
         timing_variation = (max_time - min_time) / min_time
 
-        assert timing_variation >= 0.1, f"Insufficient timing variation: {timing_variation:.1%}"
+        assert timing_variation >= MIN_TIMING_VARIATION_RATIO, f"Insufficient timing variation: {timing_variation:.1%}"
 
-    def test_response_context_comprehensive_functionality(self, response_generator):
+    def test_response_context_comprehensive_functionality(self, _response_generator):
         """Test ResponseContext functionality with comprehensive parameters."""
         # Create complex context
         context = ResponseContext(
@@ -864,7 +929,7 @@ class TestDynamicResponseGenerator:
         # Protocol compliance check
         compliance = response.validate_protocol_compliance()
         assert compliance.is_compliant, f"Protocol compliance failed: {compliance.violations}"
-        assert compliance.compliance_score >= 0.9, f"Low compliance score: {compliance.compliance_score}"
+        assert compliance.compliance_score >= MIN_COMPLIANCE_SCORE, f"Low compliance score: {compliance.compliance_score}"
 
         # Security assessment
         security = response.get_security_assessment()
@@ -876,11 +941,10 @@ class TestDynamicResponseGenerator:
         risk = response.calculate_detection_risk()
         assert isinstance(risk, float), "Detection risk not numeric"
         assert 0.0 <= risk <= 1.0, f"Invalid risk value: {risk}"
-        assert risk <= 0.3, f"High detection risk: {risk}"  # Should be low for good responses
+        assert risk <= MAX_DETECTION_RISK, f"High detection risk: {risk}"
 
     def test_concurrent_response_generation_thread_safety(self, response_generator, real_flexlm_request):
         """Test thread safety during concurrent response generation."""
-        import threading
         import queue
 
         results = queue.Queue()
@@ -903,7 +967,7 @@ class TestDynamicResponseGenerator:
 
         # Start multiple threads
         threads = []
-        num_threads = 20
+        num_threads = NUM_CONCURRENT_THREADS
 
         for i in range(num_threads):
             t = threading.Thread(target=generate_concurrent_response, args=(i,))
@@ -930,7 +994,7 @@ class TestDynamicResponseGenerator:
 
     def test_performance_benchmarks_high_throughput(self, response_generator, real_flexlm_request):
         """Test performance benchmarks for high-throughput scenarios."""
-        num_requests = 1000
+        num_requests = BENCHMARK_NUM_REQUESTS
         start_time = time.time()
 
         successful_responses = 0
@@ -957,21 +1021,21 @@ class TestDynamicResponseGenerator:
         avg_response_size = total_response_size / successful_responses if successful_responses > 0 else 0
 
         # Performance requirements
-        assert rps >= 500, f"Insufficient throughput: {rps:.1f} RPS (required: 500+ RPS)"
-        assert successful_responses >= num_requests * 0.99, f"High failure rate: {successful_responses}/{num_requests}"
-        assert avg_response_size > 50, f"Responses too small: {avg_response_size} bytes"
+        assert rps >= MIN_THROUGHPUT_RPS, f"Insufficient throughput: {rps:.1f} RPS (required: {MIN_THROUGHPUT_RPS}+ RPS)"
+        assert successful_responses >= num_requests * MIN_SUCCESS_RATE, f"High failure rate: {successful_responses}/{num_requests}"
+        assert avg_response_size > MIN_RESPONSE_SIZE_BYTES, f"Responses too small: {avg_response_size} bytes"
 
         # Memory efficiency check
         import psutil
         process = psutil.Process()
         memory_mb = process.memory_info().rss / (1024 * 1024)
-        assert memory_mb < 500, f"Excessive memory usage: {memory_mb:.1f} MB"
+        assert memory_mb < MAX_MEMORY_MB, f"Excessive memory usage: {memory_mb:.1f} MB"
 
 
 class TestProtocolHandlerSpecialization:
     """Tests for individual protocol handler specialization and sophistication."""
 
-    def test_flexlm_handler_advanced_features(self):
+    def test_flexlm_handler_advanced_features(self) -> None:
         """Test FlexLM handler advanced licensing features."""
         handler = FlexLMProtocolHandler()
 
@@ -997,7 +1061,7 @@ class TestProtocolHandlerSpecialization:
 
         assert checkout_response.success and checkin_response.success, "Checkout/checkin failed"
 
-    def test_hasp_handler_security_features(self):
+    def test_hasp_handler_security_features(self) -> None:
         """Test HASP handler security and dongle emulation features."""
         handler = HASPProtocolHandler()
 
@@ -1016,7 +1080,7 @@ class TestProtocolHandlerSpecialization:
         assert vc_response.success, "Vendor code validation failed"
         assert 'decrypted_features' in vc_response.metadata, "Missing feature decryption"
 
-    def test_adobe_handler_cloud_integration(self):
+    def test_adobe_handler_cloud_integration(self) -> None:
         """Test Adobe handler cloud licensing integration."""
         handler = AdobeProtocolHandler()
 
@@ -1034,7 +1098,7 @@ class TestProtocolHandlerSpecialization:
 
         assert deactivate_response.success, "Device deactivation failed"
 
-    def test_kms_handler_volume_licensing(self):
+    def test_kms_handler_volume_licensing(self) -> None:
         """Test KMS handler volume licensing features."""
         handler = MicrosoftKMSHandler()
 
@@ -1052,7 +1116,7 @@ class TestProtocolHandlerSpecialization:
 
         assert office_response.success, "Office KMS activation failed"
 
-    def test_autodesk_handler_subscription_management(self):
+    def test_autodesk_handler_subscription_management(self) -> None:
         """Test Autodesk handler subscription and network licensing."""
         handler = AutodeskProtocolHandler()
 

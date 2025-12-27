@@ -81,15 +81,3 @@ if MODULE_AVAILABLE:
     print(f"  - HASP requests after clear: {len(hasp.captured_requests)}")
 
     print("\nOK All basic tests passed successfully!")
-
-except ImportError as e:
-    print(f"FAIL Import error: {e}")
-    sys.exit(1)
-
-except Exception as e:
-    print(f"FAIL Test error: {e}")
-    import traceback
-    traceback.print_exc()
-    sys.exit(1)
-
-print("\n🎉 License protocol handler basic functionality verified!")

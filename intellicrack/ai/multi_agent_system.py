@@ -235,7 +235,12 @@ class BaseAgent:
         self.logger.info("Initialized %s capabilities for %s agent", len(self.capabilities), self.role.value)
 
     def _get_role_specific_capabilities(self) -> list[AgentCapability]:
-        """Get capabilities specific to the agent's role."""
+        """Get capabilities specific to the agent's role.
+
+        Returns:
+            list[AgentCapability]: List of capabilities specific to the agent's assigned role.
+
+        """
         role_capabilities = {
             AgentRole.STATIC_ANALYZER: [
                 AgentCapability(
@@ -404,7 +409,17 @@ class BaseAgent:
         return role_capabilities.get(self.role, [])
 
     async def execute_task(self, task: AgentTask) -> dict[str, Any]:
-        """Execute a task specific to this agent."""
+        """Execute a task specific to this agent.
+
+        Args:
+            task: The task to execute containing task type and input data.
+
+        Returns:
+            dict[str, Any]: Task execution result dictionary containing task_id, status,
+            result data, execution time, agent_id, and timestamp. Returns error
+            information on failure.
+
+        """
         try:
             self.current_task = task
             self.busy = True
@@ -447,7 +462,13 @@ class BaseAgent:
             self.busy = False
 
     async def _update_knowledge_base(self, task: AgentTask, result: dict[str, Any]) -> None:
-        """Update the agent's knowledge base with task results."""
+        """Update the agent's knowledge base with task results.
+
+        Args:
+            task: The executed task containing task type and input data.
+            result: The result data from task execution.
+
+        """
         knowledge_entry = {
             "task_type": task.task_type,
             "timestamp": datetime.now().isoformat(),
@@ -469,7 +490,15 @@ class BaseAgent:
             self.learned_patterns.append(learned_pattern)
 
     def _extract_patterns(self, data: dict[str, Any]) -> list[str]:
-        """Extract reusable patterns from data."""
+        """Extract reusable patterns from data.
+
+        Args:
+            data: Dictionary containing data to analyze for patterns.
+
+        Returns:
+            List of identified patterns found in the data (max 10 patterns).
+
+        """
         patterns = []
 
         for value in data.values():
@@ -494,7 +523,15 @@ class BaseAgent:
         return patterns[:10]
 
     def _identify_success_patterns(self, result: dict[str, Any]) -> list[str]:
-        """Identify patterns that indicate successful task execution."""
+        """Identify patterns that indicate successful task execution.
+
+        Args:
+            result: Task execution result dictionary to analyze.
+
+        Returns:
+            List of success pattern indicators found in the result.
+
+        """
         success_patterns = []
 
         if result.get("status") == "completed":
@@ -512,7 +549,15 @@ class BaseAgent:
         return success_patterns
 
     def _calculate_complexity(self, input_data: dict[str, Any]) -> float:
-        """Calculate complexity score for the input data."""
+        """Calculate complexity score for the input data.
+
+        Args:
+            input_data: Dictionary of input data to analyze for complexity.
+
+        Returns:
+            Complexity score between 0.0 and 10.0 based on data structure.
+
+        """
         complexity = 0.0
 
         complexity += len(input_data) * 0.1
@@ -530,7 +575,15 @@ class BaseAgent:
         return min(complexity, 10.0)
 
     async def _execute_task_implementation(self, task: AgentTask) -> dict[str, Any]:
-        """Implement the actual task execution logic."""
+        """Implement the actual task execution logic.
+
+        Args:
+            task: The task to execute.
+
+        Returns:
+            Task execution result dictionary with analysis or operation results.
+
+        """
         task_handlers = {
             "analyze_binary": self._handle_binary_analysis,
             "generate_exploit": self._handle_exploit_generation,
@@ -547,7 +600,16 @@ class BaseAgent:
         return await self._handle_generic_task(task)
 
     async def _handle_binary_analysis(self, task: AgentTask) -> dict[str, Any]:
-        """Handle binary analysis tasks."""
+        """Handle binary analysis tasks.
+
+        Args:
+            task: Binary analysis task containing binary_file and analysis_type.
+
+        Returns:
+            Dictionary with file_info, sections, imports, exports, strings,
+            analysis_metadata, and processing_time.
+
+        """
         binary_data = task.input_data.get("binary_file")
         analysis_type = task.input_data.get("analysis_type", "full")
 
@@ -582,11 +644,20 @@ class BaseAgent:
         return {"analysis_results": results, "processing_time": 2.5}
 
     async def _handle_exploit_generation(self, task: AgentTask) -> dict[str, Any]:
-        """Handle exploit generation tasks."""
+        """Handle exploit generation tasks.
+
+        Args:
+            task: Exploit generation task with vulnerability_info and target_system.
+
+        Returns:
+            Dictionary containing exploit_code, payload_variants, success_probability,
+            and target_compatibility.
+
+        """
         vulnerability_data = task.input_data.get("vulnerability_info", {})
         target_system = task.input_data.get("target_system", "windows_x64")
 
-        exploit_code = f"""
+        exploit_code = f'''
 # Exploit for {vulnerability_data.get("type", "generic")} vulnerability
 # Target: {target_system}
 # Generated by agent {self.agent_id}
@@ -596,11 +667,20 @@ import socket
 import sys
 
 class ExploitGenerator:
-    def __init__(self):
-        self.target_arch = "{target_system}"
-        self.vuln_type = "{vulnerability_data.get("type", "buffer_overflow")}"
+    """Generate exploit payloads for detected vulnerabilities."""
 
-    def generate_payload(self):
+    def __init__(self) -> None:
+        """Initialize exploit generator with target architecture and vulnerability type."""
+        self.target_arch = "{target_system}"
+        self.vuln_type = "{vulnerability_data.get('type', 'buffer_overflow')}"
+
+    def generate_payload(self) -> bytes:
+        """Generate exploit payload based on vulnerability type.
+
+        Returns:
+            Bytes representing the crafted exploit payload.
+
+        """
         if self.vuln_type == "buffer_overflow":
             return self._buffer_overflow_payload()
         elif self.vuln_type == "format_string":
@@ -608,19 +688,43 @@ class ExploitGenerator:
         else:
             return self._generic_payload()
 
-    def _buffer_overflow_payload(self):
+    def _buffer_overflow_payload(self) -> bytes:
+        """Generate buffer overflow exploit payload.
+
+        Returns:
+            Bytes containing padding, return address, and shellcode.
+
+        """
         padding = b"A" * 256
         ret_addr = struct.pack("<Q", 0x41414141414141)
         shellcode = self._get_shellcode()
         return padding + ret_addr + shellcode
 
-    def _format_string_payload(self):
+    def _format_string_payload(self) -> bytes:
+        """Generate format string vulnerability payload.
+
+        Returns:
+            Bytes containing format string exploitation sequence.
+
+        """
         return b"%08x" * 20 + b"%n"
 
-    def _generic_payload(self):
+    def _generic_payload(self) -> bytes:
+        """Generate generic fallback exploit payload.
+
+        Returns:
+            Bytes containing NOP sled and shellcode.
+
+        """
         return b"\\x90" * 100 + self._get_shellcode()
 
-    def _get_shellcode(self):
+    def _get_shellcode(self) -> bytes:
+        """Retrieve Windows x64 shellcode for arbitrary command execution.
+
+        Returns:
+            Bytes representing executable shellcode for calculating application.
+
+        """
         # Windows x64 calc.exe shellcode
         return (
             b"\\xfc\\x48\\x83\\xe4\\xf0\\xe8\\xc0\\x00\\x00\\x00\\x41\\x51"
@@ -639,7 +743,7 @@ class ExploitGenerator:
 
 exploit = ExploitGenerator()
 payload = exploit.generate_payload()
-"""
+'''
 
         return {
             "exploit_code": exploit_code,
@@ -649,7 +753,16 @@ payload = exploit.generate_payload()
         }
 
     async def _handle_reverse_engineering(self, task: AgentTask) -> dict[str, Any]:
-        """Handle reverse engineering tasks."""
+        """Handle reverse engineering tasks.
+
+        Args:
+            task: Reverse engineering task with target_file and analysis depth.
+
+        Returns:
+            Dictionary with disassembly, control_flow, algorithm_reconstruction,
+            and protection_mechanisms information.
+
+        """
         target_binary = task.input_data.get("target_file")
         analysis_depth = task.input_data.get("depth", "moderate")
 
@@ -693,7 +806,16 @@ payload = exploit.generate_payload()
         return results
 
     async def _handle_vulnerability_scanning(self, task: AgentTask) -> dict[str, Any]:
-        """Handle vulnerability scanning tasks."""
+        """Handle vulnerability scanning tasks.
+
+        Args:
+            task: Vulnerability scanning task with targets and scan_type.
+
+        Returns:
+            Dictionary with scan_metadata, scan_results, detailed_findings,
+            risk_assessment, and recommendations.
+
+        """
         scan_targets = task.input_data.get("targets", [])
         scan_type = task.input_data.get("scan_type", "comprehensive")
 
@@ -753,7 +875,17 @@ payload = exploit.generate_payload()
         }
 
     async def _handle_code_modification(self, task: AgentTask) -> dict[str, Any]:
-        """Handle code modification tasks."""
+        """Handle code modification tasks.
+
+        Args:
+            task: Code modification task with target_file, modification_type,
+                and patch_instructions.
+
+        Returns:
+            Dictionary with target_file, modification_type, patches_applied,
+            code_injections, and modification_summary.
+
+        """
         target_file = task.input_data.get("target_file")
         modification_type = task.input_data.get("modification_type")
         patch_data = task.input_data.get("patch_instructions", {})
@@ -798,7 +930,19 @@ payload = exploit.generate_payload()
         }
 
     async def _handle_script_generation(self, task: AgentTask) -> dict[str, Any]:
-        """Handle script generation tasks."""
+        """Handle script generation tasks.
+
+        Args:
+            task: Script generation task with script_type and target_functions.
+
+        Returns:
+            dict[str, Any]: Dictionary with script_content, script_type, target_functions,
+            script_validation, and estimated_effectiveness.
+
+        Raises:
+            TimeoutError: If script validation subprocess exceeds the 5-second timeout.
+
+        """
         script_type = task.input_data.get("script_type", "frida")
         target_functions = task.input_data.get("target_functions", [])
 
@@ -896,7 +1040,16 @@ if __name__ == "__main__":
         }
 
     async def _handle_coordination(self, task: AgentTask) -> dict[str, Any]:
-        """Handle coordination tasks."""
+        """Handle coordination tasks.
+
+        Args:
+            task: Coordination task with workflow and agent_assignments.
+
+        Returns:
+            Dictionary with coordination_plan, total_estimated_time,
+            success_probability, and risk_factors.
+
+        """
         workflow = task.input_data.get("workflow", {})
         agent_assignments = task.input_data.get("agent_assignments", {})
 
@@ -957,7 +1110,16 @@ if __name__ == "__main__":
         }
 
     async def _handle_specialist_analysis(self, task: AgentTask) -> dict[str, Any]:
-        """Handle specialist analysis tasks."""
+        """Handle specialist analysis tasks.
+
+        Args:
+            task: Specialist analysis task with domain and analysis_request.
+
+        Returns:
+            Dictionary with analysis_metadata, domain_analysis, technical_assessment,
+            recommendations, and advanced_techniques.
+
+        """
         domain = task.input_data.get("domain", "general")
         analysis_request = task.input_data.get("analysis_request", {})
 
@@ -995,7 +1157,16 @@ if __name__ == "__main__":
         }
 
     async def _handle_generic_task(self, task: AgentTask) -> dict[str, Any]:
-        """Handle generic or unknown task types."""
+        """Handle generic or unknown task types.
+
+        Args:
+            task: Generic task with any structure.
+
+        Returns:
+            Dictionary with task_type, status, message, input_summary,
+            and processing_notes.
+
+        """
         return {
             "task_type": task.task_type,
             "status": "completed",
@@ -1012,7 +1183,7 @@ if __name__ == "__main__":
         }
 
     def start(self) -> None:
-        """Start the agent."""
+        """Start the agent and initialize message processing loop."""
         self.active = True
 
         # Start message processing loop
@@ -1025,12 +1196,12 @@ if __name__ == "__main__":
         logger.info("Agent %s started", self.agent_id)
 
     def stop(self) -> None:
-        """Stop the agent."""
+        """Stop the agent and cease message processing."""
         self.active = False
         logger.info("Agent %s stopped", self.agent_id)
 
     def _message_processing_loop(self) -> None:
-        """Process messages in the main loop."""
+        """Process incoming agent messages in a continuous loop until stopped."""
         while self.active:
             try:
                 message = self.message_queue.get(timeout=1.0)
@@ -1042,7 +1213,12 @@ if __name__ == "__main__":
                 logger.exception("Error processing message in %s: %s", self.agent_id, e)
 
     def _process_message(self, message: AgentMessage) -> None:
-        """Process incoming message."""
+        """Process incoming message and route to appropriate handler.
+
+        Args:
+            message: The agent message to process containing type and content.
+
+        """
         try:
             if message.message_type == MessageType.TASK_REQUEST:
                 self._handle_task_request(message)
@@ -1060,7 +1236,12 @@ if __name__ == "__main__":
             self._send_error_response(message, str(e))
 
     def _handle_task_request(self, message: AgentMessage) -> None:
-        """Handle task request from another agent."""
+        """Handle task request from another agent and execute asynchronously.
+
+        Args:
+            message: Task request message containing task details and ID.
+
+        """
         task_data = message.content.get("task", {})
 
         if self.busy or not self._can_execute_task(task_data):
@@ -1088,7 +1269,13 @@ if __name__ == "__main__":
         task_handle.add_done_callback(self._running_tasks.discard)
 
     async def _execute_task_async(self, task: AgentTask, original_message: AgentMessage) -> None:
-        """Execute task asynchronously and send response."""
+        """Execute task asynchronously and send response back to requestor.
+
+        Args:
+            task: The task to execute containing type and input data.
+            original_message: The original message requesting the task execution.
+
+        """
         self.busy = True
         self.current_task = task
         start_time = time.time()
@@ -1141,13 +1328,26 @@ if __name__ == "__main__":
             self.current_task = None
 
     def _can_execute_task(self, task_data: dict[str, Any]) -> bool:
-        """Check if agent can execute the task."""
+        """Check if agent can execute the task.
+
+        Args:
+            task_data: Task data containing task type information.
+
+        Returns:
+            True if agent has capability to execute the task, False otherwise.
+
+        """
         task_type = task_data.get("type", "")
 
         return any(task_type in capability.input_types or task_type == capability.capability_name for capability in self.capabilities)
 
     def _handle_knowledge_share(self, message: AgentMessage) -> None:
-        """Handle knowledge sharing from another agent."""
+        """Handle knowledge sharing from another agent and update knowledge base.
+
+        Args:
+            message: Knowledge share message containing knowledge data.
+
+        """
         knowledge = message.content.get("knowledge", {})
         source_agent = message.sender_id
 
@@ -1165,7 +1365,12 @@ if __name__ == "__main__":
         logger.info("Agent %s received knowledge from %s", self.agent_id, source_agent)
 
     def _handle_collaboration_request(self, message: AgentMessage) -> None:
-        """Handle collaboration request."""
+        """Handle collaboration request and send availability response.
+
+        Args:
+            message: Collaboration request message with request details.
+
+        """
         collaboration_type = message.content.get("type", "")
 
         if collaboration_type == "capability_needed":
@@ -1184,7 +1389,12 @@ if __name__ == "__main__":
                 self._send_collaboration_response(message, False, {"available": False})
 
     def _handle_capability_query(self, message: AgentMessage) -> None:
-        """Handle capability query."""
+        """Handle capability query and send list of available capabilities.
+
+        Args:
+            message: Capability query message from another agent.
+
+        """
         capabilities_data = [
             {
                 "name": capability.capability_name,
@@ -1208,13 +1418,25 @@ if __name__ == "__main__":
         self._send_message(response)
 
     def _handle_task_response(self, message: AgentMessage) -> None:
-        """Handle task response."""
+        """Handle task response and queue response message for requestor.
+
+        Args:
+            message: Task response message from another agent.
+
+        """
         correlation_id = message.correlation_id
         if correlation_id and correlation_id in self.response_waiters:
             self.response_waiters[correlation_id].put(message)
 
     def _send_task_response(self, original_message: AgentMessage, success: bool, result: dict[str, Any]) -> None:
-        """Send task response."""
+        """Send task response message back to the requestor.
+
+        Args:
+            original_message: The original request message to respond to.
+            success: Whether the task execution was successful.
+            result: The task execution result data containing results or errors.
+
+        """
         response = AgentMessage(
             message_id=str(uuid.uuid4()),
             sender_id=self.agent_id,
@@ -1231,7 +1453,13 @@ if __name__ == "__main__":
         self._send_message(response)
 
     def _send_task_rejection(self, original_message: AgentMessage, reason: str) -> None:
-        """Send task rejection."""
+        """Send task rejection response to the requestor.
+
+        Args:
+            original_message: The original request message being rejected.
+            reason: Reason for rejecting the task execution.
+
+        """
         response = AgentMessage(
             message_id=str(uuid.uuid4()),
             sender_id=self.agent_id,
@@ -1248,7 +1476,14 @@ if __name__ == "__main__":
         self._send_message(response)
 
     def _send_collaboration_response(self, original_message: AgentMessage, available: bool, data: dict[str, Any]) -> None:
-        """Send collaboration response."""
+        """Send collaboration response with availability and capability information.
+
+        Args:
+            original_message: The original collaboration request message.
+            available: Whether agent is available for collaboration.
+            data: Additional collaboration data containing estimated time and confidence.
+
+        """
         response = AgentMessage(
             message_id=str(uuid.uuid4()),
             sender_id=self.agent_id,
@@ -1264,7 +1499,13 @@ if __name__ == "__main__":
         self._send_message(response)
 
     def _send_error_response(self, original_message: AgentMessage, error: str) -> None:
-        """Send error response."""
+        """Send error response to the message sender.
+
+        Args:
+            original_message: The original message that caused the error.
+            error: Error description message explaining the issue.
+
+        """
         response = AgentMessage(
             message_id=str(uuid.uuid4()),
             sender_id=self.agent_id,
@@ -1277,30 +1518,66 @@ if __name__ == "__main__":
         self._send_message(response)
 
     def _send_message(self, message: AgentMessage) -> None:
-        """Send message through collaboration system."""
+        """Send message through collaboration system to recipient.
+
+        Args:
+            message: The agent message to send with recipient information.
+
+        """
         if self.collaboration_system:
             self.collaboration_system.route_message(message)
 
     def _has_capability(self, capability_name: str) -> bool:
-        """Check if agent has specific capability."""
+        """Check if agent has specific capability.
+
+        Args:
+            capability_name: Name of the capability to check for.
+
+        Returns:
+            True if agent has the capability, False otherwise.
+
+        """
         return any(cap.capability_name == capability_name for cap in self.capabilities)
 
     def _estimate_execution_time(self, capability_name: str) -> float:
-        """Estimate execution time for capability."""
+        """Estimate execution time for capability.
+
+        Args:
+            capability_name: Name of the capability to estimate time for.
+
+        Returns:
+            Estimated execution time in seconds, 0.0 if capability not found.
+
+        """
         return next(
             (capability.processing_time_estimate for capability in self.capabilities if capability.capability_name == capability_name),
             0.0,
         )
 
     def _get_capability_confidence(self, capability_name: str) -> float:
-        """Get confidence level for capability."""
+        """Get confidence level for capability.
+
+        Args:
+            capability_name: Name of the capability to get confidence for.
+
+        Returns:
+            Confidence level (0.0-1.0) for the capability, 0.0 if not found.
+
+        """
         return next(
             (capability.confidence_level for capability in self.capabilities if capability.capability_name == capability_name),
             0.0,
         )
 
     def share_knowledge(self, knowledge: dict[str, Any], target_agents: list[str] | None = None) -> None:
-        """Share knowledge with other agents."""
+        """Share knowledge with other agents through collaboration system.
+
+        Args:
+            knowledge: Knowledge dictionary to share containing insights and patterns.
+            target_agents: List of agent IDs to share with. If None, shares with all
+                trusted agents in the collaboration system.
+
+        """
         if not self.collaboration_system:
             return
 
@@ -1323,7 +1600,15 @@ if __name__ == "__main__":
             self._send_message(message)
 
     def get_agent_status(self) -> dict[str, Any]:
-        """Get current agent status."""
+        """Get current agent status.
+
+        Returns:
+            Dictionary containing agent_id, role, active status, busy status,
+            current_task, tasks_completed, tasks_failed, success_rate,
+            avg_execution_time, last_activity, capabilities_count,
+            knowledge_base_size, and trusted_agents_count.
+
+        """
         return {
             "agent_id": self.agent_id,
             "role": self.role.value,
@@ -1374,7 +1659,19 @@ class StaticAnalysisAgent(BaseAgent):
         ]
 
     async def execute_task(self, task: AgentTask) -> dict[str, Any]:
-        """Execute static analysis task."""
+        """Execute static analysis task.
+
+        Args:
+            task: Static analysis task with task_type and input_data.
+
+        Returns:
+            Analysis results dictionary containing binary_analysis, code_analysis,
+            or control_flow_analysis output.
+
+        Raises:
+            ValueError: If task type is not recognized.
+
+        """
         task_type = task.task_type
         input_data = task.input_data
 
@@ -1387,7 +1684,16 @@ class StaticAnalysisAgent(BaseAgent):
         raise ValueError(f"Unknown task type: {task_type}")
 
     def _analyze_binary_with_lief(self, file_path: str) -> dict[str, Any]:
-        """Analyze binary using LIEF library."""
+        """Analyze binary using LIEF library.
+
+        Args:
+            file_path: Path to the binary file to analyze.
+
+        Returns:
+            Dictionary with file_type, architecture, entry_point, sections,
+            imports, exports, compiler, file_size, and confidence.
+
+        """
         import lief
 
         analysis_result: dict[str, Any] = {}
@@ -1436,7 +1742,16 @@ class StaticAnalysisAgent(BaseAgent):
         return analysis_result
 
     def _analyze_binary_with_r2pipe(self, file_path: str) -> dict[str, Any]:
-        """Analyze binary using r2pipe as fallback."""
+        """Analyze binary using r2pipe as fallback.
+
+        Args:
+            file_path: Path to the binary file to analyze.
+
+        Returns:
+            Dictionary with file_type, architecture, compiler, entry_point,
+            sections, imports, exports, file_size, and confidence.
+
+        """
         import r2pipe
 
         analysis_result = {}
@@ -1465,7 +1780,16 @@ class StaticAnalysisAgent(BaseAgent):
         return analysis_result
 
     def _analyze_binary_basic(self, file_path: str) -> dict[str, Any]:
-        """Perform basic binary analysis using memory mapping."""
+        """Perform basic binary analysis using memory mapping.
+
+        Args:
+            file_path: Path to the binary file to analyze.
+
+        Returns:
+            Dictionary with file_type, architecture, entry_point, sections,
+            imports, exports, strings, and confidence analysis data.
+
+        """
         import mmap
         import struct
 
@@ -1600,7 +1924,16 @@ class StaticAnalysisAgent(BaseAgent):
         return analysis_result
 
     async def _analyze_binary(self, input_data: dict[str, Any]) -> dict[str, Any]:
-        """Perform binary analysis."""
+        """Perform binary analysis.
+
+        Args:
+            input_data: Dictionary containing file_path for the binary to analyze.
+
+        Returns:
+            Dictionary with binary analysis results including file_type,
+            architecture, compiler, sections, imports, exports, and confidence.
+
+        """
         file_path = input_data.get("file_path", "")
 
         logger.debug("Binary analysis agent analyzing: %s", file_path)
@@ -1641,7 +1974,16 @@ class StaticAnalysisAgent(BaseAgent):
         return analysis_result
 
     def _detect_language(self, code: str, language: str) -> str:
-        """Detect programming language from code content."""
+        """Detect programming language from code content.
+
+        Args:
+            code: Source code to analyze.
+            language: Pre-specified language hint, or "unknown" for auto-detection.
+
+        Returns:
+            Detected programming language as string (python, javascript, c, java, php, etc).
+
+        """
         if language != "unknown":
             return language
 
@@ -1659,7 +2001,16 @@ class StaticAnalysisAgent(BaseAgent):
         return "php" if "<?php" in code else language
 
     def _analyze_python_code(self, code: str) -> dict[str, Any]:
-        """Analyze Python code using AST."""
+        """Analyze Python code using AST.
+
+        Args:
+            code: Python source code to analyze.
+
+        Returns:
+            Dictionary with functions_detected, classes_detected, function_names,
+            class_names, potential_vulnerabilities, code_quality_score, and confidence.
+
+        """
         try:
             import ast
 
@@ -1695,7 +2046,15 @@ class StaticAnalysisAgent(BaseAgent):
             return {"confidence": 0.5}
 
     def _check_python_vulnerabilities(self, node: object) -> list[dict[str, object]]:
-        """Check for vulnerabilities in Python AST node."""
+        """Check for vulnerabilities in Python AST node.
+
+        Args:
+            node: AST node to check for security vulnerabilities.
+
+        Returns:
+            List of vulnerability dictionaries with type, function, line, and severity.
+
+        """
         import ast
 
         vulnerabilities = []
@@ -1736,7 +2095,17 @@ class StaticAnalysisAgent(BaseAgent):
         return vulnerabilities
 
     def _calculate_python_quality_score(self, code: str, functions: list[Any], vulnerabilities: list[Any]) -> float:
-        """Calculate code quality score for Python code."""
+        """Calculate code quality score for Python code.
+
+        Args:
+            code: Python source code to score.
+            functions: List of function names found in code.
+            vulnerabilities: List of vulnerabilities detected in code.
+
+        Returns:
+            Quality score between 0.0 and 1.0 based on code metrics.
+
+        """
         lines = code.split("\n")
         non_empty_lines = [line for line in lines if line.strip()]
         comment_lines = [line for line in lines if line.strip().startswith("#")]
@@ -1756,7 +2125,16 @@ class StaticAnalysisAgent(BaseAgent):
         return max(0.1, quality_score)
 
     def _analyze_c_cpp_code(self, code: str) -> dict[str, Any]:
-        """Analyze C/C++ code for vulnerabilities and metrics."""
+        """Analyze C/C++ code for vulnerabilities and metrics.
+
+        Args:
+            code: C/C++ source code to analyze.
+
+        Returns:
+            Dictionary with functions_detected, classes_detected,
+            potential_vulnerabilities, code_quality_score, and confidence.
+
+        """
         lines = code.split("\n")
         vulnerabilities = []
 
@@ -1798,7 +2176,16 @@ class StaticAnalysisAgent(BaseAgent):
         }
 
     def _analyze_javascript_code(self, code: str) -> dict[str, Any]:
-        """Analyze JavaScript/TypeScript code for vulnerabilities and metrics."""
+        """Analyze JavaScript/TypeScript code for vulnerabilities and metrics.
+
+        Args:
+            code: JavaScript/TypeScript source code to analyze.
+
+        Returns:
+            Dictionary with functions_detected, classes_detected,
+            potential_vulnerabilities, code_quality_score, and confidence.
+
+        """
         lines = code.split("\n")
         vulnerabilities = []
 
@@ -1837,7 +2224,16 @@ class StaticAnalysisAgent(BaseAgent):
         }
 
     def _analyze_generic_code(self, code: str) -> dict[str, Any]:
-        """Analyze code for unknown languages."""
+        """Analyze code for unknown languages.
+
+        Args:
+            code: Source code to analyze.
+
+        Returns:
+            Dictionary with functions_detected, classes_detected,
+            code_quality_score, and confidence for generic code.
+
+        """
         lines = code.split("\n")
         return {
             "functions_detected": len([line for line in lines if "(" in line and ")" in line and "{" in line]),
@@ -1847,7 +2243,16 @@ class StaticAnalysisAgent(BaseAgent):
         }
 
     async def _analyze_code(self, input_data: dict[str, Any]) -> dict[str, Any]:
-        """Perform code analysis."""
+        """Perform code analysis.
+
+        Args:
+            input_data: Dictionary with code, language, and optional file_path.
+
+        Returns:
+            Dictionary with language, lines_of_code, functions_detected,
+            classes_detected, potential_vulnerabilities, code_quality_score, and confidence.
+
+        """
         code = input_data.get("code", "")
         language = input_data.get("language", "unknown")
         input_data.get("file_path", "")
@@ -1877,7 +2282,16 @@ class StaticAnalysisAgent(BaseAgent):
         return analysis_result
 
     async def _analyze_control_flow(self, input_data: dict[str, Any]) -> dict[str, Any]:
-        """Perform control flow analysis."""
+        """Perform control flow analysis.
+
+        Args:
+            input_data: Dictionary containing binary_path for analysis.
+
+        Returns:
+            Dictionary with basic_blocks, function_count, cyclomatic_complexity,
+            call_graph_nodes, control_flow_anomalies, and confidence.
+
+        """
         binary_path = input_data.get("binary_path", "")
 
         logger.debug("Control flow analysis agent analyzing: %s", binary_path)
@@ -2065,7 +2479,19 @@ class DynamicAnalysisAgent(BaseAgent):
         ]
 
     async def execute_task(self, task: AgentTask) -> dict[str, Any]:
-        """Execute dynamic analysis task."""
+        """Execute dynamic analysis task.
+
+        Args:
+            task: Dynamic analysis task with task_type and input_data.
+
+        Returns:
+            Analysis results containing runtime behavior, memory metrics,
+            API calls, and network connections.
+
+        Raises:
+            ValueError: If task type is not recognized.
+
+        """
         task_type = task.task_type
         input_data = task.input_data
 
@@ -2078,7 +2504,17 @@ class DynamicAnalysisAgent(BaseAgent):
         raise ValueError(f"Unknown task type: {task_type}")
 
     async def _analyze_runtime(self, input_data: dict[str, Any]) -> dict[str, Any]:
-        """Perform runtime analysis."""
+        """Perform runtime analysis.
+
+        Args:
+            input_data: Dictionary containing executable path to analyze.
+
+        Returns:
+            Dictionary with execution_time, cpu_usage, memory_peak,
+            file_operations, network_connections, registry_operations,
+            behavior_patterns, and confidence.
+
+        """
         executable = input_data.get("executable", "")
 
         logger.debug("Runtime analysis agent analyzing executable: %s", executable)
@@ -2316,7 +2752,16 @@ class DynamicAnalysisAgent(BaseAgent):
         return result
 
     async def _analyze_memory(self, input_data: dict[str, Any]) -> dict[str, Any]:
-        """Perform memory analysis."""
+        """Perform memory analysis.
+
+        Args:
+            input_data: Dictionary containing process_id to analyze.
+
+        Returns:
+            Dictionary with heap_usage, stack_usage, memory_leaks,
+            buffer_overflows, memory_protection flags, and confidence.
+
+        """
         process_id = input_data.get("process_id", 0)
 
         logger.debug("Memory analysis agent analyzing process: %s", process_id)
@@ -2500,7 +2945,16 @@ class DynamicAnalysisAgent(BaseAgent):
         return result
 
     async def _monitor_api_calls(self, input_data: dict[str, Any]) -> dict[str, Any]:
-        """Monitor API calls using real instrumentation."""
+        """Monitor API calls using real instrumentation.
+
+        Args:
+            input_data: Dictionary with process_id, duration, and optional target_apis.
+
+        Returns:
+            Dictionary with api_calls, suspicious_apis, protection_bypasses,
+            and analysis summary with confidence.
+
+        """
         process_id = input_data.get("process_id", 0)
         duration = input_data.get("duration", 10)
         input_data.get("target_apis", [])
@@ -2801,7 +3255,18 @@ class ReverseEngineeringAgent(BaseAgent):
         ]
 
     async def execute_task(self, task: AgentTask) -> dict[str, Any]:
-        """Execute reverse engineering task."""
+        """Execute reverse engineering task.
+
+        Args:
+            task: Reverse engineering task with task_type and input_data.
+
+        Returns:
+            Disassembly, decompilation, or algorithm analysis results.
+
+        Raises:
+            ValueError: If task type is not recognized.
+
+        """
         task_type = task.task_type
         input_data = task.input_data
 
@@ -2814,7 +3279,15 @@ class ReverseEngineeringAgent(BaseAgent):
         raise ValueError(f"Unknown task type: {task_type}")
 
     def _create_capstone_disassembler(self, architecture: str) -> object:
-        """Create capstone disassembler for given architecture."""
+        """Create capstone disassembler for given architecture.
+
+        Args:
+            architecture: CPU architecture (x64, x86, arm, etc).
+
+        Returns:
+            Capstone Cs disassembler instance for the specified architecture.
+
+        """
         from capstone import CS_ARCH_ARM, CS_ARCH_X86, CS_MODE_32, CS_MODE_64, CS_MODE_ARM, Cs
 
         if architecture == "x64":
@@ -2826,7 +3299,17 @@ class ReverseEngineeringAgent(BaseAgent):
         return Cs(CS_ARCH_X86, CS_MODE_32)
 
     def _process_capstone_instruction(self, insn: object, function_boundaries: list[Any], cross_references: list[Any]) -> dict[str, object]:
-        """Process a single capstone instruction and update boundaries/references."""
+        """Process a single capstone instruction and update boundaries/references.
+
+        Args:
+            insn: Capstone instruction object to process.
+            function_boundaries: List to track function start/end addresses.
+            cross_references: List to track jumps and calls.
+
+        Returns:
+            Instruction information dictionary with address, instruction text, and bytes.
+
+        """
         address = getattr(insn, "address", 0)
         mnemonic = getattr(insn, "mnemonic", "")
         op_str = getattr(insn, "op_str", "")
@@ -2858,7 +3341,17 @@ class ReverseEngineeringAgent(BaseAgent):
         return instruction_info
 
     def _decode_x86_instruction(self, binary_data: bytes, offset: int, start_address: int) -> tuple[str, int]:
-        """Decode a single x86 instruction manually."""
+        """Decode a single x86 instruction manually.
+
+        Args:
+            binary_data: Binary data containing the instruction.
+            offset: Offset in binary_data where instruction starts.
+            start_address: Base address for instruction address calculation.
+
+        Returns:
+            Tuple of (instruction string, instruction length in bytes).
+
+        """
         if offset >= len(binary_data):
             return "", 1
 
@@ -2928,7 +3421,16 @@ class ReverseEngineeringAgent(BaseAgent):
         return f"db {opcode:02x}", 1
 
     def _manual_x86_disassembly(self, binary_data: bytes, start_address: int) -> tuple[list[Any], list[Any], list[Any]]:
-        """Perform manual x86 disassembly as fallback."""
+        """Perform manual x86 disassembly as fallback when disassembler unavailable.
+
+        Args:
+            binary_data: Raw binary data to disassemble.
+            start_address: Base address for address calculation.
+
+        Returns:
+            Tuple of (assembly_instructions, function_boundaries, cross_references).
+
+        """
         assembly_instructions = []
         function_boundaries = []
         cross_references = []
@@ -2990,7 +3492,16 @@ class ReverseEngineeringAgent(BaseAgent):
         return assembly_instructions, function_boundaries, cross_references
 
     def _create_fallback_disassembly(self, binary_data: bytes, start_address: int) -> list[Any]:
-        """Create minimal fallback disassembly showing raw bytes."""
+        """Create minimal fallback disassembly showing raw bytes.
+
+        Args:
+            binary_data: Binary data to create fallback disassembly for.
+            start_address: Base address for address calculation.
+
+        Returns:
+            List of disassembly entries with address, instruction, and bytes.
+
+        """
         assembly_instructions = []
         for i in range(0, min(len(binary_data), 100), 16):
             addr = start_address + i
@@ -3000,7 +3511,15 @@ class ReverseEngineeringAgent(BaseAgent):
         return assembly_instructions
 
     def _identify_function_patterns(self, assembly_instructions: list[Any]) -> list[Any]:
-        """Identify function boundaries from assembly patterns."""
+        """Identify function boundaries from assembly patterns using prologue/epilogue detection.
+
+        Args:
+            assembly_instructions: List of assembly instruction dictionaries.
+
+        Returns:
+            List of function boundary dictionaries with start address, end address, and function name.
+
+        """
         function_boundaries = []
         current_func = None
 
@@ -3019,7 +3538,16 @@ class ReverseEngineeringAgent(BaseAgent):
         return function_boundaries
 
     async def _disassemble_code(self, input_data: dict[str, Any]) -> dict[str, Any]:
-        """Disassemble binary code using real disassembly engines."""
+        """Disassemble binary code using real disassembly engines.
+
+        Args:
+            input_data: Dictionary with binary_data, start_address, and architecture.
+
+        Returns:
+            Dictionary with assembly_instructions, function_boundaries,
+            cross_references, and confidence.
+
+        """
         binary_data = input_data.get("binary_data", b"")
         start_address = input_data.get("start_address", 0x401000)
         architecture = input_data.get("architecture", "x86")
@@ -3062,7 +3590,15 @@ class ReverseEngineeringAgent(BaseAgent):
         }
 
     def _decompile_with_r2pipe(self, binary_path: str) -> tuple[str, list[Any], list[Any]]:
-        """Decompile using r2pipe with r2dec plugin."""
+        """Decompile using r2pipe with r2dec plugin.
+
+        Args:
+            binary_path: Path to binary file to decompile.
+
+        Returns:
+            Tuple of (pseudo_code string, function_signatures list, variable_analysis list).
+
+        """
         import r2pipe
 
         pseudo_code = ""
@@ -3103,7 +3639,15 @@ class ReverseEngineeringAgent(BaseAgent):
         return pseudo_code, function_signatures, variable_analysis
 
     def _analyze_assembly_patterns(self, assembly_code: list[Any]) -> list[Any]:
-        """Analyze assembly code to identify code blocks."""
+        """Analyze assembly code to identify code blocks.
+
+        Args:
+            assembly_code: List of assembly instruction dictionaries.
+
+        Returns:
+            List of code blocks analyzed by instruction type and patterns.
+
+        """
         code_blocks = []
         current_block: list[Any] = []
 
@@ -3137,7 +3681,15 @@ class ReverseEngineeringAgent(BaseAgent):
         return code_blocks
 
     def _generate_pseudocode_from_blocks(self, code_blocks: list[Any]) -> tuple[str, list[Any]]:
-        """Generate pseudo code from analyzed code blocks."""
+        """Generate pseudo code from analyzed code blocks.
+
+        Args:
+            code_blocks: List of code blocks to convert to pseudo code.
+
+        Returns:
+            Tuple of (pseudo_code string, function_signatures list).
+
+        """
         pseudo_code = ""
         function_signatures = []
 
@@ -3196,7 +3748,15 @@ class ReverseEngineeringAgent(BaseAgent):
         return pseudo_code, function_signatures
 
     def _generate_pattern_based_pseudocode(self, assembly_code: list[Any]) -> tuple[str, list[Any], list[Any]]:
-        """Generate pseudo code based on common patterns in assembly."""
+        """Generate pseudo code based on common patterns in assembly.
+
+        Args:
+            assembly_code: List of assembly instructions to analyze.
+
+        Returns:
+            Tuple of (pseudo_code string, function_signatures list, variable_analysis list).
+
+        """
         has_license_check = any("license" in str(insn).lower() for insn in assembly_code)
         has_string_ops = any("str" in insn.get("instruction", "").lower() for insn in assembly_code)
         has_crypto = any(op in str(insn).lower() for insn in assembly_code for op in ["aes", "des", "rsa", "sha", "md5"])
@@ -3279,7 +3839,16 @@ int process_data(void* input, int size) {
         return pseudo_code, function_signatures, variable_analysis
 
     async def _decompile_code(self, input_data: dict[str, Any]) -> dict[str, Any]:
-        """Decompile code to higher level using real decompilation engines."""
+        """Decompile code to higher level using real decompilation engines.
+
+        Args:
+            input_data: Dictionary with assembly_code, binary_path, and architecture.
+
+        Returns:
+            Dictionary with pseudo_code, function_signatures, variable_analysis,
+            and confidence.
+
+        """
         assembly_code = input_data.get("assembly_code", [])
         binary_path = input_data.get("binary_path", "")
         input_data.get("architecture", "x86")
@@ -3315,7 +3884,15 @@ int process_data(void* input, int size) {
         }
 
     def _detect_string_algorithms(self, code_lower: str) -> list[dict[str, Any]]:
-        """Detect string algorithm patterns in code."""
+        """Detect string algorithm patterns in code.
+
+        Args:
+            code_lower: Lowercase code string to analyze.
+
+        Returns:
+            List of detected string algorithms with complexity and confidence.
+
+        """
         algorithms = []
 
         if any(pattern in code_lower for pattern in ["strcmp", "strncmp", "memcmp", "strstr", "strchr"]):
@@ -3339,7 +3916,15 @@ int process_data(void* input, int size) {
         return algorithms
 
     def _detect_cryptographic_functions(self, code_lower: str) -> list[dict[str, Any]]:
-        """Detect cryptographic function patterns in code."""
+        """Detect cryptographic function patterns in code.
+
+        Args:
+            code_lower: Lowercase code string to analyze.
+
+        Returns:
+            List of detected cryptographic functions with algorithm name and confidence.
+
+        """
         crypto_patterns = {
             "aes": ["aes", "rijndael", "sbox", "mixcolumns", "shiftrows"],
             "des": ["des", "feistel", "permutation", "sbox"],
@@ -3363,7 +3948,15 @@ int process_data(void* input, int size) {
         ]
 
     def _detect_obfuscation_techniques(self, code_lower: str) -> list[dict[str, Any]]:
-        """Detect obfuscation technique patterns in code."""
+        """Detect obfuscation technique patterns in code.
+
+        Args:
+            code_lower: Lowercase code string to analyze.
+
+        Returns:
+            List of detected obfuscation techniques with confidence levels.
+
+        """
         obfuscation_patterns = {
             "control_flow_flattening": ["switch.*case.*default.*goto", "state_machine"],
             "string_encryption": ["decrypt_string", "encoded_string", "char\\[\\].*=.*{.*0x"],
@@ -3398,7 +3991,15 @@ int process_data(void* input, int size) {
         ]
 
     def _analyze_assembly_for_algorithms(self, assembly_code: list[Any]) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[str]]:
-        """Analyze assembly code for algorithm and compiler patterns."""
+        """Analyze assembly code for algorithm and compiler patterns.
+
+        Args:
+            assembly_code: List of assembly instruction dictionaries to analyze.
+
+        Returns:
+            Tuple of (identified_algorithms, cryptographic_functions, compiler_patterns).
+
+        """
         identified_algorithms = []
         cryptographic_functions = []
         compiler_patterns = []
@@ -3436,7 +4037,15 @@ int process_data(void* input, int size) {
         return identified_algorithms, cryptographic_functions, compiler_patterns
 
     def _analyze_loop_complexity(self, code: str) -> list[dict[str, Any]]:
-        """Analyze loop nesting complexity patterns in code."""
+        """Analyze loop nesting complexity patterns in code.
+
+        Args:
+            code: Source code string to analyze.
+
+        Returns:
+            List of identified loop complexity patterns and their time complexity.
+
+        """
         algorithms = []
 
         loop_depth = 0
@@ -3462,7 +4071,16 @@ int process_data(void* input, int size) {
         return algorithms
 
     def _determine_optimization_level(self, compiler_patterns: list[str], assembly_code: list[Any]) -> str:
-        """Determine code optimization level based on compiler and assembly patterns."""
+        """Determine code optimization level based on compiler and assembly patterns.
+
+        Args:
+            compiler_patterns: List of identified compiler patterns.
+            assembly_code: List of assembly instructions to analyze.
+
+        Returns:
+            str: Optimization level as one of 'high', 'medium', 'low', or 'unknown'.
+
+        """
         if not compiler_patterns:
             if assembly_code:
                 asm_str = str(assembly_code)
@@ -3485,7 +4103,16 @@ int process_data(void* input, int size) {
         return "unknown"
 
     async def _analyze_algorithms(self, input_data: dict[str, Any]) -> dict[str, Any]:
-        """Analyze algorithms in code using real pattern detection."""
+        """Analyze algorithms in code using real pattern detection.
+
+        Args:
+            input_data: Dictionary with code and optional assembly_code.
+
+        Returns:
+            Dictionary with identified_algorithms, cryptographic_functions,
+            obfuscation_techniques, optimization_level, compiler_patterns, and confidence.
+
+        """
         code = input_data.get("code", "")
         assembly_code = input_data.get("assembly_code", [])
 
@@ -3553,7 +4180,12 @@ class MultiAgentSystem:
         logger.info("Multi-agent system initialized")
 
     def add_agent(self, agent: BaseAgent) -> None:
-        """Add agent to the system."""
+        """Add agent to the system and register it for message routing.
+
+        Args:
+            agent: BaseAgent instance to add to the multi-agent system.
+
+        """
         agent.collaboration_system = self
         self.agents[agent.agent_id] = agent
         self.message_router.register_agent(agent.agent_id, agent.message_queue)
@@ -3561,7 +4193,12 @@ class MultiAgentSystem:
         logger.info("Added agent %s to system", agent.agent_id)
 
     def remove_agent(self, agent_id: str) -> None:
-        """Remove agent from system."""
+        """Remove agent from system and stop its operations.
+
+        Args:
+            agent_id: ID of the agent to remove.
+
+        """
         if agent_id in self.agents:
             agent = self.agents[agent_id]
             agent.stop()
@@ -3571,7 +4208,7 @@ class MultiAgentSystem:
             logger.info("Removed agent %s from system", agent_id)
 
     def start(self) -> None:
-        """Start the multi-agent system."""
+        """Start the multi-agent system and initialize all agents."""
         self.active = True
 
         # Start all agents
@@ -3581,7 +4218,7 @@ class MultiAgentSystem:
         logger.info("Multi-agent system started")
 
     def stop(self) -> None:
-        """Stop the multi-agent system."""
+        """Stop the multi-agent system and cease all agent operations."""
         self.active = False
 
         # Stop all agents
@@ -3591,13 +4228,30 @@ class MultiAgentSystem:
         logger.info("Multi-agent system stopped")
 
     def route_message(self, message: AgentMessage) -> None:
-        """Route message between agents."""
+        """Route message between agents and track message statistics.
+
+        Args:
+            message: AgentMessage to route to recipient agent.
+
+        """
         self.message_router.route_message(message)
         self.collaboration_stats["messages_sent"] += 1
 
     @profile_ai_operation("multi_agent_collaboration")
     async def execute_collaborative_task(self, task: AgentTask) -> CollaborationResult:
-        """Execute task using multiple agents."""
+        """Execute task using multiple agents.
+
+        Args:
+            task: AgentTask to execute collaboratively across multiple agents.
+
+        Returns:
+            CollaborationResult containing task outcome, participating agents,
+            execution metrics, and combined results.
+
+        Raises:
+            ValueError: If no suitable agents found for task execution.
+
+        """
         start_time = time.time()
         participating_agents = []
 
@@ -3658,7 +4312,15 @@ class MultiAgentSystem:
             )
 
     def _determine_required_capabilities(self, task: AgentTask) -> list[str]:
-        """Determine required capabilities for task."""
+        """Determine required capabilities for task.
+
+        Args:
+            task: AgentTask to determine required capabilities for.
+
+        Returns:
+            List of capability names required to execute the task.
+
+        """
         task_type = task.task_type
 
         capability_map = {
@@ -3671,7 +4333,15 @@ class MultiAgentSystem:
         return capability_map.get(task_type, [task_type])
 
     def _find_suitable_agents(self, required_capabilities: list[str]) -> list[tuple[str, BaseAgent]]:
-        """Find agents with required capabilities."""
+        """Find agents with required capabilities.
+
+        Args:
+            required_capabilities: List of capability names needed for task.
+
+        Returns:
+            List of tuples (agent_id, agent) sorted by performance metrics.
+
+        """
         suitable_agents = []
 
         for agent_id, agent in self.agents.items():
@@ -3696,7 +4366,16 @@ class MultiAgentSystem:
         return suitable_agents
 
     def _create_subtasks(self, main_task: AgentTask, suitable_agents: list[tuple[str, BaseAgent]]) -> list[tuple[str, AgentTask]]:
-        """Create subtasks for agents."""
+        """Create subtasks for agents.
+
+        Args:
+            main_task: Main task to decompose into subtasks.
+            suitable_agents: List of (agent_id, agent) tuples capable of handling subtasks.
+
+        Returns:
+            List of tuples (agent_id, subtask) for parallel execution.
+
+        """
         subtasks = []
 
         for agent_id, agent in suitable_agents:
@@ -3720,7 +4399,15 @@ class MultiAgentSystem:
         return subtasks
 
     async def _execute_subtasks_parallel(self, subtasks: list[tuple[str, AgentTask]]) -> dict[str, dict[str, Any]]:
-        """Execute subtasks in parallel."""
+        """Execute subtasks in parallel.
+
+        Args:
+            subtasks: List of (agent_id, subtask) tuples to execute.
+
+        Returns:
+            Dictionary mapping agent_id to result dictionaries with success/error info.
+
+        """
 
         async def execute_subtask(agent_id: str, subtask: AgentTask) -> tuple[str, dict[str, Any]]:
             agent = self.agents[agent_id]
@@ -3738,7 +4425,15 @@ class MultiAgentSystem:
         return dict(results)
 
     def _combine_results(self, subtask_results: dict[str, dict[str, Any]]) -> dict[str, Any]:
-        """Combine results from multiple agents."""
+        """Combine results from multiple agents.
+
+        Args:
+            subtask_results: Dictionary mapping agent_id to execution results.
+
+        Returns:
+            Combined analysis dictionary with unified and cross-validated findings.
+
+        """
         combined: dict[str, Any] = {
             "agent_results": {},
             "unified_analysis": {},
@@ -3760,7 +4455,16 @@ class MultiAgentSystem:
         return combined
 
     def _create_unified_analysis(self, results: dict[str, dict[str, Any]]) -> dict[str, Any]:
-        """Create unified analysis from multiple agent results."""
+        """Create unified analysis from multiple agent results.
+
+        Args:
+            results: Dictionary of successful agent analysis results.
+
+        Returns:
+            Unified analysis dictionary with overall assessment, confidence scores,
+            combined findings, and recommendations.
+
+        """
         unified = {
             "overall_assessment": "analysis_complete",
             "confidence_scores": {},
@@ -3789,7 +4493,15 @@ class MultiAgentSystem:
         return unified
 
     def _cross_validate_findings(self, results: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
-        """Cross-validate findings between agents."""
+        """Cross-validate findings between agents.
+
+        Args:
+            results: Dictionary of agent analysis results to cross-validate.
+
+        Returns:
+            List of cross-validated findings confirmed by multiple agents.
+
+        """
         # Simple cross-validation: look for common patterns
         finding_patterns = defaultdict(list)
 
@@ -3810,7 +4522,15 @@ class MultiAgentSystem:
         ]
 
     def _extract_patterns(self, result: dict[str, Any]) -> list[str]:
-        """Extract patterns from agent result."""
+        """Extract patterns from agent result.
+
+        Args:
+            result: Agent result dictionary to extract patterns from.
+
+        Returns:
+            List of pattern strings extracted from the result.
+
+        """
         patterns = []
 
         # Extract patterns based on result structure
@@ -3826,7 +4546,15 @@ class MultiAgentSystem:
         return patterns
 
     def _calculate_combined_confidence(self, subtask_results: dict[str, dict[str, Any]]) -> float:
-        """Calculate combined confidence from multiple agents."""
+        """Calculate combined confidence from multiple agents.
+
+        Args:
+            subtask_results: Dictionary of subtask execution results from agents.
+
+        Returns:
+            Combined confidence score (0.0-1.0) averaged from successful results.
+
+        """
         confidences = []
 
         for result_data in subtask_results.values():
@@ -3838,7 +4566,13 @@ class MultiAgentSystem:
         return sum(confidences) / len(confidences) if confidences else 0.0
 
     async def _share_collaboration_knowledge(self, task: AgentTask, result: CollaborationResult) -> None:
-        """Share knowledge gained from collaboration."""
+        """Share knowledge gained from collaboration with participating agents.
+
+        Args:
+            task: The original task that was executed.
+            result: The collaboration result containing execution metrics and success info.
+
+        """
         knowledge = {
             "collaboration_pattern": {
                 "task_type": task.task_type,
@@ -3859,7 +4593,13 @@ class MultiAgentSystem:
         self.collaboration_stats["knowledge_shares"] += 1
 
     def get_system_status(self) -> dict[str, Any]:
-        """Get multi-agent system status."""
+        """Get multi-agent system status.
+
+        Returns:
+            Dictionary with active status, agent counts, collaboration stats,
+            and individual agent status information.
+
+        """
         agent_statuses = {agent_id: agent.get_agent_status() for agent_id, agent in self.agents.items()}
         return {
             "active": self.active,
@@ -3880,16 +4620,32 @@ class MessageRouter:
         self.message_log: deque[dict[str, Any]] = deque(maxlen=1000)
 
     def register_agent(self, agent_id: str, message_queue: Queue[AgentMessage]) -> None:
-        """Register agent message queue."""
+        """Register agent message queue for routing.
+
+        Args:
+            agent_id: ID of agent to register.
+            message_queue: Queue for sending messages to the agent.
+
+        """
         self.agent_queues[agent_id] = message_queue
 
     def unregister_agent(self, agent_id: str) -> None:
-        """Unregister agent."""
+        """Unregister agent from message router.
+
+        Args:
+            agent_id: ID of agent to unregister.
+
+        """
         if agent_id in self.agent_queues:
             del self.agent_queues[agent_id]
 
     def route_message(self, message: AgentMessage) -> None:
-        """Route message to target agent."""
+        """Route message to target agent and log routing information.
+
+        Args:
+            message: AgentMessage to deliver to recipient agent.
+
+        """
         if message.recipient_id in self.agent_queues:
             self.agent_queues[message.recipient_id].put(message)
             self.message_log.append(
@@ -3921,7 +4677,15 @@ class TaskDistributor:
         self.load_balancer = LoadBalancer()
 
     def distribute_task(self, task: AgentTask) -> str:
-        """Distribute task to appropriate agent."""
+        """Distribute task to appropriate agent.
+
+        Args:
+            task: AgentTask to distribute to an appropriate agent.
+
+        Returns:
+            Agent ID that receives the task, empty string if no agent found.
+
+        """
         if best_agent := self._find_best_agent(task):
             # Send task to agent
             message = AgentMessage(
@@ -3950,7 +4714,15 @@ class TaskDistributor:
         return ""
 
     def _find_best_agent(self, task: AgentTask) -> BaseAgent | None:
-        """Find best agent for task."""
+        """Find best agent for task based on capability and performance score.
+
+        Args:
+            task: AgentTask to find suitable agent for.
+
+        Returns:
+            Best-suited BaseAgent instance based on scoring, or None if no suitable agent available.
+
+        """
         suitable_agents = []
 
         for agent in self.system.agents.values():
@@ -3970,7 +4742,17 @@ class TaskDistributor:
         return None
 
     def _calculate_agent_score(self, agent: BaseAgent, task: AgentTask) -> float:
-        """Calculate agent suitability score for task."""
+        """Calculate agent suitability score for task.
+
+        Args:
+            agent: BaseAgent to calculate score for.
+            task: AgentTask to evaluate agent suitability for.
+
+        Returns:
+            Suitability score based on success rate, performance, capability match,
+            and activity recency.
+
+        """
         score = 0.0
 
         # Base score from success rate
@@ -4003,7 +4785,13 @@ class LoadBalancer:
         self.load_history: deque[dict[str, Any]] = deque(maxlen=100)
 
     def update_agent_load(self, agent_id: str, load: float) -> None:
-        """Update agent load."""
+        """Update agent load and record in load history.
+
+        Args:
+            agent_id: ID of the agent.
+            load: Current load value for the agent.
+
+        """
         self.agent_loads[agent_id] = load
         self.load_history.append(
             {
@@ -4014,7 +4802,15 @@ class LoadBalancer:
         )
 
     def get_least_loaded_agent(self, available_agents: list[str]) -> str | None:
-        """Get least loaded agent from available agents."""
+        """Get least loaded agent from available agents.
+
+        Args:
+            available_agents: List of available agent IDs to select from.
+
+        Returns:
+            Agent ID with least load, or None if no agents available.
+
+        """
         if not available_agents:
             return None
 
@@ -4040,7 +4836,15 @@ class KnowledgeManager:
         self.access_patterns: dict[str, int] = defaultdict(int)
 
     def store_knowledge(self, category: str, key: str, value: object, source_agent: str) -> None:
-        """Store knowledge from agent."""
+        """Store knowledge from agent in shared knowledge repository.
+
+        Args:
+            category: Knowledge category name for organizing knowledge.
+            key: Unique key for the knowledge item.
+            value: Knowledge value to store.
+            source_agent: ID of agent providing the knowledge.
+
+        """
         if category not in self.shared_knowledge:
             self.shared_knowledge[category] = {}
 
@@ -4057,7 +4861,17 @@ class KnowledgeManager:
         self.knowledge_graph[source_agent].add(f"{category}:{key}")
 
     def retrieve_knowledge(self, category: str, key: str, requesting_agent: str) -> Any:
-        """Retrieve knowledge for agent."""
+        """Retrieve knowledge for agent.
+
+        Args:
+            category: Knowledge category name.
+            key: Key of the knowledge item to retrieve.
+            requesting_agent: ID of agent requesting the knowledge.
+
+        Returns:
+            Knowledge value if found, None otherwise.
+
+        """
         if category in self.shared_knowledge and key in self.shared_knowledge[category]:
             knowledge_item = self.shared_knowledge[category][key]
             knowledge_item["access_count"] += 1
@@ -4070,7 +4884,16 @@ class KnowledgeManager:
         return None
 
     def get_related_knowledge(self, category: str, requesting_agent: str) -> dict[str, Any]:
-        """Get all knowledge in category."""
+        """Get all knowledge items in specified category for agent access.
+
+        Args:
+            category: Knowledge category to retrieve items from.
+            requesting_agent: ID of agent requesting the knowledge items.
+
+        Returns:
+            Dictionary mapping knowledge keys to values for all items in the category.
+
+        """
         logger.debug("Agent '%s' requesting knowledge from category '%s'", requesting_agent, category)
         if category in self.shared_knowledge:
             return {k: v["value"] for k, v in self.shared_knowledge[category].items()}

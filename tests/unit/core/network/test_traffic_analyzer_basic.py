@@ -7,6 +7,8 @@ import sys
 import traceback
 import pytest
 from pathlib import Path
+from typing import Any
+from typing import Optional
 
 sys.path.insert(0, str(Path(__file__).parent))
 
@@ -19,7 +21,7 @@ except ImportError:
 
 pytestmark = pytest.mark.skipif(not MODULE_AVAILABLE, reason="Module not available")
 
-def test_basic_imports():
+def test_basic_imports() -> Optional[Any]:
     """Test basic imports work."""
     if MODULE_AVAILABLE:
         print("OK Successfully imported NetworkTrafficAnalyzer")
@@ -28,7 +30,7 @@ def test_basic_imports():
         print(f"FAIL Module not available")
         return False
 
-def test_basic_initialization():
+def test_basic_initialization() -> Optional[Any]:
     """Test basic analyzer initialization."""
     if not MODULE_AVAILABLE:
         return False
@@ -78,7 +80,7 @@ def test_basic_initialization():
         traceback.print_exc()
         return False
 
-def test_packet_processing():
+def test_packet_processing() -> Optional[Any]:
     """Test basic packet processing functionality."""
     try:
         from intellicrack.core.network.traffic_analyzer import NetworkTrafficAnalyzer
@@ -108,7 +110,7 @@ def test_packet_processing():
         traceback.print_exc()
         return False
 
-def test_results_functionality():
+def test_results_functionality() -> Optional[Any]:
     """Test get_results functionality."""
     try:
         from intellicrack.core.network.traffic_analyzer import NetworkTrafficAnalyzer

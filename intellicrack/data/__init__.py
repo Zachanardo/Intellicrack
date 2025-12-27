@@ -32,6 +32,8 @@ TEMPLATES_DIR: Path = DATA_DIR / "templates"
 YARA_RULES_DIR: Path = DATA_DIR / "yara_rules"
 
 C2_SESSIONS_DB: Path = DATA_DIR / "c2_sessions.db"
+EXPLOITATION_LOGS_DB: Path = DATABASE_DIR / "exploitation_logs.db"
+LICENSE_SERVER_DB: Path = DATABASE_DIR / "license_server.db"
 SUCCESS_RATES_DB: Path = DATABASE_DIR / "intellicrack_success_rates.db"
 PROTECTION_SIGNATURES_DB: Path = DATABASE_DIR / "protection_signatures.db"
 
@@ -112,7 +114,9 @@ __all__ = [
     "CERTIFICATES_DIR",
     "DATA_DIR",
     "DATABASE_DIR",
+    "EXPLOITATION_LOGS_DB",
     "HAS_SIGNATURE_TEMPLATES",
+    "LICENSE_SERVER_DB",
     "OUTPUT_DIR",
     "PROTECTION_SIGNATURES_DB",
     "PROTOCOL_SIGNATURES",

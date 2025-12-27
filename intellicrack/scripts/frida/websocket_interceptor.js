@@ -85,12 +85,36 @@ const credentialGenerator = {
         };
     },
 
+    // Validate UUID format using string-based parsing (avoid unsafe regex)
+    isValidUUID: value => {
+        if (!value || value.length !== 36) {
+            return false;
+        }
+        const parts = value.split('-');
+        if (parts.length !== 5) {
+            return false;
+        }
+        const expectedLengths = [8, 4, 4, 4, 12];
+        const hexChars = '0123456789abcdefABCDEF';
+        for (const [idx, part] of parts.entries()) {
+            if (part.length !== expectedLengths[idx]) {
+                return false;
+            }
+            for (const char of part) {
+                if (!hexChars.includes(char)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    },
+
     // Detect format (JWT, UUID, base64, hex, etc.)
     detectFormat: value => {
         if (value.includes('.') && value.split('.').length === 3) {
             return 'jwt';
         }
-        if (/^[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}$/i.test(value)) {
+        if (this.isValidUUID(value)) {
             return 'uuid';
         }
         if (/^[\d+/=A-Za-z]+$/.test(value) && value.length % 4 === 0) {
@@ -189,7 +213,7 @@ const credentialGenerator = {
     // Generate UUID
     generateUUID: () =>
         'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replaceAll(/[xy]/g, c => {
-            const r = (Math.random() * 16) | 0;
+            const r = Math.trunc(Math.random() * 16);
             const v = c === 'x' ? r : (r & 0x3) | 0x8;
             return v.toString(16);
         }),
@@ -641,7 +665,7 @@ const websocketInterceptor = {
         ws.addEventListener(
             'message',
             event => {
-                const { data } = event;
+                const { data, origin, lastEventId, source, ports } = event;
                 send({
                     type: 'info',
                     target: 'websocket_interceptor',
@@ -655,10 +679,10 @@ const websocketInterceptor = {
                     event.stopImmediatePropagation();
                     const modifiedEvent = new MessageEvent('message', {
                         data: modified,
-                        origin: event.origin,
-                        lastEventId: event.lastEventId,
-                        source: event.source,
-                        ports: event.ports,
+                        origin,
+                        lastEventId,
+                        source,
+                        ports,
                     });
 
                     send({
@@ -744,6 +768,7 @@ const websocketInterceptor = {
                                 this.bufferType
                             );
 
+                            let processedMessage;
                             if (this.isSend) {
                                 send({
                                     type: 'info',
@@ -752,11 +777,11 @@ const websocketInterceptor = {
                                     message,
                                     handle: this.handle.toString(),
                                 });
-                                var modified = self.processOutgoingMessage(message);
-                                if (modified !== message) {
+                                processedMessage = self.processOutgoingMessage(message);
+                                if (processedMessage !== message) {
                                     self.replaceWebSocketBuffer(
                                         this.buffer,
-                                        modified,
+                                        processedMessage,
                                         this.bufferType
                                     );
                                 }
@@ -768,11 +793,11 @@ const websocketInterceptor = {
                                     message,
                                     handle: this.handle.toString(),
                                 });
-                                var modified = self.processIncomingMessage(message);
-                                if (modified !== message) {
+                                processedMessage = self.processIncomingMessage(message);
+                                if (processedMessage !== message) {
                                     self.replaceWebSocketBuffer(
                                         this.buffer,
-                                        modified,
+                                        processedMessage,
                                         this.bufferType
                                     );
                                     self.spoofedResponses++;
@@ -916,7 +941,7 @@ const websocketInterceptor = {
             if (bufferType === 0) {
                 // Binary - expect hex string
                 if (newContent.startsWith('BINARY[')) {
-                    const hex = newContent.substring(7, newContent.length - 1);
+                    const hex = newContent.slice(7, -1);
                     const bytes = hex.split(' ');
                     for (const [i, byte] of bytes.entries()) {
                         buffer.add(i).writeU8(Number.parseInt(byte, 16));
@@ -945,7 +970,7 @@ const websocketInterceptor = {
         // Check request patterns
         for (let i = 0; i < this.config.messagePatterns.requests.length; i++) {
             const pattern = this.config.messagePatterns.requests[i];
-            if (message.match(pattern.pattern)) {
+            if (pattern.pattern.test(message)) {
                 send({
                     type: 'info',
                     target: 'websocket_interceptor',
@@ -986,7 +1011,7 @@ const websocketInterceptor = {
         let modified = message;
         for (let i = 0; i < this.config.messagePatterns.responses.length; i++) {
             const pattern = this.config.messagePatterns.responses[i];
-            if (modified.match(pattern.pattern)) {
+            if (pattern.pattern.test(modified)) {
                 send({
                     type: 'info',
                     target: 'websocket_interceptor',
@@ -1080,26 +1105,30 @@ const websocketInterceptor = {
         try {
             // Hook RTCPeerConnection constructor
             if (typeof RTCPeerConnection !== 'undefined') {
-                const originalRTCPeerConnection = RTCPeerConnection;
-                RTCPeerConnection = config => {
-                    if (self.config.webRtcConfig.spoofIceServers && config && config.iceServers) {
-                        config.iceServers = self.config.webRtcConfig.overrideStunServers.map(
-                            url => ({
-                                urls: url,
-                            })
-                        );
-                        send({
-                            type: 'bypass',
-                            target: 'websocket_interceptor',
-                            action: 'webrtc_ice_servers_spoofed',
-                            servers: config.iceServers,
-                        });
-                    }
+                const OriginalRTCPeerConnection = RTCPeerConnection;
+                Object.defineProperty(globalThis, 'RTCPeerConnection', {
+                    value: config => {
+                        if (self.config.webRtcConfig.spoofIceServers && config && config.iceServers) {
+                            config.iceServers = self.config.webRtcConfig.overrideStunServers.map(
+                                url => ({
+                                    urls: url,
+                                })
+                            );
+                            send({
+                                type: 'bypass',
+                                target: 'websocket_interceptor',
+                                action: 'webrtc_ice_servers_spoofed',
+                                servers: config.iceServers,
+                            });
+                        }
 
-                    const pc = new originalRTCPeerConnection(config);
-                    self.hookDataChannelEvents(pc);
-                    return pc;
-                };
+                        const pc = new OriginalRTCPeerConnection(config);
+                        self.hookDataChannelEvents(pc);
+                        return pc;
+                    },
+                    writable: true,
+                    configurable: true,
+                });
             }
 
             // Hook native WebRTC APIs (Windows)
@@ -1214,14 +1243,18 @@ const websocketInterceptor = {
 
     // Hook native WebRTC data channel
     hookNativeDataChannel: channel => {
-        // Hook data channel message handlers
-        if (channel.onmessage) {
-            const originalOnMessage = channel.onmessage;
-            channel.onmessage = function (event) {
-                self.interceptDataChannelMessage(event);
-                return Reflect.apply(originalOnMessage, this, arguments);
-            };
+        // Hook data channel message handlers using addEventListener
+        const originalOnMessage = channel.onmessage;
+        if (originalOnMessage) {
+            channel.removeEventListener('message', originalOnMessage);
         }
+        channel.addEventListener('message', function (event, ...restArgs) {
+            self.interceptDataChannelMessage(event);
+            if (originalOnMessage) {
+                return Reflect.apply(originalOnMessage, this, [event, ...restArgs]);
+            }
+            return undefined;
+        });
 
         // This would require platform-specific implementation
         // For Windows, we'd hook WebRTC DLL functions
@@ -2266,118 +2299,123 @@ const websocketInterceptor = {
         try {
             // Hook EventSource constructor for SSE interception
             if (typeof EventSource !== 'undefined') {
-                const originalEventSource = EventSource;
-                EventSource = (url, config) => {
-                    send({
-                        type: 'info',
-                        target: 'websocket_interceptor',
-                        action: 'sse_connection_detected',
-                        url,
-                        config,
-                    });
-
-                    const eventSource = new originalEventSource(url, config);
-
-                    // Check if SSE URL should be intercepted
-                    if (self.shouldInterceptUrl(url)) {
+                const OriginalEventSource = EventSource;
+                Object.defineProperty(globalThis, 'EventSource', {
+                    value: (url, config) => {
                         send({
                             type: 'info',
                             target: 'websocket_interceptor',
-                            action: 'sse_connection_intercepted',
+                            action: 'sse_connection_detected',
                             url,
+                            config,
                         });
 
-                        // Hook all SSE message events
-                        const originalAddEventListener = eventSource.addEventListener;
-                        eventSource.addEventListener = function (type, listener, options) {
-                            if (
-                                type === 'message'
+                        const eventSource = new OriginalEventSource(url, config);
+
+                        // Check if SSE URL should be intercepted
+                        if (self.shouldInterceptUrl(url)) {
+                            send({
+                                type: 'info',
+                                target: 'websocket_interceptor',
+                                action: 'sse_connection_intercepted',
+                                url,
+                            });
+
+                            // Hook all SSE message events
+                            const originalAddEventListener = eventSource.addEventListener;
+                            eventSource.addEventListener = function (type, listener, options) {
+                                if (
+                                    type === 'message'
                                 || type === 'error'
                                 || type.includes('license')
-                            ) {
-                                const wrappedListener = function (event) {
-                                    const originalData = event.data;
-
-                                    send({
-                                        target: 'websocket_interceptor',
-                                        action: 'sse_message_received',
-                                        type,
-                                        data: originalData,
-                                    });
-
-                                    // Process SSE message for license validation bypass
-                                    const modified = self.processIncomingMessage(originalData);
-                                    if (modified !== originalData) {
-                                        // Create modified event
-                                        Object.defineProperty(event, 'data', {
-                                            value: modified,
-                                            writable: false,
-                                        });
+                                ) {
+                                    const wrappedListener = event => {
+                                        const originalData = event.data;
 
                                         send({
                                             target: 'websocket_interceptor',
-                                            action: 'sse_message_spoofed',
-                                            original: originalData,
-                                            modified,
+                                            action: 'sse_message_received',
                                             type,
+                                            data: originalData,
                                         });
-                                        self.spoofedResponses++;
-                                    }
 
-                                    self.interceptedMessages++;
-                                    return listener.call(this, event);
-                                };
-                                return originalAddEventListener.call(
-                                    this,
-                                    type,
-                                    wrappedListener,
-                                    options
-                                );
-                            }
-                            return originalAddEventListener.call(this, type, listener, options);
-                        };
+                                        // Process SSE message for license validation bypass
+                                        const modified = self.processIncomingMessage(originalData);
+                                        if (modified !== originalData) {
+                                        // Create modified event
+                                            Object.defineProperty(event, 'data', {
+                                                value: modified,
+                                                writable: false,
+                                            });
 
-                        // Hook onmessage property
-                        const messageDescriptor
+                                            send({
+                                                target: 'websocket_interceptor',
+                                                action: 'sse_message_spoofed',
+                                                original: originalData,
+                                                modified,
+                                                type,
+                                            });
+                                            self.spoofedResponses++;
+                                        }
+
+                                        self.interceptedMessages++;
+                                        return listener.call(this, event);
+                                    };
+                                    return originalAddEventListener.call(
+                                        this,
+                                        type,
+                                        wrappedListener,
+                                        options
+                                    );
+                                }
+                                return originalAddEventListener.call(this, type, listener, options);
+                            };
+
+                            // Hook onmessage property
+                            const messageDescriptor
                             = Object.getOwnPropertyDescriptor(EventSource.prototype, 'onmessage')
                             || Object.getOwnPropertyDescriptor(eventSource, 'onmessage');
-                        if (messageDescriptor?.set) {
-                            const originalSetter = messageDescriptor.set;
-                            Object.defineProperty(eventSource, 'onmessage', {
-                                set(handler) {
-                                    if (handler) {
-                                        const wrappedHandler = function (event) {
-                                            const modified = self.processIncomingMessage(
-                                                event.data
-                                            );
-                                            if (modified !== event.data) {
-                                                Object.defineProperty(event, 'data', {
-                                                    value: modified,
-                                                    writable: false,
-                                                });
-                                                self.spoofedResponses++;
-                                            }
-                                            self.interceptedMessages++;
-                                            return handler.call(this, event);
-                                        };
-                                        originalSetter.call(this, wrappedHandler);
-                                    } else {
-                                        originalSetter.call(this, handler);
-                                    }
-                                },
-                                get: messageDescriptor.get,
-                                configurable: true,
-                            });
+                            if (messageDescriptor?.set) {
+                                const originalSetter = messageDescriptor.set;
+                                Object.defineProperty(eventSource, 'onmessage', {
+                                    set(handler) {
+                                        if (handler) {
+                                            const wrappedHandler = event => {
+                                                const modified = self.processIncomingMessage(
+                                                    event.data
+                                                );
+                                                if (modified !== event.data) {
+                                                    Object.defineProperty(event, 'data', {
+                                                        value: modified,
+                                                        writable: false,
+                                                    });
+                                                    self.spoofedResponses++;
+                                                }
+                                                self.interceptedMessages++;
+                                                return handler.call(this, event);
+                                            };
+                                            originalSetter.call(this, wrappedHandler);
+                                        } else {
+                                            originalSetter.call(this, handler);
+                                        }
+                                    },
+                                    get: messageDescriptor.get,
+                                    configurable: true,
+                                });
+                            }
                         }
-                    }
 
-                    return eventSource;
-                };
+                        return eventSource;
+                    },
+                    writable: true,
+                    configurable: true,
+                });
 
                 // Copy static properties
-                for (const prop in originalEventSource) {
-                    if (Object.hasOwn(originalEventSource, prop)) {
-                        EventSource[prop] = originalEventSource[prop];
+                const newEventSource = globalThis.EventSource;
+                for (const prop in OriginalEventSource) {
+                    if (Object.hasOwn(OriginalEventSource, prop)) {
+                        newEventSource[prop] = OriginalEventSource[prop];
                     }
                 }
             }
@@ -2500,177 +2538,182 @@ const websocketInterceptor = {
         try {
             // Hook WebTransport constructor
             if (typeof WebTransport !== 'undefined') {
-                const originalWebTransport = WebTransport;
-                WebTransport = (url, options) => {
-                    send({
-                        type: 'info',
-                        target: 'websocket_interceptor',
-                        action: 'webtransport_connection_detected',
-                        url,
-                        options,
-                    });
-
-                    const transport = new originalWebTransport(url, options);
-
-                    if (self.shouldInterceptUrl(url)) {
+                const OriginalWebTransport = WebTransport;
+                Object.defineProperty(globalThis, 'WebTransport', {
+                    value: (url, options) => {
                         send({
                             type: 'info',
                             target: 'websocket_interceptor',
-                            action: 'webtransport_connection_intercepted',
+                            action: 'webtransport_connection_detected',
                             url,
+                            options,
                         });
 
-                        // Hook incomingUnidirectionalStreams
-                        transport.incomingUnidirectionalStreams
-                            .getReader()
-                            .read()
-                            .then(function processStream(result) {
-                                if (!result.done) {
-                                    const stream = result.value;
-                                    send({
-                                        type: 'info',
-                                        target: 'websocket_interceptor',
-                                        action: 'webtransport_unidirectional_stream',
-                                        streamId: stream.toString(),
-                                    });
+                        const transport = new OriginalWebTransport(url, options);
 
-                                    // Process stream data
-                                    self.hookWebTransportStream(stream, 'unidirectional');
-
-                                    // Continue reading streams
-                                    return transport.incomingUnidirectionalStreams
-                                        .getReader()
-                                        .read()
-                                        .then(processStream);
-                                }
-                                return null;
-                            })
-                            .catch(error => {
-                                send({
-                                    type: 'error',
-                                    target: 'websocket_interceptor',
-                                    action: 'webtransport_stream_error',
-                                    error: error.toString(),
-                                });
+                        if (self.shouldInterceptUrl(url)) {
+                            send({
+                                type: 'info',
+                                target: 'websocket_interceptor',
+                                action: 'webtransport_connection_intercepted',
+                                url,
                             });
 
-                        // Hook incomingBidirectionalStreams
-                        transport.incomingBidirectionalStreams
-                            .getReader()
-                            .read()
-                            .then(function processStream(result) {
-                                if (!result.done) {
-                                    const stream = result.value;
+                            // Hook incomingUnidirectionalStreams
+                            transport.incomingUnidirectionalStreams
+                                .getReader()
+                                .read()
+                                .then(function processStream(result) {
+                                    if (!result.done) {
+                                        const stream = result.value;
+                                        send({
+                                            type: 'info',
+                                            target: 'websocket_interceptor',
+                                            action: 'webtransport_unidirectional_stream',
+                                            streamId: stream.toString(),
+                                        });
+
+                                        // Process stream data
+                                        self.hookWebTransportStream(stream, 'unidirectional');
+
+                                        // Continue reading streams
+                                        return transport.incomingUnidirectionalStreams
+                                            .getReader()
+                                            .read()
+                                            .then(processStream);
+                                    }
+                                    return null;
+                                })
+                                .catch(error => {
                                     send({
-                                        type: 'info',
+                                        type: 'error',
                                         target: 'websocket_interceptor',
-                                        action: 'webtransport_bidirectional_stream',
-                                        streamId: stream.toString(),
+                                        action: 'webtransport_stream_error',
+                                        error: error.toString(),
                                     });
-
-                                    self.hookWebTransportStream(stream, 'bidirectional');
-                                    return transport.incomingBidirectionalStreams
-                                        .getReader()
-                                        .read()
-                                        .then(processStream);
-                                }
-                                return null;
-                            })
-                            .catch(error => {
-                                send({
-                                    type: 'error',
-                                    target: 'websocket_interceptor',
-                                    action: 'webtransport_stream_error',
-                                    error: error.toString(),
-                                });
-                            });
-
-                        // Hook datagrams
-                        const originalSendDatagrams = transport.datagrams.writable.getWriter();
-                        transport.datagrams.writable.getWriter = () => {
-                            const writer = originalSendDatagrams;
-                            const originalWrite = writer.write;
-
-                            writer.write = function (data) {
-                                const dataStr = new TextDecoder().decode(data);
-                                send({
-                                    type: 'info',
-                                    target: 'websocket_interceptor',
-                                    action: 'webtransport_datagram_send',
-                                    data: dataStr,
                                 });
 
-                                const modified = self.processOutgoingMessage(dataStr);
-                                if (modified !== dataStr) {
-                                    data = new TextEncoder().encode(modified);
+                            // Hook incomingBidirectionalStreams
+                            transport.incomingBidirectionalStreams
+                                .getReader()
+                                .read()
+                                .then(function processStream(result) {
+                                    if (!result.done) {
+                                        const stream = result.value;
+                                        send({
+                                            type: 'info',
+                                            target: 'websocket_interceptor',
+                                            action: 'webtransport_bidirectional_stream',
+                                            streamId: stream.toString(),
+                                        });
+
+                                        self.hookWebTransportStream(stream, 'bidirectional');
+                                        return transport.incomingBidirectionalStreams
+                                            .getReader()
+                                            .read()
+                                            .then(processStream);
+                                    }
+                                    return null;
+                                })
+                                .catch(error => {
                                     send({
-                                        type: 'bypass',
+                                        type: 'error',
                                         target: 'websocket_interceptor',
-                                        action: 'webtransport_datagram_modified',
-                                        original: dataStr,
-                                        modified,
+                                        action: 'webtransport_stream_error',
+                                        error: error.toString(),
                                     });
-                                }
+                                });
 
-                                self.interceptedMessages++;
-                                return originalWrite.call(this, data);
-                            };
-                            return writer;
-                        };
+                            // Hook datagrams
+                            const originalSendDatagrams = transport.datagrams.writable.getWriter();
+                            transport.datagrams.writable.getWriter = () => {
+                                const writer = originalSendDatagrams;
+                                const originalWrite = writer.write;
 
-                        // Hook incoming datagrams
-                        transport.datagrams.readable
-                            .getReader()
-                            .read()
-                            .then(function processDatagram(result) {
-                                if (!result.done) {
-                                    const data = result.value;
+                                writer.write = function (data) {
                                     const dataStr = new TextDecoder().decode(data);
-
                                     send({
                                         type: 'info',
                                         target: 'websocket_interceptor',
-                                        action: 'webtransport_datagram_received',
+                                        action: 'webtransport_datagram_send',
                                         data: dataStr,
                                     });
 
-                                    const modified = self.processIncomingMessage(dataStr);
+                                    const modified = self.processOutgoingMessage(dataStr);
                                     if (modified !== dataStr) {
+                                        data = new TextEncoder().encode(modified);
                                         send({
                                             type: 'bypass',
                                             target: 'websocket_interceptor',
-                                            action: 'webtransport_datagram_response_spoofed',
+                                            action: 'webtransport_datagram_modified',
                                             original: dataStr,
                                             modified,
                                         });
-                                        self.spoofedResponses++;
                                     }
 
                                     self.interceptedMessages++;
-                                    return transport.datagrams.readable
-                                        .getReader()
-                                        .read()
-                                        .then(processDatagram);
-                                }
-                                return null;
-                            })
-                            .catch(error => {
-                                send({
-                                    type: 'error',
-                                    target: 'websocket_interceptor',
-                                    action: 'webtransport_datagram_error',
-                                    error: error.toString(),
-                                });
-                            });
-                    }
+                                    return originalWrite.call(this, data);
+                                };
+                                return writer;
+                            };
 
-                    return transport;
-                };
+                            // Hook incoming datagrams
+                            transport.datagrams.readable
+                                .getReader()
+                                .read()
+                                .then(function processDatagram(result) {
+                                    if (!result.done) {
+                                        const data = result.value;
+                                        const dataStr = new TextDecoder().decode(data);
+
+                                        send({
+                                            type: 'info',
+                                            target: 'websocket_interceptor',
+                                            action: 'webtransport_datagram_received',
+                                            data: dataStr,
+                                        });
+
+                                        const modified = self.processIncomingMessage(dataStr);
+                                        if (modified !== dataStr) {
+                                            send({
+                                                type: 'bypass',
+                                                target: 'websocket_interceptor',
+                                                action: 'webtransport_datagram_response_spoofed',
+                                                original: dataStr,
+                                                modified,
+                                            });
+                                            self.spoofedResponses++;
+                                        }
+
+                                        self.interceptedMessages++;
+                                        return transport.datagrams.readable
+                                            .getReader()
+                                            .read()
+                                            .then(processDatagram);
+                                    }
+                                    return null;
+                                })
+                                .catch(error => {
+                                    send({
+                                        type: 'error',
+                                        target: 'websocket_interceptor',
+                                        action: 'webtransport_datagram_error',
+                                        error: error.toString(),
+                                    });
+                                });
+                        }
+
+                        return transport;
+                    },
+                    writable: true,
+                    configurable: true,
+                });
 
                 // Copy static properties
-                for (const prop in originalWebTransport) {
-                    if (Object.hasOwn(originalWebTransport, prop)) {
-                        WebTransport[prop] = originalWebTransport[prop];
+                const newWebTransport = globalThis.WebTransport;
+                for (const prop in OriginalWebTransport) {
+                    if (Object.hasOwn(OriginalWebTransport, prop)) {
+                        newWebTransport[prop] = OriginalWebTransport[prop];
                     }
                 }
             }
@@ -3600,66 +3643,70 @@ const websocketInterceptor = {
         // Hook Express.js webhook handlers (if in Node.js environment)
         try {
             if (typeof require !== 'undefined') {
-                const originalRequire = require;
-                require = function (module) {
-                    const result = Reflect.apply(originalRequire, this, arguments);
+                const OriginalRequire = require;
+                Object.defineProperty(globalThis, 'require', {
+                    value: (module, ...restArgs) => {
+                        const result = Reflect.apply(OriginalRequire, globalThis, [module, ...restArgs]);
 
-                    if (module === 'express' && result) {
-                        send({
-                            type: 'info',
-                            target: 'websocket_interceptor',
-                            action: 'express_framework_detected',
-                        });
+                        if (module === 'express' && result) {
+                            send({
+                                type: 'info',
+                                target: 'websocket_interceptor',
+                                action: 'express_framework_detected',
+                            });
 
-                        // Hook Express router
-                        const originalRouter = result.Router;
-                        result.Router = function () {
-                            const router = Reflect.apply(originalRouter, this, arguments);
-                            const originalPost = router.post;
-                            const originalPut = router.put;
+                            // Hook Express router
+                            const OriginalRouter = result.Router;
+                            result.Router = function (...routerArgs) {
+                                const router = Reflect.apply(OriginalRouter, this, routerArgs);
+                                const originalPost = router.post;
+                                const originalPut = router.put;
 
-                            // Hook POST routes (common for webhooks)
-                            router.post = function (path) {
-                                if (
-                                    path.includes('webhook')
-                                    || path.includes('license')
-                                    || path.includes('callback')
-                                ) {
-                                    send({
-                                        type: 'info',
-                                        target: 'websocket_interceptor',
-                                        action: 'webhook_route_registered',
-                                        method: 'POST',
-                                        path,
-                                    });
-                                }
-                                return Reflect.apply(originalPost, this, arguments);
+                                // Hook POST routes (common for webhooks)
+                                router.post = function (path, ...postArgs) {
+                                    if (
+                                        path.includes('webhook')
+                                        || path.includes('license')
+                                        || path.includes('callback')
+                                    ) {
+                                        send({
+                                            type: 'info',
+                                            target: 'websocket_interceptor',
+                                            action: 'webhook_route_registered',
+                                            method: 'POST',
+                                            path,
+                                        });
+                                    }
+                                    return Reflect.apply(originalPost, this, [path, ...postArgs]);
+                                };
+
+                                // Hook PUT routes
+                                router.put = function (path, ...putArgs) {
+                                    if (
+                                        path.includes('webhook')
+                                        || path.includes('license')
+                                        || path.includes('callback')
+                                    ) {
+                                        send({
+                                            type: 'info',
+                                            target: 'websocket_interceptor',
+                                            action: 'webhook_route_registered',
+                                            method: 'PUT',
+                                            path,
+                                        });
+                                    }
+                                    return Reflect.apply(originalPut, this, [path, ...putArgs]);
+                                };
+
+                                return router;
                             };
+                        }
 
-                            // Hook PUT routes
-                            router.put = function (path) {
-                                if (
-                                    path.includes('webhook')
-                                    || path.includes('license')
-                                    || path.includes('callback')
-                                ) {
-                                    send({
-                                        type: 'info',
-                                        target: 'websocket_interceptor',
-                                        action: 'webhook_route_registered',
-                                        method: 'PUT',
-                                        path,
-                                    });
-                                }
-                                return Reflect.apply(originalPut, this, arguments);
-                            };
-
-                            return router;
-                        };
-                    }
-
-                    return result;
-                };
+                        return result;
+                    },
+                    writable: true,
+                    configurable: true,
+                });
             }
         } catch {
             // Not in Node.js environment or require not available
@@ -3927,8 +3974,8 @@ const websocketInterceptor = {
                                     || func.includes('check')
                                     || func.includes('auth'))
                             ) {
-                                moduleImports[func] = function () {
-                                    const args = Array.prototype.slice.call(arguments);
+                                moduleImports[func] = (...wasmArgs) => {
+                                    const args = wasmArgs;
                                     send({
                                         type: 'info',
                                         target: 'websocket_interceptor',
@@ -4014,8 +4061,8 @@ const websocketInterceptor = {
                         || func.includes('send')
                         || func.includes('receive')
                     ) {
-                        exports[func] = function () {
-                            const args = Array.prototype.slice.call(arguments);
+                        exports[func] = (...exportArgs) => {
+                            const args = exportArgs;
                             send({
                                 type: 'info',
                                 target: 'websocket_interceptor',
@@ -4505,31 +4552,35 @@ const websocketInterceptor = {
     // Hook GraphQL WebSocket subprotocol
     hookGraphQLWebSocketProtocol: () => {
         // Hook WebSocket connections with GraphQL subprotocols
-        const originalWebSocket = WebSocket;
-        if (originalWebSocket) {
-            WebSocket = (url, protocols) => {
-                const ws = new originalWebSocket(url, protocols);
+        const OriginalWebSocket = WebSocket;
+        if (OriginalWebSocket) {
+            Object.defineProperty(globalThis, 'WebSocket', {
+                value: (url, protocols) => {
+                    const ws = new OriginalWebSocket(url, protocols);
 
-                // Check if this is a GraphQL subscription WebSocket
-                if (
-                    protocols
+                    // Check if this is a GraphQL subscription WebSocket
+                    if (
+                        protocols
                     && (protocols.includes('graphql-ws')
                         || protocols.includes('graphql-transport-ws')
                         || (Array.isArray(protocols) && protocols.some(p => p.includes('graphql'))))
-                ) {
-                    send({
-                        type: 'info',
-                        target: 'websocket_interceptor',
-                        action: 'graphql_websocket_detected',
-                        url,
-                        protocols,
-                    });
+                    ) {
+                        send({
+                            type: 'info',
+                            target: 'websocket_interceptor',
+                            action: 'graphql_websocket_detected',
+                            url,
+                            protocols,
+                        });
 
-                    self.hookGraphQLWebSocketInstance(ws);
-                }
+                        self.hookGraphQLWebSocketInstance(ws);
+                    }
 
-                return ws;
-            };
+                    return ws;
+                },
+                writable: true,
+                configurable: true,
+            });
         }
     },
 
@@ -4651,79 +4702,83 @@ const websocketInterceptor = {
         // Hook GraphQL libraries (if available in Node.js environment)
         try {
             if (typeof require !== 'undefined') {
-                const originalRequire = require;
-                require = function (module) {
-                    const result = Reflect.apply(originalRequire, this, arguments);
+                const OriginalRequireGraphQL = require;
+                Object.defineProperty(globalThis, 'require', {
+                    value: (module, ...restArgs) => {
+                        const result = Reflect.apply(OriginalRequireGraphQL, globalThis, [module, ...restArgs]);
 
-                    if (
-                        (module === 'graphql'
+                        if (
+                            (module === 'graphql'
                             || module === 'apollo-server'
                             || module === 'apollo-client')
                         && result
-                    ) {
-                        send({
-                            type: 'info',
-                            target: 'websocket_interceptor',
-                            action: 'graphql_library_detected',
-                            module,
-                        });
+                        ) {
+                            send({
+                                type: 'info',
+                                target: 'websocket_interceptor',
+                                action: 'graphql_library_detected',
+                                module,
+                            });
 
-                        // Hook GraphQL execution
-                        if (result.execute) {
-                            const originalExecute = result.execute;
-                            result.execute = function (args) {
-                                const { document } = args;
-                                const variables = args.variableValues || {};
+                            // Hook GraphQL execution
+                            if (result.execute) {
+                                const originalExecute = result.execute;
+                                result.execute = function (args) {
+                                    const { document, variableValues } = args;
+                                    const variables = variableValues || {};
 
-                                if (document?.definitions) {
-                                    document.definitions.forEach(def => {
-                                        if (def.selectionSet?.selections) {
-                                            def.selectionSet.selections.forEach(selection => {
-                                                if (
-                                                    selection.name
+                                    if (document?.definitions) {
+                                        document.definitions.forEach(def => {
+                                            if (def.selectionSet?.selections) {
+                                                def.selectionSet.selections.forEach(selection => {
+                                                    if (
+                                                        selection.name
                                                     && (selection.name.value.includes('license')
                                                         || selection.name.value.includes('validate')
                                                         || selection.name.value.includes('auth'))
-                                                ) {
-                                                    send({
-                                                        type: 'info',
-                                                        target: 'websocket_interceptor',
-                                                        action: 'graphql_license_query_detected',
-                                                        operation: selection.name.value,
-                                                        variables,
-                                                    });
+                                                    ) {
+                                                        send({
+                                                            type: 'info',
+                                                            target: 'websocket_interceptor',
+                                                            action: 'graphql_license_query_detected',
+                                                            operation: selection.name.value,
+                                                            variables,
+                                                        });
 
-                                                    // Modify variables for license bypass
-                                                    args.variableValues
+                                                        // Modify variables for license bypass
+                                                        args.variableValues
                                                         = self.modifyGraphQLVariables(variables);
-                                                }
-                                            });
-                                        }
-                                    });
-                                }
-
-                                return originalExecute.call(this, args).then(result => {
-                                    if (result.data) {
-                                        const modified = self.processGraphQLResponse(result.data);
-                                        if (modified !== result.data) {
-                                            result.data = modified;
-                                            send({
-                                                type: 'bypass',
-                                                target: 'websocket_interceptor',
-                                                action: 'graphql_execution_result_modified',
-                                                modified,
-                                            });
-                                            self.spoofedResponses++;
-                                        }
+                                                    }
+                                                });
+                                            }
+                                        });
                                     }
-                                    return result;
-                                });
-                            };
-                        }
-                    }
 
-                    return result;
-                };
+                                    return originalExecute.call(this, args).then(result => {
+                                        if (result.data) {
+                                            const modified = self.processGraphQLResponse(result.data);
+                                            if (modified !== result.data) {
+                                                result.data = modified;
+                                                send({
+                                                    type: 'bypass',
+                                                    target: 'websocket_interceptor',
+                                                    action: 'graphql_execution_result_modified',
+                                                    modified,
+                                                });
+                                                self.spoofedResponses++;
+                                            }
+                                        }
+                                        return result;
+                                    });
+                                };
+                            }
+                        }
+
+                        return result;
+                    },
+                    writable: true,
+                    configurable: true,
+                });
             }
         } catch {
             // Not in Node.js environment
@@ -5110,16 +5165,16 @@ const websocketInterceptor = {
         try {
             const bytes = [];
             for (let i = 0; i < message.length; i += 2) {
-                bytes.push(Number.parseInt(message.substr(i, 2), 16));
+                bytes.push(Number.parseInt(message.slice(i, i + 2), 16));
             }
 
-            const decoded = String.fromCharCode.apply(null, bytes);
+            const decoded = String.fromCodePoint(...bytes);
             const modified = this.processIncomingMessage(decoded);
 
             // Re-encode to hex
             let result = '';
             for (let j = 0; j < modified.length; j++) {
-                result += modified.charCodeAt(j).toString(16).padStart(2, '0');
+                result += modified.codePointAt(j).toString(16).padStart(2, '0');
             }
 
             return result;
@@ -5586,7 +5641,7 @@ const websocketInterceptor = {
 
                 offset++;
                 for (let i = 0; i < length; i++) {
-                    name += String.fromCharCode(buffer.add(offset + i).readU8());
+                    name += String.fromCodePoint(buffer.add(offset + i).readU8());
                 }
 
                 offset += length;

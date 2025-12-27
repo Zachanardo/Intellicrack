@@ -121,7 +121,7 @@ function encryptMessage(message, key = 0xDE_AD_BE_EF) {
     const messageStr = JSON.stringify(message);
     let encrypted = '';
     for (let i = 0; i < messageStr.length; i++) {
-        encrypted += String.fromCharCode(messageStr.charCodeAt(i) ^ (key >> (8 * (i % 4))));
+        encrypted += String.fromCodePoint((messageStr.codePointAt(i) || 0) ^ (key >> (8 * (i % 4))));
     }
     return btoa(encrypted);
 }

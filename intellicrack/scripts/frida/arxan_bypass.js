@@ -382,7 +382,9 @@ const ArxanBypass = {
                     }
                 },
                 onLeave(_retval) {
-                    if (this.shouldBlock) {}
+                    if (this.shouldBlock) {
+                        this.shouldBlock = false;
+                    }
                 },
             });
             this.hooks.installed++;

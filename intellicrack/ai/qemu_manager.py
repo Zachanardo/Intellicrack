@@ -97,7 +97,11 @@ class SecureHostKeyPolicy(MissingHostKeyPolicy):  # type: ignore[misc]
     """Secure host key policy that maintains a known_hosts file for QEMU VMs."""
 
     def __init__(self, known_hosts_path: Path) -> None:
-        """Initialize with path to known_hosts file."""
+        """Initialize with path to known_hosts file.
+
+        Args:
+            known_hosts_path: Path to the known_hosts file for SSH host key storage
+        """
         self.known_hosts_path = known_hosts_path
         self.host_keys = HostKeys()
 
@@ -109,7 +113,17 @@ class SecureHostKeyPolicy(MissingHostKeyPolicy):  # type: ignore[misc]
                 logger.warning("Could not load known_hosts file: %s", e)
 
     def missing_host_key(self, client: SSHClient, hostname: str, key: paramiko.PKey) -> None:
-        """Handle missing host key by checking and storing it securely."""
+        """Handle missing host key by checking and storing it securely.
+
+        Args:
+            client: SSH client instance
+            hostname: Hostname or IP address of the remote host
+            key: Public key from the remote host
+
+        Raises:
+            SSHException: If host key verification fails due to key mismatch
+
+        """
         # For QEMU VMs on localhost with dynamic ports, we store by port
         # This is acceptable for local VMs in controlled environments
         key_identifier = f"[{hostname}]:{client.get_transport().getpeername()[1]}"
@@ -308,7 +322,11 @@ class QEMUManager:
                 # Key is still in memory and usable for this session
 
     def _find_qemu_executable(self) -> str:
-        """Find QEMU executable on the system."""
+        """Find QEMU executable on the system.
+
+        Returns:
+            Path to QEMU executable as a string
+        """
         if config_path := self.config.get_tool_path("qemu-system-x86_64"):
             return config_path
 
@@ -324,7 +342,15 @@ class QEMUManager:
         snapshot: QEMUSnapshot,
         retries: int | None = None,
     ) -> SSHClient | None:
-        """Get or create SSH connection to VM with retry logic and circuit breaker."""
+        """Get or create SSH connection to VM with retry logic and circuit breaker.
+
+        Args:
+            snapshot: QEMUSnapshot instance containing VM connection details
+            retries: Number of connection retry attempts. If None, uses default from config
+
+        Returns:
+            SSHClient instance if connection successful, None if failed
+        """
         retry_count: int = retries if retries is not None else self.ssh_retry_count
         pool_key = (snapshot.vm_name, snapshot.ssh_port)
 
@@ -342,7 +368,14 @@ class QEMUManager:
             return self._create_new_connection(snapshot, pool_key, retry_count)
 
     def _get_existing_connection(self, pool_key: tuple[str, int]) -> SSHClient | None:
-        """Check if an active connection exists in the pool."""
+        """Check if an active connection exists in the pool.
+
+        Args:
+            pool_key: Tuple of (hostname, port) identifying the connection pool entry
+
+        Returns:
+            SSHClient instance if active connection exists, None otherwise
+        """
         if pool_key in self.ssh_connection_pool:
             client = self.ssh_connection_pool[pool_key]
             try:
@@ -355,7 +388,12 @@ class QEMUManager:
         return None
 
     def _remove_invalid_connection(self, pool_key: tuple[str, int], client: SSHClient) -> None:
-        """Remove invalid connection from the pool."""
+        """Remove invalid connection from the pool.
+
+        Args:
+            pool_key: Tuple of (hostname, port) identifying the connection pool entry
+            client: SSHClient instance to remove and close
+        """
         if pool_key in self.ssh_connection_pool:
             del self.ssh_connection_pool[pool_key]
         try:
@@ -364,7 +402,16 @@ class QEMUManager:
             self.logger.debug("Error closing SSH client: %s", e)
 
     def _create_new_connection(self, snapshot: QEMUSnapshot, pool_key: tuple[str, int], retries: int) -> SSHClient | None:
-        """Attempt to create a new SSH connection with retries."""
+        """Attempt to create a new SSH connection with retries.
+
+        Args:
+            snapshot: QEMUSnapshot instance containing VM connection details
+            pool_key: Tuple of (hostname, port) for connection pool management
+            retries: Number of retry attempts for connection establishment
+
+        Returns:
+            SSHClient instance if connection successful, None if all retries exhausted
+        """
         for attempt in range(retries):
             try:
                 client = self._initialize_ssh_client(snapshot)
@@ -386,7 +433,14 @@ class QEMUManager:
         return None
 
     def _initialize_ssh_client(self, snapshot: QEMUSnapshot) -> SSHClient:
-        """Initialize and connect an SSH client."""
+        """Initialize and connect an SSH client.
+
+        Args:
+            snapshot: QEMUSnapshot instance containing VM connection details
+
+        Returns:
+            Connected SSHClient instance
+        """
         client = SSHClient()
         known_hosts_path = self.working_dir / "ssh" / "known_hosts"
         client.set_missing_host_key_policy(SecureHostKeyPolicy(known_hosts_path))
@@ -402,7 +456,14 @@ class QEMUManager:
         return client
 
     def _handle_connection_exception(self, vm_name: str, exception: Exception, attempt: int, retries: int) -> None:
-        """Handle exceptions during SSH connection attempts."""
+        """Handle exceptions during SSH connection attempts.
+
+        Args:
+            vm_name: Name of the virtual machine
+            exception: Exception that occurred during connection
+            attempt: Current attempt number (0-indexed)
+            retries: Total number of retry attempts configured
+        """
         if isinstance(exception, TimeoutError):
             logger.warning("SSH connection timeout (attempt %s/%s): %s", attempt + 1, retries, exception)
         elif isinstance(exception, paramiko.AuthenticationException):
@@ -502,7 +563,11 @@ class QEMUManager:
         return None
 
     def _inject_ssh_key(self, snapshot: QEMUSnapshot) -> None:
-        """Inject our SSH public key into the VM for password-less access."""
+        """Inject our SSH public key into the VM for password-less access.
+
+        Args:
+            snapshot: QEMUSnapshot instance containing VM connection details
+        """
         try:
             # Create .ssh directory if it doesn't exist
             self._execute_command_in_vm(snapshot, "mkdir -p ~/.ssh && chmod 700 ~/.ssh")
@@ -520,7 +585,14 @@ class QEMUManager:
             logger.warning("Failed to inject SSH key: %s", e)
 
     def _is_circuit_open(self, vm_name: str) -> bool:
-        """Check if circuit breaker is open for a VM."""
+        """Check if circuit breaker is open for a VM.
+
+        Args:
+            vm_name: Name of the virtual machine
+
+        Returns:
+            True if circuit breaker is open (connections blocked), False otherwise
+        """
         if vm_name not in self.ssh_circuit_breaker:
             return False
 
@@ -540,7 +612,11 @@ class QEMUManager:
         return True
 
     def _record_connection_failure(self, vm_name: str) -> None:
-        """Record a connection failure for circuit breaker."""
+        """Record a connection failure for circuit breaker.
+
+        Args:
+            vm_name: Name of the virtual machine
+        """
         if vm_name not in self.ssh_circuit_breaker:
             self.ssh_circuit_breaker[vm_name] = {
                 "failures": 0,
@@ -561,7 +637,11 @@ class QEMUManager:
             )
 
     def _reset_circuit_breaker(self, vm_name: str) -> None:
-        """Reset circuit breaker on successful connection."""
+        """Reset circuit breaker on successful connection.
+
+        Args:
+            vm_name: Name of the virtual machine
+        """
         if vm_name in self.ssh_circuit_breaker:
             self.ssh_circuit_breaker[vm_name] = {
                 "failures": 0,
@@ -570,7 +650,11 @@ class QEMUManager:
             }
 
     def _close_ssh_connection(self, snapshot: QEMUSnapshot) -> None:
-        """Close and remove SSH connection from pool."""
+        """Close and remove SSH connection from pool.
+
+        Args:
+            snapshot: QEMUSnapshot instance containing VM connection details
+        """
         pool_key = (snapshot.vm_name, snapshot.ssh_port)
 
         with self.ssh_lock:
@@ -583,7 +667,19 @@ class QEMUManager:
                     del self.ssh_connection_pool[pool_key]
 
     def create_script_test_snapshot(self, binary_path: str, platform: str = "windows") -> str:
-        """Create a QEMU snapshot specifically for script testing."""
+        """Create a QEMU snapshot specifically for script testing.
+
+        Args:
+            binary_path: Path to the binary file to test
+            platform: Operating system platform ("windows" or "linux", default "windows")
+
+        Returns:
+            Snapshot ID as a string
+
+        Raises:
+            ValueError: If no base image is available for the specified platform
+            subprocess.CalledProcessError: If QEMU snapshot creation fails
+        """
         snapshot_id = f"test_{int(time.time())}_{hash(binary_path) % 10000}"
 
         logger.info("Creating script test snapshot: %s", snapshot_id)
@@ -639,7 +735,14 @@ class QEMUManager:
         return snapshot_id
 
     def _start_vm_for_snapshot(self, snapshot: QEMUSnapshot) -> None:
-        """Start QEMU VM for a specific snapshot with resource management."""
+        """Start QEMU VM for a specific snapshot with resource management.
+
+        Args:
+            snapshot: QEMUSnapshot instance containing VM configuration
+
+        Raises:
+            RuntimeError: If VM startup fails or process exits unexpectedly
+        """
         logger.info("Starting VM for snapshot: %s", snapshot.snapshot_id)
 
         # QEMU command for starting VM
@@ -716,7 +819,15 @@ class QEMUManager:
             raise
 
     def _wait_for_vm_ready(self, snapshot: QEMUSnapshot, timeout: int = 60) -> bool:
-        """Wait for VM to be ready for testing."""
+        """Wait for VM to be ready for testing.
+
+        Args:
+            snapshot: QEMUSnapshot instance to monitor
+            timeout: Maximum seconds to wait for VM readiness (default 60)
+
+        Returns:
+            True if VM became ready, False if timeout exceeded
+        """
         logger.info("Waiting for VM to be ready: %s", snapshot.snapshot_id)
 
         start_time = time.time()
@@ -746,7 +857,16 @@ class QEMUManager:
         return False
 
     def _upload_file_to_vm(self, snapshot: QEMUSnapshot, content: str, remote_path: str) -> None:
-        """Upload text content to VM as a file."""
+        """Upload text content to VM as a file.
+
+        Args:
+            snapshot: QEMUSnapshot instance containing VM connection details
+            content: Text content to write to the file
+            remote_path: Destination path on the VM
+
+        Raises:
+            RuntimeError: If SSH connection cannot be established or file upload fails
+        """
         # Get SSH connection
         ssh_client = self._get_ssh_connection(snapshot)
         if not ssh_client:
@@ -779,7 +899,16 @@ class QEMUManager:
             raise RuntimeError(msg) from e
 
     def _upload_binary_to_vm(self, snapshot: QEMUSnapshot, local_binary: str, remote_path: str) -> None:
-        """Upload binary file to VM."""
+        """Upload binary file to VM.
+
+        Args:
+            snapshot: QEMUSnapshot instance containing VM connection details
+            local_binary: Local path to the binary file to upload
+            remote_path: Destination path on the VM
+
+        Raises:
+            RuntimeError: If SSH connection cannot be established or binary upload fails
+        """
         # Get SSH connection
         ssh_client = self._get_ssh_connection(snapshot)
         if not ssh_client:
@@ -819,7 +948,16 @@ class QEMUManager:
         command: str,
         timeout: int = 30,
     ) -> dict[str, Any]:
-        """Execute a command in the VM via SSH."""
+        """Execute a command in the VM via SSH.
+
+        Args:
+            snapshot: QEMUSnapshot instance containing VM connection details
+            command: Shell command to execute on the VM
+            timeout: Maximum seconds to wait for command completion (default 30)
+
+        Returns:
+            Dictionary with keys 'exit_code' (int), 'stdout' (str), 'stderr' (str)
+        """
         # Get SSH connection
         ssh_client = self._get_ssh_connection(snapshot)
         if not ssh_client:
@@ -866,7 +1004,15 @@ class QEMUManager:
             }
 
     def _analyze_frida_output(self, stdout: str, stderr: str) -> bool:
-        """Analyze Frida output to determine success/failure."""
+        """Analyze Frida output to determine success/failure.
+
+        Args:
+            stdout: Standard output from Frida script execution
+            stderr: Standard error output from Frida script execution
+
+        Returns:
+            True if Frida script execution succeeded, False otherwise
+        """
         # Success indicators
         success_indicators = [
             "[+] Script loaded",
@@ -904,7 +1050,15 @@ class QEMUManager:
         return not stderr.strip()
 
     def _analyze_ghidra_output(self, stdout: str, stderr: str) -> bool:
-        """Analyze Ghidra output to determine success/failure."""
+        """Analyze Ghidra output to determine success/failure.
+
+        Args:
+            stdout: Standard output from Ghidra script execution
+            stderr: Standard error output from Ghidra script execution
+
+        Returns:
+            True if Ghidra script execution succeeded, False otherwise
+        """
         # Success indicators
         success_indicators = [
             "Analysis complete",
@@ -942,7 +1096,12 @@ class QEMUManager:
         return "Analysis finished" in stdout or not stderr.strip()
 
     def cleanup_snapshot(self, snapshot_id: str) -> None:
-        """Clean up a test snapshot and stop associated VM."""
+        """Clean up a test snapshot and stop associated VM.
+
+        Args:
+            snapshot_id: ID of the snapshot to clean up
+
+        """
         if snapshot_id not in self.snapshots:
             logger.warning("Snapshot not found for cleanup: %s", snapshot_id)
             return
@@ -1014,7 +1173,12 @@ class QEMUManager:
             log_vm_operation("stop", snapshot.vm_name, success=False, error=str(e))
 
     def _stop_vm_for_snapshot(self, snapshot: QEMUSnapshot) -> None:
-        """Stop VM for a specific snapshot."""
+        """Stop VM for a specific snapshot.
+
+        Args:
+            snapshot: QEMUSnapshot object representing the VM to stop
+
+        """
         try:
             if snapshot.vm_process and snapshot.vm_process.poll() is None:
                 try:
@@ -1038,7 +1202,15 @@ class QEMUManager:
         logger.info("All snapshots cleaned up")
 
     def get_snapshot_info(self, snapshot_id: str) -> dict[str, Any] | None:
-        """Get information about a snapshot."""
+        """Get information about a snapshot.
+
+        Args:
+            snapshot_id: ID of the snapshot to retrieve information for
+
+        Returns:
+            Dictionary containing snapshot metadata or None if snapshot not found
+
+        """
         if snapshot_id not in self.snapshots:
             return None
 
@@ -1171,7 +1343,12 @@ class QEMUManager:
             return False
 
     def list_snapshots(self) -> list[dict[str, Any]]:
-        """List all active snapshots."""
+        """List all active snapshots.
+
+        Returns:
+            List of dictionaries containing snapshot information for each active snapshot.
+
+        """
         snapshots_list: list[dict[str, Any]] = []
         for sid in self.snapshots:
             info = self.get_snapshot_info(sid)
@@ -1197,7 +1374,15 @@ class QEMUManager:
             logger.debug("Error during destructor cleanup: %s", e)
 
     def _get_windows_base_image(self) -> Path:
-        """Get path to Windows base image using dynamic discovery."""
+        """Get path to Windows base image using dynamic discovery.
+
+        Returns:
+            Path object pointing to the Windows base image file
+
+        Raises:
+            RuntimeError: If no Windows base image can be found or created
+
+        """
         from intellicrack.utils.path_resolver import get_qemu_images_dir
         from intellicrack.utils.qemu_image_discovery import get_qemu_discovery
 
@@ -1236,7 +1421,15 @@ class QEMUManager:
         )
 
     def _get_linux_base_image(self) -> str:
-        """Get Linux base image using dynamic discovery."""
+        """Get Linux base image using dynamic discovery.
+
+        Returns:
+            String path to the Linux base image file
+
+        Raises:
+            RuntimeError: If no Linux base image can be found or created
+
+        """
         from intellicrack.utils.path_resolver import get_qemu_images_dir
         from intellicrack.utils.qemu_image_discovery import get_qemu_discovery
 
@@ -1275,13 +1468,33 @@ class QEMUManager:
         )
 
     def _detect_os_type(self, binary_path: str) -> str:
-        """Detect operating system type from binary."""
+        """Detect operating system type from binary.
+
+        Args:
+            binary_path: Path to the binary file to analyze
+
+        Returns:
+            String indicating OS type ('windows' or 'linux')
+
+        """
         if binary_path.lower().endswith((".exe", ".dll")):
             return "windows"
         return "linux" if binary_path.lower().endswith((".so", ".elf")) else "windows"
 
     def create_snapshot(self, binary_path: str) -> str:
-        """Create a QEMU snapshot for testing."""
+        """Create a QEMU snapshot for testing.
+
+        Args:
+            binary_path: Path to the binary executable to test in the snapshot
+
+        Returns:
+            String ID of the created snapshot
+
+        Raises:
+            FileNotFoundError: If the target binary does not exist at the specified path
+            RuntimeError: If VM fails to start or base image cannot be created
+
+        """
         try:
             os_type = self._detect_os_type(binary_path)
             snapshot_id = f"test_{int(time.time())}_{os.getpid()}"
@@ -1349,7 +1562,19 @@ class QEMUManager:
             raise
 
     def _create_minimal_test_image(self, snapshot_dir: Path, os_type: str) -> Path:
-        """Create minimal test image when base image is not available."""
+        """Create minimal test image when base image is not available.
+
+        Args:
+            snapshot_dir: Path to the snapshot directory for storing the image
+            os_type: Operating system type ('windows' or 'linux')
+
+        Returns:
+            Path object pointing to the created disk image file
+
+        Raises:
+            RuntimeError: If qemu-img command fails or qemu-img is not installed
+
+        """
         disk_path = snapshot_dir / "test_disk.qcow2"
 
         try:
@@ -1396,7 +1621,19 @@ class QEMUManager:
             ) from e
 
     def _copy_base_image(self, base_image: Path, snapshot_dir: Path) -> Path:
-        """Copy base image to snapshot directory."""
+        """Copy base image to snapshot directory.
+
+        Args:
+            base_image: Path to the base image to copy
+            snapshot_dir: Path to the snapshot directory for storing the copy
+
+        Returns:
+            Path object pointing to the copied disk image file
+
+        Raises:
+            RuntimeError: If image copy or qemu-img creation fails
+
+        """
         temp_disk = snapshot_dir / "snapshot_disk.qcow2"
 
         try:
@@ -1435,7 +1672,15 @@ class QEMUManager:
             ) from e
 
     def _start_vm(self, snapshot: QEMUSnapshot) -> bool:
-        """Start QEMU VM."""
+        """Start QEMU VM.
+
+        Args:
+            snapshot: QEMUSnapshot object containing VM configuration
+
+        Returns:
+            True if VM started successfully, False otherwise
+
+        """
         try:
             # Build QEMU command
             cmd = [
@@ -1504,7 +1749,17 @@ class QEMUManager:
         script_content: str,
         binary_path: str,
     ) -> ExecutionResult:
-        """Test a Frida script in QEMU environment."""
+        """Test a Frida script in QEMU environment.
+
+        Args:
+            snapshot_id: ID of the snapshot VM to test in
+            script_content: Frida script content to execute
+            binary_path: Path to the binary to test with Frida
+
+        Returns:
+            ExecutionResult containing success status, output, error, and runtime metrics
+
+        """
         if snapshot_id not in self.snapshots:
             return ExecutionResult(
                 success=False,
@@ -1593,7 +1848,17 @@ fi
         script_content: str,
         binary_path: str,
     ) -> ExecutionResult:
-        """Test a Ghidra script in QEMU environment."""
+        """Test a Ghidra script in QEMU environment.
+
+        Args:
+            snapshot_id: ID of the snapshot VM to test in
+            script_content: Ghidra script content to execute
+            binary_path: Path to the binary to analyze with Ghidra
+
+        Returns:
+            ExecutionResult containing success status, output, error, and runtime metrics
+
+        """
         if snapshot_id not in self.snapshots:
             return ExecutionResult(
                 success=False,
@@ -1669,9 +1934,16 @@ fi
             )
 
     def _execute_in_vm_real(self, snapshot: QEMUSnapshot, script_content: str) -> dict[str, Any]:
-        """Execute script in VM using real SSH connection."""
-        logger.info("Executing script in VM %s via SSH", snapshot.vm_name)
+        """Execute script in VM using real SSH connection.
 
+        Args:
+            snapshot: QEMUSnapshot object containing VM connection info
+            script_content: Script content to execute in the VM
+
+        Returns:
+            Dictionary containing exit_code, stdout, and stderr from script execution.
+
+        """
         # Create temporary script file
         with tempfile.NamedTemporaryFile(mode="w", suffix=".sh", delete=False) as f:
             f.write(script_content)
@@ -1714,7 +1986,20 @@ fi
                 self.logger.debug("Error removing temp script file: %s", e)
 
     def create_versioned_snapshot(self, parent_snapshot_id: str, binary_path: str) -> str:
-        """Create a new snapshot version based on an existing snapshot."""
+        """Create a new snapshot version based on an existing snapshot.
+
+        Args:
+            parent_snapshot_id: ID of the parent snapshot to base new version on
+            binary_path: Path to the binary to test in the new snapshot version
+
+        Returns:
+            String ID of the newly created versioned snapshot
+
+        Raises:
+            ValueError: If parent snapshot does not exist
+            RuntimeError: If qemu-img command fails or snapshot creation fails
+
+        """
         if parent_snapshot_id not in self.snapshots:
             msg = f"Parent snapshot not found: {parent_snapshot_id}"
             raise ValueError(msg)
@@ -1810,7 +2095,19 @@ fi
         return snapshot_id
 
     def compare_snapshots(self, snapshot_id1: str, snapshot_id2: str) -> dict[str, Any]:
-        """Compare two snapshots and return differences."""
+        """Compare two snapshots and return differences.
+
+        Args:
+            snapshot_id1: ID of the first snapshot to compare
+            snapshot_id2: ID of the second snapshot to compare
+
+        Returns:
+            Dictionary containing comparison data for both snapshots and their differences
+
+        Raises:
+            ValueError: If one or both snapshots are not found
+
+        """
         if snapshot_id1 not in self.snapshots or snapshot_id2 not in self.snapshots:
             raise ValueError("One or both snapshots not found")
 
@@ -1856,7 +2153,16 @@ fi
         snapshot1: QEMUSnapshot,
         snapshot2: QEMUSnapshot,
     ) -> str:
-        """Determine the relationship between two snapshots."""
+        """Determine the relationship between two snapshots.
+
+        Args:
+            snapshot1: First QEMUSnapshot object to compare
+            snapshot2: Second QEMUSnapshot object to compare
+
+        Returns:
+            String describing the relationship between the two snapshots
+
+        """
         if snapshot1.parent_snapshot == snapshot2.snapshot_id:
             return f"{snapshot1.snapshot_id} is child of {snapshot2.snapshot_id}"
         if snapshot2.parent_snapshot == snapshot1.snapshot_id:
@@ -1866,7 +2172,20 @@ fi
         return "No direct relationship"
 
     def rollback_snapshot(self, snapshot_id: str, target_state: str | None = None) -> bool:
-        """Rollback a snapshot to a previous state or clean state."""
+        """Rollback a snapshot to a previous state or clean state.
+
+        Args:
+            snapshot_id: ID of the snapshot to rollback
+            target_state: Optional ID of a snapshot state to rollback to
+
+        Returns:
+            True if rollback was successful, False otherwise
+
+        Raises:
+            ValueError: If the snapshot does not exist.
+            RuntimeError: If rollback disk creation fails.
+
+        """
         if snapshot_id not in self.snapshots:
             msg = f"Snapshot not found: {snapshot_id}"
             raise ValueError(msg)
@@ -2020,7 +2339,18 @@ fi
             return False
 
     def monitor_snapshot_performance(self, snapshot_id: str) -> dict[str, Any]:
-        """Monitor performance metrics for a snapshot."""
+        """Monitor performance metrics for a snapshot.
+
+        Args:
+            snapshot_id: ID of the snapshot to monitor
+
+        Returns:
+            Dictionary containing disk usage, memory usage, CPU usage, and other metrics
+
+        Raises:
+            ValueError: If the snapshot is not found
+
+        """
         if snapshot_id not in self.snapshots:
             msg = f"Snapshot not found: {snapshot_id}"
             raise ValueError(msg)
@@ -2075,7 +2405,16 @@ fi
             return {"error": str(e)}
 
     def enable_network_isolation(self, snapshot_id: str, isolated: bool = True) -> None:
-        """Enable or disable network isolation for a snapshot."""
+        """Enable or disable network isolation for a snapshot.
+
+        Args:
+            snapshot_id: ID of the snapshot to apply isolation to
+            isolated: True to enable isolation, False to disable
+
+        Raises:
+            ValueError: If the snapshot does not exist
+
+        """
         if snapshot_id not in self.snapshots:
             msg = f"Snapshot not found: {snapshot_id}"
             raise ValueError(msg)
@@ -2098,7 +2437,12 @@ fi
                 logger.warning("Failed to apply network isolation: %s", e)
 
     def get_snapshot_hierarchy(self) -> dict[str, Any]:
-        """Get the hierarchy of all snapshots showing parent-child relationships."""
+        """Get the hierarchy of all snapshots showing parent-child relationships.
+
+        Returns:
+            Dictionary containing root snapshots and parent-child relationship mapping
+
+        """
         hierarchy: dict[str, Any] = {"roots": [], "children": {}}
 
         # Find root snapshots (no parent)
@@ -2136,7 +2480,18 @@ fi
         script_type: str = "frida",
         timeout: int = 60,
     ) -> ExecutionResult:
-        """Test a script in QEMU VM - main entry point for autonomous agent."""
+        """Test a script in QEMU VM - main entry point for autonomous agent.
+
+        Args:
+            script_content: Script content to execute
+            binary_path: Path to the binary to test
+            script_type: Type of script ('frida', 'ghidra', or generic)
+            timeout: Execution timeout in seconds
+
+        Returns:
+            ExecutionResult containing success status, output, error, and metrics
+
+        """
         try:
             # Create snapshot for testing
             snapshot_id = self.create_script_test_snapshot(binary_path)
@@ -2171,7 +2526,17 @@ fi
         script_content: str,
         binary_path: str,
     ) -> ExecutionResult:
-        """Test a generic script in QEMU environment."""
+        """Test a generic script in QEMU environment.
+
+        Args:
+            snapshot_id: ID of the snapshot VM to test in
+            script_content: Script content to execute
+            binary_path: Path to the binary to test with script
+
+        Returns:
+            ExecutionResult containing success status, output, error, and runtime metrics
+
+        """
         if snapshot_id not in self.snapshots:
             return ExecutionResult(
                 success=False,
@@ -2228,6 +2593,9 @@ exit 0
 
         Returns:
             Dictionary containing optimization results and statistics
+
+        Raises:
+            TimeoutError: If optimization exceeds the 300 second timeout.
 
         """
         logger.info("Starting snapshot storage optimization")
@@ -2929,7 +3297,15 @@ exit 0
     }
 
     def _get_image_for_architecture(self, architecture: str) -> Path | None:
-        """Get image path for specific architecture using dynamic discovery."""
+        """Get image path for specific architecture using dynamic discovery.
+
+        Args:
+            architecture: Target architecture identifier
+
+        Returns:
+            Path object to the image file or None if not found
+
+        """
         from intellicrack.utils.qemu_image_discovery import get_qemu_discovery
 
         discovery = get_qemu_discovery()
@@ -2980,6 +3356,9 @@ exit 0
 
         Returns:
             Path to default rootfs image
+
+        Raises:
+            RuntimeError: If no suitable rootfs image can be found.
 
         """
         from intellicrack.utils.path_resolver import get_qemu_images_dir
@@ -3080,6 +3459,9 @@ exit 0
         Returns:
             List of command arguments
 
+        Raises:
+            RuntimeError: If QEMU binary cannot be found.
+
         """
         # Find QEMU binary
         import shutil
@@ -3150,7 +3532,12 @@ exit 0
         return cmd
 
     def _is_kvm_available(self) -> bool:
-        """Check if KVM acceleration is available."""
+        """Check if KVM acceleration is available.
+
+        Returns:
+            True if KVM is available and accessible, False otherwise
+
+        """
         try:
             return os.path.exists("/dev/kvm") and os.access("/dev/kvm", os.R_OK | os.W_OK)
         except (OSError, ValueError, RuntimeError) as e:
@@ -3189,7 +3576,12 @@ exit 0
         return False
 
     def _test_monitor_connection(self) -> bool:
-        """Test if monitor socket is accessible."""
+        """Test if monitor socket is accessible.
+
+        Returns:
+            True if monitor socket is accessible, False otherwise
+
+        """
         try:
             if not self.monitor_socket or not os.path.exists(self.monitor_socket):
                 return False

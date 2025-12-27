@@ -516,7 +516,14 @@ for crypto_func in crypto_functions:
         )
 
     def get_pattern_by_indicators(self, indicators: list[str]) -> list[ProtectionPattern]:
-        """Find patterns matching the given indicators."""
+        """Find patterns matching the given indicators.
+
+        Args:
+            indicators: List of indicator strings to match against protection patterns.
+
+        Returns:
+            list[ProtectionPattern]: List of matching patterns sorted by confidence in descending order.
+        """
         matching_patterns = []
 
         for pattern in self.patterns.values():
@@ -544,7 +551,14 @@ for crypto_func in crypto_functions:
         return matching_patterns
 
     def get_bypass_strategy(self, protection_type: str) -> dict[str, Any]:
-        """Get comprehensive bypass strategy for protection type."""
+        """Get comprehensive bypass strategy for protection type.
+
+        Args:
+            protection_type: String identifier of the protection type to get bypass strategy for.
+
+        Returns:
+            dict[str, Any]: Dictionary containing bypass strategy with keys: type, patterns, priority, confidence, complexity, frida_template, ghidra_template.
+        """
         protection_type_lower = protection_type.lower()
 
         # Map protection types to patterns
@@ -589,7 +603,14 @@ for crypto_func in crypto_functions:
         }
 
     def analyze_binary_patterns(self, analysis_results: dict[str, Any]) -> list[ProtectionPattern]:
-        """Analyze binary and identify protection patterns."""
+        """Analyze binary and identify protection patterns.
+
+        Args:
+            analysis_results: Dictionary containing analysis results with keys for strings, functions, and imports.
+
+        Returns:
+            list[ProtectionPattern]: List of detected protection patterns with confidence above 0.7 threshold.
+        """
         detected_patterns = []
 
         # Extract indicators from analysis
@@ -622,7 +643,12 @@ for crypto_func in crypto_functions:
         return detected_patterns
 
     def update_success_rate(self, pattern_name: str, success: bool) -> None:
-        """Update pattern success rate based on results."""
+        """Update pattern success rate based on results.
+
+        Args:
+            pattern_name: Name of the pattern to update success rate for.
+            success: Boolean indicating whether the pattern was successful.
+        """
         if pattern_name not in self.success_history:
             self.success_history[pattern_name] = {"attempts": 0, "successes": 0}
 
@@ -641,7 +667,11 @@ for crypto_func in crypto_functions:
             logger.info("Updated %s success rate: %.2f", pattern_name, self.patterns[pattern_name].success_rate)
 
     def get_pattern_statistics(self) -> dict[str, Any]:
-        """Get statistics about pattern usage and success rates."""
+        """Get statistics about pattern usage and success rates.
+
+        Returns:
+            dict[str, Any]: Dictionary containing statistics with keys: total_patterns, pattern_usage, average_success_rate, most_successful, least_successful.
+        """
         stats: dict[str, Any] = {
             "total_patterns": len(self.patterns),
             "pattern_usage": {},
@@ -678,7 +708,11 @@ for crypto_func in crypto_functions:
         return stats
 
     def export_patterns(self) -> dict[str, Any]:
-        """Export all patterns for analysis or backup."""
+        """Export all patterns for analysis or backup.
+
+        Returns:
+            dict[str, Any]: Dictionary containing all patterns, success history, and statistics for export.
+        """
         return {
             "patterns": {
                 name: {

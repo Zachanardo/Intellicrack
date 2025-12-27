@@ -1,332 +1,466 @@
 # Test Review: Group 2
 
-**Review Date:** 2025-12-26
+**Review Date:** 2025-12-27
 **Reviewer:** test-reviewer agent
-**Group:** AI/ML, Exploitation, UI, CLI, Dashboard Components
-
----
+**Scope:** AI, ML, Core/ML, Core/Exploitation, Core/Vulnerability Research, UI, Utils/UI, CLI, Dashboard, Core/Monitoring, Core/Reporting
 
 ## Executive Summary
 
-**Overall Verdict:** ⚠️ **CONDITIONAL PASS WITH CRITICAL CONCERNS**
+**Overall Verdict:** FAIL
 
-All 5 test files reviewed for Group 2 contain **NO MOCKS OR STUBS**, which is excellent and meets the fundamental requirement. However, there are significant concerns about whether these tests genuinely validate **offensive licensing cracking capabilities** or merely test generic utility functionality.
+**Critical Issues Found:** 2
+**High Priority Issues:** 3
+**Medium Priority Issues:** 2
 
-### Summary Statistics
+Three test files were reviewed for Group 2. All three files contain violations of production-ready testing standards:
 
-| Metric                                  | Count |
-| --------------------------------------- | ----- |
-| Total Files Reviewed                    | 5     |
-| Files Passed (Production-Ready)         | 3     |
-| Files with Critical Issues              | 2     |
-| Mock/Stub Violations                    | 0 ✓   |
-| Files Missing Real Offensive Validation | 2     |
+1. `test_background_loader.py` - **CRITICAL FAILURE** - Extensive mock usage for core functionality
+2. `test_binary_feature_extractor.py` - **PASS WITH WARNINGS** - Minor monkeypatch usage for testing fallbacks only
+3. `test_license_protection_neural_network.py` - **HIGH** - Unused mock imports, needs cleanup
 
 ---
 
 ## Detailed File Reviews
 
-### ✅ PASSED: `tests/ai/test_performance_optimization_layer.py`
+### ❌ FAILED: `tests/unit/ai/test_background_loader.py`
 
-**Status:** Production-Ready
-**Lines of Code:** 684
+**Verdict:** FAIL (CRITICAL VIOLATIONS)
 
-#### Strengths
+#### Critical Issues
 
-1. **No Mocks/Stubs:** Zero mock usage - all tests use real implementations ✓
-2. **Real Operations:** Tests genuine performance optimization, caching, resource management ✓
-3. **Complete Type Annotations:** All functions properly typed ✓
-4. **Comprehensive Edge Cases:** Tests empty lists, single items, zero requirements, recursive functions ✓
-5. **Specific Assertions:**
-    - `assert result == 21` (line 448) - validates actual computation
-    - `assert estimates_fp16["estimated_memory_gb"] > estimates_8bit["estimated_memory_gb"]` (line 278) - validates quantization memory reduction
-    - `assert cache.stats["hits"] == 1` (line 349) - validates caching behavior
-6. **Production Workflows:** Tests complete optimization layer initialization and operation (lines 428-495)
-7. **Error Handling:** Tests handle None results, errors in parallel execution (lines 304-317, 554-564)
+1. **CRITICAL: Mock Backend Classes Replace Real LLM Backends**
+   - **Lines 33-71:** `MockBackend`, `FailingMockBackend`, `ErrorMockBackend` are fake implementations
+   - **Problem:** Tests validate background loading infrastructure but NOT actual LLM backend loading
+   - **Impact:** Tests would pass even if real LLM backends (OpenAI, Anthropic, local models) fail to load
+   - **Violation:** Per test-writer spec lines 27-30, NO mocks for core functionality
 
-#### Relevance to Licensing Cracking
+2. **CRITICAL: Mock Config Objects**
+   - **Lines 74-80:** Fixture `mock_config` creates `Mock()` objects instead of real `LLMConfig`
+   - **Problem:** Tests don't validate actual config validation, provider detection, API key handling
+   - **Impact:** Config-related bugs in production won't be caught
 
-This module is **ACCEPTABLE** - performance optimization is critical for analyzing large protected binaries and running AI models for license analysis. The tests validate real capabilities that would fail if broken.
+3. **CRITICAL: Mock LLM Manager**
+   - **Lines 498, 507, 517, 529, 546, 559, 572, 586:** `IntegratedBackgroundLoader` tests use `mock_manager = Mock()`
+   - **Problem:** Never validates integration with actual LLM manager
+   - **Impact:** Integration bugs between background loader and LLM manager won't be caught
 
-**PASS** ✓
+#### What Tests Actually Validate
 
----
+✅ **Valid Tests (Infrastructure Only):**
+- Thread management and synchronization (lines 435-491)
+- Priority queue ordering (lines 342-354)
+- Task state transitions (lines 222-309)
+- Progress callback queuing (lines 144-220)
+- Concurrent task submissions (lines 659-684)
 
-### ⚠️ CONDITIONAL PASS: `tests/ai/test_semantic_code_analyzer.py`
+❌ **Invalid Tests (Mocked Core Logic):**
+- Lines 438-448: Tests `MockBackend` initialization, NOT real LLM backend loading
+- Lines 450-458: Tests `FailingMockBackend`, NOT actual backend failure modes
+- Lines 460-468: Tests `ErrorMockBackend`, NOT real error handling
+- Lines 526-542: Uses mocked callbacks instead of real progress tracking
 
-**Status:** Production-Ready but Scope Concerns
-**Lines of Code:** 646
+#### Required Fixes
 
-#### Strengths
+**MANDATORY CHANGES:**
 
-1. **No Mocks/Stubs:** Zero mock usage ✓
-2. **Real Code Analysis:** Tests actual AST parsing, semantic analysis on real code samples ✓
-3. **Complete Type Annotations:** All functions properly typed ✓
-4. **File I/O:** Uses real temporary files for analysis (lines 149-168, 183-197)
-5. **Specific Assertions:**
-    - `assert auth_node.semantic_intent == SemanticIntent.AUTHENTICATION` (line 165)
-    - `assert features["vocabulary_matches"]["license"] > 0` (line 66)
-    - `assert "validate" in processor._split_camel_case("validateLicense")` (line 116)
+1. **Replace Mock Backends with Real LLM Backends**
+   ```python
+   # REMOVE:
+   class MockBackend:
+       def initialize(self) -> bool:
+           time.sleep(0.1)
+           return True
 
-#### Critical Concerns
+   # REPLACE WITH:
+   @pytest.fixture
+   def real_llm_config() -> LLMConfig:
+       """Create real LLM config for testing."""
+       return LLMConfig(
+           provider=LLMProvider.OLLAMA,  # Use local model for testing
+           model_name="tinyllama",  # Small model for fast tests
+           base_url="http://localhost:11434",
+           temperature=0.7,
+       )
 
-**SCOPE VIOLATION WARNING:**
+   @pytest.fixture
+   def real_backend_class() -> type[LLMBackend]:
+       """Use real OLLAMA backend for testing."""
+       from intellicrack.ai.llm_backends import OllamaBackend
+       return OllamaBackend
+   ```
 
-The semantic code analyzer tests focus heavily on **generic code analysis patterns** (authentication, validation, complexity) rather than **licensing-specific offensive capabilities**. While it tests license validation detection (lines 51-70, 366-401), the majority of tests are for general-purpose code analysis.
+2. **Use Real LLMConfig Objects**
+   ```python
+   # REMOVE:
+   @pytest.fixture
+   def mock_config() -> Any:
+       config = Mock()
+       config.provider = Mock(value="test_provider")
+       return config
 
-**Key Questions:**
+   # REPLACE WITH:
+   @pytest.fixture
+   def test_llm_config() -> LLMConfig:
+       """Real LLM config with test-friendly settings."""
+       return LLMConfig(
+           provider=LLMProvider.OLLAMA,
+           model_name="tinyllama",
+           base_url="http://localhost:11434",
+       )
+   ```
 
-1. How does this help **crack license protections**?
-2. Does it analyze license validation algorithms to find weaknesses?
-3. Does it identify bypass opportunities in license checks?
+3. **Use Real LLM Manager**
+   ```python
+   # REMOVE:
+   mock_manager = Mock()
+   loader = IntegratedBackgroundLoader(mock_manager)
 
-**Test at line 170-197** validates detection of weak/trivial license validation - this is good and relevant!
+   # REPLACE WITH:
+   @pytest.fixture
+   def test_llm_manager() -> LLMManager:
+       """Real LLM manager for integration tests."""
+       manager = LLMManager()
+       manager.initialize()
+       return manager
 
-**Test at lines 366-401** validates license pattern detection - also relevant.
+   def test_integrated_loader(test_llm_manager: LLMManager):
+       loader = IntegratedBackgroundLoader(test_llm_manager)
+       # Now tests validate REAL integration
+   ```
 
-However, tests like:
+4. **Add Production Environment Tests**
+   - Test actual model loading with small models (tinyllama, phi-2)
+   - Test actual API provider initialization (with test API keys in CI)
+   - Test actual error handling when models fail to load
+   - Test actual progress tracking during real model loading
 
-- Authentication code analysis (lines 30-50, 126-168)
-- Generic complexity metrics (lines 274-330)
-- Nested code structures (lines 625-645)
-
-These seem like **general code analysis** not **offensive licensing cracking**.
-
-#### Recommendation
-
-**CONDITIONAL PASS** - Tests are production-ready, but need clarification:
-
-- Is this analyzer used to **find weaknesses in license validation code**?
-- If yes, add tests that explicitly validate **identifying bypass opportunities**
-- If no, this may not belong in Intellicrack's offensive toolset
-
----
-
-### ✅ PASSED: `tests/ai/test_script_editor.py`
-
-**Status:** Production-Ready
-**Lines of Code:** 676
-
-#### Strengths
-
-1. **No Mocks/Stubs:** Zero mock usage ✓
-2. **Real Script Operations:** Tests actual Frida/Python/Ghidra script validation and editing ✓
-3. **Complete Type Annotations:** All functions properly typed ✓
-4. **File I/O:** Uses real temporary files for version management (lines 184-264)
-5. **Specific Assertions:**
-    - `assert result == ValidationResult.SYNTAX_ERROR` (line 82) - validates error detection
-    - `assert len(issues["critical_issues"]) > 0` (line 118) - validates security scanning
-    - `assert quant_type == "gptq"` (line 243) - validates detection logic
-6. **Frida Script Validation:** Tests real Frida patterns (lines 44-63) ✓
-7. **QEMU Integration:** Tests goal achievement analysis (lines 507-539) ✓
-8. **Edge Cases:** Empty files, syntax errors, binary files (lines 627-645)
-
-#### Relevance to Licensing Cracking
-
-**HIGHLY RELEVANT** - This tests AI-powered editing of Frida scripts used for:
-
-- License bypass script generation
-- Script validation before deployment
-- Version management for crack scripts
-- QEMU testing of bypass effectiveness
-
-The script editor is a **core offensive tool** for iteratively improving license bypass scripts.
-
-**PASS** ✓
-
----
-
-### ⚠️ CONDITIONAL PASS: `tests/cli/test_tutorial_system.py`
-
-**Status:** Production-Ready but Educational Focus
-**Lines of Code:** 689
-
-#### Strengths
-
-1. **No Mocks/Stubs:** Zero mock usage ✓
-2. **Real State Management:** Tests actual tutorial progression, step validation ✓
-3. **Complete Type Annotations:** All functions properly typed ✓
-4. **Specific Assertions:**
-    - `assert success is True` (line 122)
-    - `assert system.current_step == initial_step + 1` (line 158)
-    - `assert system.tutorial_progress["getting_started"] > 0` (line 308)
-5. **Workflow Testing:** Tests complete tutorial lifecycle (lines 634-658)
-6. **Edge Cases:** Empty tutorials, nonexistent tutorials, missing prerequisites (lines 412-487)
-
-#### Critical Concerns
-
-**EDUCATIONAL TOOL - NOT OFFENSIVE CAPABILITY:**
-
-The tutorial system is an **educational/UX feature**, not an **offensive licensing cracking capability**. While well-tested, it doesn't validate:
-
-- License bypass effectiveness
-- Crack generation
-- Protection analysis
-- Key generation
-
-This is a **user interface/tutorial** component, not a core cracking tool.
-
-#### Questions for Clarification
-
-1. Are the tutorials **teaching users how to crack licenses**?
-2. Do tutorial workflows validate **actual bypass techniques**?
-3. Or is this just generic CLI onboarding?
-
-If tutorials are **generic software tutorials**, this is out of scope for offensive testing.
-
-If tutorials **teach license cracking techniques**, add tests that validate:
-
-- Tutorial teaches correct bypass methodology
-- Commands in tutorials actually perform cracks
-- Tutorial completion results in successful license bypass
-
-**CONDITIONAL PASS** - Well-written tests, but scope concerns.
+**ACCEPTABLE Mock Usage (Infrastructure Only):**
+- Environment variable manipulation (`os.environ["DISABLE_BACKGROUND_THREADS"]`)
+- Thread synchronization primitives (already done correctly)
+- Timeout mechanisms for slow operations (already done correctly)
 
 ---
 
-### ✅ PASSED: `tests/ai/test_quantization_manager.py`
+### ✅ PASSED WITH WARNINGS: `tests/unit/ml/test_binary_feature_extractor.py`
 
-**Status:** Production-Ready
-**Lines of Code:** 500
+**Verdict:** PASS (Minor Issues)
 
-#### Strengths
+#### What This Test Does Right
 
-1. **No Mocks/Stubs:** Zero mock usage ✓
-2. **Real Model Operations:** Tests actual quantization config creation, memory estimation ✓
-3. **Complete Type Annotations:** All functions properly typed ✓
-4. **File I/O:** Creates real test model files (lines 262-299)
-5. **Specific Assertions:**
-    - `assert estimates_fp16["estimated_memory_gb"] > estimates_8bit["estimated_memory_gb"]` (line 278)
-    - `assert quant_type == "gptq"` (line 243)
-    - `assert device in ["cpu", "cuda", "mps"]` (line 36)
-6. **Backend Availability:** Tests real backend detection (lines 302-346)
-7. **Memory Calculations:** Validates quantization reduces memory correctly (lines 262-280)
-8. **Complete Workflows:** Tests quantization config creation for all types (lines 444-454)
+✅ **Production-Ready Binary Generation:**
+- Lines 37-69: Creates REAL minimal PE binary with valid DOS/PE headers
+- Lines 73-103: Creates REAL complex PE with actual import tables, sections
+- Lines 107-125: Creates REAL high-entropy binary (packed simulation)
+- NO fake byte strings like `b'\x00' * 1024` - all structured binary data
 
-#### Relevance to Licensing Cracking
+✅ **Real Feature Extraction:**
+- Lines 181-224: Tests actual opcode histogram extraction on real binaries
+- Lines 229-268: Tests actual CFG building with NetworkX
+- Lines 273-303: Tests actual API sequence extraction
+- Lines 308-349: Tests actual entropy calculation on real data
+- Lines 355-396: Tests actual string extraction (ASCII and Unicode)
 
-**RELEVANT** - Quantization is essential for:
+✅ **Comprehensive Edge Cases:**
+- Lines 582-631: Very small binaries, very large binaries, non-PE binaries
+- Lines 612-630: Thread safety with concurrent extraction
+- Lines 541-577: Entropy calculation edge cases (empty, uniform, repetitive)
 
-- Running large AI models on limited hardware for license analysis
-- Optimizing ML models that detect license validation patterns
-- Memory-efficient inference during binary analysis
+✅ **Proper Assertions:**
+- Validates specific shapes, dtypes, value ranges
+- Checks normalization correctness
+- Validates feature consistency across runs
 
-This enables AI-powered license cracking on consumer hardware.
+#### Minor Issues (Acceptable Monkeypatch Usage)
 
-**PASS** ✓
+⚠️ **Lines 215-224:** `monkeypatch.setattr(extractor, "disassembler", None)`
+- **Purpose:** Test fallback behavior when Capstone unavailable
+- **Acceptable:** Testing graceful degradation, not core functionality
+- **Impact:** Low - validates error handling only
+
+⚠️ **Lines 250-260:** `monkeypatch.setattr(binary_feature_extractor, "NETWORKX_AVAILABLE", False)`
+- **Purpose:** Test fallback when NetworkX unavailable
+- **Acceptable:** Testing dependency isolation
+- **Impact:** Low - validates optional dependency handling
+
+⚠️ **Lines 472-482:** `monkeypatch.setattr(extractor, "pe", None)` and `"lief_binary"`
+- **Purpose:** Test fallback when PE parsers unavailable
+- **Acceptable:** Testing graceful degradation
+- **Impact:** Low - validates parser fallback logic
+
+**Verdict:** These monkeypatch uses are ACCEPTABLE because:
+1. They test fallback/degradation paths, not core functionality
+2. Core functionality is tested with real implementations
+3. They validate error handling, not simulating success
+
+#### Recommendations
+
+1. **Add Linting Pass:**
+   ```bash
+   pixi run ruff check tests/unit/ml/test_binary_feature_extractor.py
+   ```
+
+2. **Add More Protection-Specific Tests:**
+   - Test feature extraction on binaries with VMProtect signatures
+   - Test feature extraction on binaries with Themida obfuscation
+   - Test feature extraction on binaries with actual licensing code
+
+3. **Coverage Improvements:**
+   - Add tests for ELF binaries (Linux protection schemes)
+   - Add tests for Mach-O binaries (macOS protection schemes)
+   - Add tests for corrupted section headers
 
 ---
 
-## Critical Issues Summary
+### ⚠️ HIGH PRIORITY: `tests/unit/ml/test_license_protection_neural_network.py`
 
-### SCOPE VIOLATIONS (2 Files)
+**Verdict:** PASS (Needs Cleanup)
 
-1. **`test_semantic_code_analyzer.py`** - Heavy focus on generic code analysis rather than license-specific offensive capabilities
-2. **`test_tutorial_system.py`** - Educational/UX component, not offensive cracking validation
+#### Critical Issue: Unused Imports
 
-### Required Actions
+**Line 15:** `from unittest.mock import Mock, patch`
+- **Problem:** Mock and patch are imported but NEVER used
+- **Impact:** Code smell, suggests tests were originally planned with mocks
+- **Fix Required:** Remove unused imports
 
-#### For `test_semantic_code_analyzer.py`
+```python
+# REMOVE THIS LINE:
+from unittest.mock import Mock, patch
+```
 
-**IF** this analyzer is used to find license validation weaknesses:
+#### What This Test Does Right
 
-- ✅ Keep existing tests
-- ➕ Add test: `test_identify_weak_license_validation_patterns()`
-- ➕ Add test: `test_suggest_bypass_opportunities_in_license_checks()`
-- ➕ Add test: `test_detect_serial_validation_algorithm_weaknesses()`
+✅ **Real Neural Network Testing:**
+- Lines 168-254: Tests real CNN architecture, forward pass, gradient flow
+- Lines 259-306: Tests real Transformer architecture with positional encoding
+- Lines 311-362: Tests real Hybrid multi-modal model
+- Lines 502-578: Tests real training loops with actual PyTorch optimizers
 
-**IF** this is just generic code analysis:
+✅ **Real Binary Data:**
+- Lines 71-78: Creates real PE binary for testing (not fake bytes)
+- Lines 83-95: Creates real dataset directory structure
 
-- ❌ Remove from Intellicrack or clarify its offensive purpose
+✅ **Real Model Operations:**
+- Lines 180-198: Validates actual forward pass output shapes
+- Lines 208-219: Validates actual gradient backpropagation
+- Lines 240-253: Tests actual model weight saving/loading
+- Lines 562-577: Tests full training loop with real data
 
-#### For `test_tutorial_system.py`
+✅ **Real PyTorch Components:**
+- Lines 428-486: Tests custom loss functions (focal loss, center loss)
+- Lines 364-423: Tests custom dataset loading and caching
+- Lines 652-662: Tests dataloader creation
 
-**IF** tutorials teach license cracking:
+#### Medium Priority Issues
 
-- ✅ Keep existing tests
-- ➕ Add test: `test_tutorial_teaches_valid_bypass_technique()`
-- ➕ Add test: `test_tutorial_completion_results_in_successful_crack()`
-- ➕ Add test: `test_tutorial_commands_perform_real_analysis()`
+⚠️ **Line 74:** `np.array([0x80], dtype=np.uint32).tobytes()`
+- **Issue:** Hardcoded e_lfanew offset without struct packing
+- **Recommendation:** Use `struct.pack("<I", 0x80)` for consistency with binary_feature_extractor tests
 
-**IF** tutorials are generic:
+⚠️ **Lines 590-599:** Fallback prediction testing
+- **Issue:** Tests fallback heuristics but doesn't validate actual model inference
+- **Recommendation:** Add test that validates model prediction on known protection types
 
-- ⚠️ Clarify that this is **supporting infrastructure** for teaching cracking, not offensive validation
-- Consider moving to separate "education tests" category
+#### Recommendations
+
+1. **REQUIRED: Remove Unused Imports**
+   ```bash
+   # This will fail until unused imports removed:
+   pixi run ruff check tests/unit/ml/test_license_protection_neural_network.py --select F401
+   ```
+
+2. **Add Real Protection Type Tests:**
+   ```python
+   def test_model_predicts_vmprotect(self, vmprotect_sample: Path) -> None:
+       """Model correctly identifies VMProtect protection."""
+       predictor = LicenseProtectionPredictor()
+       result = predictor.predict(str(vmprotect_sample))
+
+       assert result["protection_type"] == "vmprotect"
+       assert result["confidence"] >= 0.7
+   ```
+
+3. **Add Model Accuracy Tests:**
+   ```python
+   def test_trained_model_accuracy_threshold(self, test_dataset_dir: Path) -> None:
+       """Trained model achieves minimum accuracy threshold."""
+       train_loader, val_loader, test_loader = create_dataloaders(str(test_dataset_dir))
+
+       model = LicenseProtectionCNN(num_classes=len(LicenseProtectionType))
+       trainer = LicenseProtectionTrainer(model)
+       trainer.train(train_loader, val_loader)
+
+       _, accuracy = trainer.validate(test_loader)
+       assert accuracy >= 70.0, "Model accuracy below production threshold"
+   ```
+
+---
+
+## Files NOT Created (From testing-todo2.md)
+
+The following Group 2 files were marked as incomplete but no tests exist:
+
+### AI Module Tests (Missing):
+- ❌ `intellicrack/ai/llm_config_as_code.py` - No test coverage
+- ❌ `intellicrack/ai/llm_fallback_chains.py` - No test coverage
+- ❌ `intellicrack/ai/coordination_layer.py` - No test coverage
+- ❌ `intellicrack/ai/gpu_integration.py` - No test coverage
+- ❌ `intellicrack/ai/lazy_model_loader.py` - No test coverage
+- ❌ `intellicrack/ai/model_cache_manager.py` - No test coverage
+- ❌ `intellicrack/ai/model_download_manager.py` - No test coverage
+- ❌ `intellicrack/ai/quantization_manager.py` - No test coverage
+
+### Core/Vulnerability Research (Missing):
+- ❌ `intellicrack/core/vulnerability_research/research_manager.py` - No test coverage
+- ❌ `intellicrack/core/vulnerability_research/vulnerability_analyzer.py` - No test coverage
+
+### UI Tests (ALL Missing):
+- ❌ All dialog tests (14 files)
+- ❌ All tab tests (7 files)
+- ❌ All widget tests (9 files)
+
+### CLI Tests (Missing):
+- ❌ `intellicrack/cli/advanced_export.py` - No test coverage
+- ❌ `intellicrack/cli/ai_chat_interface.py` - No test coverage
+- ❌ `intellicrack/cli/interactive_mode.py` - No test coverage
+- ❌ `intellicrack/cli/pipeline.py` - No test coverage
+
+### Dashboard Tests (Missing):
+- ❌ `intellicrack/dashboard/dashboard_widgets.py` - No test coverage
+- ❌ `intellicrack/dashboard/websocket_stream.py` - No test coverage
+
+### Monitoring Tests (Missing):
+- ❌ `intellicrack/core/monitoring/api_monitor.py` - No test coverage
+- ❌ `intellicrack/core/monitoring/file_monitor.py` - No test coverage
+- ❌ `intellicrack/core/monitoring/memory_monitor.py` - No test coverage
 
 ---
 
 ## Linting Status
 
-**Unable to verify** - Bash tool unavailable. Manual verification recommended:
-
+### test_background_loader.py
 ```bash
-pixi run ruff check tests/ai/test_semantic_code_analyzer.py
-pixi run ruff check tests/ai/test_performance_optimization_layer.py
-pixi run ruff check tests/ai/test_script_editor.py
-pixi run ruff check tests/cli/test_tutorial_system.py
-pixi run ruff check tests/ai/test_quantization_manager.py
+# Expected to pass (pending mock removal):
+pixi run ruff check tests/unit/ai/test_background_loader.py
+```
+
+### test_binary_feature_extractor.py
+```bash
+# Should pass:
+pixi run ruff check tests/unit/ml/test_binary_feature_extractor.py
+```
+
+### test_license_protection_neural_network.py
+```bash
+# Will FAIL on F401 (unused imports):
+pixi run ruff check tests/unit/ml/test_license_protection_neural_network.py
 ```
 
 ---
 
-## Recommendations
+## Required Fixes Summary
 
-### Priority 1: Clarify Scope
+### Priority 1 (CRITICAL - Must Fix Before Merge)
 
-**Immediately clarify:**
+1. **test_background_loader.py:**
+   - Remove all `MockBackend`, `FailingMockBackend`, `ErrorMockBackend` classes
+   - Replace with real LLM backend classes (OllamaBackend for local testing)
+   - Replace `mock_config` fixture with real `LLMConfig` objects
+   - Replace `mock_manager` with real `LLMManager` instances
+   - Add integration tests with actual model loading
 
-1. Does `semantic_code_analyzer` find license validation weaknesses? If yes, add offensive tests.
-2. Do tutorials teach actual cracking techniques? If no, move to infrastructure testing.
+2. **test_license_protection_neural_network.py:**
+   - Remove unused imports: `from unittest.mock import Mock, patch`
 
-### Priority 2: Add Missing Offensive Tests
+### Priority 2 (HIGH - Improve Test Quality)
 
-For files marked "CONDITIONAL PASS", add tests that explicitly validate:
+3. **test_background_loader.py:**
+   - Add tests with real small models (tinyllama, phi-2)
+   - Add tests with real API providers (mock API endpoints if needed)
+   - Add tests for actual loading failures (network timeout, invalid model)
 
-- License bypass capability identification
-- Crack technique validation
-- Real-world offensive effectiveness
+4. **test_binary_feature_extractor.py:**
+   - Add tests for real protected binaries (VMProtect, Themida samples)
+   - Add tests for ELF and Mach-O formats
+   - Add performance benchmarks for large binary processing
 
-### Priority 3: Document Test Purpose
+5. **test_license_protection_neural_network.py:**
+   - Add accuracy threshold tests
+   - Add real protection type prediction tests
+   - Add model performance benchmarks
 
-Add docstring to each test file's header explaining:
+### Priority 3 (MEDIUM - Coverage Gaps)
 
-- **What offensive capability** is being validated
-- **How this helps crack licenses**
-- **What would break if tests fail**
+6. **All Group 2 modules:**
+   - Create missing test files for AI modules
+   - Create UI component tests (with headless PyQt)
+   - Create CLI integration tests
+   - Create dashboard WebSocket tests
 
 ---
 
-## Pass/Fail Summary
+## Metrics
 
-### Passed Review ✅
+### Current Test Coverage (Group 2)
 
-- ✅ `tests/ai/test_performance_optimization_layer.py` - Validates real optimization for binary analysis
-- ✅ `tests/ai/test_script_editor.py` - Validates Frida bypass script editing and testing
-- ✅ `tests/ai/test_quantization_manager.py` - Validates AI model optimization for license analysis
+| Category | Files with Tests | Total Files | Coverage % |
+|----------|------------------|-------------|------------|
+| AI Modules | 1/17 | 17 | 5.9% |
+| ML Modules | 3/3 | 3 | 100% |
+| Core/ML | 1/1 | 1 | 100% |
+| Core/Exploitation | 0/2 | 2 | 0% |
+| Core/Vulnerability | 0/2 | 2 | 0% |
+| UI Dialogs | 0/14 | 14 | 0% |
+| UI Tabs | 0/7 | 7 | 0% |
+| UI Widgets | 0/9 | 9 | 0% |
+| CLI | 0/6 | 6 | 0% |
+| Dashboard | 0/2 | 2 | 0% |
+| Core/Monitoring | 0/3 | 3 | 0% |
+| Core/Reporting | 0/1 | 1 | 0% |
+| **TOTAL** | **5/67** | **67** | **7.5%** |
 
-### Conditional Pass ⚠️
+### Test Quality Metrics
 
-- ⚠️ `tests/ai/test_semantic_code_analyzer.py` - **Needs offensive purpose clarification**
-- ⚠️ `tests/cli/test_tutorial_system.py` - **Educational tool, not offensive validation**
+| Test File | Production-Ready | Real Data | No Mocks | Specific Assertions | Verdict |
+|-----------|------------------|-----------|----------|---------------------|---------|
+| test_background_loader.py | ❌ | ❌ | ❌ | ✅ | **FAIL** |
+| test_binary_feature_extractor.py | ✅ | ✅ | ✅* | ✅ | **PASS** |
+| test_license_protection_neural_network.py | ✅ | ✅ | ⚠️** | ✅ | **PASS** |
+
+\* Minor acceptable monkeypatch for fallback testing only
+\*\* Unused mock imports need removal
 
 ---
 
-## Final Verdict
+## Conclusion
 
-**3 of 5 files PASS unconditionally**
-**2 of 5 files PASS with scope concerns requiring clarification**
+**Group 2 Testing Status: INCOMPLETE AND FAILING**
 
-All tests are **production-ready** in terms of:
+- Only 3 test files created out of 67 required modules (4.5% completion)
+- 1 test file has CRITICAL violations (mock usage for core functionality)
+- 2 test files are production-ready with minor cleanup needed
+- Massive coverage gaps in UI, CLI, Dashboard, and Monitoring modules
 
-- No mocks ✓
-- Real operations ✓
-- Specific assertions ✓
-- Type annotations ✓
-- Edge case coverage ✓
+**Recommendation:**
+1. REJECT `test_background_loader.py` until mock usage is removed and real LLM backends are used
+2. ACCEPT `test_binary_feature_extractor.py` after linting pass
+3. ACCEPT `test_license_protection_neural_network.py` after removing unused imports
+4. CONTINUE test writing for remaining 64 modules in Group 2
 
-However, **2 files may not be testing offensive licensing cracking capabilities** and should be:
+**Next Steps:**
+1. Refactor `test_background_loader.py` to use real LLM backends
+2. Clean up unused imports in `test_license_protection_neural_network.py`
+3. Run linting on all three files
+4. Create tests for remaining Group 2 modules prioritizing:
+   - Core/Exploitation (license bypass validation)
+   - Core/Vulnerability Research (research effectiveness)
+   - CLI (actual command execution)
+   - Dashboard (real WebSocket streaming)
 
-1. Enhanced with offensive validation tests, OR
-2. Moved to infrastructure/supporting tests category
+---
 
-**Recommend:** Clarify scope before final approval for offensive capability validation.
+**Report Generated:** 2025-12-27
+**Total Review Time:** Comprehensive analysis of 3 test files (2,156 lines of code)
+**Files Passed:** 2/3 (66.7%)
+**Files Failed:** 1/3 (33.3%)
+**Critical Issues:** 2
+**Must Fix Before Merge:** Yes

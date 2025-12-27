@@ -17,7 +17,7 @@ from intellicrack.core.network.protocols.hasp_parser import (
 )
 
 
-def test_hasp_parser_basic():
+def test_hasp_parser_basic() -> None:
     """Test basic HASP parser functionality."""
     print("=== Testing HASP Sentinel Parser ===")
     parser = HASPSentinelParser()
@@ -30,7 +30,7 @@ def test_hasp_parser_basic():
         print(f"  - {vendor_name}: 0x{vendor_code:08X}")
 
 
-def test_hasp_request_response():
+def test_hasp_request_response() -> None:
     """Test HASP request/response generation."""
     print("\n=== Testing Request/Response Generation ===")
     parser = HASPSentinelParser()
@@ -74,7 +74,7 @@ def test_hasp_request_response():
         print("FAIL Failed to parse request")
 
 
-def test_hasp_crypto():
+def test_hasp_crypto() -> None:
     """Test HASP cryptographic operations."""
     print("\n=== Testing Cryptographic Operations ===")
     parser = HASPSentinelParser()
@@ -98,7 +98,7 @@ def test_hasp_crypto():
     print(f"OK RSA signature verification: {verified}")
 
 
-def test_hasp_feature_management():
+def test_hasp_feature_management() -> None:
     """Test HASP feature management."""
     print("\n=== Testing Feature Management ===")
     parser = HASPSentinelParser()
@@ -126,7 +126,7 @@ def test_hasp_feature_management():
         print(f"OK Feature memory initialized: {len(memory)} bytes")
 
 
-def test_hasp_memory_operations():
+def test_hasp_memory_operations() -> None:
     """Test HASP memory read/write operations."""
     print("\n=== Testing Memory Operations ===")
     parser = HASPSentinelParser()
@@ -177,7 +177,7 @@ def test_hasp_memory_operations():
         print(f"  - Data: {read_response.encryption_response[:16].hex()}")
 
 
-def test_hasp_usb_emulator():
+def test_hasp_usb_emulator() -> None:
     """Test HASP USB dongle emulator."""
     print("\n=== Testing USB Emulator ===")
     usb_emulator = HASPUSBEmulator()
@@ -198,7 +198,7 @@ def test_hasp_usb_emulator():
     print(f"OK Device descriptor generated with {len(device_descriptor)} sections")
 
 
-def test_hasp_packet_analyzer():
+def test_hasp_packet_analyzer() -> None:
     """Test HASP packet analyzer with test capture."""
     print("\n=== Testing Packet Analyzer ===")
     analyzer = HASPPacketAnalyzer()
@@ -224,7 +224,7 @@ def test_hasp_packet_analyzer():
         print("⚠ Test PCAP file not found")
 
 
-def test_hasp_server_emulator():
+def test_hasp_server_emulator() -> None:
     """Test HASP server emulator initialization."""
     print("\n=== Testing Server Emulator ===")
     server = HASPServerEmulator("127.0.0.1", 1947)

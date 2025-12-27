@@ -465,7 +465,7 @@ class PerformanceOptimizer:
 
             # Check memory usage before execution
             memory_percent = (
-                psutil.virtual_memory()
+                psutil.virtual_memory().percent / 100.0
                 if PSUTIL_AVAILABLE
                 else type(
                     "",
@@ -489,7 +489,7 @@ class PerformanceOptimizer:
 
             # Check memory after execution
             memory_percent_after = (
-                psutil.virtual_memory()
+                psutil.virtual_memory().percent / 100.0
                 if PSUTIL_AVAILABLE
                 else type(
                     "",
@@ -661,7 +661,7 @@ class ResourceManager:
         return {
             ResourceType.CPU: cpu_count,
             # MB
-            ResourceType.MEMORY: psutil.virtual_memory()
+            ResourceType.MEMORY: psutil.virtual_memory().total // (1024 * 1024)
             if PSUTIL_AVAILABLE
             else type(
                 "",
@@ -780,7 +780,7 @@ class ResourceManager:
 
         # Check memory
         available_memory = (
-            psutil.virtual_memory()
+            psutil.virtual_memory().available // (1024 * 1024)
             if PSUTIL_AVAILABLE
             else type(
                 "",
@@ -928,7 +928,10 @@ class ParallelExecutor:
         start_time = time.time()
 
         for item in baseline_items:
-            func(item, *args, **kwargs)
+            try:
+                func(item, *args, **kwargs)
+            except Exception as e:
+                logger.debug("Error during baseline measurement: %s", e)
 
         sequential_time_per_item = (time.time() - start_time) / len(baseline_items)
         estimated_sequential_time = sequential_time_per_item * len(items)
@@ -1353,7 +1356,7 @@ class PerformanceOptimizationLayer:
             "resource_usage": self.resource_manager.get_resource_usage(),
             "system_info": {
                 "cpu_count": psutil.cpu_count(logical=False) if PSUTIL_AVAILABLE else 4,
-                "memory_total_gb": psutil.virtual_memory()
+                "memory_total_gb": psutil.virtual_memory().total / (1024**3)
                 if PSUTIL_AVAILABLE
                 else type(
                     "",
@@ -1365,7 +1368,7 @@ class PerformanceOptimizationLayer:
                     },
                 )().total
                 / (1024**3),
-                "memory_available_gb": psutil.virtual_memory()
+                "memory_available_gb": psutil.virtual_memory().available / (1024**3)
                 if PSUTIL_AVAILABLE
                 else type(
                     "",

@@ -12,20 +12,36 @@ All tests validate genuine Keystone functionality.
 
 import pytest
 
-from intellicrack.handlers.keystone_handler import (
-    KEYSTONE_AVAILABLE,
-    KS_ARCH_ARM,
-    KS_ARCH_ARM64,
-    KS_ARCH_X86,
-    KS_MODE_32,
-    KS_MODE_64,
-    KS_MODE_ARM,
-    KS_MODE_THUMB,
-    Ks,
+try:
+    from intellicrack.handlers.keystone_handler import (
+        KEYSTONE_AVAILABLE,
+        KS_ARCH_ARM,
+        KS_ARCH_ARM64,
+        KS_ARCH_X86,
+        KS_MODE_32,
+        KS_MODE_64,
+        KS_MODE_ARM,
+        KS_MODE_THUMB,
+        Ks,
+    )
+    KEYSTONE_HANDLER_AVAILABLE = True
+except ImportError:
+    KEYSTONE_AVAILABLE = False
+    KS_ARCH_ARM = None
+    KS_ARCH_ARM64 = None
+    KS_ARCH_X86 = None
+    KS_MODE_32 = None
+    KS_MODE_64 = None
+    KS_MODE_ARM = None
+    KS_MODE_THUMB = None
+    Ks = None
+    KEYSTONE_HANDLER_AVAILABLE = False
+
+
+pytestmark = pytest.mark.skipif(
+    not KEYSTONE_HANDLER_AVAILABLE or not KEYSTONE_AVAILABLE,
+    reason="Keystone handler not available"
 )
-
-
-pytestmark = pytest.mark.skipif(not KEYSTONE_AVAILABLE, reason="Keystone not available")
 
 
 class TestKeystoneAvailability:

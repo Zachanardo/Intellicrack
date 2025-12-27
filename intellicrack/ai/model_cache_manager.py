@@ -76,11 +76,10 @@ class RestrictedUnpickler(pickle.Unpickler):  # noqa: S301
             name: Class name to load
 
         Returns:
-            The requested class type
+            type[Any]: The requested class type
 
         Raises:
-            pickle.UnpicklingError: If the class is not in the allowed list
-
+            UnpicklingError: If the class is not in the allowed list
         """
         # Allow only safe modules and classes
         ALLOWED_MODULES = {
@@ -118,11 +117,10 @@ def secure_pickle_load(file_path: str) -> object:
         file_path: Path to the pickled file to load
 
     Returns:
-        The unpickled object
+        object: The unpickled object
 
     Raises:
         ValueError: If integrity check fails
-        pickle.UnpicklingError: If unsafe classes are detected
 
     """
     with open(file_path, "rb") as f:
@@ -188,7 +186,12 @@ def empty_cache() -> None:
 
 
 def memory_allocated() -> int:
-    """Get allocated GPU memory in bytes."""
+    """Get allocated GPU memory in bytes.
+
+    Returns:
+        int: Allocated GPU memory in bytes (0 if not available)
+
+    """
     if HAS_TORCH and torch is not None:
         if hasattr(torch, "cuda") and torch.cuda.is_available():
             return int(torch.cuda.memory_allocated())
@@ -198,7 +201,12 @@ def memory_allocated() -> int:
 
 
 def memory_reserved() -> int:
-    """Get reserved GPU memory in bytes."""
+    """Get reserved GPU memory in bytes.
+
+    Returns:
+        int: Reserved GPU memory in bytes (0 if not available)
+
+    """
     if HAS_TORCH and torch is not None:
         if hasattr(torch, "cuda") and torch.cuda.is_available():
             return int(torch.cuda.memory_reserved())
@@ -273,7 +281,12 @@ class ModelCacheManager:
         self.disk_index = self._load_disk_index()
 
     def _load_disk_index(self) -> dict[str, Any]:
-        """Load disk cache index."""
+        """Load disk cache index.
+
+        Returns:
+            dict[str, Any]: Disk cache index, empty dict if not available
+
+        """
         if not self.enable_disk_cache or not self.disk_index_file.exists():
             return {}
 
@@ -850,7 +863,15 @@ _CACHE_MANAGER: ModelCacheManager | None = None
 
 
 def get_cache_manager(max_memory_gb: float = 8.0) -> ModelCacheManager:
-    """Get the global model cache manager."""
+    """Get the global model cache manager.
+
+    Args:
+        max_memory_gb: Maximum memory to use for caching in GB
+
+    Returns:
+        ModelCacheManager: The global model cache manager instance
+
+    """
     global _CACHE_MANAGER
     if _CACHE_MANAGER is None:
         _CACHE_MANAGER = ModelCacheManager(max_memory_gb=max_memory_gb)

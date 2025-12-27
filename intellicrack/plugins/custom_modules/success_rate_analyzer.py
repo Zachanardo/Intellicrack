@@ -117,7 +117,11 @@ class AnalysisEvent:
             self.event_id = self.generate_event_id()
 
     def generate_event_id(self) -> str:
-        """Generate unique event ID."""
+        """Generate unique event ID.
+
+        Returns:
+            str: The unique event ID.
+        """
         data = f"{self.event_type.value}_{self.component}_{self.timestamp}"
         return hashlib.sha256(data.encode()).hexdigest()[:16]
 
@@ -154,7 +158,16 @@ class WilsonScoreInterval:
 
     @staticmethod
     def calculate(successes: int, total: int, confidence_level: float = 0.95) -> tuple[float, float]:
-        """Calculate Wilson score confidence interval."""
+        """Calculate Wilson score confidence interval.
+
+        Args:
+            successes: Number of successful outcomes.
+            total: Total number of outcomes.
+            confidence_level: Desired confidence level (default 0.95 for 95%).
+
+        Returns:
+            tuple[float, float]: Lower and upper bounds of the confidence interval.
+        """
         if total == 0:
             return (0.0, 1.0)
 
@@ -180,18 +193,43 @@ class BayesianAnalyzer:
         self.prior_beta = prior_beta
 
     def update_posterior(self, successes: int, failures: int) -> tuple[float, float]:
-        """Update Beta posterior parameters."""
+        """Update Beta posterior parameters.
+
+        Args:
+            successes: Number of successful outcomes.
+            failures: Number of failed outcomes.
+
+        Returns:
+            tuple[float, float]: Updated posterior alpha and beta parameters.
+        """
         posterior_alpha = self.prior_alpha + successes
         posterior_beta = self.prior_beta + failures
         return (posterior_alpha, posterior_beta)
 
     def posterior_mean(self, successes: int, failures: int) -> float:
-        """Calculate posterior mean."""
+        """Calculate posterior mean.
+
+        Args:
+            successes: Number of successful outcomes.
+            failures: Number of failed outcomes.
+
+        Returns:
+            float: Posterior mean of the success rate.
+        """
         alpha, beta = self.update_posterior(successes, failures)
         return alpha / (alpha + beta)
 
     def credible_interval(self, successes: int, failures: int, confidence: float = 0.95) -> tuple[float, float]:
-        """Calculate Bayesian credible interval."""
+        """Calculate Bayesian credible interval.
+
+        Args:
+            successes: Number of successful outcomes.
+            failures: Number of failed outcomes.
+            confidence: Desired confidence level (default 0.95 for 95%).
+
+        Returns:
+            tuple[float, float]: Lower and upper bounds of the credible interval.
+        """
         alpha, beta = self.update_posterior(successes, failures)
         lower_percentile = (1 - confidence) / 2
         upper_percentile = 1 - lower_percentile
@@ -202,7 +240,16 @@ class BayesianAnalyzer:
         return (lower, upper)
 
     def posterior_probability(self, successes: int, failures: int, threshold: float) -> float:
-        """Calculate P(``success_rate`` > threshold | data)."""
+        """Calculate P(success_rate > threshold | data).
+
+        Args:
+            successes: Number of successful outcomes.
+            failures: Number of failed outcomes.
+            threshold: Success rate threshold value.
+
+        Returns:
+            float: Probability that success rate exceeds the threshold.
+        """
         alpha, beta = self.update_posterior(successes, failures)
         cdf_result = stats.beta.cdf(threshold, alpha, beta)
         return float(1 - cdf_result)
@@ -216,11 +263,20 @@ class SurvivalAnalyzer:
         self.survival_data: list[tuple[float, bool]] = []
 
     def add_observation(self, duration: float, censored: bool = False) -> None:
-        """Add survival observation."""
+        """Add survival observation.
+
+        Args:
+            duration: Duration until event or censoring.
+            censored: Whether the observation is censored (default False).
+        """
         self.survival_data.append((duration, not censored))  # True = event occurred
 
     def kaplan_meier_estimate(self) -> tuple[list[float], list[float]]:
-        """Calculate Kaplan-Meier survival function."""
+        """Calculate Kaplan-Meier survival function.
+
+        Returns:
+            tuple[list[float], list[float]]: Times and corresponding survival probabilities.
+        """
         if not self.survival_data:
             return ([], [])
 
@@ -256,7 +312,11 @@ class SurvivalAnalyzer:
         return (times, survival_probs)
 
     def median_survival_time(self) -> float | None:
-        """Calculate median survival time."""
+        """Calculate median survival time.
+
+        Returns:
+            float | None: Median survival time or None if not calculable.
+        """
         times, survival_probs = self.kaplan_meier_estimate()
 
         if not times:
@@ -276,11 +336,25 @@ class TimeSeriesAnalyzer:
         self.history: defaultdict[str, list[tuple[float, float]]] = defaultdict(list)
 
     def add_data_point(self, component: str, timestamp: float, value: float) -> None:
-        """Add time series data point."""
+        """Add time series data point.
+
+        Args:
+            component: Component identifier.
+            timestamp: Data point timestamp.
+            value: Data point value.
+        """
         self.history[component].append((timestamp, value))
 
     def detect_trend(self, component: str, window_size: int = 30) -> dict[str, Any]:
-        """Detect trend using linear regression."""
+        """Detect trend using linear regression.
+
+        Args:
+            component: Component identifier.
+            window_size: Size of the sliding window for trend detection (default 30).
+
+        Returns:
+            dict[str, Any]: Trend analysis results including direction, strength, slope, R-squared, and p-value.
+        """
         if component not in self.history or len(self.history[component]) < window_size:
             return {"trend": "insufficient_data", "strength": 0.0}
 
@@ -311,7 +385,15 @@ class TimeSeriesAnalyzer:
         }
 
     def seasonal_decomposition(self, component: str, period: int = 24) -> dict[str, Any]:
-        """Perform seasonal decomposition."""
+        """Perform seasonal decomposition.
+
+        Args:
+            component: Component identifier.
+            period: Period for seasonal decomposition (default 24 hours).
+
+        Returns:
+            dict[str, Any]: Seasonal decomposition results including seasonal flag, strength, and components.
+        """
         if component not in self.history or len(self.history[component]) < period * 2:
             return {"seasonal": False, "components": {}}
 
@@ -357,7 +439,15 @@ class TimeSeriesAnalyzer:
         }
 
     def forecast_arima(self, component: str, periods: int = 10) -> tuple[list[float], list[tuple[float, float]]]:
-        """Perform ARIMA-like forecasting."""
+        """Perform ARIMA-like forecasting.
+
+        Args:
+            component: Component identifier.
+            periods: Number of periods to forecast (default 10).
+
+        Returns:
+            tuple[list[float], list[tuple[float, float]]]: Forecasted values and prediction intervals.
+        """
         if component not in self.history or len(self.history[component]) < 10:
             return ([], [])
 
@@ -398,7 +488,15 @@ class StatisticalTester:
 
     @staticmethod
     def chi_square_test(observed: list[int], expected: list[int] | None = None) -> dict[str, float]:
-        """Chi-square goodness of fit test."""
+        """Chi-square goodness of fit test.
+
+        Args:
+            observed: Observed frequencies.
+            expected: Expected frequencies (default uniform distribution).
+
+        Returns:
+            dict[str, float]: Chi-square statistic, p-value, and degrees of freedom.
+        """
         expected_values: list[float]
         if expected is None:
             expected_values = [float(sum(observed)) / len(observed)] * len(observed)
@@ -415,7 +513,17 @@ class StatisticalTester:
 
     @staticmethod
     def fishers_exact_test(success1: int, total1: int, success2: int, total2: int) -> dict[str, float]:
-        """Fisher's exact test for comparing two proportions."""
+        """Fisher's exact test for comparing two proportions.
+
+        Args:
+            success1: Successes in group 1.
+            total1: Total count in group 1.
+            success2: Successes in group 2.
+            total2: Total count in group 2.
+
+        Returns:
+            dict[str, float]: Odds ratio and p-value.
+        """
         # Create contingency table
         table = [[success1, total1 - success1], [success2, total2 - success2]]
 
@@ -428,7 +536,15 @@ class StatisticalTester:
 
     @staticmethod
     def mann_whitney_u_test(group1: list[float], group2: list[float]) -> dict[str, float]:
-        """Mann-Whitney U test for comparing two independent groups."""
+        """Mann-Whitney U test for comparing two independent groups.
+
+        Args:
+            group1: First group of observations.
+            group2: Second group of observations.
+
+        Returns:
+            dict[str, float]: U statistic and p-value.
+        """
         statistic, p_value = stats.mannwhitneyu(group1, group2, alternative="two-sided")
 
         return {
@@ -442,7 +558,17 @@ class PerformanceMetrics:
 
     @staticmethod
     def confusion_matrix_metrics(tp: int, tn: int, fp: int, fn: int) -> dict[str, float]:
-        """Calculate metrics from confusion matrix."""
+        """Calculate metrics from confusion matrix.
+
+        Args:
+            tp: True positives.
+            tn: True negatives.
+            fp: False positives.
+            fn: False negatives.
+
+        Returns:
+            dict[str, float]: Calculated performance metrics.
+        """
         total = tp + tn + fp + fn
         if total == 0:
             return {}
@@ -466,7 +592,15 @@ class PerformanceMetrics:
 
     @staticmethod
     def auc_roc(y_true: list[int], y_scores: list[float]) -> float:
-        """Calculate AUC-ROC using trapezoidal rule."""
+        """Calculate AUC-ROC using trapezoidal rule.
+
+        Args:
+            y_true: True binary labels.
+            y_scores: Predicted scores.
+
+        Returns:
+            float: Area Under the ROC Curve.
+        """
         if len(set(y_true)) != 2:
             return 0.5  # Cannot calculate ROC for non-binary classification
 
@@ -573,7 +707,11 @@ class EventTracker:
             conn.commit()
 
     def log_event(self, event: AnalysisEvent) -> None:
-        """Log analysis event to database."""
+        """Log analysis event to database.
+
+        Args:
+            event: The analysis event to log.
+        """
         with self.lock, sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
 
@@ -606,7 +744,17 @@ class EventTracker:
         start_time: float | None = None,
         end_time: float | None = None,
     ) -> list[AnalysisEvent]:
-        """Retrieve events from database with filtering."""
+        """Retrieve events from database with filtering.
+
+        Args:
+            component: Filter by component name (optional).
+            protection_category: Filter by protection category (optional).
+            start_time: Filter events after this timestamp (optional).
+            end_time: Filter events before this timestamp (optional).
+
+        Returns:
+            list[AnalysisEvent]: List of matching events.
+        """
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
 
@@ -658,7 +806,17 @@ class EventTracker:
         start_time: float | None = None,
         end_time: float | None = None,
     ) -> tuple[int, int]:
-        """Get success and total counts."""
+        """Get success and total counts.
+
+        Args:
+            component: Filter by component name (optional).
+            protection_category: Filter by protection category (optional).
+            start_time: Filter events after this timestamp (optional).
+            end_time: Filter events before this timestamp (optional).
+
+        Returns:
+            tuple[int, int]: Counts of successful and total events.
+        """
         events = self.get_events(component, protection_category, start_time, end_time)
 
         success_count = sum(event.outcome == OutcomeType.SUCCESS for event in events)
@@ -682,7 +840,14 @@ class MLPredictor:
         self.feature_names: list[str] = []
 
     def prepare_features(self, events: list[AnalysisEvent]) -> tuple[np.ndarray, np.ndarray]:
-        """Prepare features for machine learning."""
+        """Prepare features for machine learning.
+
+        Args:
+            events: List of analysis events to convert to features.
+
+        Returns:
+            tuple[np.ndarray, np.ndarray]: Feature matrix and target values.
+        """
         if not events:
             return np.array([]), np.array([])
 
@@ -752,7 +917,11 @@ class MLPredictor:
         return np.array(features), np.array(targets)
 
     def train(self, events: list[AnalysisEvent]) -> None:
-        """Train prediction models."""
+        """Train prediction models.
+
+        Args:
+            events: Historical events for training.
+        """
         X, y = self.prepare_features(events)
 
         if len(X) < 10:  # Need minimum samples for training
@@ -771,7 +940,15 @@ class MLPredictor:
         self.is_trained = True
 
     def predict(self, recent_events: list[AnalysisEvent], horizon: int = 24) -> dict[str, Any]:
-        """Predict future success rates."""
+        """Predict future success rates.
+
+        Args:
+            recent_events: Recent events for prediction context.
+            horizon: Prediction horizon in hours (default 24).
+
+        Returns:
+            dict[str, Any]: Predictions from each model and ensemble.
+        """
         if not self.is_trained or not recent_events:
             return {}
 
@@ -809,7 +986,14 @@ class ReportGenerator:
         self.output_dir.mkdir(exist_ok=True)
 
     def generate_comprehensive_report(self, analyzer: "SuccessRateAnalyzer") -> str:
-        """Generate comprehensive PDF report."""
+        """Generate comprehensive PDF report.
+
+        Args:
+            analyzer: The SuccessRateAnalyzer instance to report on.
+
+        Returns:
+            str: Path to the generated PDF report.
+        """
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         report_path = self.output_dir / f"intellicrack_success_analysis_{timestamp}.pdf"
 
@@ -936,7 +1120,14 @@ class ReportGenerator:
         return str(report_path)
 
     def _calculate_daily_success_rates(self, events: list[AnalysisEvent]) -> dict[int, float]:
-        """Calculate daily success rates."""
+        """Calculate daily success rates.
+
+        Args:
+            events: Events to calculate daily success rates for.
+
+        Returns:
+            dict[int, float]: Daily success rates mapped by days ago.
+        """
         daily_events = defaultdict(list)
         current_time = time.time()
 
@@ -953,7 +1144,14 @@ class ReportGenerator:
         return daily_success
 
     def _prepare_correlation_data(self, analyzer: "SuccessRateAnalyzer") -> np.ndarray | None:
-        """Prepare correlation matrix data from actual time series."""
+        """Prepare correlation matrix data from actual time series.
+
+        Args:
+            analyzer: The SuccessRateAnalyzer instance.
+
+        Returns:
+            np.ndarray | None: Correlation matrix or None if unable to calculate.
+        """
         try:
             component_stats = analyzer.get_component_statistics()
             if len(component_stats) < 2:
@@ -1038,7 +1236,6 @@ class SuccessRateAnalyzer:
 
     def _start_background_tasks(self) -> None:
         """Start background analysis tasks."""
-
         def background_worker() -> None:
             while self.is_running:
                 try:
@@ -1075,7 +1272,17 @@ class SuccessRateAnalyzer:
         metadata: dict[str, Any] | None = None,
         error_details: str = "",
     ) -> None:
-        """Log analysis event."""
+        """Log analysis event.
+
+        Args:
+            event_type: Type of event to log.
+            outcome: Outcome of the event.
+            protection_category: Protection category being analyzed.
+            component: Component name.
+            duration: Duration of the event in seconds (default 0.0).
+            metadata: Additional metadata as dictionary (optional).
+            error_details: Error details if applicable (default empty string).
+        """
         event = AnalysisEvent(
             event_id="",  # Will be auto-generated
             event_type=event_type,
@@ -1576,16 +1783,4 @@ if __name__ == "__main__":
     logger.info("  Overall success rate (24h): %.3f", dashboard["overall_metrics"]["overall_success_rate_24h"])
 
     # Generate report
-    logger.info("Generating comprehensive report...")
-    report_path = analyzer.generate_comprehensive_report()
-    logger.info("Report saved to: %s", report_path)
-
-    # Export data
-    json_file = analyzer.export_data("json")
-    csv_file = analyzer.export_data("csv")
-    logger.info("Data exported to: %s, %s", json_file, csv_file)
-
-    logger.info("Success rate analysis demonstration completed!")
-
-    # Cleanup
-    analyzer.shutdown()
+    logg

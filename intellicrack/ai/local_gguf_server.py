@@ -129,7 +129,12 @@ class LocalGGUFServer:
         self._detect_intel_gpu()
 
     def _detect_intel_gpu(self) -> None:
-        """Detect available Intel GPU backends and devices."""
+        """Detect available Intel GPU backends and devices.
+
+        Populates gpu_backend and gpu_devices attributes with detected Intel GPU
+        capabilities from OpenVINO, DPCTL, or PyTorch XPU backends.
+
+        """
         self.gpu_backend = None
         self.gpu_devices = []
 
@@ -212,7 +217,12 @@ class LocalGGUFServer:
             logger.info("No Intel GPU devices detected")
 
     def _get_optimal_threads(self) -> int:
-        """Get optimal number of threads based on system configuration."""
+        """Get optimal number of threads based on system configuration.
+
+        Returns:
+            int: Optimal number of threads for model execution.
+
+        """
         import multiprocessing
         import os
 
@@ -232,7 +242,12 @@ class LocalGGUFServer:
         return optimal
 
     def can_run(self) -> bool:
-        """Check if the server can run (dependencies available)."""
+        """Check if the server can run (dependencies available).
+
+        Returns:
+            bool: True if Flask and llama-cpp-python are available, False otherwise.
+
+        """
         return HAS_FLASK and HAS_LLAMA_CPP
 
     def load_model(self, model_path: str, **kwargs: object) -> bool:
@@ -339,7 +354,11 @@ class LocalGGUFServer:
             return False
 
     def unload_model(self) -> None:
-        """Unload the current model."""
+        """Unload the current model.
+
+        Releases model resources and resets model state.
+
+        """
         if self.model:
             try:
                 # llama.cpp doesn't have explicit unload, just delete reference
@@ -352,7 +371,14 @@ class LocalGGUFServer:
                 logger.exception("Error unloading model: %s", e)
 
     def start_server(self) -> bool:
-        """Start the local GGUF server."""
+        """Start the local GGUF server.
+
+        Initializes Flask app, sets up routes, and starts server in a daemon thread.
+
+        Returns:
+            bool: True if server started successfully, False otherwise.
+
+        """
         if not self.can_run():
             logger.exception("Cannot start server: missing dependencies")
             return False
@@ -395,7 +421,12 @@ class LocalGGUFServer:
             return False
 
     def stop_server(self) -> None:
-        """Stop the local GGUF server."""
+        """Stop the local GGUF server.
+
+        Sets the running flag to false. Flask may not immediately terminate
+        when running in daemon mode.
+
+        """
         self.is_running = False
         if self.server_thread:
             # Flask doesn't have a clean shutdown method when run this way
@@ -403,7 +434,12 @@ class LocalGGUFServer:
             logger.info("Server stop requested (thread will continue until process ends)")
 
     def _setup_routes(self) -> None:
-        """Set up Flask routes for the server."""
+        """Set up Flask routes for the server.
+
+        Registers all API endpoints including health check, model loading,
+        and OpenAI-compatible chat/completion endpoints.
+
+        """
         if self.app is None or jsonify is None:
             logger.exception("Flask app or jsonify not available")
             return
@@ -591,7 +627,15 @@ class LocalGGUFServer:
                 return jsonify({"error": "Internal server error during model unloading"}), 500
 
     def _messages_to_prompt(self, messages: list[dict[str, Any]]) -> str:
-        """Convert OpenAI-style messages to a prompt."""
+        """Convert OpenAI-style messages to a prompt.
+
+        Args:
+            messages: List of message dictionaries with 'role' and 'content' keys.
+
+        Returns:
+            str: Formatted prompt string with messages.
+
+        """
         prompt_parts = []
 
         for message in messages:
@@ -609,7 +653,23 @@ class LocalGGUFServer:
         return "\n\n".join(prompt_parts)
 
     def _complete_response(self, prompt: str, max_tokens: int, temperature: float, top_p: float, stop: list[str]) -> object:
-        """Generate a complete response."""
+        """Generate a complete response.
+
+        Args:
+            prompt: The input prompt text.
+            max_tokens: Maximum number of tokens to generate.
+            temperature: Sampling temperature for randomness.
+            top_p: Nucleus sampling probability threshold.
+            stop: List of stop sequences to end generation.
+
+        Returns:
+            object: Flask response object with JSON-formatted completion result.
+
+        Raises:
+            RuntimeError: If jsonify module is not available.
+            Exception: If response generation fails (re-raised after logging).
+
+        """
         if jsonify is None:
             raise RuntimeError("jsonify not available")
 
@@ -668,6 +728,10 @@ class LocalGGUFServer:
         Returns:
             Flask response object with streaming content.
 
+        Raises:
+            RuntimeError: If Flask app is not available.
+            Exception: If streaming generation fails (re-raised after logging).
+
         """
         if self.app is None:
             raise RuntimeError("Flask app not available")
@@ -722,7 +786,12 @@ class LocalGGUFServer:
             raise
 
     def _run_server(self) -> None:
-        """Run the Flask server."""
+        """Run the Flask server.
+
+        Server exceptions are caught and logged but not propagated to allow
+        graceful error handling without crashing the application.
+
+        """
         if self.app is None:
             logger.exception("Flask app not available")
             return
@@ -739,7 +808,12 @@ class LocalGGUFServer:
             logger.exception("Server runtime error: %s", e)
 
     def _test_server(self) -> bool:
-        """Test if the server is responding."""
+        """Test if the server is responding.
+
+        Returns:
+            bool: True if server responds with status 200, False otherwise.
+
+        """
         if requests is None:
             logger.exception("requests module not available")
             return False
@@ -755,11 +829,21 @@ class LocalGGUFServer:
             return False
 
     def get_server_url(self) -> str:
-        """Get the server URL."""
+        """Get the server URL.
+
+        Returns:
+            str: The server URL in format http://host:port.
+
+        """
         return f"http://{self.host}:{self.port}"
 
     def is_healthy(self) -> bool:
-        """Check if server is healthy."""
+        """Check if server is healthy.
+
+        Returns:
+            bool: True if server is running and responding, False otherwise.
+
+        """
         if not self.is_running:
             return False
 
@@ -798,7 +882,12 @@ class GGUFModelManager:
         self.scan_models()
 
     def scan_models(self) -> None:
-        """Scan for available GGUF models."""
+        """Scan for available GGUF models.
+
+        Scans the models directory recursively for .gguf files and populates
+        the available_models dictionary with metadata about each model.
+
+        """
         self.available_models = {}
 
         if not self.models_directory.exists():
@@ -825,11 +914,25 @@ class GGUFModelManager:
         logger.info("Found %s GGUF models", len(self.available_models))
 
     def list_models(self) -> dict[str, dict[str, Any]]:
-        """List available models."""
+        """List available models.
+
+        Returns:
+            dict[str, dict[str, Any]]: Dictionary mapping model names to their metadata.
+
+        """
         return self.available_models.copy()
 
     def download_model(self, model_url: str, model_name: str | None = None) -> bool:
-        """Download a model from URL."""
+        """Download a model from URL.
+
+        Args:
+            model_url: URL of the model to download.
+            model_name: Optional name for the model file. Extracted from URL if not provided.
+
+        Returns:
+            bool: True if download successful, False otherwise.
+
+        """
         if requests is None:
             logger.exception("requests module required for model download")
             return False
@@ -894,28 +997,59 @@ class GGUFModelManager:
         return success
 
     def unload_model(self) -> None:
-        """Unload the current model."""
+        """Unload the current model.
+
+        Unloads the currently loaded model from the server and resets
+        the current_model attribute.
+
+        """
         self.server.unload_model()
         self.current_model = None
 
     def start_server(self) -> bool:
-        """Start the local GGUF server."""
+        """Start the local GGUF server.
+
+        Returns:
+            bool: True if server started successfully, False otherwise.
+
+        """
         return self.server.start_server()
 
     def stop_server(self) -> None:
-        """Stop the local GGUF server."""
+        """Stop the local GGUF server.
+
+        Stops the running server. Note that Flask may not immediately
+        terminate when running in daemon mode.
+
+        """
         self.server.stop_server()
 
     def get_server_url(self) -> str:
-        """Get the server URL."""
+        """Get the server URL.
+
+        Returns:
+            str: The server URL in format http://host:port.
+
+        """
         return self.server.get_server_url()
 
     def is_server_running(self) -> bool:
-        """Check if server is running."""
+        """Check if server is running.
+
+        Returns:
+            bool: True if server is running and responding to health checks.
+
+        """
         return self.server.is_running and self.server.is_healthy()
 
     def get_recommended_models(self) -> list[dict[str, str]]:
-        """Get list of recommended models for download."""
+        """Get list of recommended models for download.
+
+        Returns:
+            list[dict[str, str]]: List of recommended model dictionaries with
+                name, description, size, url, and use_case fields.
+
+        """
         return [
             {
                 "name": "CodeLlama-7B-Instruct.Q4_K_M.gguf",

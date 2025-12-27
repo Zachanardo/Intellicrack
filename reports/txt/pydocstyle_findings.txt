@@ -97,7 +97,7 @@ tests\validation_system\runner.py:368: D107: in public method `__init__`: - Miss
 
 tests\validation_system\runner.py:384: D205: in public method `calculate_confidence_interval`: - 1 blank line required between summary line and description (found 0)
 
-tests\validation_system\runner.py:426: D205: in public method `perform_hypothesis_test`: - 1 blank line required between summary line and description (found 0)
+tests\validation_system\runner.py:425: D205: in public method `perform_hypothesis_test`: - 1 blank line required between summary line and description (found 0)
 
 tests\validation_system\runner.py:457: D205: in public method `validate_success_rate`: - 1 blank line required between summary line and description (found 0)
 
@@ -117,7 +117,7 @@ tests\validation_system\runner.py:780: D205: in public class `ValidationTestRunn
 
 tests\validation_system\runner.py:785: D107: in public method `__init__`: - Missing docstring in __init__
 
-tests\validation_system\runner.py:987: D205: in public method `execute_test_case`: - 1 blank line required between summary line and description (found 0)
+tests\validation_system\runner.py:980: D205: in public method `execute_test_case`: - 1 blank line required between summary line and description (found 0)
 
 
 26 findings in tests\framework\real_world_testing_framework.py
@@ -136,43 +136,43 @@ tests\framework\real_world_testing_framework.py:123: D400: in public method `cre
 
 tests\framework\real_world_testing_framework.py:145: D400: in private method `_generate_serial_check_binary`: - First line should end with a period (not 'y')
 
-tests\framework\real_world_testing_framework.py:278: D400: in private method `_generate_flexlm_binary`: - First line should end with a period (not 'y')
+tests\framework\real_world_testing_framework.py:275: D400: in private method `_generate_flexlm_binary`: - First line should end with a period (not 'y')
 
-tests\framework\real_world_testing_framework.py:292: D400: in private method `_generate_hasp_binary`: - First line should end with a period (not 'y')
+tests\framework\real_world_testing_framework.py:289: D400: in private method `_generate_hasp_binary`: - First line should end with a period (not 'y')
 
-tests\framework\real_world_testing_framework.py:305: D400: in private method `_generate_generic_protected_binary`: - First line should end with a period (not 'y')
+tests\framework\real_world_testing_framework.py:302: D400: in private method `_generate_generic_protected_binary`: - First line should end with a period (not 'y')
 
-tests\framework\real_world_testing_framework.py:309: D400: in public method `run_bypass_test`: - First line should end with a period (not 'y')
+tests\framework\real_world_testing_framework.py:306: D400: in public method `run_bypass_test`: - First line should end with a period (not 'y')
 
-tests\framework\real_world_testing_framework.py:384: D400: in private method `_create_sandbox`: - First line should end with a period (not 'g')
+tests\framework\real_world_testing_framework.py:381: D400: in private method `_create_sandbox`: - First line should end with a period (not 'g')
 
-tests\framework\real_world_testing_framework.py:398: D400: in private method `_cleanup_sandbox`: - First line should end with a period (not 'g')
+tests\framework\real_world_testing_framework.py:395: D400: in private method `_cleanup_sandbox`: - First line should end with a period (not 'g')
 
-tests\framework\real_world_testing_framework.py:406: D400: in private method `_verify_simple_license_bypass`: - First line should end with a period (not 's')
+tests\framework\real_world_testing_framework.py:403: D400: in private method `_verify_simple_license_bypass`: - First line should end with a period (not 's')
 
-tests\framework\real_world_testing_framework.py:430: D400: in private method `_verify_flexlm_bypass`: - First line should end with a period (not 's')
+tests\framework\real_world_testing_framework.py:427: D400: in private method `_verify_flexlm_bypass`: - First line should end with a period (not 's')
 
-tests\framework\real_world_testing_framework.py:459: D400: in private method `_verify_hasp_bypass`: - First line should end with a period (not 's')
+tests\framework\real_world_testing_framework.py:456: D400: in private method `_verify_hasp_bypass`: - First line should end with a period (not 's')
 
-tests\framework\real_world_testing_framework.py:496: D400: in private method `_verify_multi_protection_bypass`: - First line should end with a period (not 's')
+tests\framework\real_world_testing_framework.py:493: D400: in private method `_verify_multi_protection_bypass`: - First line should end with a period (not 's')
 
-tests\framework\real_world_testing_framework.py:551: D400: in private method `_check_service_running`: - First line should end with a period (not 'g')
+tests\framework\real_world_testing_framework.py:548: D400: in private method `_check_service_running`: - First line should end with a period (not 'g')
 
-tests\framework\real_world_testing_framework.py:563: D400: in private method `_save_test_report`: - First line should end with a period (not 'e')
+tests\framework\real_world_testing_framework.py:560: D400: in private method `_save_test_report`: - First line should end with a period (not 'e')
 
-tests\framework\real_world_testing_framework.py:571: D400: in public method `run_comprehensive_test_suite`: - First line should end with a period (not 's')
+tests\framework\real_world_testing_framework.py:568: D400: in public method `run_comprehensive_test_suite`: - First line should end with a period (not 's')
 
-tests\framework\real_world_testing_framework.py:664: D400: in public method `benchmark_performance`: - First line should end with a period (not 'e')
+tests\framework\real_world_testing_framework.py:661: D400: in public method `benchmark_performance`: - First line should end with a period (not 'e')
 
-tests\framework\real_world_testing_framework.py:725: D400: in private method `_calculate_performance_rating`: - First line should end with a period (not 'e')
+tests\framework\real_world_testing_framework.py:722: D400: in private method `_calculate_performance_rating`: - First line should end with a period (not 'e')
 
-tests\framework\real_world_testing_framework.py:738: D400: in public method `validate_bypass_safety`: - First line should end with a period (not 'y')
+tests\framework\real_world_testing_framework.py:735: D400: in public method `validate_bypass_safety`: - First line should end with a period (not 'y')
 
-tests\framework\real_world_testing_framework.py:777: D400: in public method `generate_test_report`: - First line should end with a period (not 't')
+tests\framework\real_world_testing_framework.py:774: D400: in public method `generate_test_report`: - First line should end with a period (not 't')
 
-tests\framework\real_world_testing_framework.py:830: D400: in public function `main`: - First line should end with a period (not 'n')
+tests\framework\real_world_testing_framework.py:827: D400: in public function `main`: - First line should end with a period (not 'n')
 
-tests\framework\real_world_testing_framework.py:830: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')
+tests\framework\real_world_testing_framework.py:827: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')
 
 
 25 findings in intellicrack\tools\plugin_ci_cd.py
@@ -181,51 +181,51 @@ intellicrack\tools\plugin_ci_cd.py:37: D400: in public class `CICDPipeline`: - F
 
 intellicrack\tools\plugin_ci_cd.py:52: D400: in private method `_load_or_create_config`: - First line should end with a period (not 'n')
 
-intellicrack\tools\plugin_ci_cd.py:89: D400: in public method `run_pipeline`: - First line should end with a period (not 'e')
+intellicrack\tools\plugin_ci_cd.py:87: D400: in public method `run_pipeline`: - First line should end with a period (not 'e')
 
-intellicrack\tools\plugin_ci_cd.py:122: D400: in public method `run_validate_stage`: - First line should end with a period (not 'e')
+intellicrack\tools\plugin_ci_cd.py:120: D400: in public method `run_validate_stage`: - First line should end with a period (not 'e')
 
-intellicrack\tools\plugin_ci_cd.py:122: D401: in public method `run_validate_stage`: - First line should be in imperative mood (perhaps 'Validate', not 'Validation')
+intellicrack\tools\plugin_ci_cd.py:120: D401: in public method `run_validate_stage`: - First line should be in imperative mood (perhaps 'Validate', not 'Validation')
 
-intellicrack\tools\plugin_ci_cd.py:160: D400: in public method `run_test_stage`: - First line should end with a period (not 's')
+intellicrack\tools\plugin_ci_cd.py:158: D400: in public method `run_test_stage`: - First line should end with a period (not 's')
 
-intellicrack\tools\plugin_ci_cd.py:237: D400: in public method `run_quality_stage`: - First line should end with a period (not 's')
+intellicrack\tools\plugin_ci_cd.py:235: D400: in public method `run_quality_stage`: - First line should end with a period (not 's')
 
-intellicrack\tools\plugin_ci_cd.py:280: D400: in public method `run_security_stage`: - First line should end with a period (not 's')
+intellicrack\tools\plugin_ci_cd.py:278: D400: in public method `run_security_stage`: - First line should end with a period (not 's')
 
-intellicrack\tools\plugin_ci_cd.py:319: D400: in public method `run_build_stage`: - First line should end with a period (not 'n')
+intellicrack\tools\plugin_ci_cd.py:316: D400: in public method `run_build_stage`: - First line should end with a period (not 'n')
 
-intellicrack\tools\plugin_ci_cd.py:360: D400: in public method `run_deploy_stage`: - First line should end with a period (not 't')
+intellicrack\tools\plugin_ci_cd.py:357: D400: in public method `run_deploy_stage`: - First line should end with a period (not 't')
 
-intellicrack\tools\plugin_ci_cd.py:398: D400: in private method `_check_syntax`: - First line should end with a period (not 'x')
+intellicrack\tools\plugin_ci_cd.py:395: D400: in private method `_check_syntax`: - First line should end with a period (not 'x')
 
-intellicrack\tools\plugin_ci_cd.py:411: D400: in private method `_check_structure`: - First line should end with a period (not 'e')
+intellicrack\tools\plugin_ci_cd.py:408: D400: in private method `_check_structure`: - First line should end with a period (not 'e')
 
-intellicrack\tools\plugin_ci_cd.py:417: D400: in private method `_check_imports`: - First line should end with a period (not 's')
+intellicrack\tools\plugin_ci_cd.py:414: D400: in private method `_check_imports`: - First line should end with a period (not 's')
 
-intellicrack\tools\plugin_ci_cd.py:423: D400: in private method `_run_linter`: - First line should end with a period (not 'r')
+intellicrack\tools\plugin_ci_cd.py:420: D400: in private method `_run_linter`: - First line should end with a period (not 'r')
 
-intellicrack\tools\plugin_ci_cd.py:456: D400: in private method `_calculate_complexity`: - First line should end with a period (not 'y')
+intellicrack\tools\plugin_ci_cd.py:455: D400: in private method `_calculate_complexity`: - First line should end with a period (not 'y')
 
-intellicrack\tools\plugin_ci_cd.py:475: D400: in private method `_check_line_length`: - First line should end with a period (not 'h')
+intellicrack\tools\plugin_ci_cd.py:473: D400: in private method `_check_line_length`: - First line should end with a period (not 'h')
 
-intellicrack\tools\plugin_ci_cd.py:485: D400: in private method `_run_bandit`: - First line should end with a period (not 'r')
+intellicrack\tools\plugin_ci_cd.py:483: D400: in private method `_run_bandit`: - First line should end with a period (not 'r')
 
-intellicrack\tools\plugin_ci_cd.py:516: D400: in private method `_check_dependencies`: - First line should end with a period (not 's')
+intellicrack\tools\plugin_ci_cd.py:513: D400: in private method `_check_dependencies`: - First line should end with a period (not 's')
 
-intellicrack\tools\plugin_ci_cd.py:522: D400: in private method `_optimize_plugin`: - First line should end with a period (not 'e')
+intellicrack\tools\plugin_ci_cd.py:519: D400: in private method `_optimize_plugin`: - First line should end with a period (not 'e')
 
-intellicrack\tools\plugin_ci_cd.py:537: D400: in private method `_get_version`: - First line should end with a period (not 'n')
+intellicrack\tools\plugin_ci_cd.py:534: D400: in private method `_get_version`: - First line should end with a period (not 'n')
 
-intellicrack\tools\plugin_ci_cd.py:553: D400: in private method `_calculate_checksum`: - First line should end with a period (not 'm')
+intellicrack\tools\plugin_ci_cd.py:549: D400: in private method `_calculate_checksum`: - First line should end with a period (not 'm')
 
-intellicrack\tools\plugin_ci_cd.py:563: D400: in private method `_update_plugin_registry`: - First line should end with a period (not 'o')
+intellicrack\tools\plugin_ci_cd.py:559: D400: in private method `_update_plugin_registry`: - First line should end with a period (not 'o')
 
-intellicrack\tools\plugin_ci_cd.py:591: D400: in private method `_generate_report`: - First line should end with a period (not 't')
+intellicrack\tools\plugin_ci_cd.py:587: D400: in private method `_generate_report`: - First line should end with a period (not 't')
 
-intellicrack\tools\plugin_ci_cd.py:632: D400: in public class `GitHubActionsGenerator`: - First line should end with a period (not 's')
+intellicrack\tools\plugin_ci_cd.py:628: D400: in public class `GitHubActionsGenerator`: - First line should end with a period (not 's')
 
-intellicrack\tools\plugin_ci_cd.py:636: D400: in public method `generate_workflow`: - First line should end with a period (not 'L')
+intellicrack\tools\plugin_ci_cd.py:632: D400: in public method `generate_workflow`: - First line should end with a period (not 'L')
 
 
 24 findings in intellicrack\llm\tools\intellicrack_protection_analysis_tool.py
@@ -291,41 +291,41 @@ tests\validation_system\forensic_collector.py:64: D107: in public method `__init
 
 tests\validation_system\forensic_collector.py:105: D200: in private method `_capture_memory_dump`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\forensic_collector.py:188: D200: in private method `_start_api_monitoring`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\forensic_collector.py:185: D200: in private method `_start_api_monitoring`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\forensic_collector.py:268: D200: in private method `_start_wpt_tracing`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\forensic_collector.py:262: D200: in private method `_start_wpt_tracing`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\forensic_collector.py:299: D200: in private method `_stop_api_monitoring`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\forensic_collector.py:292: D200: in private method `_stop_api_monitoring`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\forensic_collector.py:347: D200: in private method `_start_network_capture`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\forensic_collector.py:349: D200: in private method `_start_network_capture`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\forensic_collector.py:408: D200: in private method `_start_powershell_capture`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\forensic_collector.py:409: D200: in private method `_start_powershell_capture`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\forensic_collector.py:441: D200: in private method `_stop_network_capture`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\forensic_collector.py:442: D200: in private method `_stop_network_capture`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\forensic_collector.py:464: D200: in private method `_capture_registry_snapshot`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\forensic_collector.py:465: D200: in private method `_capture_registry_snapshot`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\forensic_collector.py:565: D200: in private method `_monitor_file_system`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\forensic_collector.py:566: D200: in private method `_monitor_file_system`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\forensic_collector.py:682: D200: in private method `_start_procmon_file_monitoring`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\forensic_collector.py:683: D200: in private method `_start_procmon_file_monitoring`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\forensic_collector.py:729: D200: in private method `_stop_file_system_monitoring`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\forensic_collector.py:726: D200: in private method `_stop_file_system_monitoring`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\forensic_collector.py:781: D200: in private method `_capture_process_list`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\forensic_collector.py:778: D200: in private method `_capture_process_list`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\forensic_collector.py:832: D200: in private method `_start_screen_recording`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\forensic_collector.py:830: D200: in private method `_start_screen_recording`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\forensic_collector.py:919: D200: in private method `_start_powershell_screen_recording`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\forensic_collector.py:917: D200: in private method `_start_powershell_screen_recording`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\forensic_collector.py:1026: D200: in private method `_stop_screen_recording`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\forensic_collector.py:1024: D200: in private method `_stop_screen_recording`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\forensic_collector.py:1182: D200: in public method `collect_all_forensic_evidence`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\forensic_collector.py:1178: D200: in public method `collect_all_forensic_evidence`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\forensic_collector.py:1243: D200: in public method `package_evidence`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\forensic_collector.py:1239: D200: in public method `package_evidence`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\forensic_collector.py:1332: D200: in public method `generate_report`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\forensic_collector.py:1328: D200: in public method `generate_report`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\forensic_collector.py:1392: D200: in public method `save_report`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\forensic_collector.py:1399: D200: in public method `save_report`: - One-line docstring should fit on one line with quotes (found 3)
 
 
 23 findings in tests\validation_system\memory_integrity_checker.py
@@ -348,33 +348,33 @@ tests\validation_system\memory_integrity_checker.py:91: D107: in public method `
 
 tests\validation_system\memory_integrity_checker.py:115: D200: in private method `_find_existing_process`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\memory_integrity_checker.py:221: D200: in private method `_dump_process_memory`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\memory_integrity_checker.py:220: D200: in private method `_dump_process_memory`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\memory_integrity_checker.py:370: D200: in private method `_extract_text_section_from_disk`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\memory_integrity_checker.py:368: D200: in private method `_extract_text_section_from_disk`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\memory_integrity_checker.py:396: D200: in private method `_extract_text_section_from_memory`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\memory_integrity_checker.py:394: D200: in private method `_extract_text_section_from_memory`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\memory_integrity_checker.py:477: D200: in private method `_dump_memory_regions`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\memory_integrity_checker.py:475: D200: in private method `_dump_memory_regions`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\memory_integrity_checker.py:589: D200: in private method `_extract_from_raw_memory_dump`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\memory_integrity_checker.py:587: D200: in private method `_extract_from_raw_memory_dump`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\memory_integrity_checker.py:611: D200: in private method `_extract_text_from_pe_data`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\memory_integrity_checker.py:609: D200: in private method `_extract_text_from_pe_data`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\memory_integrity_checker.py:669: D200: in private method `_extract_memory_region_via_powershell`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\memory_integrity_checker.py:667: D200: in private method `_extract_memory_region_via_powershell`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\memory_integrity_checker.py:744: D200: in private method `_compare_sections`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\memory_integrity_checker.py:742: D200: in private method `_compare_sections`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\memory_integrity_checker.py:792: D200: in private method `_detect_common_hooks`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\memory_integrity_checker.py:790: D200: in private method `_detect_common_hooks`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\memory_integrity_checker.py:862: D200: in private method `_check_import_address_table`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\memory_integrity_checker.py:860: D200: in private method `_check_import_address_table`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\memory_integrity_checker.py:909: D200: in private method `_verify_export_address_table`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\memory_integrity_checker.py:907: D200: in private method `_verify_export_address_table`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\memory_integrity_checker.py:1071: D200: in public method `check_all_memory_integrity`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\memory_integrity_checker.py:1065: D200: in public method `check_all_memory_integrity`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\memory_integrity_checker.py:1134: D200: in public method `generate_report`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\memory_integrity_checker.py:1128: D200: in public method `generate_report`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\memory_integrity_checker.py:1204: D200: in public method `save_report`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\memory_integrity_checker.py:1208: D200: in public method `save_report`: - One-line docstring should fit on one line with quotes (found 3)
 
 
 21 findings in tests\validation\day8_2_end_to_end_workflow_test.py
@@ -403,23 +403,23 @@ tests\validation\day8_2_end_to_end_workflow_test.py:242: D400: in public method 
 
 tests\validation\day8_2_end_to_end_workflow_test.py:292: D400: in public method `test_03_complete_workflow_codemeter`: - First line should end with a period (not 'y')
 
-tests\validation\day8_2_end_to_end_workflow_test.py:331: D400: in public method `test_04_ui_integration_workflow`: - First line should end with a period (not 'e')
+tests\validation\day8_2_end_to_end_workflow_test.py:329: D400: in public method `test_04_ui_integration_workflow`: - First line should end with a period (not 'e')
 
-tests\validation\day8_2_end_to_end_workflow_test.py:368: D400: in public method `test_05_multi_protection_workflow`: - First line should end with a period (not 's')
+tests\validation\day8_2_end_to_end_workflow_test.py:366: D400: in public method `test_05_multi_protection_workflow`: - First line should end with a period (not 's')
 
-tests\validation\day8_2_end_to_end_workflow_test.py:434: D400: in public method `test_06_performance_requirements`: - First line should end with a period (not 't')
+tests\validation\day8_2_end_to_end_workflow_test.py:433: D400: in public method `test_06_performance_requirements`: - First line should end with a period (not 't')
 
-tests\validation\day8_2_end_to_end_workflow_test.py:469: D400: in public method `test_07_memory_usage_validation`: - First line should end with a period (not 's')
+tests\validation\day8_2_end_to_end_workflow_test.py:468: D400: in public method `test_07_memory_usage_validation`: - First line should end with a period (not 's')
 
-tests\validation\day8_2_end_to_end_workflow_test.py:516: D400: in public method `test_08_error_handling_workflow`: - First line should end with a period (not 'w')
+tests\validation\day8_2_end_to_end_workflow_test.py:515: D400: in public method `test_08_error_handling_workflow`: - First line should end with a period (not 'w')
 
-tests\validation\day8_2_end_to_end_workflow_test.py:544: D400: in public method `test_09_ai_integration_workflow`: - First line should end with a period (not 'w')
+tests\validation\day8_2_end_to_end_workflow_test.py:543: D400: in public method `test_09_ai_integration_workflow`: - First line should end with a period (not 'w')
 
-tests\validation\day8_2_end_to_end_workflow_test.py:573: D400: in public method `test_10_exploitation_workflow`: - First line should end with a period (not 'w')
+tests\validation\day8_2_end_to_end_workflow_test.py:572: D400: in public method `test_10_exploitation_workflow`: - First line should end with a period (not 'w')
 
-tests\validation\day8_2_end_to_end_workflow_test.py:611: D400: in public method `tearDownClass`: - First line should end with a period (not 's')
+tests\validation\day8_2_end_to_end_workflow_test.py:610: D400: in public method `tearDownClass`: - First line should end with a period (not 's')
 
-tests\validation\day8_2_end_to_end_workflow_test.py:688: D400: in public function `main`: - First line should end with a period (not 's')
+tests\validation\day8_2_end_to_end_workflow_test.py:678: D400: in public function `main`: - First line should end with a period (not 's')
 
 
 20 findings in intellicrack\llm\tools\script_generation_tool.py
@@ -467,43 +467,43 @@ intellicrack\llm\tools\script_generation_tool.py:1336: D401: in public function 
 
 19 findings in intellicrack\utils\tools\tool_wrappers.py
 
-intellicrack\utils\tools\tool_wrappers.py:50: D401: in public function `log_message`: - First line should be in imperative mood; try rephrasing (found 'Helper')
+intellicrack\utils\tools\tool_wrappers.py:55: D401: in public function `log_message`: - First line should be in imperative mood; try rephrasing (found 'Helper')
 
-intellicrack\utils\tools\tool_wrappers.py:55: D205: in public function `wrapper_find_file`: - 1 blank line required between summary line and description (found 0)
+intellicrack\utils\tools\tool_wrappers.py:60: D205: in public function `wrapper_find_file`: - 1 blank line required between summary line and description (found 0)
 
-intellicrack\utils\tools\tool_wrappers.py:97: D205: in public function `wrapper_load_binary`: - 1 blank line required between summary line and description (found 0)
+intellicrack\utils\tools\tool_wrappers.py:102: D205: in public function `wrapper_load_binary`: - 1 blank line required between summary line and description (found 0)
 
-intellicrack\utils\tools\tool_wrappers.py:141: D205: in public function `wrapper_list_relevant_files`: - 1 blank line required between summary line and description (found 0)
+intellicrack\utils\tools\tool_wrappers.py:146: D205: in public function `wrapper_list_relevant_files`: - 1 blank line required between summary line and description (found 0)
 
-intellicrack\utils\tools\tool_wrappers.py:186: D205: in public function `wrapper_read_file_chunk`: - 1 blank line required between summary line and description (found 0)
+intellicrack\utils\tools\tool_wrappers.py:191: D205: in public function `wrapper_read_file_chunk`: - 1 blank line required between summary line and description (found 0)
 
-intellicrack\utils\tools\tool_wrappers.py:233: D205: in public function `wrapper_get_file_metadata`: - 1 blank line required between summary line and description (found 0)
+intellicrack\utils\tools\tool_wrappers.py:238: D205: in public function `wrapper_get_file_metadata`: - 1 blank line required between summary line and description (found 0)
 
-intellicrack\utils\tools\tool_wrappers.py:283: D205: in public function `wrapper_run_static_analysis`: - 1 blank line required between summary line and description (found 0)
+intellicrack\utils\tools\tool_wrappers.py:288: D205: in public function `wrapper_run_static_analysis`: - 1 blank line required between summary line and description (found 0)
 
-intellicrack\utils\tools\tool_wrappers.py:313: D205: in public function `wrapper_deep_license_analysis`: - 1 blank line required between summary line and description (found 0)
+intellicrack\utils\tools\tool_wrappers.py:318: D205: in public function `wrapper_deep_license_analysis`: - 1 blank line required between summary line and description (found 0)
 
-intellicrack\utils\tools\tool_wrappers.py:339: D205: in public function `wrapper_detect_protections`: - 1 blank line required between summary line and description (found 0)
+intellicrack\utils\tools\tool_wrappers.py:344: D205: in public function `wrapper_detect_protections`: - 1 blank line required between summary line and description (found 0)
 
-intellicrack\utils\tools\tool_wrappers.py:372: D205: in public function `wrapper_disassemble_address`: - 1 blank line required between summary line and description (found 0)
+intellicrack\utils\tools\tool_wrappers.py:377: D205: in public function `wrapper_disassemble_address`: - 1 blank line required between summary line and description (found 0)
 
-intellicrack\utils\tools\tool_wrappers.py:486: D205: in public function `wrapper_get_cfg`: - 1 blank line required between summary line and description (found 0)
+intellicrack\utils\tools\tool_wrappers.py:491: D205: in public function `wrapper_get_cfg`: - 1 blank line required between summary line and description (found 0)
 
-intellicrack\utils\tools\tool_wrappers.py:533: D205: in public function `wrapper_launch_target`: - 1 blank line required between summary line and description (found 0)
+intellicrack\utils\tools\tool_wrappers.py:538: D205: in public function `wrapper_launch_target`: - 1 blank line required between summary line and description (found 0)
 
-intellicrack\utils\tools\tool_wrappers.py:661: D205: in public function `wrapper_attach_target`: - 1 blank line required between summary line and description (found 0)
+intellicrack\utils\tools\tool_wrappers.py:666: D205: in public function `wrapper_attach_target`: - 1 blank line required between summary line and description (found 0)
 
-intellicrack\utils\tools\tool_wrappers.py:745: D205: in public function `wrapper_run_frida_script`: - 1 blank line required between summary line and description (found 0)
+intellicrack\utils\tools\tool_wrappers.py:750: D205: in public function `wrapper_run_frida_script`: - 1 blank line required between summary line and description (found 0)
 
-intellicrack\utils\tools\tool_wrappers.py:873: D205: in public function `wrapper_detach`: - 1 blank line required between summary line and description (found 0)
+intellicrack\utils\tools\tool_wrappers.py:878: D205: in public function `wrapper_detach`: - 1 blank line required between summary line and description (found 0)
 
-intellicrack\utils\tools\tool_wrappers.py:957: D205: in public function `wrapper_propose_patch`: - 1 blank line required between summary line and description (found 0)
+intellicrack\utils\tools\tool_wrappers.py:962: D205: in public function `wrapper_propose_patch`: - 1 blank line required between summary line and description (found 0)
 
-intellicrack\utils\tools\tool_wrappers.py:1449: D205: in public function `wrapper_get_proposed_patches`: - 1 blank line required between summary line and description (found 0)
+intellicrack\utils\tools\tool_wrappers.py:1454: D205: in public function `wrapper_get_proposed_patches`: - 1 blank line required between summary line and description (found 0)
 
-intellicrack\utils\tools\tool_wrappers.py:1501: D205: in public function `wrapper_apply_confirmed_patch`: - 1 blank line required between summary line and description (found 0)
+intellicrack\utils\tools\tool_wrappers.py:1506: D205: in public function `wrapper_apply_confirmed_patch`: - 1 blank line required between summary line and description (found 0)
 
-intellicrack\utils\tools\tool_wrappers.py:1613: D205: in public function `wrapper_generate_launcher_script`: - 1 blank line required between summary line and description (found 0)
+intellicrack\utils\tools\tool_wrappers.py:1618: D205: in public function `wrapper_generate_launcher_script`: - 1 blank line required between summary line and description (found 0)
 
 
 19 findings in tests\validation_system\cross_version_tester.py
@@ -514,76 +514,76 @@ tests\validation_system\cross_version_tester.py:23: D101: in public class `Detec
 
 tests\validation_system\cross_version_tester.py:24: D107: in public method `__init__`: - Missing docstring in __init__
 
-tests\validation_system\cross_version_tester.py:190: D204: in public class `VersionTestResult`: - 1 blank line required after class docstring (found 0)
+tests\validation_system\cross_version_tester.py:192: D204: in public class `VersionTestResult`: - 1 blank line required after class docstring (found 0)
 
-tests\validation_system\cross_version_tester.py:201: D105: in public method `__post_init__`: - Missing docstring in magic method
+tests\validation_system\cross_version_tester.py:203: D105: in public method `__post_init__`: - Missing docstring in magic method
 
-tests\validation_system\cross_version_tester.py:208: D204: in public class `CrossVersionTestReport`: - 1 blank line required after class docstring (found 0)
+tests\validation_system\cross_version_tester.py:210: D204: in public class `CrossVersionTestReport`: - 1 blank line required after class docstring (found 0)
 
-tests\validation_system\cross_version_tester.py:218: D105: in public method `__post_init__`: - Missing docstring in magic method
+tests\validation_system\cross_version_tester.py:220: D105: in public method `__post_init__`: - Missing docstring in magic method
 
-tests\validation_system\cross_version_tester.py:226: D107: in public method `__init__`: - Missing docstring in __init__
+tests\validation_system\cross_version_tester.py:228: D107: in public method `__init__`: - Missing docstring in __init__
 
-tests\validation_system\cross_version_tester.py:249: D205: in private method `_find_versioned_binaries`: - 1 blank line required between summary line and description (found 0)
+tests\validation_system\cross_version_tester.py:251: D205: in private method `_find_versioned_binaries`: - 1 blank line required between summary line and description (found 0)
 
-tests\validation_system\cross_version_tester.py:273: D205: in private method `_get_versioned_binary`: - 1 blank line required between summary line and description (found 0)
+tests\validation_system\cross_version_tester.py:274: D205: in private method `_get_versioned_binary`: - 1 blank line required between summary line and description (found 0)
 
-tests\validation_system\cross_version_tester.py:317: D205: in public method `test_protection_version`: - 1 blank line required between summary line and description (found 0)
+tests\validation_system\cross_version_tester.py:318: D205: in public method `test_protection_version`: - 1 blank line required between summary line and description (found 0)
 
-tests\validation_system\cross_version_tester.py:448: D200: in public method `test_protection_versions`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\cross_version_tester.py:449: D200: in public method `test_protection_versions`: - One-line docstring should fit on one line with quotes (found 3)
 
 tests\validation_system\cross_version_tester.py:539: D200: in public method `generate_comprehensive_report`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\cross_version_tester.py:586: D200: in public method `generate_version_difference_report`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\cross_version_tester.py:587: D200: in public method `generate_version_difference_report`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\cross_version_tester.py:644: D205: in public method `generate_compatibility_verification_report`: - 1 blank line required between summary line and description (found 0)
+tests\validation_system\cross_version_tester.py:645: D205: in public method `generate_compatibility_verification_report`: - 1 blank line required between summary line and description (found 0)
 
-tests\validation_system\cross_version_tester.py:644: D400: in public method `generate_compatibility_verification_report`: - First line should end with a period (not 's')
+tests\validation_system\cross_version_tester.py:645: D400: in public method `generate_compatibility_verification_report`: - First line should end with a period (not 's')
 
-tests\validation_system\cross_version_tester.py:819: D205: in public method `generate_success_rate_verification_report`: - 1 blank line required between summary line and description (found 0)
+tests\validation_system\cross_version_tester.py:833: D205: in public method `generate_success_rate_verification_report`: - 1 blank line required between summary line and description (found 0)
 
-tests\validation_system\cross_version_tester.py:819: D400: in public method `generate_success_rate_verification_report`: - First line should end with a period (not 's')
+tests\validation_system\cross_version_tester.py:833: D400: in public method `generate_success_rate_verification_report`: - First line should end with a period (not 's')
 
-tests\validation_system\cross_version_tester.py:900: D200: in public method `save_report`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\cross_version_tester.py:911: D200: in public method `save_report`: - One-line docstring should fit on one line with quotes (found 3)
 
 
 18 findings in intellicrack\llm\tools\binary_analysis_tool.py
 
 intellicrack\llm\tools\binary_analysis_tool.py:1: D400: at module level: - First line should end with a period (not 'n')
 
-intellicrack\llm\tools\binary_analysis_tool.py:20: D400: in public class `BinaryAnalysisTool`: - First line should end with a period (not 's')
+intellicrack\llm\tools\binary_analysis_tool.py:22: D400: in public class `BinaryAnalysisTool`: - First line should end with a period (not 's')
 
-intellicrack\llm\tools\binary_analysis_tool.py:23: D400: in public method `__init__`: - First line should end with a period (not 'l')
+intellicrack\llm\tools\binary_analysis_tool.py:25: D400: in public method `__init__`: - First line should end with a period (not 'l')
 
-intellicrack\llm\tools\binary_analysis_tool.py:29: D400: in private method `_init_analyzers`: - First line should end with a period (not 's')
+intellicrack\llm\tools\binary_analysis_tool.py:31: D400: in private method `_init_analyzers`: - First line should end with a period (not 's')
 
-intellicrack\llm\tools\binary_analysis_tool.py:45: D400: in public method `get_tool_definition`: - First line should end with a period (not 'n')
+intellicrack\llm\tools\binary_analysis_tool.py:47: D400: in public method `get_tool_definition`: - First line should end with a period (not 'n')
 
-intellicrack\llm\tools\binary_analysis_tool.py:68: D400: in public method `execute`: - First line should end with a period (not 's')
+intellicrack\llm\tools\binary_analysis_tool.py:70: D400: in public method `execute`: - First line should end with a period (not 's')
 
-intellicrack\llm\tools\binary_analysis_tool.py:92: D400: in private method `_detect_file_type`: - First line should end with a period (not 'e')
+intellicrack\llm\tools\binary_analysis_tool.py:94: D400: in private method `_detect_file_type`: - First line should end with a period (not 'e')
 
-intellicrack\llm\tools\binary_analysis_tool.py:106: D400: in private method `_analyze_pe`: - First line should end with a period (not 'e')
+intellicrack\llm\tools\binary_analysis_tool.py:108: D400: in private method `_analyze_pe`: - First line should end with a period (not 'e')
 
-intellicrack\llm\tools\binary_analysis_tool.py:146: D400: in private method `_analyze_elf`: - First line should end with a period (not 'e')
+intellicrack\llm\tools\binary_analysis_tool.py:151: D400: in private method `_analyze_elf`: - First line should end with a period (not 'e')
 
-intellicrack\llm\tools\binary_analysis_tool.py:186: D400: in private method `_analyze_basic`: - First line should end with a period (not 's')
+intellicrack\llm\tools\binary_analysis_tool.py:191: D400: in private method `_analyze_basic`: - First line should end with a period (not 's')
 
-intellicrack\llm\tools\binary_analysis_tool.py:186: D401: in private method `_analyze_basic`: - First line should be in imperative mood; try rephrasing (found 'Basic')
+intellicrack\llm\tools\binary_analysis_tool.py:191: D401: in private method `_analyze_basic`: - First line should be in imperative mood; try rephrasing (found 'Basic')
 
-intellicrack\llm\tools\binary_analysis_tool.py:214: D400: in private method `_calculate_hash`: - First line should end with a period (not 'h')
+intellicrack\llm\tools\binary_analysis_tool.py:219: D400: in private method `_calculate_hash`: - First line should end with a period (not 'h')
 
-intellicrack\llm\tools\binary_analysis_tool.py:222: D400: in private method `_calculate_entropy`: - First line should end with a period (not 'y')
+intellicrack\llm\tools\binary_analysis_tool.py:227: D400: in private method `_calculate_entropy`: - First line should end with a period (not 'y')
 
-intellicrack\llm\tools\binary_analysis_tool.py:248: D400: in private method `_format_imports`: - First line should end with a period (not 'n')
+intellicrack\llm\tools\binary_analysis_tool.py:249: D400: in private method `_format_imports`: - First line should end with a period (not 'n')
 
-intellicrack\llm\tools\binary_analysis_tool.py:261: D400: in private method `_format_sections`: - First line should end with a period (not 'n')
+intellicrack\llm\tools\binary_analysis_tool.py:262: D400: in private method `_format_sections`: - First line should end with a period (not 'n')
 
-intellicrack\llm\tools\binary_analysis_tool.py:275: D400: in private method `_extract_strings`: - First line should end with a period (not 'y')
+intellicrack\llm\tools\binary_analysis_tool.py:276: D400: in private method `_extract_strings`: - First line should end with a period (not 'y')
 
-intellicrack\llm\tools\binary_analysis_tool.py:304: D400: in public function `create_binary_tool`: - First line should end with a period (not 'l')
+intellicrack\llm\tools\binary_analysis_tool.py:300: D400: in public function `create_binary_tool`: - First line should end with a period (not 'l')
 
-intellicrack\llm\tools\binary_analysis_tool.py:304: D401: in public function `create_binary_tool`: - First line should be in imperative mood; try rephrasing (found 'Factory')
+intellicrack\llm\tools\binary_analysis_tool.py:300: D401: in public function `create_binary_tool`: - First line should be in imperative mood; try rephrasing (found 'Factory')
 
 
 17 findings in intellicrack\llm\tools\firmware_analysis_tool.py
@@ -643,19 +643,19 @@ tests\validation_system\version_difference_analyzer.py:84: D107: in public metho
 
 tests\validation_system\version_difference_analyzer.py:148: D200: in public method `analyze_binary_signature`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\version_difference_analyzer.py:341: D200: in public method `compare_versions`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\version_difference_analyzer.py:342: D200: in public method `compare_versions`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\version_difference_analyzer.py:508: D200: in public method `generate_evolution_summary`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\version_difference_analyzer.py:512: D200: in public method `generate_evolution_summary`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\version_difference_analyzer.py:570: D200: in public method `analyze_attack_surface_changes`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\version_difference_analyzer.py:574: D200: in public method `analyze_attack_surface_changes`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\version_difference_analyzer.py:622: D200: in public method `generate_bypass_implications`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\version_difference_analyzer.py:626: D200: in public method `generate_bypass_implications`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\version_difference_analyzer.py:666: D200: in public method `create_comparison_report`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\version_difference_analyzer.py:670: D200: in public method `create_comparison_report`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\version_difference_analyzer.py:712: D200: in public method `save_comparison_report`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\version_difference_analyzer.py:716: D200: in public method `save_comparison_report`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\version_difference_analyzer.py:732: D200: in public method `generate_human_readable_report`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\version_difference_analyzer.py:736: D200: in public method `generate_human_readable_report`: - One-line docstring should fit on one line with quotes (found 3)
 
 
 16 findings in tests\validation_system\phase5\reproducibility_packager.py
@@ -670,27 +670,27 @@ tests\validation_system\phase5\reproducibility_packager.py:93: D107: in public m
 
 tests\validation_system\phase5\reproducibility_packager.py:97: D202: in public method `capture_system_snapshot`: - No blank lines allowed after function docstring (found 1)
 
-tests\validation_system\phase5\reproducibility_packager.py:339: D202: in public method `capture_dependency_snapshot`: - No blank lines allowed after function docstring (found 1)
+tests\validation_system\phase5\reproducibility_packager.py:346: D202: in public method `capture_dependency_snapshot`: - No blank lines allowed after function docstring (found 1)
 
 tests\validation_system\phase5\reproducibility_packager.py:487: D107: in public method `__init__`: - Missing docstring in __init__
 
 tests\validation_system\phase5\reproducibility_packager.py:527: D202: in public method `record_execution`: - No blank lines allowed after function docstring (found 1)
 
-tests\validation_system\phase5\reproducibility_packager.py:637: D205: in public class `ReproducibilityPackager`: - 1 blank line required between summary line and description (found 0)
+tests\validation_system\phase5\reproducibility_packager.py:635: D205: in public class `ReproducibilityPackager`: - 1 blank line required between summary line and description (found 0)
 
-tests\validation_system\phase5\reproducibility_packager.py:637: D400: in public class `ReproducibilityPackager`: - First line should end with a period (not 't')
+tests\validation_system\phase5\reproducibility_packager.py:635: D400: in public class `ReproducibilityPackager`: - First line should end with a period (not 't')
 
-tests\validation_system\phase5\reproducibility_packager.py:642: D107: in public method `__init__`: - Missing docstring in __init__
+tests\validation_system\phase5\reproducibility_packager.py:640: D107: in public method `__init__`: - Missing docstring in __init__
 
-tests\validation_system\phase5\reproducibility_packager.py:659: D202: in public method `create_reproducibility_package`: - No blank lines allowed after function docstring (found 1)
+tests\validation_system\phase5\reproducibility_packager.py:657: D202: in public method `create_reproducibility_package`: - No blank lines allowed after function docstring (found 1)
 
-tests\validation_system\phase5\reproducibility_packager.py:727: D202: in private method `_capture_configuration`: - No blank lines allowed after function docstring (found 1)
+tests\validation_system\phase5\reproducibility_packager.py:725: D202: in private method `_capture_configuration`: - No blank lines allowed after function docstring (found 1)
 
-tests\validation_system\phase5\reproducibility_packager.py:873: D202: in private method `_create_execution_scripts`: - No blank lines allowed after function docstring (found 1)
+tests\validation_system\phase5\reproducibility_packager.py:870: D202: in private method `_create_execution_scripts`: - No blank lines allowed after function docstring (found 1)
 
-tests\validation_system\phase5\reproducibility_packager.py:938: D202: in private method `_create_validation_scripts`: - No blank lines allowed after function docstring (found 1)
+tests\validation_system\phase5\reproducibility_packager.py:935: D202: in private method `_create_validation_scripts`: - No blank lines allowed after function docstring (found 1)
 
-tests\validation_system\phase5\reproducibility_packager.py:1041: D202: in private method `_generate_reproduction_instructions`: - No blank lines allowed after function docstring (found 1)
+tests\validation_system\phase5\reproducibility_packager.py:1038: D202: in private method `_generate_reproduction_instructions`: - No blank lines allowed after function docstring (found 1)
 
 
 15 findings in intellicrack\llm\tools\yara_pattern_analysis_tool.py
@@ -705,25 +705,25 @@ intellicrack\llm\tools\yara_pattern_analysis_tool.py:28: D400: in public method 
 
 intellicrack\llm\tools\yara_pattern_analysis_tool.py:88: D400: in public method `execute`: - First line should end with a period (not 's')
 
-intellicrack\llm\tools\yara_pattern_analysis_tool.py:194: D400: in private method `_format_pattern_matches`: - First line should end with a period (not 'n')
+intellicrack\llm\tools\yara_pattern_analysis_tool.py:197: D400: in private method `_format_pattern_matches`: - First line should end with a period (not 'n')
 
-intellicrack\llm\tools\yara_pattern_analysis_tool.py:227: D400: in private method `_assess_security_findings`: - First line should end with a period (not 's')
+intellicrack\llm\tools\yara_pattern_analysis_tool.py:230: D400: in private method `_assess_security_findings`: - First line should end with a period (not 's')
 
-intellicrack\llm\tools\yara_pattern_analysis_tool.py:304: D400: in private method `_generate_bypass_recommendations`: - First line should end with a period (not 's')
+intellicrack\llm\tools\yara_pattern_analysis_tool.py:307: D400: in private method `_generate_bypass_recommendations`: - First line should end with a period (not 's')
 
-intellicrack\llm\tools\yara_pattern_analysis_tool.py:379: D400: in private method `_categorize_patterns`: - First line should end with a period (not 'e')
+intellicrack\llm\tools\yara_pattern_analysis_tool.py:382: D400: in private method `_categorize_patterns`: - First line should end with a period (not 'e')
 
-intellicrack\llm\tools\yara_pattern_analysis_tool.py:391: D400: in private method `_analyze_confidence_levels`: - First line should end with a period (not 's')
+intellicrack\llm\tools\yara_pattern_analysis_tool.py:394: D400: in private method `_analyze_confidence_levels`: - First line should end with a period (not 's')
 
-intellicrack\llm\tools\yara_pattern_analysis_tool.py:407: D400: in private method `_extract_threat_indicators`: - First line should end with a period (not 's')
+intellicrack\llm\tools\yara_pattern_analysis_tool.py:410: D400: in private method `_extract_threat_indicators`: - First line should end with a period (not 's')
 
-intellicrack\llm\tools\yara_pattern_analysis_tool.py:435: D400: in private method `_analyze_protection_layers`: - First line should end with a period (not 's')
+intellicrack\llm\tools\yara_pattern_analysis_tool.py:438: D400: in private method `_analyze_protection_layers`: - First line should end with a period (not 's')
 
-intellicrack\llm\tools\yara_pattern_analysis_tool.py:470: D400: in public method `analyze_custom_patterns`: - First line should end with a period (not 't')
+intellicrack\llm\tools\yara_pattern_analysis_tool.py:483: D400: in public method `analyze_custom_patterns`: - First line should end with a period (not 't')
 
-intellicrack\llm\tools\yara_pattern_analysis_tool.py:511: D400: in public function `create_yara_pattern_tool`: - First line should end with a period (not 'l')
+intellicrack\llm\tools\yara_pattern_analysis_tool.py:527: D400: in public function `create_yara_pattern_tool`: - First line should end with a period (not 'l')
 
-intellicrack\llm\tools\yara_pattern_analysis_tool.py:511: D401: in public function `create_yara_pattern_tool`: - First line should be in imperative mood; try rephrasing (found 'Factory')
+intellicrack\llm\tools\yara_pattern_analysis_tool.py:527: D401: in public function `create_yara_pattern_tool`: - First line should be in imperative mood; try rephrasing (found 'Factory')
 
 
 15 findings in tests\validation\day8_3_final_production_validation.py
@@ -740,23 +740,23 @@ tests\validation\day8_3_final_production_validation.py:70: D200: in public metho
 
 tests\validation\day8_3_final_production_validation.py:70: D400: in public method `validate_code_quality`: - First line should end with a period (not 's')
 
-tests\validation\day8_3_final_production_validation.py:128: D200: in public method `validate_functional_methods`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation\day8_3_final_production_validation.py:129: D200: in public method `validate_functional_methods`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation\day8_3_final_production_validation.py:128: D400: in public method `validate_functional_methods`: - First line should end with a period (not 't')
+tests\validation\day8_3_final_production_validation.py:129: D400: in public method `validate_functional_methods`: - First line should end with a period (not 't')
 
-tests\validation\day8_3_final_production_validation.py:328: D200: in public method `validate_deployment_readiness`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation\day8_3_final_production_validation.py:327: D200: in public method `validate_deployment_readiness`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation\day8_3_final_production_validation.py:328: D400: in public method `validate_deployment_readiness`: - First line should end with a period (not 's')
+tests\validation\day8_3_final_production_validation.py:327: D400: in public method `validate_deployment_readiness`: - First line should end with a period (not 's')
 
-tests\validation\day8_3_final_production_validation.py:446: D200: in public method `generate_final_report`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation\day8_3_final_production_validation.py:443: D200: in public method `generate_final_report`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation\day8_3_final_production_validation.py:446: D400: in public method `generate_final_report`: - First line should end with a period (not 't')
+tests\validation\day8_3_final_production_validation.py:443: D400: in public method `generate_final_report`: - First line should end with a period (not 't')
 
-tests\validation\day8_3_final_production_validation.py:544: D200: in public method `run_validation`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation\day8_3_final_production_validation.py:542: D200: in public method `run_validation`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation\day8_3_final_production_validation.py:544: D400: in public method `run_validation`: - First line should end with a period (not 'e')
+tests\validation\day8_3_final_production_validation.py:542: D400: in public method `run_validation`: - First line should end with a period (not 'e')
 
-tests\validation\day8_3_final_production_validation.py:575: D400: in public function `main`: - First line should end with a period (not 'n')
+tests\validation\day8_3_final_production_validation.py:573: D400: in public function `main`: - First line should end with a period (not 'n')
 
 
 15 findings in tests\validation_system\functional_verification.py
@@ -777,19 +777,19 @@ tests\validation_system\functional_verification.py:141: D200: in private method 
 
 tests\validation_system\functional_verification.py:189: D200: in private method `_monitor_process`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\functional_verification.py:262: D200: in private method `_test_adobe_psd_edit`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\functional_verification.py:257: D200: in private method `_test_adobe_psd_edit`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\functional_verification.py:340: D200: in private method `_test_autocad_dwg_create`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\functional_verification.py:335: D200: in private method `_test_autocad_dwg_create`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\functional_verification.py:447: D200: in private method `_test_matlab_computation`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\functional_verification.py:442: D200: in private method `_test_matlab_computation`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\functional_verification.py:571: D200: in private method `_test_office_document_create`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\functional_verification.py:566: D200: in private method `_test_office_document_create`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\functional_verification.py:886: D200: in public method `verify_all_functionality`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\functional_verification.py:879: D200: in public method `verify_all_functionality`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\functional_verification.py:949: D200: in public method `generate_report`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\functional_verification.py:942: D200: in public method `generate_report`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\functional_verification.py:1002: D200: in public method `save_report`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\functional_verification.py:1005: D200: in public method `save_report`: - One-line docstring should fit on one line with quotes (found 3)
 
 
 15 findings in tests\validation_system\version_compatibility_verifier.py
@@ -816,13 +816,13 @@ tests\validation_system\version_compatibility_verifier.py:100: D200: in private 
 
 tests\validation_system\version_compatibility_verifier.py:276: D200: in public method `detect_version_from_binary`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\version_compatibility_verifier.py:379: D200: in public method `check_version_compatibility`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\version_compatibility_verifier.py:376: D200: in public method `check_version_compatibility`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\version_compatibility_verifier.py:450: D200: in public method `generate_incompatibility_report`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\version_compatibility_verifier.py:447: D200: in public method `generate_incompatibility_report`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\version_compatibility_verifier.py:510: D200: in public method `test_version_compatibility`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\version_compatibility_verifier.py:507: D200: in public method `test_version_compatibility`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\version_compatibility_verifier.py:615: D205: in private method `_test_feature`: - 1 blank line required between summary line and description (found 0)
+tests\validation_system\version_compatibility_verifier.py:619: D205: in private method `_test_feature`: - 1 blank line required between summary line and description (found 0)
 
 
 14 findings in intellicrack\utils\core\siphash24_replacement.py
@@ -882,9 +882,9 @@ tests\validation\day7_3_checkpoint.py:408: D400: in public method `run_all_tests
 
 tests\validation\day7_3_checkpoint.py:451: D400: in private method `_generate_report`: - First line should end with a period (not 't')
 
-tests\validation\day7_3_checkpoint.py:535: D400: in public function `main`: - First line should end with a period (not 'n')
+tests\validation\day7_3_checkpoint.py:537: D400: in public function `main`: - First line should end with a period (not 'n')
 
-tests\validation\day7_3_checkpoint.py:535: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')
+tests\validation\day7_3_checkpoint.py:537: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')
 
 
 14 findings in tests\validation_system\ground_truth_establisher.py
@@ -911,11 +911,11 @@ tests\validation_system\ground_truth_establisher.py:396: D205: in public method 
 
 tests\validation_system\ground_truth_establisher.py:450: D205: in public method `create_consensus_ground_truth`: - 1 blank line required between summary line and description (found 0)
 
-tests\validation_system\ground_truth_establisher.py:522: D205: in public method `cryptographically_sign_ground_truth`: - 1 blank line required between summary line and description (found 0)
+tests\validation_system\ground_truth_establisher.py:521: D205: in public method `cryptographically_sign_ground_truth`: - 1 blank line required between summary line and description (found 0)
 
-tests\validation_system\ground_truth_establisher.py:550: D205: in public method `save_certified_ground_truth`: - 1 blank line required between summary line and description (found 0)
+tests\validation_system\ground_truth_establisher.py:549: D205: in public method `save_certified_ground_truth`: - 1 blank line required between summary line and description (found 0)
 
-tests\validation_system\ground_truth_establisher.py:583: D205: in public method `verify_no_intellicrack_usage`: - 1 blank line required between summary line and description (found 0)
+tests\validation_system\ground_truth_establisher.py:582: D205: in public method `verify_no_intellicrack_usage`: - 1 blank line required between summary line and description (found 0)
 
 
 14 findings in tests\validation_system\phase_25_orchestrator.py
@@ -936,17 +936,17 @@ tests\validation_system\phase_25_orchestrator.py:70: D200: in public method `run
 
 tests\validation_system\phase_25_orchestrator.py:107: D200: in public method `run_unknown_pattern_testing`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\phase_25_orchestrator.py:143: D200: in public method `run_dynamic_mutation_testing`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\phase_25_orchestrator.py:141: D200: in public method `run_dynamic_mutation_testing`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\phase_25_orchestrator.py:183: D200: in public method `run_variant_generation_testing`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\phase_25_orchestrator.py:181: D200: in public method `run_variant_generation_testing`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\phase_25_orchestrator.py:232: D200: in public method `execute_phase_25_validation`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\phase_25_orchestrator.py:230: D200: in public method `execute_phase_25_validation`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\phase_25_orchestrator.py:264: D200: in public method `generate_phase_25_report`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\phase_25_orchestrator.py:262: D200: in public method `generate_phase_25_report`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\phase_25_orchestrator.py:332: D200: in public method `save_phase_25_report`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\phase_25_orchestrator.py:334: D200: in public method `save_phase_25_report`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\phase_25_orchestrator.py:354: D200: in public method `run_complete_phase_25_validation`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\phase_25_orchestrator.py:356: D200: in public method `run_complete_phase_25_validation`: - One-line docstring should fit on one line with quotes (found 3)
 
 
 13 findings in intellicrack\llm\tools\memory_forensics_tool.py
@@ -1033,7 +1033,7 @@ tests\validation_system\dynamic_mutation_tester.py:389: D200: in public method `
 
 tests\validation_system\dynamic_mutation_tester.py:410: D200: in public method `generate_comprehensive_report`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\dynamic_mutation_tester.py:457: D200: in public method `save_report`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\dynamic_mutation_tester.py:468: D200: in public method `save_report`: - One-line docstring should fit on one line with quotes (found 3)
 
 
 13 findings in tests\validation_system\phase_3_orchestrator.py
@@ -1060,9 +1060,9 @@ tests\validation_system\phase_3_orchestrator.py:94: D200: in public method `exec
 
 tests\validation_system\phase_3_orchestrator.py:123: D200: in public method `generate_phase_3_report`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\phase_3_orchestrator.py:182: D200: in public method `save_phase_3_report`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\phase_3_orchestrator.py:185: D200: in public method `save_phase_3_report`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\phase_3_orchestrator.py:204: D200: in public method `run_complete_phase_3_validation`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\phase_3_orchestrator.py:207: D200: in public method `run_complete_phase_3_validation`: - One-line docstring should fit on one line with quotes (found 3)
 
 
 13 findings in tests\validation_system\statistical_analysis.py
@@ -1079,19 +1079,19 @@ tests\validation_system\statistical_analysis.py:78: D105: in public method `__po
 
 tests\validation_system\statistical_analysis.py:86: D107: in public method `__init__`: - Missing docstring in __init__
 
-tests\validation_system\statistical_analysis.py:210: D200: in private method `_vary_environment`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\statistical_analysis.py:207: D200: in private method `_vary_environment`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\statistical_analysis.py:229: D200: in private method `_calculate_confidence_interval_t`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\statistical_analysis.py:226: D200: in private method `_calculate_confidence_interval_t`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\statistical_analysis.py:253: D205: in private method `_perform_hypothesis_test`: - 1 blank line required between summary line and description (found 0)
+tests\validation_system\statistical_analysis.py:250: D205: in private method `_perform_hypothesis_test`: - 1 blank line required between summary line and description (found 0)
 
-tests\validation_system\statistical_analysis.py:291: D200: in private method `_detect_outliers`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\statistical_analysis.py:288: D200: in private method `_detect_outliers`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\statistical_analysis.py:514: D200: in public method `run_all_statistical_analyses`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\statistical_analysis.py:508: D200: in public method `run_all_statistical_analyses`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\statistical_analysis.py:587: D200: in public method `generate_report`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\statistical_analysis.py:581: D200: in public method `generate_report`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\statistical_analysis.py:641: D200: in public method `save_report`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\statistical_analysis.py:644: D200: in public method `save_report`: - One-line docstring should fit on one line with quotes (found 3)
 
 
 13 findings in tests\validation_system\unknown_pattern_tester.py
@@ -1120,7 +1120,7 @@ tests\validation_system\unknown_pattern_tester.py:98: D105: in public method `__
 
 tests\validation_system\unknown_pattern_tester.py:134: D202: in private method `_initialize_test_scenarios`: - No blank lines allowed after function docstring (found 1)
 
-tests\validation_system\unknown_pattern_tester.py:1788: D200: in public method `generate_phase_2_5_3_compliance_report`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\unknown_pattern_tester.py:1837: D200: in public method `generate_phase_2_5_3_compliance_report`: - One-line docstring should fit on one line with quotes (found 3)
 
 
 13 findings in tests\validation_system\phase6\end_of_phase_code_review.py
@@ -1164,19 +1164,19 @@ tests\utils\Production_Readiness_Audit.py:74: D401: in private method `_create_v
 
 tests\utils\Production_Readiness_Audit.py:96: D102: in public method `match`: - Missing docstring in public method
 
-tests\utils\Production_Readiness_Audit.py:147: D102: in public method `match`: - Missing docstring in public method
+tests\utils\Production_Readiness_Audit.py:151: D102: in public method `match`: - Missing docstring in public method
 
-tests\utils\Production_Readiness_Audit.py:200: D102: in public method `match`: - Missing docstring in public method
+tests\utils\Production_Readiness_Audit.py:203: D102: in public method `match`: - Missing docstring in public method
 
-tests\utils\Production_Readiness_Audit.py:258: D102: in public method `match`: - Missing docstring in public method
+tests\utils\Production_Readiness_Audit.py:259: D102: in public method `match`: - Missing docstring in public method
 
-tests\utils\Production_Readiness_Audit.py:320: D102: in public method `match`: - Missing docstring in public method
+tests\utils\Production_Readiness_Audit.py:327: D102: in public method `match`: - Missing docstring in public method
 
-tests\utils\Production_Readiness_Audit.py:354: D107: in public method `__init__`: - Missing docstring in __init__
+tests\utils\Production_Readiness_Audit.py:365: D107: in public method `__init__`: - Missing docstring in __init__
 
-tests\utils\Production_Readiness_Audit.py:471: D107: in public method `__init__`: - Missing docstring in __init__
+tests\utils\Production_Readiness_Audit.py:482: D107: in public method `__init__`: - Missing docstring in __init__
 
-tests\utils\Production_Readiness_Audit.py:644: D103: in public function `main`: - Missing docstring in public function
+tests\utils\Production_Readiness_Audit.py:651: D103: in public function `main`: - Missing docstring in public function
 
 
 12 findings in tests\utils\protocol_tool_coverage_analysis.py
@@ -1247,17 +1247,17 @@ tests\validation_system\negative_control_validator.py:85: D205: in private metho
 
 tests\validation_system\negative_control_validator.py:151: D200: in private method `_stop_network_monitoring`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\negative_control_validator.py:324: D200: in private method `_capture_screenshot`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\negative_control_validator.py:325: D200: in private method `_capture_screenshot`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\negative_control_validator.py:476: D200: in private method `_monitor_process`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\negative_control_validator.py:477: D200: in private method `_monitor_process`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\negative_control_validator.py:550: D200: in private method `_detect_license_error`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\negative_control_validator.py:546: D200: in private method `_detect_license_error`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\negative_control_validator.py:827: D200: in public method `validate_all_negative_controls`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\negative_control_validator.py:814: D200: in public method `validate_all_negative_controls`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\negative_control_validator.py:884: D200: in public method `generate_report`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\negative_control_validator.py:871: D200: in public method `generate_report`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\negative_control_validator.py:931: D200: in public method `save_report`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\negative_control_validator.py:930: D200: in public method `save_report`: - One-line docstring should fit on one line with quotes (found 3)
 
 
 12 findings in tests\validation_system\validation_orchestrator.py
@@ -1282,9 +1282,9 @@ tests\validation_system\validation_orchestrator.py:82: D200: in public method `e
 
 tests\validation_system\validation_orchestrator.py:108: D200: in public method `generate_validation_report`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\validation_orchestrator.py:158: D200: in public method `save_validation_report`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\validation_orchestrator.py:160: D200: in public method `save_validation_report`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\validation_orchestrator.py:180: D200: in public method `run_complete_validation`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\validation_orchestrator.py:182: D200: in public method `run_complete_validation`: - One-line docstring should fit on one line with quotes (found 3)
 
 
 12 findings in tests\validation_system\phase5\continuous_validation_integration.py
@@ -1303,15 +1303,15 @@ tests\validation_system\phase5\continuous_validation_integration.py:182: D202: i
 
 tests\validation_system\phase5\continuous_validation_integration.py:307: D107: in public method `__init__`: - Missing docstring in __init__
 
-tests\validation_system\phase5\continuous_validation_integration.py:416: D107: in public method `__init__`: - Missing docstring in __init__
+tests\validation_system\phase5\continuous_validation_integration.py:410: D107: in public method `__init__`: - Missing docstring in __init__
 
-tests\validation_system\phase5\continuous_validation_integration.py:558: D205: in public class `ContinuousValidationIntegration`: - 1 blank line required between summary line and description (found 0)
+tests\validation_system\phase5\continuous_validation_integration.py:552: D205: in public class `ContinuousValidationIntegration`: - 1 blank line required between summary line and description (found 0)
 
-tests\validation_system\phase5\continuous_validation_integration.py:558: D400: in public class `ContinuousValidationIntegration`: - First line should end with a period (not ',')
+tests\validation_system\phase5\continuous_validation_integration.py:552: D400: in public class `ContinuousValidationIntegration`: - First line should end with a period (not ',')
 
-tests\validation_system\phase5\continuous_validation_integration.py:563: D107: in public method `__init__`: - Missing docstring in __init__
+tests\validation_system\phase5\continuous_validation_integration.py:557: D107: in public method `__init__`: - Missing docstring in __init__
 
-tests\validation_system\phase5\continuous_validation_integration.py:944: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')
+tests\validation_system\phase5\continuous_validation_integration.py:937: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')
 
 
 12 findings in tests\validation_system\phase5\undeniable_report_generator.py
@@ -1326,19 +1326,19 @@ tests\validation_system\phase5\undeniable_report_generator.py:90: D204: in publi
 
 tests\validation_system\phase5\undeniable_report_generator.py:108: D107: in public method `__init__`: - Missing docstring in __init__
 
-tests\validation_system\phase5\undeniable_report_generator.py:220: D107: in public method `__init__`: - Missing docstring in __init__
+tests\validation_system\phase5\undeniable_report_generator.py:219: D107: in public method `__init__`: - Missing docstring in __init__
 
-tests\validation_system\phase5\undeniable_report_generator.py:267: D401: in private method `_custom_memory_dump`: - First line should be in imperative mood; try rephrasing (found 'Custom')
+tests\validation_system\phase5\undeniable_report_generator.py:266: D401: in private method `_custom_memory_dump`: - First line should be in imperative mood; try rephrasing (found 'Custom')
 
-tests\validation_system\phase5\undeniable_report_generator.py:499: D107: in public method `__init__`: - Missing docstring in __init__
+tests\validation_system\phase5\undeniable_report_generator.py:493: D107: in public method `__init__`: - Missing docstring in __init__
 
-tests\validation_system\phase5\undeniable_report_generator.py:633: D205: in public class `UndeniableReportGenerator`: - 1 blank line required between summary line and description (found 0)
+tests\validation_system\phase5\undeniable_report_generator.py:631: D205: in public class `UndeniableReportGenerator`: - 1 blank line required between summary line and description (found 0)
 
-tests\validation_system\phase5\undeniable_report_generator.py:633: D400: in public class `UndeniableReportGenerator`: - First line should end with a period (not 's')
+tests\validation_system\phase5\undeniable_report_generator.py:631: D400: in public class `UndeniableReportGenerator`: - First line should end with a period (not 's')
 
-tests\validation_system\phase5\undeniable_report_generator.py:638: D107: in public method `__init__`: - Missing docstring in __init__
+tests\validation_system\phase5\undeniable_report_generator.py:636: D107: in public method `__init__`: - Missing docstring in __init__
 
-tests\validation_system\phase5\undeniable_report_generator.py:652: D202: in public method `generate_comprehensive_report`: - No blank lines allowed after function docstring (found 1)
+tests\validation_system\phase5\undeniable_report_generator.py:650: D202: in public method `generate_comprehensive_report`: - No blank lines allowed after function docstring (found 1)
 
 
 11 findings in tests\validation_system\cross_environment_validator.py
@@ -1359,11 +1359,11 @@ tests\validation_system\cross_environment_validator.py:87: D105: in public metho
 
 tests\validation_system\cross_environment_validator.py:95: D107: in public method `__init__`: - Missing docstring in __init__
 
-tests\validation_system\cross_environment_validator.py:694: D200: in public method `validate_all_cross_environment`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\cross_environment_validator.py:681: D200: in public method `validate_all_cross_environment`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\cross_environment_validator.py:745: D200: in public method `generate_report`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\cross_environment_validator.py:732: D200: in public method `generate_report`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\cross_environment_validator.py:810: D200: in public method `save_report`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\cross_environment_validator.py:806: D200: in public method `save_report`: - One-line docstring should fit on one line with quotes (found 3)
 
 
 11 findings in tests\validation_system\full_functionality_validator.py
@@ -1384,11 +1384,11 @@ tests\validation_system\full_functionality_validator.py:79: D105: in public meth
 
 tests\validation_system\full_functionality_validator.py:87: D107: in public method `__init__`: - Missing docstring in __init__
 
-tests\validation_system\full_functionality_validator.py:1010: D200: in public method `validate_all_functionality`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\full_functionality_validator.py:1006: D200: in public method `validate_all_functionality`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\full_functionality_validator.py:1087: D200: in public method `generate_report`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\full_functionality_validator.py:1083: D200: in public method `generate_report`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\full_functionality_validator.py:1159: D200: in public method `save_report`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\full_functionality_validator.py:1165: D200: in public method `save_report`: - One-line docstring should fit on one line with quotes (found 3)
 
 
 11 findings in tests\validation_system\success_rate_verifier.py
@@ -1411,9 +1411,9 @@ tests\validation_system\success_rate_verifier.py:75: D105: in public method `__p
 
 tests\validation_system\success_rate_verifier.py:166: D200: in public method `analyze_success_rates`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\success_rate_verifier.py:304: D200: in public method `verify_success_rate_compliance`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\success_rate_verifier.py:301: D200: in public method `verify_success_rate_compliance`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\success_rate_verifier.py:381: D200: in public method `generate_phase_2_5_2_4_compliance_report`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\success_rate_verifier.py:378: D200: in public method `generate_phase_2_5_2_4_compliance_report`: - One-line docstring should fit on one line with quotes (found 3)
 
 
 11 findings in tests\validation_system\phase6\final_verdict_algorithm.py
@@ -1453,15 +1453,15 @@ tests\unit\core\network\traffic_interception_engine_coverage_analysis.py:37: D40
 
 tests\unit\core\network\traffic_interception_engine_coverage_analysis.py:65: D400: in private method `_is_method`: - First line should end with a period (not 's')
 
-tests\unit\core\network\traffic_interception_engine_coverage_analysis.py:73: D400: in public method `analyze_test_file`: - First line should end with a period (not 's')
+tests\unit\core\network\traffic_interception_engine_coverage_analysis.py:72: D400: in public method `analyze_test_file`: - First line should end with a period (not 's')
 
-tests\unit\core\network\traffic_interception_engine_coverage_analysis.py:91: D400: in public method `calculate_coverage`: - First line should end with a period (not 's')
+tests\unit\core\network\traffic_interception_engine_coverage_analysis.py:90: D400: in public method `calculate_coverage`: - First line should end with a period (not 's')
 
-tests\unit\core\network\traffic_interception_engine_coverage_analysis.py:120: D400: in private method `_map_tests_to_components`: - First line should end with a period (not 's')
+tests\unit\core\network\traffic_interception_engine_coverage_analysis.py:119: D400: in private method `_map_tests_to_components`: - First line should end with a period (not 's')
 
-tests\unit\core\network\traffic_interception_engine_coverage_analysis.py:153: D400: in public method `generate_coverage_report`: - First line should end with a period (not 't')
+tests\unit\core\network\traffic_interception_engine_coverage_analysis.py:152: D400: in public method `generate_coverage_report`: - First line should end with a period (not 't')
 
-tests\unit\core\network\traffic_interception_engine_coverage_analysis.py:227: D400: in public function `main`: - First line should end with a period (not 't')
+tests\unit\core\network\traffic_interception_engine_coverage_analysis.py:226: D400: in public function `main`: - First line should end with a period (not 't')
 
 
 9 findings in tests\unit\core\network\dynamic_response_generator_coverage_analysis.py
@@ -1478,11 +1478,11 @@ tests\unit\core\network\dynamic_response_generator_coverage_analysis.py:108: D20
 
 tests\unit\core\network\dynamic_response_generator_coverage_analysis.py:252: D202: in private method `_analyze_validation_depth`: - No blank lines allowed after function docstring (found 1)
 
-tests\unit\core\network\dynamic_response_generator_coverage_analysis.py:277: D202: in public method `generate_coverage_report`: - No blank lines allowed after function docstring (found 1)
+tests\unit\core\network\dynamic_response_generator_coverage_analysis.py:275: D202: in public method `generate_coverage_report`: - No blank lines allowed after function docstring (found 1)
 
-tests\unit\core\network\dynamic_response_generator_coverage_analysis.py:385: D202: in public method `identify_functionality_gaps`: - No blank lines allowed after function docstring (found 1)
+tests\unit\core\network\dynamic_response_generator_coverage_analysis.py:384: D202: in public method `identify_functionality_gaps`: - No blank lines allowed after function docstring (found 1)
 
-tests\unit\core\network\dynamic_response_generator_coverage_analysis.py:425: D202: in public function `main`: - No blank lines allowed after function docstring (found 1)
+tests\unit\core\network\dynamic_response_generator_coverage_analysis.py:423: D202: in public function `main`: - No blank lines allowed after function docstring (found 1)
 
 
 9 findings in tests\validation_system\persistence_validator.py
@@ -1497,13 +1497,13 @@ tests\validation_system\persistence_validator.py:48: D107: in public method `__i
 
 tests\validation_system\persistence_validator.py:71: D200: in public method `test_long_term_execution`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\persistence_validator.py:176: D200: in public method `test_reboot_persistence`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\persistence_validator.py:174: D200: in public method `test_reboot_persistence`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\persistence_validator.py:354: D200: in public method `test_time_based_persistence`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\persistence_validator.py:351: D200: in public method `test_time_based_persistence`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\persistence_validator.py:586: D200: in public method `validate_persistence`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\persistence_validator.py:581: D200: in public method `validate_persistence`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\validation_system\persistence_validator.py:609: D200: in public method `validate_all_persistence`: - One-line docstring should fit on one line with quotes (found 3)
+tests\validation_system\persistence_validator.py:601: D200: in public method `validate_all_persistence`: - One-line docstring should fit on one line with quotes (found 3)
 
 
 8 findings in tests\conftest_original.py
@@ -1522,7 +1522,7 @@ tests\conftest_original.py:93: D205: in public function `real_network_capture`: 
 
 tests\conftest_original.py:105: D200: in public function `isolated_test_env`: - One-line docstring should fit on one line with quotes (found 3)
 
-tests\conftest_original.py:157: D205: in public function `verify_no_mocks`: - 1 blank line required between summary line and description (found 0)
+tests\conftest_original.py:150: D205: in public function `verify_no_mocks`: - 1 blank line required between summary line and description (found 0)
 
 
 8 findings in tests\validation\validate_tests.py
@@ -1579,7 +1579,7 @@ tests\validation_system\phase6\evidence_requirements_validator.py:57: D204: in p
 
 tests\validation_system\phase6\evidence_requirements_validator.py:65: D105: in public method `__post_init__`: - Missing docstring in magic method
 
-tests\validation_system\phase6\evidence_requirements_validator.py:857: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Example')
+tests\validation_system\phase6\evidence_requirements_validator.py:858: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Example')
 
 
 8 findings in tests\validation_system\phase6\exploitation_pass_criteria_validator.py
@@ -1598,7 +1598,7 @@ tests\validation_system\phase6\exploitation_pass_criteria_validator.py:92: D204:
 
 tests\validation_system\phase6\exploitation_pass_criteria_validator.py:161: D401: in private method `_setup_logging`: - First line should be in imperative mood; try rephrasing (found 'Setup')
 
-tests\validation_system\phase6\exploitation_pass_criteria_validator.py:2333: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Example')
+tests\validation_system\phase6\exploitation_pass_criteria_validator.py:2319: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Example')
 
 
 7 findings in tests\validation_system\phase2\detection_depth_validator.py
@@ -1615,7 +1615,7 @@ tests\validation_system\phase2\detection_depth_validator.py:111: D204: in public
 
 tests\validation_system\phase2\detection_depth_validator.py:127: D205: in public class `DetectionDepthValidator`: - 1 blank line required between summary line and description (found 0)
 
-tests\validation_system\phase2\detection_depth_validator.py:6370: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')
+tests\validation_system\phase2\detection_depth_validator.py:6406: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')
 
 
 6 findings in intellicrack\cli\analysis_cli.py
@@ -1654,28 +1654,28 @@ tests\validation\validate_base_detector_tests.py:2: D205: at module level: - 1 b
 
 tests\validation\validate_base_detector_tests.py:13: D202: in public function `analyze_test_file`: - No blank lines allowed after function docstring (found 1)
 
-tests\validation\validate_base_detector_tests.py:100: D202: in public function `validate_imports`: - No blank lines allowed after function docstring (found 1)
+tests\validation\validate_base_detector_tests.py:99: D202: in public function `validate_imports`: - No blank lines allowed after function docstring (found 1)
 
-tests\validation\validate_base_detector_tests.py:144: D202: in public function `estimate_coverage`: - No blank lines allowed after function docstring (found 1)
+tests\validation\validate_base_detector_tests.py:143: D202: in public function `estimate_coverage`: - No blank lines allowed after function docstring (found 1)
 
-tests\validation\validate_base_detector_tests.py:195: D202: in public function `main`: - No blank lines allowed after function docstring (found 1)
+tests\validation\validate_base_detector_tests.py:194: D202: in public function `main`: - No blank lines allowed after function docstring (found 1)
 
-tests\validation\validate_base_detector_tests.py:195: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')
+tests\validation\validate_base_detector_tests.py:194: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')
 
 
 6 findings in tests\validation_system\anti_detection_verifier.py
 
 tests\validation_system\anti_detection_verifier.py:47: D107: in public method `__init__`: - Missing docstring in __init__
 
-tests\validation_system\anti_detection_verifier.py:359: D107: in public method `__init__`: - Missing docstring in __init__
+tests\validation_system\anti_detection_verifier.py:349: D107: in public method `__init__`: - Missing docstring in __init__
 
-tests\validation_system\anti_detection_verifier.py:398: D202: in public method `evade_registry_check`: - No blank lines allowed after function docstring (found 1)
+tests\validation_system\anti_detection_verifier.py:386: D202: in public method `evade_registry_check`: - No blank lines allowed after function docstring (found 1)
 
-tests\validation_system\anti_detection_verifier.py:520: D107: in public method `__init__`: - Missing docstring in __init__
+tests\validation_system\anti_detection_verifier.py:504: D107: in public method `__init__`: - Missing docstring in __init__
 
-tests\validation_system\anti_detection_verifier.py:623: D202: in private method `_calculate_entropy`: - No blank lines allowed after function docstring (found 1)
+tests\validation_system\anti_detection_verifier.py:609: D202: in private method `_calculate_entropy`: - No blank lines allowed after function docstring (found 1)
 
-tests\validation_system\anti_detection_verifier.py:710: D107: in public method `__init__`: - Missing docstring in __init__
+tests\validation_system\anti_detection_verifier.py:696: D107: in public method `__init__`: - Missing docstring in __init__
 
 
 6 findings in tests\validation_system\phase2\detection_validator.py
@@ -1690,7 +1690,7 @@ tests\validation_system\phase2\detection_validator.py:55: D204: in public class 
 
 tests\validation_system\phase2\detection_validator.py:67: D205: in public class `DetectionValidator`: - 1 blank line required between summary line and description (found 0)
 
-tests\validation_system\phase2\detection_validator.py:597: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')
+tests\validation_system\phase2\detection_validator.py:596: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')
 
 
 6 findings in tests\validation_system\phase2\evidence_verifier.py
@@ -1705,7 +1705,7 @@ tests\validation_system\phase2\evidence_verifier.py:65: D204: in public class `E
 
 tests\validation_system\phase2\evidence_verifier.py:77: D205: in public class `EvidenceVerifier`: - 1 blank line required between summary line and description (found 0)
 
-tests\validation_system\phase2\evidence_verifier.py:875: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')
+tests\validation_system\phase2\evidence_verifier.py:869: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')
 
 
 6 findings in tests\validation_system\phase2\validation_orchestrator.py
@@ -1720,7 +1720,7 @@ tests\validation_system\phase2\validation_orchestrator.py:50: D204: in public cl
 
 tests\validation_system\phase2\validation_orchestrator.py:87: D205: in public class `ValidationOrchestrator`: - 1 blank line required between summary line and description (found 0)
 
-tests\validation_system\phase2\validation_orchestrator.py:745: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')
+tests\validation_system\phase2\validation_orchestrator.py:753: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')
 
 
 6 findings in tests\validation_system\phase6\anti_gaming_validation_system.py
@@ -1735,7 +1735,7 @@ tests\validation_system\phase6\anti_gaming_validation_system.py:48: D204: in pub
 
 tests\validation_system\phase6\anti_gaming_validation_system.py:58: D204: in public class `ValidationEnvironment`: - 1 blank line required after class docstring (found 0)
 
-tests\validation_system\phase6\anti_gaming_validation_system.py:736: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Example')
+tests\validation_system\phase6\anti_gaming_validation_system.py:731: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Example')
 
 
 6 findings in tests\validation_system\phase6\reproducibility_requirements_checker.py
@@ -1750,7 +1750,7 @@ tests\validation_system\phase6\reproducibility_requirements_checker.py:39: D204:
 
 tests\validation_system\phase6\reproducibility_requirements_checker.py:51: D204: in public class `ReproductionResult`: - 1 blank line required after class docstring (found 0)
 
-tests\validation_system\phase6\reproducibility_requirements_checker.py:1315: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Example')
+tests\validation_system\phase6\reproducibility_requirements_checker.py:1317: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Example')
 
 
 6 findings in tests\validation_system\phase6\statistical_requirements_validator.py
@@ -1765,20 +1765,20 @@ tests\validation_system\phase6\statistical_requirements_validator.py:38: D105: i
 
 tests\validation_system\phase6\statistical_requirements_validator.py:44: D204: in public class `StatisticalAnalysis`: - 1 blank line required after class docstring (found 0)
 
-tests\validation_system\phase6\statistical_requirements_validator.py:634: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Example')
+tests\validation_system\phase6\statistical_requirements_validator.py:654: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Example')
 
 
 5 findings in intellicrack\cli\cli.py
 
-intellicrack\cli\cli.py:261: D401: in private function `_display_vulnerability_summary_cli`: - First line should be in imperative mood; try rephrasing (found 'Helper')
+intellicrack\cli\cli.py:258: D401: in private function `_display_vulnerability_summary_cli`: - First line should be in imperative mood; try rephrasing (found 'Helper')
 
-intellicrack\cli\cli.py:953: D401: in private function `_update_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')
+intellicrack\cli\cli.py:950: D401: in private function `_update_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')
 
-intellicrack\cli\cli.py:966: D401: in private function `_handle_gpu_acceleration_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')
+intellicrack\cli\cli.py:963: D401: in private function `_handle_gpu_acceleration_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')
 
-intellicrack\cli\cli.py:973: D401: in private function `_handle_distributed_processing_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')
+intellicrack\cli\cli.py:970: D401: in private function `_handle_distributed_processing_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')
 
-intellicrack\cli\cli.py:982: D401: in private function `_handle_symbolic_execution_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')
+intellicrack\cli\cli.py:979: D401: in private function `_handle_symbolic_execution_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')
 
 
 5 findings in tests\checkpoints\day2_checkpoint2_validation.py
@@ -1817,7 +1817,7 @@ tests\checkpoints\simple_day5_3_checkpoint.py:17: D204: in public class `MockAna
 
 tests\checkpoints\simple_day5_3_checkpoint.py:25: D107: in public method `__init__`: - Missing docstring in __init__
 
-tests\checkpoints\simple_day5_3_checkpoint.py:162: D107: in public method `__init__`: - Missing docstring in __init__
+tests\checkpoints\simple_day5_3_checkpoint.py:159: D107: in public method `__init__`: - Missing docstring in __init__
 
 
 5 findings in tests\integration\simple_day5_2_test.py
@@ -1830,7 +1830,7 @@ tests\integration\simple_day5_2_test.py:21: D204: in public class `MockUpdateMod
 
 tests\integration\simple_day5_2_test.py:30: D107: in public method `__init__`: - Missing docstring in __init__
 
-tests\integration\simple_day5_2_test.py:76: D107: in public method `__init__`: - Missing docstring in __init__
+tests\integration\simple_day5_2_test.py:73: D107: in public method `__init__`: - Missing docstring in __init__
 
 
 5 findings in tests\unit\core\network\license_server_emulator_coverage_analysis.py
@@ -1841,9 +1841,9 @@ tests\unit\core\network\license_server_emulator_coverage_analysis.py:16: D202: i
 
 tests\unit\core\network\license_server_emulator_coverage_analysis.py:16: D400: in public function `run_coverage_analysis`: - First line should end with a period (not 'r')
 
-tests\unit\core\network\license_server_emulator_coverage_analysis.py:118: D400: in public function `count_test_methods`: - First line should end with a period (not 'e')
+tests\unit\core\network\license_server_emulator_coverage_analysis.py:115: D400: in public function `count_test_methods`: - First line should end with a period (not 'e')
 
-tests\unit\core\network\license_server_emulator_coverage_analysis.py:134: D400: in public function `get_validation_areas`: - First line should end with a period (not 's')
+tests\unit\core\network\license_server_emulator_coverage_analysis.py:126: D400: in public function `get_validation_areas`: - First line should end with a period (not 's')
 
 
 5 findings in tests\validation_system\phase6\detection_pass_criteria_validator.py
@@ -1856,18 +1856,18 @@ tests\validation_system\phase6\detection_pass_criteria_validator.py:52: D204: in
 
 tests\validation_system\phase6\detection_pass_criteria_validator.py:108: D401: in private method `_setup_logging`: - First line should be in imperative mood; try rephrasing (found 'Setup')
 
-tests\validation_system\phase6\detection_pass_criteria_validator.py:1016: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Example')
+tests\validation_system\phase6\detection_pass_criteria_validator.py:1019: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Example')
 
 
 4 findings in intellicrack\core\gpu_acceleration.py
 
-intellicrack\core\gpu_acceleration.py:298: D403: in private method `_cupy_pattern_search`: - First word of the first line should be properly capitalized ('Cupy', not 'CuPy')
+intellicrack\core\gpu_acceleration.py:317: D403: in private method `_cupy_pattern_search`: - First word of the first line should be properly capitalized ('Cupy', not 'CuPy')
 
-intellicrack\core\gpu_acceleration.py:430: D403: in private method `_pycuda_pattern_search`: - First word of the first line should be properly capitalized ('Pycuda', not 'PyCUDA')
+intellicrack\core\gpu_acceleration.py:451: D403: in private method `_pycuda_pattern_search`: - First word of the first line should be properly capitalized ('Pycuda', not 'PyCUDA')
 
-intellicrack\core\gpu_acceleration.py:589: D403: in private method `_cupy_entropy`: - First word of the first line should be properly capitalized ('Cupy', not 'CuPy')
+intellicrack\core\gpu_acceleration.py:610: D403: in private method `_cupy_entropy`: - First word of the first line should be properly capitalized ('Cupy', not 'CuPy')
 
-intellicrack\core\gpu_acceleration.py:752: D403: in private method `_cupy_crc32`: - First word of the first line should be properly capitalized ('Cupy', not 'CuPy')
+intellicrack\core\gpu_acceleration.py:774: D403: in private method `_cupy_crc32`: - First word of the first line should be properly capitalized ('Cupy', not 'CuPy')
 
 
 4 findings in tests\integration\simple_day6_1_cet_cfi_test.py
@@ -1922,7 +1922,7 @@ tests\validation_system\protection_variant_generator.py:48: D204: in public clas
 
 tests\validation_system\protection_variant_generator.py:61: D204: in public class `MutationResult`: - 1 blank line required after class docstring (found 0)
 
-tests\validation_system\protection_variant_generator.py:718: D401: in private method `_simple_rle_compress`: - First line should be in imperative mood; try rephrasing (found 'Simple')
+tests\validation_system\protection_variant_generator.py:706: D401: in private method `_simple_rle_compress`: - First line should be in imperative mood; try rephrasing (found 'Simple')
 
 
 4 findings in tests\validation_system\phase45\protection_challenge_generator.py
@@ -1938,29 +1938,29 @@ tests\validation_system\phase45\protection_challenge_generator.py:113: D401: in 
 
 3 findings in intellicrack\ai\protection_aware_script_gen.py
 
-intellicrack\ai\protection_aware_script_gen.py:3991: D403: in private method `_get_securom_scripts`: - First word of the first line should be properly capitalized ('Securom', not 'SecuROM')
+intellicrack\ai\protection_aware_script_gen.py:3992: D403: in private method `_get_securom_scripts`: - First word of the first line should be properly capitalized ('Securom', not 'SecuROM')
 
-intellicrack\ai\protection_aware_script_gen.py:4123: D403: in private method `_get_starforce_scripts`: - First word of the first line should be properly capitalized ('Starforce', not 'StarForce')
+intellicrack\ai\protection_aware_script_gen.py:4124: D403: in private method `_get_starforce_scripts`: - First word of the first line should be properly capitalized ('Starforce', not 'StarForce')
 
-intellicrack\ai\protection_aware_script_gen.py:4862: D403: in private method `_get_safenet_sentinel_scripts`: - First word of the first line should be properly capitalized ('Safenet', not 'SafeNet')
+intellicrack\ai\protection_aware_script_gen.py:4863: D403: in private method `_get_safenet_sentinel_scripts`: - First word of the first line should be properly capitalized ('Safenet', not 'SafeNet')
 
 
 3 findings in intellicrack\cli\ai_chat_interface.py
 
-intellicrack\cli\ai_chat_interface.py:900: D401: in private method `_get_available_backends`: - First line should be in imperative mood; try rephrasing (found 'Helper')
+intellicrack\cli\ai_chat_interface.py:906: D401: in private method `_get_available_backends`: - First line should be in imperative mood; try rephrasing (found 'Helper')
 
-intellicrack\cli\ai_chat_interface.py:910: D401: in private method `_display_available_backends`: - First line should be in imperative mood; try rephrasing (found 'Helper')
+intellicrack\cli\ai_chat_interface.py:919: D401: in private method `_display_available_backends`: - First line should be in imperative mood; try rephrasing (found 'Helper')
 
-intellicrack\cli\ai_chat_interface.py:936: D401: in private method `_handle_backend_switch_logic`: - First line should be in imperative mood; try rephrasing (found 'Helper')
+intellicrack\cli\ai_chat_interface.py:945: D401: in private method `_handle_backend_switch_logic`: - First line should be in imperative mood; try rephrasing (found 'Helper')
 
 
 3 findings in intellicrack\core\exploitation\automated_unpacker.py
 
-intellicrack\core\exploitation\automated_unpacker.py:695: D403: in private method `_unpack_aspack`: - First word of the first line should be properly capitalized ('Aspack', not 'ASPack')
+intellicrack\core\exploitation\automated_unpacker.py:697: D403: in private method `_unpack_aspack`: - First word of the first line should be properly capitalized ('Aspack', not 'ASPack')
 
-intellicrack\core\exploitation\automated_unpacker.py:1510: D403: in private method `_unpack_vmprotect`: - First word of the first line should be properly capitalized ('Vmprotect', not 'VMProtect')
+intellicrack\core\exploitation\automated_unpacker.py:1512: D403: in private method `_unpack_vmprotect`: - First word of the first line should be properly capitalized ('Vmprotect', not 'VMProtect')
 
-intellicrack\core\exploitation\automated_unpacker.py:2088: D403: in private method `_unpack_asprotect`: - First word of the first line should be properly capitalized ('Asprotect', not 'ASProtect')
+intellicrack\core\exploitation\automated_unpacker.py:2090: D403: in private method `_unpack_asprotect`: - First word of the first line should be properly capitalized ('Asprotect', not 'ASProtect')
 
 
 3 findings in intellicrack\handlers\numpy_handler.py
@@ -1976,18 +1976,18 @@ intellicrack\handlers\numpy_handler.py:208: D105: in public method `__getitem__`
 
 intellicrack\llm\tools\__init__.py:1: D400: at module level: - First line should end with a period (not 'e')
 
-intellicrack\llm\tools\__init__.py:35: D400: in public function `get_all_tools`: - First line should end with a period (not 's')
+intellicrack\llm\tools\__init__.py:37: D400: in public function `get_all_tools`: - First line should end with a period (not 's')
 
-intellicrack\llm\tools\__init__.py:47: D400: in public function `register_tools_with_llm`: - First line should end with a period (not 'd')
+intellicrack\llm\tools\__init__.py:49: D400: in public function `register_tools_with_llm`: - First line should end with a period (not 'd')
 
 
 3 findings in intellicrack\plugins\custom_modules\vm_protection_unwrapper.py
 
-intellicrack\plugins\custom_modules\vm_protection_unwrapper.py:172: D403: in private method `_vmprotect_1x_key_schedule`: - First word of the first line should be properly capitalized ('Vmprotect', not 'VMProtect')
+intellicrack\plugins\custom_modules\vm_protection_unwrapper.py:181: D403: in private method `_vmprotect_1x_key_schedule`: - First word of the first line should be properly capitalized ('Vmprotect', not 'VMProtect')
 
-intellicrack\plugins\custom_modules\vm_protection_unwrapper.py:191: D403: in private method `_vmprotect_2x_key_schedule`: - First word of the first line should be properly capitalized ('Vmprotect', not 'VMProtect')
+intellicrack\plugins\custom_modules\vm_protection_unwrapper.py:200: D403: in private method `_vmprotect_2x_key_schedule`: - First word of the first line should be properly capitalized ('Vmprotect', not 'VMProtect')
 
-intellicrack\plugins\custom_modules\vm_protection_unwrapper.py:211: D403: in private method `_vmprotect_3x_key_schedule`: - First word of the first line should be properly capitalized ('Vmprotect', not 'VMProtect')
+intellicrack\plugins\custom_modules\vm_protection_unwrapper.py:220: D403: in private method `_vmprotect_3x_key_schedule`: - First word of the first line should be properly capitalized ('Vmprotect', not 'VMProtect')
 
 
 3 findings in tests\checkpoints\day4_checkpoint4_validation.py
@@ -1996,7 +1996,7 @@ tests\checkpoints\day4_checkpoint4_validation.py:2: D400: at module level: - Fir
 
 tests\checkpoints\day4_checkpoint4_validation.py:26: D101: in public class `BinaryPatch`: - Missing docstring in public class
 
-tests\checkpoints\day4_checkpoint4_validation.py:392: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')
+tests\checkpoints\day4_checkpoint4_validation.py:388: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')
 
 
 3 findings in tests\checkpoints\simple_day6_3_checkpoint.py
@@ -2014,7 +2014,7 @@ tests\generators\capture_license_protocols.py:2: D205: at module level: - 1 blan
 
 tests\generators\capture_license_protocols.py:25: D107: in public method `__init__`: - Missing docstring in __init__
 
-tests\generators\capture_license_protocols.py:479: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')
+tests\generators\capture_license_protocols.py:469: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')
 
 
 3 findings in tests\integration\simple_day4_2_test.py
@@ -2023,7 +2023,7 @@ tests\integration\simple_day4_2_test.py:2: D400: at module level: - First line s
 
 tests\integration\simple_day4_2_test.py:14: D204: in public class `BinaryPatch`: - 1 blank line required after class docstring (found 0)
 
-tests\integration\simple_day4_2_test.py:280: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')
+tests\integration\simple_day4_2_test.py:272: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')
 
 
 3 findings in tests\runners\execute_analysis.py
@@ -2050,7 +2050,7 @@ tests\utils\coverage_runner.py:2: D205: at module level: - 1 blank line required
 
 tests\utils\coverage_runner.py:2: D400: at module level: - First line should end with a period (not 'g')
 
-tests\utils\coverage_runner.py:360: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')
+tests\utils\coverage_runner.py:358: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')
 
 
 3 findings in tests\utils\run_coverage_analysis.py
@@ -2077,7 +2077,7 @@ tests\utils\validate_ssl_interceptor_tests.py:2: D400: at module level: - First 
 
 tests\utils\validate_ssl_interceptor_tests.py:14: D202: in public function `validate_ssl_interceptor_tests`: - No blank lines allowed after function docstring (found 1)
 
-tests\utils\validate_ssl_interceptor_tests.py:139: D202: in public function `validate_source_module`: - No blank lines allowed after function docstring (found 1)
+tests\utils\validate_ssl_interceptor_tests.py:132: D202: in public function `validate_source_module`: - No blank lines allowed after function docstring (found 1)
 
 
 3 findings in tests\validation\day8_1_real_world_ui_tests.py
@@ -2120,9 +2120,9 @@ tests\validation_system\fix_phase1_violations.py:113: D400: in public function `
 
 tests\validation_system\multi_environment_tester.py:68: D107: in public method `__init__`: - Missing docstring in __init__
 
-tests\validation_system\multi_environment_tester.py:253: D107: in public method `__init__`: - Missing docstring in __init__
+tests\validation_system\multi_environment_tester.py:250: D107: in public method `__init__`: - Missing docstring in __init__
 
-tests\validation_system\multi_environment_tester.py:413: D107: in public method `__init__`: - Missing docstring in __init__
+tests\validation_system\multi_environment_tester.py:407: D107: in public method `__init__`: - Missing docstring in __init__
 
 
 2 findings in intellicrack\ai\llm_types.py
@@ -2134,23 +2134,23 @@ intellicrack\ai\llm_types.py:62: D401: in public method `on_completed`: - First 
 
 2 findings in intellicrack\core\analysis\cross_tool_orchestrator.py
 
-intellicrack\core\analysis\cross_tool_orchestrator.py:906: D202: in private method `_setup_resolution_rules`: - No blank lines allowed after function docstring (found 1)
+intellicrack\core\analysis\cross_tool_orchestrator.py:910: D202: in private method `_setup_resolution_rules`: - No blank lines allowed after function docstring (found 1)
 
-intellicrack\core\analysis\cross_tool_orchestrator.py:936: D202: in private method `_setup_recovery_strategies`: - No blank lines allowed after function docstring (found 1)
+intellicrack\core\analysis\cross_tool_orchestrator.py:940: D202: in private method `_setup_recovery_strategies`: - No blank lines allowed after function docstring (found 1)
 
 
-2 findings in intellicrack\hexview\integration.py
+2 findings in intellicrack\ui\main_app.py
 
-intellicrack\hexview\integration.py:28: D102: in public method `menuBar`: - Missing docstring in public method
+intellicrack\ui\main_app.py:810: D401: in private method `_on_ai_task_complete_wrapper`: - First line should be in imperative mood; try rephrasing (found 'Wrapper')
 
-intellicrack\hexview\integration.py:29: D102: in public method `children`: - Missing docstring in public method
+intellicrack\ui\main_app.py:846: D401: in private method `_on_coordinated_analysis_complete_wrapper`: - First line should be in imperative mood; try rephrasing (found 'Wrapper')
 
 
 2 findings in intellicrack\ui\dialogs\model_finetuning_dialog.py
 
-intellicrack\ui\dialogs\model_finetuning_dialog.py:2035: D403: in private method `_relu`: - First word of the first line should be properly capitalized ('Relu', not 'ReLU')
+intellicrack\ui\dialogs\model_finetuning_dialog.py:2036: D403: in private method `_relu`: - First word of the first line should be properly capitalized ('Relu', not 'ReLU')
 
-intellicrack\ui\dialogs\model_finetuning_dialog.py:2047: D403: in private method `_relu_derivative`: - First word of the first line should be properly capitalized ('Relu', not 'ReLU')
+intellicrack\ui\dialogs\model_finetuning_dialog.py:2048: D403: in private method `_relu_derivative`: - First word of the first line should be properly capitalized ('Relu', not 'ReLU')
 
 
 2 findings in intellicrack\utils\logger.py
@@ -2192,7 +2192,7 @@ tests\integration\run_external_tools_tests.py:2: D400: at module level: - First 
 
 tests\integration\simple_day4_test.py:2: D400: at module level: - First line should end with a period (not 'n')
 
-tests\integration\simple_day4_test.py:132: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')
+tests\integration\simple_day4_test.py:127: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')
 
 
 2 findings in tests\unit\core\anti_analysis\run_base_detector_tests.py
@@ -2234,41 +2234,41 @@ tests\utils\ssl_interceptor_coverage_analysis.py:17: D202: in public function `a
 
 tests\utils\verify_no_mocks.py:2: D205: at module level: - 1 blank line required between summary line and description (found 0)
 
-tests\utils\verify_no_mocks.py:221: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')
+tests\utils\verify_no_mocks.py:219: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')
 
 
 2 findings in tests\validation\entropy_coverage_validator.py
 
-tests\validation\entropy_coverage_validator.py:265: D202: in public function `generate_coverage_report`: - No blank lines allowed after function docstring (found 1)
+tests\validation\entropy_coverage_validator.py:263: D202: in public function `generate_coverage_report`: - No blank lines allowed after function docstring (found 1)
 
-tests\validation\entropy_coverage_validator.py:407: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')
+tests\validation\entropy_coverage_validator.py:405: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')
 
 
 2 findings in tests\validation_system\fingerprint_randomizer.py
 
 tests\validation_system\fingerprint_randomizer.py:50: D107: in public method `__init__`: - Missing docstring in __init__
 
-tests\validation_system\fingerprint_randomizer.py:322: D107: in public method `__init__`: - Missing docstring in __init__
+tests\validation_system\fingerprint_randomizer.py:306: D107: in public method `__init__`: - Missing docstring in __init__
 
 
 1 findings in intellicrack\ai\background_loader.py
 
-intellicrack\ai\background_loader.py:425: D202: in public method `load_model_in_background`: - No blank lines allowed after function docstring (found 1)
+intellicrack\ai\background_loader.py:437: D202: in public method `load_model_in_background`: - No blank lines allowed after function docstring (found 1)
 
 
 1 findings in intellicrack\ai\enhanced_training_interface.py
 
-intellicrack\ai\enhanced_training_interface.py:977: D403: in private method `_relu`: - First word of the first line should be properly capitalized ('Relu', not 'ReLU')
+intellicrack\ai\enhanced_training_interface.py:939: D403: in private method `_relu`: - First word of the first line should be properly capitalized ('Relu', not 'ReLU')
 
 
 1 findings in intellicrack\ai\headless_training_interface.py
 
-intellicrack\ai\headless_training_interface.py:888: D403: in private method `_relu`: - First word of the first line should be properly capitalized ('Relu', not 'ReLU')
+intellicrack\ai\headless_training_interface.py:897: D403: in private method `_relu`: - First word of the first line should be properly capitalized ('Relu', not 'ReLU')
 
 
-1 findings in intellicrack\ai\__init__.py
+1 findings in intellicrack\analysis\protection_workflow.py
 
-intellicrack\ai\__init__.py:168: D103: in public function `learning_engine`: - Missing docstring in public function
+intellicrack\analysis\protection_workflow.py:118: D103: in public function `log_all_methods`: - Missing docstring in public function
 
 
 1 findings in intellicrack\core\analysis\export_analyzer.py
@@ -2278,7 +2278,7 @@ intellicrack\core\analysis\export_analyzer.py:669: D401: in public function `ana
 
 1 findings in intellicrack\core\processing\parallel_processing_manager.py
 
-intellicrack\core\processing\parallel_processing_manager.py:177: D202: in private method `_process_with_multiprocessing`: - No blank lines allowed after function docstring (found 1)
+intellicrack\core\processing\parallel_processing_manager.py:180: D202: in private method `_process_with_multiprocessing`: - No blank lines allowed after function docstring (found 1)
 
 
 1 findings in intellicrack\core\processing\qiling_emulator.py
@@ -2286,29 +2286,34 @@ intellicrack\core\processing\parallel_processing_manager.py:177: D202: in privat
 intellicrack\core\processing\qiling_emulator.py:859: D202: in public method `emulate_with_patches`: - No blank lines allowed after function docstring (found 1)
 
 
+1 findings in intellicrack\handlers\psutil_handler.py
+
+intellicrack\handlers\psutil_handler.py:928: D402: in public function `Process`: - First line should not be the function's "signature"
+
+
 1 findings in intellicrack\handlers\pyqt6_handler.py
 
-intellicrack\handlers\pyqt6_handler.py:253: D401: in private function `log_all_methods`: - First line should be in imperative mood (perhaps 'Decorate', not 'Decorator')
+intellicrack\handlers\pyqt6_handler.py:255: D401: in private function `log_all_methods`: - First line should be in imperative mood (perhaps 'Decorate', not 'Decorator')
 
 
 1 findings in intellicrack\models\repositories\lmstudio_repository.py
 
-intellicrack\models\repositories\lmstudio_repository.py:207: D403: in public method `download_model`: - First word of the first line should be properly capitalized ('Lmstudio', not 'LMStudio')
+intellicrack\models\repositories\lmstudio_repository.py:231: D403: in public method `download_model`: - First word of the first line should be properly capitalized ('Lmstudio', not 'LMStudio')
 
 
 1 findings in intellicrack\models\repositories\openai_repository.py
 
-intellicrack\models\repositories\openai_repository.py:211: D403: in public method `download_model`: - First word of the first line should be properly capitalized ('Openai', not 'OpenAI')
+intellicrack\models\repositories\openai_repository.py:241: D403: in public method `download_model`: - First word of the first line should be properly capitalized ('Openai', not 'OpenAI')
 
 
 1 findings in intellicrack\models\repositories\openrouter_repository.py
 
-intellicrack\models\repositories\openrouter_repository.py:225: D403: in public method `download_model`: - First word of the first line should be properly capitalized ('Openrouter', not 'OpenRouter')
+intellicrack\models\repositories\openrouter_repository.py:238: D403: in public method `download_model`: - First word of the first line should be properly capitalized ('Openrouter', not 'OpenRouter')
 
 
 1 findings in intellicrack\plugins\custom_modules\hardware_dongle_emulator.py
 
-intellicrack\plugins\custom_modules\hardware_dongle_emulator.py:439: D401: in private method `_algo_custom`: - First line should be in imperative mood; try rephrasing (found 'Custom')
+intellicrack\plugins\custom_modules\hardware_dongle_emulator.py:441: D401: in private method `_algo_custom`: - First line should be in imperative mood; try rephrasing (found 'Custom')
 
 
 1 findings in intellicrack\plugins\custom_modules\success_rate_analyzer.py
@@ -2326,19 +2331,24 @@ intellicrack\tools\ml_manager.py:300: D401: in public function `main`: - First l
 intellicrack\tools\protection_analyzer_tool.py:2: D205: at module level: - 1 blank line required between summary line and description (found 0)
 
 
-1 findings in intellicrack\ui\dialogs\model_manager_dialog.py
-
-intellicrack\ui\dialogs\model_manager_dialog.py:214: D202: in public method `setup_content`: - No blank lines allowed after function docstring (found 1)
-
-
 1 findings in intellicrack\ui\dialogs\trial_reset_dialog.py
 
-intellicrack\ui\dialogs\trial_reset_dialog.py:559: D401: in private method `_quick_scan_helper`: - First line should be in imperative mood; try rephrasing (found 'Helper')
+intellicrack\ui\dialogs\trial_reset_dialog.py:560: D401: in private method `_quick_scan_helper`: - First line should be in imperative mood; try rephrasing (found 'Helper')
+
+
+1 findings in intellicrack\ui\widgets\intellicrack_advanced_protection_widget.py
+
+intellicrack\ui\widgets\intellicrack_advanced_protection_widget.py:197: D401: in public method `plot_entropy`: - First line should be in imperative mood; try rephrasing (found 'Placeholder')
 
 
 1 findings in intellicrack\ui\widgets\unified_protection_widget.py
 
 intellicrack\ui\widgets\unified_protection_widget.py:600: D401: in private method `_update_analysis_details`: - First line should be in imperative mood; try rephrasing (found 'Internal')
+
+
+1 findings in intellicrack\utils\type_safety.py
+
+intellicrack\utils\type_safety.py:57: D103: in public function `validate_type`: - Missing docstring in public function
 
 
 1 findings in intellicrack\utils\tools\ghidra_script_manager.py
@@ -2353,7 +2363,7 @@ intellicrack\utils\tools\ghidra_utils.py:1: D205: at module level: - 1 blank lin
 
 1 findings in intellicrack\utils\tools\pcapy_compat.py
 
-intellicrack\utils\tools\pcapy_compat.py:100: D401: in public method `__iter__`: - First line should be in imperative mood (perhaps 'Iterate', not 'Iterator')
+intellicrack\utils\tools\pcapy_compat.py:112: D401: in public method `__iter__`: - First line should be in imperative mood (perhaps 'Iterate', not 'Iterator')
 
 
 1 findings in intellicrack\utils\tools\__init__.py
@@ -2383,7 +2393,7 @@ tests\ai\__init__.py:1: D104: at module level: - Missing docstring in public pac
 
 1 findings in tests\core\analysis\verify_test_quality.py
 
-tests\core\analysis\verify_test_quality.py:176: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')
+tests\core\analysis\verify_test_quality.py:173: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')
 
 
 1 findings in tests\core\analysis\__init__.py
@@ -2398,7 +2408,7 @@ tests\core\exploitation\__init__.py:1: D200: at module level: - One-line docstri
 
 1 findings in tests\core\patching\validate_tests.py
 
-tests\core\patching\validate_tests.py:72: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')
+tests\core\patching\validate_tests.py:70: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')
 
 
 1 findings in tests\core\processing\__init__.py
@@ -2553,9 +2563,9 @@ tests\validation_system\fix_syntax_errors.py:2: D200: at module level: - One-lin
 
 1 findings in tests\validation_system\phase45\binary_differential_analyzer.py
 
-tests\validation_system\phase45\binary_differential_analyzer.py:447: D401: in private method `_setup_logging`: - First line should be in imperative mood; try rephrasing (found 'Setup')
+tests\validation_system\phase45\binary_differential_analyzer.py:440: D401: in private method `_setup_logging`: - First line should be in imperative mood; try rephrasing (found 'Setup')
 
 
 1 findings in tests\validation_system\phase45\runtime_instruction_tracer.py
 
-tests\validation_system\phase45\runtime_instruction_tracer.py:155: D401: in private method `_setup_etw_tracing`: - First line should be in imperative mood; try rephrasing (found 'Setup')
+tests\validation_system\phase45\runtime_instruction_tracer.py:154: D401: in private method `_setup_etw_tracing`: - First line should be in imperative mood; try rephrasing (found 'Setup')

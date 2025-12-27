@@ -9,14 +9,31 @@ import pytest
 import tempfile
 import os
 from unittest.mock import patch
-from PyQt6.QtWidgets import (QApplication, QWidget, QTextEdit, QComboBox,
-                            QPushButton, QListWidget, QProgressBar)
-from intellicrack.ui.dialogs.common_imports import QTest, Qt
-from intellicrack.ai.llm_backends import LLMManager
-from intellicrack.ai.model_manager_module import ModelManager
 
+try:
+    from PyQt6.QtWidgets import (QApplication, QWidget, QTextEdit, QComboBox,
+                                QPushButton, QListWidget, QProgressBar)
+    from intellicrack.ui.dialogs.common_imports import QTest, Qt
+    from intellicrack.ai.llm_backends import LLMManager
+    from intellicrack.ai.model_manager_module import ModelManager
+    from intellicrack.ui.tabs.ai_assistant_tab import AIAssistantTab
+    GUI_AVAILABLE = True
+except ImportError:
+    QApplication = None
+    QWidget = None
+    QTextEdit = None
+    QComboBox = None
+    QPushButton = None
+    QListWidget = None
+    QProgressBar = None
+    QTest = None
+    Qt = None
+    LLMManager = None
+    ModelManager = None
+    AIAssistantTab = None
+    GUI_AVAILABLE = False
 
-from intellicrack.ui.tabs.ai_assistant_tab import AIAssistantTab
+pytestmark = pytest.mark.skipif(not GUI_AVAILABLE, reason="GUI modules not available")
 
 
 class TestAIAssistantTab:

@@ -122,11 +122,15 @@ exec(user_input)
         tester = ScriptTester()
 
         complex_code = """
-for i in range(100):
-    if condition:
-        while True:
-            for j in range(10):
-                process()
+for (var i = 0; i < 100; i++) {
+    if (condition) {
+        while (true) {
+            for (var j = 0; j < 10; j++) {
+                process();
+            }
+        }
+    }
+}
 """
 
         metrics = tester._analyze_performance(complex_code)

@@ -679,7 +679,7 @@ const wasmBypass = {
                     for (let j = 0; j < nameLen && exportPos < sectionEnd; j++) {
                         nameBytes.push(bytes[exportPos++]);
                     }
-                    const name = String.fromCharCode.apply(null, nameBytes);
+                    const name = String.fromCodePoint(...nameBytes);
 
                     // Read export kind
                     const kind = bytes[exportPos++];
@@ -727,11 +727,16 @@ const wasmBypass = {
 
         const modified = {};
 
-        // Deep clone and modify
         for (const module in importObject) {
+            if (!Object.hasOwn(importObject, module)) {
+                continue;
+            }
             modified[module] = {};
 
             for (const name in importObject[module]) {
+                if (!Object.hasOwn(importObject[module], name)) {
+                    continue;
+                }
                 const original = importObject[module][name];
 
                 if (typeof original === 'function') {
@@ -1086,8 +1091,7 @@ const wasmBypass = {
         const originalFetch = window.fetch;
         const self = this;
 
-        window.fetch = async function (url, _options) {
-            // Check if this is a WASM file
+        window.fetch = async function (url, ...restArgs) {
             if (self.isWASMURL(url)) {
                 send({
                     type: 'info',
@@ -1096,14 +1100,11 @@ const wasmBypass = {
                     url,
                 });
 
-                // Call original
-                const response = await Reflect.apply(originalFetch, this, arguments);
+                const response = await Reflect.apply(originalFetch, this, [url, ...restArgs]);
 
-                // Clone to analyze
                 const cloned = response.clone();
                 const buffer = await cloned.arrayBuffer();
 
-                // Analyze the module
                 const analysis = self.analyzeWASMBinary(buffer);
 
                 if (analysis.hasLicenseCheck) {
@@ -1115,7 +1116,6 @@ const wasmBypass = {
                         checks_count: analysis.licenseChecks.length,
                     });
 
-                    // Store module info
                     self.state.wasm_modules.set(url.toString(), {
                         url,
                         analysis,
@@ -1126,7 +1126,7 @@ const wasmBypass = {
                 return response;
             }
 
-            return Reflect.apply(originalFetch, this, arguments);
+            return Reflect.apply(originalFetch, this, [url, ...restArgs]);
         };
 
         // Also hook XMLHttpRequest
@@ -1152,12 +1152,12 @@ const wasmBypass = {
         const originalSend = XMLHttpRequest.prototype.send;
         const self = this;
 
-        XMLHttpRequest.prototype.open = function (_method, url) {
+        XMLHttpRequest.prototype.open = function (method, url, ...restArgs) {
             this._wasmURL = url;
-            return Reflect.apply(originalOpen, this, arguments);
+            return Reflect.apply(originalOpen, this, [method, url, ...restArgs]);
         };
 
-        XMLHttpRequest.prototype.send = function () {
+        XMLHttpRequest.prototype.send = function (...sendArgs) {
             if (this._wasmURL && self.isWASMURL(this._wasmURL)) {
                 send({
                     type: 'info',
@@ -1167,9 +1167,8 @@ const wasmBypass = {
                 });
 
                 const originalOnload = this.onload;
-                this.addEventListener('load', function () {
+                this.addEventListener('load', function (evt) {
                     if (this.response instanceof ArrayBuffer) {
-                        // Analyze WASM
                         const analysis = self.analyzeWASMBinary(this.response);
 
                         if (analysis.hasLicenseCheck) {
@@ -1183,12 +1182,12 @@ const wasmBypass = {
                     }
 
                     if (originalOnload) {
-                        Reflect.apply(originalOnload, this, arguments);
+                        Reflect.apply(originalOnload, this, [evt]);
                     }
                 });
             }
 
-            return Reflect.apply(originalSend, this, arguments);
+            return Reflect.apply(originalSend, this, sendArgs);
         };
     },
 
@@ -1330,14 +1329,13 @@ const wasmBypass = {
         const originalInit = Module.onRuntimeInitialized;
         const self = this;
 
-        Module.onRuntimeInitialized = function () {
+        Module.onRuntimeInitialized = function (...initArgs) {
             send({
                 type: 'info',
                 target: 'wasm_protection_bypass',
                 action: 'emscripten_runtime_initialized',
             });
 
-            // Hook exported functions
             if (Module.asm) {
                 for (const name in Module.asm) {
                     if (typeof Module.asm[name] === 'function' && self.isLicenseFunction(name)) {
@@ -1346,13 +1344,12 @@ const wasmBypass = {
                 }
             }
 
-            // Hook _malloc/_free to monitor allocations
             if (Module._malloc) {
                 self.hookMemoryAllocation();
             }
 
             if (originalInit) {
-                Reflect.apply(originalInit, this, arguments);
+                Reflect.apply(originalInit, this, initArgs);
             }
         };
     },
@@ -1465,17 +1462,16 @@ const wasmBypass = {
         });
     },
 
-    // Hook WebWorker WASM support
     hookWebWorkerWASM() {
         if (!this.config.modernFeatures.webWorkers.enabled) {
             return;
         }
 
-        // Hook Worker constructor to intercept WASM in workers
         if (typeof Worker !== 'undefined') {
-            const originalWorker = Worker;
-            Worker = (scriptURL, options) => {
-                const worker = new originalWorker(scriptURL, options);
+            const OriginalWorker = globalThis.Worker;
+
+            function HookedWorker(scriptURL, options) {
+                const worker = new OriginalWorker(scriptURL, options);
 
                 send({
                     type: 'info',
@@ -1484,7 +1480,6 @@ const wasmBypass = {
                     script_url: scriptURL.toString(),
                 });
 
-                // Hook postMessage to intercept WASM data
                 const originalPostMessage = worker.postMessage;
                 worker.postMessage = function (message, transferable) {
                     if (message && (message.wasmModule || message.wasmBuffer)) {
@@ -1494,7 +1489,6 @@ const wasmBypass = {
                             action: 'worker_wasm_message_intercepted',
                         });
 
-                        // Modify WASM message if needed
                         if (message.wasmModule) {
                             message.bypassLicense = true;
                         }
@@ -1502,9 +1496,7 @@ const wasmBypass = {
                     return originalPostMessage.call(this, message, transferable);
                 };
 
-                // Hook onmessage to catch responses
-                const originalOnMessage = worker.onmessage;
-                worker.onmessage = function (event) {
+                worker.addEventListener('message', event => {
                     if (event.data?.licenseResult) {
                         send({
                             type: 'bypass',
@@ -1512,36 +1504,33 @@ const wasmBypass = {
                             action: 'worker_license_result_spoofed',
                         });
 
-                        // Spoof license validation results
                         event.data.licenseResult = true;
                         event.data.isValid = true;
-                        event.data.expires = Date.now() + 365 * 24 * 60 * 60 * 1000; // 1 year from now
+                        event.data.expires = Date.now() + 365 * 24 * 60 * 60 * 1000;
                     }
-
-                    if (originalOnMessage) {
-                        return originalOnMessage.call(this, event);
-                    }
-                    return undefined;
-                };
+                });
 
                 return worker;
-            };
+            }
 
-            // Preserve prototype
-            Worker.prototype = originalWorker.prototype;
+            HookedWorker.prototype = OriginalWorker.prototype;
+            Object.defineProperty(globalThis, 'Worker', {
+                value: HookedWorker,
+                writable: true,
+                configurable: true,
+            });
         }
     },
 
-    // Hook SharedArrayBuffer and Atomics for shared WASM memory
     hookSharedMemoryFeatures() {
         if (!this.config.modernFeatures.sharedMemory.enabled) {
             return;
         }
 
-        // Hook SharedArrayBuffer creation
         if (typeof SharedArrayBuffer !== 'undefined') {
-            const originalSAB = SharedArrayBuffer;
-            SharedArrayBuffer = length => {
+            const OriginalSAB = globalThis.SharedArrayBuffer;
+
+            function HookedSharedArrayBuffer(length) {
                 send({
                     type: 'info',
                     target: 'wasm_bypass',
@@ -1549,18 +1538,15 @@ const wasmBypass = {
                     length,
                 });
 
-                const buffer = new originalSAB(length);
+                const buffer = new OriginalSAB(length);
 
-                // Patch shared memory for license bypass
                 if (length > 1024) {
-                    // Likely license-related if large enough
                     setTimeout(() => {
                         try {
                             const view = new Uint32Array(buffer);
-                            // Common license validation patterns in shared memory
                             for (let i = 0; i < Math.min(256, view.length); i++) {
                                 if (view[i] === 0xDE_AD_BE_EF || view[i] === 0xCA_FE_BA_BE) {
-                                    view[i] = 0x1_CE_57_ED; // "LICEN5ED"
+                                    view[i] = 0x1_CE_57_ED;
                                     send({
                                         type: 'bypass',
                                         target: 'wasm_bypass',
@@ -1583,8 +1569,14 @@ const wasmBypass = {
                 }
 
                 return buffer;
-            };
-            SharedArrayBuffer.prototype = originalSAB.prototype;
+            }
+
+            HookedSharedArrayBuffer.prototype = OriginalSAB.prototype;
+            Object.defineProperty(globalThis, 'SharedArrayBuffer', {
+                value: HookedSharedArrayBuffer,
+                writable: true,
+                configurable: true,
+            });
         }
 
         // Hook Atomics operations for license validation bypass
@@ -1628,7 +1620,6 @@ const wasmBypass = {
         }
     },
 
-    // Hook BigInt WASM integration for license bypass
     hookBigIntWASMFeatures() {
         if (!this.config.modernFeatures.bigIntSupport.enabled) {
             return;
@@ -1637,12 +1628,12 @@ const wasmBypass = {
             return;
         }
 
-        // Hook BigInt constructor for license key spoofing
-        const originalBigInt = BigInt;
-        BigInt = function (value) {
-            const result = originalBigInt(value);
+        const self = this;
+        const OriginalBigInt = globalThis.BigInt;
 
-            // Detect potential license keys (large numbers)
+        function HookedBigInt(value) {
+            const result = OriginalBigInt(value);
+
             if (result > 0xFF_FF_FF_FF_FF_FFn && result < 0xFF_FF_FF_FF_FF_FF_FF_FFn) {
                 send({
                     type: 'info',
@@ -1651,17 +1642,23 @@ const wasmBypass = {
                     original: result.toString(),
                 });
 
-                // Store original for potential spoofing later
-                this.state.license_functions.add(`bigint_license_${result.toString()}`);
+                self.state.license_functions.add(`bigint_license_${result.toString()}`);
             }
 
             return result;
-        };
+        }
 
-        // Hook WASM BigInt imports/exports
+        Object.defineProperty(globalThis, 'BigInt', {
+            value: HookedBigInt,
+            writable: true,
+            configurable: true,
+        });
+
         if (typeof WebAssembly !== 'undefined' && WebAssembly.Global) {
-            const originalGlobal = WebAssembly.Global;
-            WebAssembly.Global = (descriptor, value) => {
+            const OriginalGlobal = WebAssembly.Global;
+
+            function HookedGlobal(descriptor, value) {
+                let modifiedValue = value;
                 if (
                     descriptor.value === 'i64'
                     && typeof value === 'bigint'
@@ -1674,24 +1671,25 @@ const wasmBypass = {
                         original_value: value.toString(),
                         spoofed_value: '1234567890123456789n',
                     });
-                    value = 1_234_567_890_123_456_789n;
+                    modifiedValue = 1_234_567_890_123_456_789n;
                 }
-                return new originalGlobal(descriptor, value);
-            };
-            WebAssembly.Global.prototype = originalGlobal.prototype;
+                return new OriginalGlobal(descriptor, modifiedValue);
+            }
+
+            HookedGlobal.prototype = OriginalGlobal.prototype;
+            WebAssembly.Global = HookedGlobal;
         }
     },
 
-    // Hook Memory64 WASM features
     hookMemory64Features() {
         if (!this.config.modernFeatures.memory64.enabled) {
             return;
         }
 
-        // Hook WebAssembly.Memory for 64-bit memory bypass
         if (typeof WebAssembly !== 'undefined' && WebAssembly.Memory) {
-            const originalMemory = WebAssembly.Memory;
-            WebAssembly.Memory = descriptor => {
+            const OriginalMemory = WebAssembly.Memory;
+
+            function HookedMemory(descriptor) {
                 send({
                     type: 'info',
                     target: 'wasm_bypass',
@@ -1701,7 +1699,6 @@ const wasmBypass = {
                     is_64bit: descriptor.index === 'i64',
                 });
 
-                // Spoof memory size for license validation bypass
                 if (descriptor.maximum && descriptor.maximum > 65_536) {
                     const originalMax = descriptor.maximum;
                     descriptor.maximum = Math.max(descriptor.initial || 1, 32_768);
@@ -1715,20 +1712,17 @@ const wasmBypass = {
                     });
                 }
 
-                const memory = new originalMemory(descriptor);
+                const memory = new OriginalMemory(descriptor);
 
-                // Patch memory for license validation
                 setTimeout(() => {
                     try {
                         const { buffer } = memory;
                         const view = new Uint32Array(buffer);
 
-                        // Look for license validation patterns in memory
                         for (let i = 0; i < Math.min(1024, view.length); i++) {
                             if (view[i] === 0x4C_49_43_45 || view[i] === 0x4E_53_45_44) {
-                                // "LICE" or "NSED"
-                                view[i] = 0x56_41_4C_49; // "VALI"
-                                view[i + 1] = 0x44; // "D"
+                                view[i] = 0x56_41_4C_49;
+                                view[i + 1] = 0x44;
                                 send({
                                     type: 'bypass',
                                     target: 'wasm_bypass',
@@ -1749,22 +1743,23 @@ const wasmBypass = {
                 }, 200);
 
                 return memory;
-            };
-            WebAssembly.Memory.prototype = originalMemory.prototype;
+            }
+
+            HookedMemory.prototype = OriginalMemory.prototype;
+            WebAssembly.Memory = HookedMemory;
         }
     },
 
-    // Hook SIMD instructions for license bypass
     hookSIMDFeatures() {
         if (!this.config.modernFeatures.simdInstructions.enabled) {
             return;
         }
 
-        // Hook WASM SIMD globals if they exist
         if (typeof WebAssembly !== 'undefined' && WebAssembly.Global) {
-            const originalGlobal = WebAssembly.Global;
-            WebAssembly.Global = (descriptor, value) => {
-                // Detect SIMD v128 globals used for license validation
+            const OriginalGlobal = WebAssembly.Global;
+
+            function HookedSIMDGlobal(descriptor, value) {
+                let modifiedValue = value;
                 if (descriptor.value === 'v128') {
                     send({
                         type: 'info',
@@ -1772,10 +1767,8 @@ const wasmBypass = {
                         action: 'wasm_simd_global_detected',
                     });
 
-                    // Spoof SIMD license validation vectors
                     if (value && typeof value === 'object') {
-                        // Create a "valid license" SIMD vector pattern
-                        value = Array.from({ length: 16 }).fill(0x4C); // Fill with 'L' for "LICENSE"
+                        modifiedValue = Array.from({ length: 16 }).fill(0x4C);
 
                         send({
                             type: 'bypass',
@@ -1784,9 +1777,11 @@ const wasmBypass = {
                         });
                     }
                 }
-                return new originalGlobal(descriptor, value);
-            };
-            WebAssembly.Global.prototype = originalGlobal.prototype;
+                return new OriginalGlobal(descriptor, modifiedValue);
+            }
+
+            HookedSIMDGlobal.prototype = OriginalGlobal.prototype;
+            WebAssembly.Global = HookedSIMDGlobal;
         }
 
         // Hook potential SIMD library functions
@@ -1952,12 +1947,11 @@ const wasmBypass = {
         this.state.hooked_functions.set(`obj.${funcName}`, original);
     },
 
-    // Monitor dynamic WASM creation
-    monitorDynamicWASM: () => {
-        // Monitor eval for dynamic WASM
-        const originalEval = window.eval;
+    monitorDynamicWASM() {
+        const evalKey = 'eval';
+        const originalEval = globalThis[evalKey];
 
-        window.eval = function (code) {
+        function HookedEval(code, ...restArgs) {
             if (
                 typeof code === 'string'
                 && (code.includes('WebAssembly') || code.includes('wasm'))
@@ -1970,13 +1964,18 @@ const wasmBypass = {
                 });
             }
 
-            return Reflect.apply(originalEval, this, arguments);
-        };
+            return Reflect.apply(originalEval, this, [code, ...restArgs]);
+        }
 
-        // Monitor Function constructor
-        const OriginalFunction = window.Function;
-        window.Function = new Proxy(OriginalFunction, {
-            construct(target, args) {
+        Object.defineProperty(globalThis, evalKey, {
+            value: HookedEval,
+            writable: true,
+            configurable: true,
+        });
+
+        const OriginalFunction = globalThis.Function;
+        globalThis.Function = new Proxy(OriginalFunction, {
+            construct(Target, args) {
                 const code = args.join('');
                 if (code.includes('WebAssembly') || code.includes('wasm')) {
                     send({
@@ -1987,7 +1986,7 @@ const wasmBypass = {
                     });
                 }
 
-                return new target(...args);
+                return new Target(...args);
             },
         });
     },
@@ -2021,7 +2020,7 @@ const wasmBypass = {
         const self = this;
 
         WebAssembly.Module = new Proxy(OriginalModule, {
-            construct(target, args) {
+            construct(ModuleTarget, args) {
                 send({
                     type: 'info',
                     target: 'wasm_protection_bypass',
@@ -2029,7 +2028,6 @@ const wasmBypass = {
                     args_length: args.length,
                 });
 
-                // Analyze the module
                 if (args[0]) {
                     const analysis = self.analyzeWASMBinary(args[0]);
 
@@ -2043,7 +2041,7 @@ const wasmBypass = {
                     }
                 }
 
-                return new target(...args);
+                return new ModuleTarget(...args);
             },
         });
     },
@@ -2061,7 +2059,6 @@ const wasmBypass = {
                 bytes_length: bytes.byteLength,
             });
 
-            // Analyze before compilation
             const analysis = self.analyzeWASMBinary(bytes);
 
             if (analysis.hasLicenseCheck) {
@@ -2073,7 +2070,8 @@ const wasmBypass = {
                 });
             }
 
-            return original.call(this, bytes);
+            const compiledModule = await original.call(this, bytes);
+            return compiledModule;
         };
     },
 
@@ -2241,15 +2239,13 @@ const wasmBypass = {
         };
     },
 
-    // Hook threading operations for concurrent license checks
     hookThreadingOperations: () => {
-        // Hook Worker threads that might validate licenses
         if (typeof Worker !== 'undefined') {
-            const originalWorker = Worker;
-            Worker = (scriptURL, options) => {
-                const worker = new originalWorker(scriptURL, options);
+            const OriginalWorker = Worker;
 
-                // Intercept thread communications
+            function HookedWorker(scriptURL, options) {
+                const worker = new OriginalWorker(scriptURL, options);
+
                 const originalPostMessage = worker.postMessage;
                 worker.postMessage = function (message, transfer) {
                     if (
@@ -2259,7 +2255,7 @@ const wasmBypass = {
                     ) {
                         message.licenseValid = true;
                         message.licensed = true;
-                        message.expiryDate = Date.now() + 31_536_000_000; // 1 year
+                        message.expiryDate = Date.now() + 31_536_000_000;
                         send({
                             type: 'bypass',
                             target: 'wasm_bypass',
@@ -2270,8 +2266,14 @@ const wasmBypass = {
                 };
 
                 return worker;
-            };
-            Worker.prototype = originalWorker.prototype;
+            }
+
+            HookedWorker.prototype = OriginalWorker.prototype;
+            Object.defineProperty(globalThis, 'Worker', {
+                value: HookedWorker,
+                writable: true,
+                configurable: true,
+            });
         }
 
         // Hook Atomics.wait to prevent license timeout checks
@@ -2369,7 +2371,7 @@ const wasmBypass = {
                 const originalAddEventListener = window.addEventListener;
                 window.addEventListener = function (type, listener, options) {
                     if (type === 'error' || type === 'unhandledrejection') {
-                        const wrappedListener = function (event) {
+                        const wrappedListener = event => {
                             if (
                                 event?.message
                                 && typeof event.message === 'string'
@@ -2384,11 +2386,12 @@ const wasmBypass = {
                                 });
                                 event.preventDefault();
                                 event.stopPropagation();
-                                return;
+                                return undefined;
                             }
                             if (listener) {
-                                return listener.call(this, event);
+                                listener.call(this, event);
                             }
+                            return undefined;
                         };
                         return originalAddEventListener.call(this, type, wrappedListener, options);
                     }
@@ -2966,7 +2969,8 @@ const wasmBypass = {
                     bytes = self.patchWASMBinary(bytes, analysis);
                 }
 
-                return originalCompile.call(this, bytes);
+                const compiledResult = await originalCompile.call(this, bytes);
+                return compiledResult;
             };
         }
     },
@@ -3146,10 +3150,12 @@ const wasmBypass = {
                         target: 'wasm_bypass',
                         action: 'crypto_license_verification_bypassed',
                     });
-                    return true;
+                    const bypassResult = await Promise.resolve(true);
+                    return bypassResult;
                 }
 
-                return originalVerify.call(this, algorithm, key, signature, data);
+                const verifyResult = await originalVerify.call(this, algorithm, key, signature, data);
+                return verifyResult;
             };
         }
     },

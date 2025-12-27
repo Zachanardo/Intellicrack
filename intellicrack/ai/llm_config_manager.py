@@ -154,7 +154,13 @@ class LLMConfigManager:
     # No dual storage - production-ready single source of truth
 
     def _get_default_profiles(self) -> dict[str, dict[str, Any]]:
-        """Get default model profiles for different use cases with dynamic model recommendations."""
+        """Get default model profiles for different use cases with dynamic model recommendations.
+
+        Returns:
+            dict[str, dict[str, Any]]: Dictionary mapping profile IDs to profile configurations,
+                each containing name, description, settings, and recommended models list.
+
+        """
         recommended_models = self._get_recommended_models_for_profiles()
 
         return {
@@ -600,7 +606,12 @@ class LLMConfigManager:
         central_config.save()  # Persist immediately to central config
 
     def _update_aggregate_metrics(self, model_id: str) -> None:
-        """Update aggregate metrics for a model."""
+        """Update aggregate metrics for a model.
+
+        Args:
+            model_id: str: Unique identifier for the model to update aggregate metrics for.
+
+        """
         history = self.metrics[model_id]["history"]
         if not history:
             return
@@ -916,7 +927,13 @@ _CONFIG_MANAGER = None
 
 
 def get_llm_config_manager() -> LLMConfigManager:
-    """Get the global LLM configuration manager."""
+    """Get the global LLM configuration manager.
+
+    Returns:
+        LLMConfigManager: The singleton instance of the LLM configuration manager,
+            creating it if necessary.
+
+    """
     global _CONFIG_MANAGER
     if _CONFIG_MANAGER is None:
         _CONFIG_MANAGER = LLMConfigManager()

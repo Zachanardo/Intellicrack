@@ -108,7 +108,13 @@ class ModelBatchTester:
         self._load_default_test_suites()
 
     def _load_default_test_suites(self) -> None:
-        """Load default test suites."""
+        """Load default test suites.
+
+        Initializes built-in test suites for basic functionality, code generation,
+        and binary analysis testing. Populates self.test_suites dictionary with
+        predefined test cases.
+
+        """
         # Basic functionality tests
         self.test_suites["basic"] = [
             TestCase(
@@ -233,6 +239,9 @@ class ModelBatchTester:
         Returns:
             Test result
 
+        Raises:
+            ValueError: If specified model is not found (caught internally).
+
         """
         llm_manager = llm_manager or self.llm_manager
         if not llm_manager:
@@ -354,6 +363,9 @@ class ModelBatchTester:
         Returns:
             Batch test report
 
+        Raises:
+            ValueError: If specified test suite is not found.
+
         """
         if suite_id not in self.test_suites:
             raise ValueError(f"Test suite '{suite_id}' not found")
@@ -442,7 +454,21 @@ class ModelBatchTester:
         model_ids: list[str],
         test_cases: list[TestCase],
     ) -> dict[str, Any]:
-        """Generate summary statistics from test results."""
+        """Generate summary statistics from test results.
+
+        Analyzes test results and produces aggregated statistics per model
+        and per test case, including success rates, validation metrics,
+        and performance measurements.
+
+        Args:
+            results: List of test results to summarize
+            model_ids: List of model IDs tested
+            test_cases: List of test cases executed
+
+        Returns:
+            Dictionary containing summary statistics with per-model and per-test metrics
+
+        """
         summary: dict[str, Any] = {
             "total_tests": len(results),
             "successful_tests": sum(bool(r.success) for r in results),
@@ -638,7 +664,18 @@ class ModelBatchTester:
         return output_path
 
     def _generate_html_report(self, report: BatchTestReport) -> str:
-        """Generate HTML report from test results."""
+        """Generate HTML report from test results.
+
+        Formats test results as an HTML document with summary statistics,
+        model performance tables, and detailed test result information.
+
+        Args:
+            report: Test report to convert to HTML format
+
+        Returns:
+            HTML string containing formatted test report
+
+        """
         html = f"""
 <!DOCTYPE html>
 <html>
@@ -739,7 +776,19 @@ _BATCH_TESTER = None
 
 
 def get_batch_tester(llm_manager: LLMManager | None = None) -> ModelBatchTester:
-    """Get the global batch tester."""
+    """Get the global batch tester.
+
+    Returns a singleton instance of ModelBatchTester, creating it if necessary.
+    The tester can be initialized with an optional LLM manager for conducting
+    batch tests across multiple models.
+
+    Args:
+        llm_manager: Optional LLM manager instance for model testing
+
+    Returns:
+        Singleton ModelBatchTester instance
+
+    """
     global _BATCH_TESTER
     if _BATCH_TESTER is None:
         _BATCH_TESTER = ModelBatchTester(llm_manager=llm_manager)

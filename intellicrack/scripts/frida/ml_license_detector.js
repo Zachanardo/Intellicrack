@@ -594,8 +594,8 @@ const MlLicenseDetector = {
     // === HOOK PLACEMENT EVALUATION ===
     evaluateHookPlacement(detectionResult) {
         const { confidence } = detectionResult;
-        const { thresholds } = this.config;
-        const strategy = this.config.hook_strategy;
+        const { thresholds, hook_strategy } = this.config;
+        const strategy = hook_strategy;
 
         try {
             if (strategy.aggressive) {
@@ -1053,16 +1053,18 @@ const MlLicenseDetector = {
 
         // Use bypass results as ground truth
         for (const key in this.bypass_results) {
-            const result = this.bypass_results[key];
+            if (Object.hasOwn(this.bypass_results, key)) {
+                const result = this.bypass_results[key];
 
-            if (result.detection && result.bypass) {
-                const label = result.bypass.applied ? 1 : 0; // License function if bypass was applied
+                if (result.detection && result.bypass) {
+                    const label = result.bypass.applied ? 1 : 0; // License function if bypass was applied
 
-                trainingData.push({
-                    features: result.detection.features,
-                    label,
-                    weight: 1,
-                });
+                    trainingData.push({
+                        features: result.detection.features,
+                        label,
+                        weight: 1,
+                    });
+                }
             }
         }
 
@@ -1099,27 +1101,29 @@ const MlLicenseDetector = {
         let total = 0;
 
         for (const key in this.bypass_results) {
-            const result = this.bypass_results[key];
+            if (Object.hasOwn(this.bypass_results, key)) {
+                const result = this.bypass_results[key];
 
-            if (result.detection && result.bypass) {
-                total++;
+                if (result.detection && result.bypass) {
+                    total++;
 
-                const predicted
-                    = result.detection.confidence >= this.config.thresholds.medium_confidence;
-                const actual = result.bypass.applied;
+                    const predicted
+                        = result.detection.confidence >= this.config.thresholds.medium_confidence;
+                    const actual = result.bypass.applied;
 
-                if (predicted === actual) {
-                    correct++;
+                    if (predicted === actual) {
+                        correct++;
 
-                    if (actual) {
-                        metrics.true_positives++;
+                        if (actual) {
+                            metrics.true_positives++;
+                        } else {
+                            metrics.true_negatives++;
+                        }
+                    } else if (predicted && !actual) {
+                        metrics.false_positives++;
                     } else {
-                        metrics.true_negatives++;
+                        metrics.false_negatives++;
                     }
-                } else if (predicted && !actual) {
-                    metrics.false_positives++;
-                } else {
-                    metrics.false_negatives++;
                 }
             }
         }
@@ -1220,7 +1224,7 @@ const MlLicenseDetector = {
         let hash = 0;
         const str = JSON.stringify(params);
         for (let i = 0; i < str.length; i++) {
-            const char = str.charCodeAt(i);
+            const char = str.codePointAt(i) || 0;
             hash = (hash << 5) - hash + char;
             hash &= hash; // Convert to 32-bit integer
         }
@@ -1434,13 +1438,15 @@ const MlLicenseDetector = {
             let medConf = 0;
             let lowConf = 0;
             for (const key in this.detected_functions) {
-                const conf = this.detected_functions[key].confidence;
-                if (conf >= this.config.thresholds.high_confidence) {
-                    highConf++;
-                } else if (conf >= this.config.thresholds.medium_confidence) {
-                    medConf++;
-                } else {
-                    lowConf++;
+                if (Object.hasOwn(this.detected_functions, key)) {
+                    const conf = this.detected_functions[key].confidence;
+                    if (conf >= this.config.thresholds.high_confidence) {
+                        highConf++;
+                    } else if (conf >= this.config.thresholds.medium_confidence) {
+                        medConf++;
+                    } else {
+                        lowConf++;
+                    }
                 }
             }
 
@@ -1495,15 +1501,17 @@ const MlLicenseDetector = {
                 action: 'learning_status',
                 enabled: this.config.learning.enabled,
             });
+            let strategyName = 'Adaptive';
+            if (this.config.hook_strategy.aggressive) {
+                strategyName = 'Aggressive';
+            } else if (this.config.hook_strategy.conservative) {
+                strategyName = 'Conservative';
+            }
             send({
                 type: 'info',
                 target: 'ml_license_detector',
                 action: 'detection_strategy',
-                strategy: this.config.hook_strategy.aggressive
-                    ? 'Aggressive'
-                    : (this.config.hook_strategy.conservative
-                        ? 'Conservative'
-                        : 'Adaptive'),
+                strategy: strategyName,
             });
 
             send({

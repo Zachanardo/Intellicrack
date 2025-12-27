@@ -54,10 +54,20 @@ class ProgressCallback(ABC):
 
     @abstractmethod
     def on_progress(self, progress: LoadingProgress) -> None:
-        """Called when loading progress is updated."""
+        """Called when loading progress is updated.
+
+        Args:
+            progress: The current loading progress information.
+        """
         pass
 
     @abstractmethod
     def on_completed(self, model_id: str, success: bool, error: str | None = None) -> None:
-        """Called when loading is completed."""
+        """Called when loading is completed.
+
+        Args:
+            model_id: The unique identifier of the model that finished loading.
+            success: Whether the loading operation was successful.
+            error: Optional error message if loading failed.
+        """
         pass

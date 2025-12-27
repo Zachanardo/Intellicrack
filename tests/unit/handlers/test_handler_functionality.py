@@ -11,6 +11,29 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
+HANDLERS_AVAILABLE = False
+IMPORT_ERROR = ""
+HAS_CAPSTONE = False
+CAPSTONE_AVAILABLE = False
+HAS_LIEF = False
+LIEF_AVAILABLE = False
+HAS_PEFILE = False
+PEFILE_AVAILABLE = False
+HAS_KEYSTONE = False
+KEYSTONE_AVAILABLE = False
+HAS_CRYPTOGRAPHY = False
+CRYPTOGRAPHY_AVAILABLE = False
+Cs = None
+CS_ARCH_X86 = None
+CS_MODE_32 = None
+CS_MODE_64 = None
+lief_parse = None
+PE = None
+Ks = None
+KS_ARCH_X86 = None
+KS_MODE_32 = None
+KS_MODE_64 = None
+
 try:
     from intellicrack.handlers.capstone_handler import (
         HAS_CAPSTONE,
@@ -47,6 +70,12 @@ try:
 except ImportError as e:
     HANDLERS_AVAILABLE = False
     IMPORT_ERROR = str(e)
+
+
+pytestmark = pytest.mark.skipif(
+    not HANDLERS_AVAILABLE,
+    reason=f"Handlers not available: {IMPORT_ERROR}"
+)
 
 
 @pytest.fixture

@@ -78,15 +78,18 @@ class Tutorial:
 class TutorialSystem:
     """Interactive tutorial system for Intellicrack CLI."""
 
-    def __init__(self, cli_instance: object | None = None) -> None:
+    def __init__(self, cli_instance: object | None = None, interactive: bool = True) -> None:
         """Initialize tutorial system.
 
         Args:
             cli_instance: Reference to CLI instance for command execution.
+            interactive: Whether to run in interactive mode (prompts for input).
+                        Set to False for testing or automated scenarios.
 
         """
         self.console = Console() if RICH_AVAILABLE else None
         self.cli_instance = cli_instance
+        self.interactive = interactive
 
         # Tutorial state
         self.current_tutorial: Tutorial | None = None
@@ -448,6 +451,9 @@ class TutorialSystem:
 
         self.current_tutorial = tutorial
         self.current_step = self.tutorial_progress.get(tutorial_name, 0)
+        # Initialize progress tracking if not already present
+        if tutorial_name not in self.tutorial_progress:
+            self.tutorial_progress[tutorial_name] = 0
 
         self._show_tutorial_intro()
         return True
@@ -546,8 +552,9 @@ class TutorialSystem:
 
             logger.info("Navigation: 'tutorial next' | 'tutorial prev' | 'tutorial skip' | 'tutorial quit'")
 
-        # Prompt for command execution
-        self._prompt_for_command()
+        # Prompt for command execution (only in interactive mode)
+        if self.interactive:
+            self._prompt_for_command()
 
     def _prompt_for_command(self) -> None:
         """Prompt user to execute the tutorial command interactively."""
@@ -1096,7 +1103,7 @@ class TutorialSystem:
 
     def interactive_tutorial_selection(self) -> str | None:
         """Interactive tutorial selection using Prompt."""
-        if not RICH_AVAILABLE or not self.console:
+        if not self.interactive or not RICH_AVAILABLE or not self.console:
             return None
 
         tutorial_names = list(self.tutorials.keys())
@@ -1121,7 +1128,7 @@ class TutorialSystem:
 
     def confirm_tutorial_reset(self, tutorial_name: str) -> bool:
         """Confirm tutorial reset using Confirm."""
-        if not RICH_AVAILABLE or not self.console:
+        if not self.interactive or not RICH_AVAILABLE or not self.console:
             return False
 
         if tutorial := self.tutorials.get(tutorial_name):
@@ -1134,7 +1141,7 @@ class TutorialSystem:
 
     def get_custom_tutorial_settings(self) -> dict[str, Any]:
         """Get custom tutorial settings using Prompt."""
-        if not RICH_AVAILABLE or not self.console:
+        if not self.interactive or not RICH_AVAILABLE or not self.console:
             return {}
 
         settings: dict[str, Any] = {"auto_advance": Confirm.ask("Enable auto-advance to next step?", default=False)}

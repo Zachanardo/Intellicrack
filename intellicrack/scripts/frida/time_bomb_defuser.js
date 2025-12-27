@@ -278,7 +278,7 @@ const TimeBombDefuser = {
     // Windows capability detection
     detectWindowsCapabilities() {
         // Check for .NET runtime
-        Process.enumerateModules().forEach(function (module) {
+        for (const module of Process.enumerateModules()) {
             const name = module.name.toLowerCase();
             if (
                 name.includes('clr.dll')
@@ -287,7 +287,7 @@ const TimeBombDefuser = {
             ) {
                 this.platform.capabilities.dotnet = true;
             }
-        }, this);
+        }
     },
 
     // macOS capability detection
@@ -301,11 +301,11 @@ const TimeBombDefuser = {
     // Linux capability detection
     detectLinuxCapabilities() {
         // Check for glibc
-        Process.enumerateModules().forEach(function (module) {
+        for (const module of Process.enumerateModules()) {
             if (module.name.includes('libc.so')) {
                 this.platform.capabilities.libc = true;
             }
-        }, this);
+        }
     },
 
     // Initialize process tracking for per-process time isolation
@@ -382,9 +382,9 @@ const TimeBombDefuser = {
         const features = this.extractFeatures(context);
 
         // Calculate weighted score
-        for (const feature in features) {
+        for (const [feature, value] of Object.entries(features)) {
             if (this.mlModel.weights.has(feature)) {
-                score += features[feature] * this.mlModel.weights.get(feature);
+                score += value * this.mlModel.weights.get(feature);
             }
         }
 
@@ -909,10 +909,10 @@ const TimeBombDefuser = {
         ];
 
         // Randomly apply mutations
-        Object.keys(this.hooks).forEach(function (address) {
+        for (const address of Object.keys(this.hooks)) {
             const mutation = mutations[Math.floor(Math.random() * mutations.length)];
             mutation.call(this, address);
-        }, this);
+        }
     },
 
     // Should spoof time (intelligent decision)
@@ -1161,24 +1161,16 @@ const TimeBombDefuser = {
             'crypt32.dll',
             'CertGetCertificateChain',
             original =>
-                function (
-                    _hChainEngine,
-                    _pCertContext,
-                    pTime,
-                    _hAdditionalStore,
-                    _pChainPara,
-                    _dwFlags,
-                    _pvReserved,
-                    _ppChainContext
-                ) {
+                function (...args) {
+                    const pTime = args[2];
                     if (pTime && !pTime.isNull() && self.shouldSpoofTime()) {
                         // Replace time with safe time
                         const safeTime = Memory.alloc(8);
                         safeTime.writeU64(self.getSpoofedFileTime());
-                        arguments[2] = safeTime;
+                        args[2] = safeTime;
                         self.stats.timeSpoofs++;
                     }
-                    return Reflect.apply(original, this, arguments);
+                    return Reflect.apply(original, this, args);
                 }
         );
 
@@ -1202,8 +1194,9 @@ const TimeBombDefuser = {
                 'advapi32.dll',
                 func,
                 original =>
-                    function (_hKey, lpValueName, _lpReserved, lpType, lpData, lpcbData) {
-                        const result = Reflect.apply(original, this, arguments);
+                    function (...args) {
+                        const [, lpValueName, , lpType, lpData, lpcbData] = args;
+                        const result = Reflect.apply(original, this, args);
 
                         if (result === 0 && lpData && lpValueName) {
                             const valueName = func.endsWith('W')
@@ -1227,17 +1220,12 @@ const TimeBombDefuser = {
                 'advapi32.dll',
                 func,
                 original =>
-                    function (
-                        _hKey,
-                        _dwIndex,
-                        lpValueName,
-                        _lpcchValueName,
-                        _lpReserved,
-                        lpType,
-                        lpData,
-                        lpcbData
-                    ) {
-                        const result = Reflect.apply(original, this, arguments);
+                    function (...args) {
+                        const lpValueName = args[2];
+                        const lpType = args[5];
+                        const lpData = args[6];
+                        const lpcbData = args[7];
+                        const result = Reflect.apply(original, this, args);
 
                         if (result === 0 && lpData && lpValueName) {
                             const valueName = func.endsWith('W')
@@ -1857,7 +1845,7 @@ const TimeBombDefuser = {
     startProgressionTimer() {
         setInterval(() => {
             // Update process-specific times
-            for (const process in this.processStartTimes) {
+            for (const process of Object.keys(this.processStartTimes)) {
                 const elapsed = Date.now() - this.processStartTimes[process];
                 const progressed = elapsed * this.config.timeProgression.rate;
 

@@ -162,19 +162,38 @@ class AISharedContext:
             self._context[key] = value
 
     def update(self, updates: dict[str, Any]) -> None:
-        """Update multiple values in shared context."""
+        """Update multiple values in shared context.
+
+        Args:
+            updates: Dictionary of key-value pairs to add/update in context
+
+        """
         with self._lock:
             self._context.update(updates)
 
     def get_analysis_cache(self, binary_hash: str) -> dict[str, Any] | None:
-        """Get cached analysis results for a binary."""
+        """Get cached analysis results for a binary.
+
+        Args:
+            binary_hash: Hash of the binary to retrieve cached results for
+
+        Returns:
+            Dictionary of cached analysis results or None if not found
+
+        """
         with self._lock:
             cached_analyses = validate_type(self._context["cached_analyses"], dict)
             result = cached_analyses.get(binary_hash)
             return validate_type(result, dict) if result is not None else None
 
     def cache_analysis(self, binary_hash: str, results: dict[str, Any]) -> None:
-        """Cache analysis results for a binary."""
+        """Cache analysis results for a binary.
+
+        Args:
+            binary_hash: Hash of the binary to cache results for
+            results: Dictionary of analysis results to cache
+
+        """
         with self._lock:
             cached_analyses = validate_type(self._context["cached_analyses"], dict)
             cached_analyses[binary_hash] = {
@@ -204,7 +223,14 @@ class AIEventBus:
         logger.info("AI Event Bus initialized")
 
     def subscribe(self, event_type: str, callback: Callable[[dict[str, Any], str], None], component_name: str) -> None:
-        """Subscribe to specific events."""
+        """Subscribe to specific events.
+
+        Args:
+            event_type: Type of event to subscribe to
+            callback: Function to call when event is emitted
+            component_name: Name of the subscribing component
+
+        """
         with self._lock:
             if event_type not in self._subscribers:
                 self._subscribers[event_type] = []
@@ -219,7 +245,14 @@ class AIEventBus:
         logger.debug("Component %s subscribed to %s", component_name, event_type)
 
     def emit(self, event_type: str, data: dict[str, Any], source_component: str) -> None:
-        """Emit an event to all subscribers."""
+        """Emit an event to all subscribers.
+
+        Args:
+            event_type: Type of event to emit
+            data: Event data to pass to subscribers
+            source_component: Name of the component emitting the event
+
+        """
         with self._lock:
             subscribers = self._subscribers.get(event_type, [])
 
@@ -255,7 +288,13 @@ class AIEventBus:
                     logger.exception("Error calling subscriber %s: %s", subscriber["component"], e)
 
     def unsubscribe(self, event_type: str, component_name: str) -> None:
-        """Unsubscribe a component from an event type."""
+        """Unsubscribe a component from an event type.
+
+        Args:
+            event_type: Type of event to unsubscribe from
+            component_name: Name of the component to unsubscribe
+
+        """
         with self._lock:
             if event_type in self._subscribers:
                 self._subscribers[event_type] = [sub for sub in self._subscribers[event_type] if sub["component"] != component_name]
@@ -381,7 +420,12 @@ class AIOrchestrator:
         logger.info("All AI components initialization attempt completed.")
 
     def _setup_event_subscriptions(self) -> None:
-        """Set up event subscriptions for component coordination."""
+        """Set up event subscriptions for component coordination.
+
+        Subscribes the orchestrator to various system events including analysis
+        completion, ML prediction updates, model loading, and error notifications.
+
+        """
         # Subscribe to analysis completion events
         self.event_bus.subscribe("analysis_complete", self._on_analysis_complete, "orchestrator")
         self.event_bus.subscribe("ml_prediction_complete", self._on_ml_prediction_complete, "orchestrator")
@@ -389,7 +433,13 @@ class AIOrchestrator:
         self.event_bus.subscribe("error_occurred", self._on_error_occurred, "orchestrator")
 
     def _on_analysis_complete(self, data: dict[str, Any], source: str) -> None:
-        """Handle analysis completion events."""
+        """Handle analysis completion events.
+
+        Args:
+            data: Event data containing analysis results and metadata
+            source: Name of the component that triggered the event
+
+        """
         task_id = data.get("task_id", "unknown")
         logger.info("Analysis complete from %s for task %s", source, task_id)
 
@@ -406,7 +456,13 @@ class AIOrchestrator:
             logger.warning("Analysis completion event for task %s from %s did not contain 'results' data.", task_id, source)
 
     def _on_ml_prediction_complete(self, data: dict[str, Any], source: str) -> None:
-        """Handle ML prediction completion events."""
+        """Handle ML prediction completion events.
+
+        Args:
+            data: Event data containing prediction results
+            source: Name of the component that triggered the event
+
+        """
         logger.info("ML prediction complete from %s", source)
 
         # Check if we need to escalate to complex analysis
@@ -415,15 +471,32 @@ class AIOrchestrator:
             self._escalate_to_complex_analysis(data)
 
     def _on_model_loaded(self, data: dict[str, Any], source: str) -> None:
-        """Handle model loading events."""
+        """Handle model loading events.
+
+        Args:
+            data: Event data containing model loading information
+            source: Name of the component that triggered the event
+
+        """
         logger.info("Model loaded in %s: %s", source, data.get("model_name", "unknown"))
 
     def _on_error_occurred(self, data: dict[str, Any], source: str) -> None:
-        """Handle error events."""
+        """Handle error events.
+
+        Args:
+            data: Event data containing error information
+            source: Name of the component that triggered the event
+
+        """
         logger.exception("Error in %s: %s", source, data.get("error", "unknown error"))
 
     def _escalate_to_complex_analysis(self, ml_data: dict[str, Any]) -> None:
-        """Escalate low-confidence ML results to complex LLM analysis."""
+        """Escalate low-confidence ML results to complex LLM analysis.
+
+        Args:
+            ml_data: ML prediction data to escalate for complex analysis
+
+        """
         if self.model_manager:
             logger.info("Escalating to complex analysis due to low ML confidence")
             # Create complex analysis task
@@ -459,7 +532,12 @@ class AIOrchestrator:
         logger.info("Task processing stopped")
 
     def _process_tasks(self) -> None:
-        """Process tasks in the main loop."""
+        """Process tasks in the main loop.
+
+        Continuously retrieves and executes tasks from the priority queue,
+        handling timeouts and errors gracefully.
+
+        """
         while self.is_running:
             try:
                 # Get next task (blocking with timeout)
@@ -476,7 +554,15 @@ class AIOrchestrator:
                 logger.exception("Error in task processing loop: %s", e)
 
     def _execute_task(self, task: AITask) -> AIResult:
-        """Execute an AI task using the appropriate components."""
+        """Execute an AI task using the appropriate components.
+
+        Args:
+            task: The AI task to execute
+
+        Returns:
+            AIResult containing task execution outcome
+
+        """
         start_time = datetime.now()
         result_data: dict[str, Any] = {}
         components_used: list[str] = []
@@ -616,7 +702,19 @@ class AIOrchestrator:
         return result
 
     def _execute_vulnerability_scan(self, task: AITask) -> tuple[dict[str, Any], list[str], float]:
-        """Execute vulnerability scanning task."""
+        """Execute vulnerability scanning task.
+
+        Args:
+            task: The vulnerability scan task to execute
+
+        Returns:
+            Tuple of (result_data, components_used, confidence)
+
+        Raises:
+            ValueError: If binary_path is not provided in task input
+            AttributeError: If no analysis method is available on ai_assistant
+
+        """
         components_used: list[str] = []
         result_data: dict[str, Any] = {}
         confidence = 0.0
@@ -649,7 +747,18 @@ class AIOrchestrator:
         return result_data, components_used, confidence
 
     def _execute_license_analysis(self, task: AITask) -> tuple[dict[str, Any], list[str], float]:
-        """Execute license analysis task."""
+        """Execute license analysis task.
+
+        Args:
+            task: The license analysis task to execute
+
+        Returns:
+            Tuple of (result_data, components_used, confidence)
+
+        Raises:
+            AttributeError: If no license analysis method is available on ai_assistant
+
+        """
         components_used: list[str] = []
         result_data: dict[str, Any] = {}
         confidence = 0.0
@@ -674,7 +783,18 @@ class AIOrchestrator:
         return result_data, components_used, confidence
 
     def _execute_binary_analysis(self, task: AITask) -> tuple[dict[str, Any], list[str], float]:
-        """Execute binary analysis task."""
+        """Execute binary analysis task.
+
+        Args:
+            task: The binary analysis task to execute
+
+        Returns:
+            Tuple of (result_data, components_used, confidence)
+
+        Raises:
+            AttributeError: If no binary analysis method is available on hex_bridge
+
+        """
         components_used: list[str] = []
         result_data: dict[str, Any] = {}
         confidence = 0.0
@@ -730,7 +850,18 @@ class AIOrchestrator:
         return result_data, components_used, confidence
 
     def _execute_reasoning_task(self, task: AITask) -> tuple[dict[str, Any], list[str], float]:
-        """Execute complex reasoning task."""
+        """Execute complex reasoning task.
+
+        Args:
+            task: The reasoning task to execute
+
+        Returns:
+            Tuple of (result_data, components_used, confidence)
+
+        Raises:
+            AttributeError: If no reasoning method is available on ai_assistant
+
+        """
         components_used: list[str] = []
         result_data: dict[str, Any] = {}
         confidence = 0.0
@@ -801,7 +932,15 @@ class AIOrchestrator:
         return result_data, components_used, confidence
 
     def _extract_recommendations(self, content: str) -> list[str]:
-        """Extract actionable recommendations from LLM response."""
+        """Extract actionable recommendations from LLM response.
+
+        Args:
+            content: LLM response text to extract recommendations from
+
+        Returns:
+            List of extracted recommendation strings
+
+        """
         recommendations = []
 
         # Look for common recommendation patterns
@@ -816,7 +955,15 @@ class AIOrchestrator:
         return recommendations[:5]  # Limit to top 5 recommendations
 
     def _execute_frida_script_generation(self, task: AITask) -> tuple[dict[str, Any], list[str], float]:
-        """Execute Frida script generation task."""
+        """Execute Frida script generation task.
+
+        Args:
+            task: The Frida script generation task to execute
+
+        Returns:
+            Tuple of (result_data, components_used, confidence)
+
+        """
         components_used: list[str] = []
         result_data: dict[str, Any] = {}
         confidence = 0.0
@@ -863,7 +1010,15 @@ class AIOrchestrator:
         return result_data, components_used, confidence
 
     def _execute_ghidra_script_generation(self, task: AITask) -> tuple[dict[str, Any], list[str], float]:
-        """Execute Ghidra script generation task."""
+        """Execute Ghidra script generation task.
+
+        Args:
+            task: The Ghidra script generation task to execute
+
+        Returns:
+            Tuple of (result_data, components_used, confidence)
+
+        """
         components_used: list[str] = []
         result_data: dict[str, Any] = {}
         confidence = 0.0
@@ -910,7 +1065,15 @@ class AIOrchestrator:
         return result_data, components_used, confidence
 
     def _execute_unified_script_generation(self, task: AITask) -> tuple[dict[str, Any], list[str], float]:
-        """Execute unified script generation task (both Frida and Ghidra)."""
+        """Execute unified script generation task (both Frida and Ghidra).
+
+        Args:
+            task: The unified script generation task to execute
+
+        Returns:
+            Tuple of (result_data, components_used, confidence)
+
+        """
         components_used: list[str] = []
         result_data: dict[str, Any] = {}
         confidence = 0.0
@@ -975,7 +1138,15 @@ class AIOrchestrator:
         return result_data, components_used, confidence
 
     def _execute_script_testing(self, task: AITask) -> tuple[dict[str, Any], list[str], float]:
-        """Execute script testing task."""
+        """Execute script testing task.
+
+        Args:
+            task: The script testing task to execute
+
+        Returns:
+            Tuple of (result_data, components_used, confidence)
+
+        """
         components_used: list[str] = []
         result_data: dict[str, Any] = {}
         confidence = 0.0
@@ -1030,7 +1201,15 @@ class AIOrchestrator:
         return result_data, components_used, confidence
 
     def _execute_script_refinement(self, task: AITask) -> tuple[dict[str, Any], list[str], float]:
-        """Execute script refinement task."""
+        """Execute script refinement task.
+
+        Args:
+            task: The script refinement task to execute
+
+        Returns:
+            Tuple of (result_data, components_used, confidence)
+
+        """
         components_used: list[str] = []
         result_data: dict[str, Any] = {}
         confidence = 0.0
@@ -1064,7 +1243,15 @@ class AIOrchestrator:
         return result_data, components_used, confidence
 
     def _execute_autonomous_workflow(self, task: AITask) -> tuple[dict[str, Any], list[str], float]:
-        """Execute autonomous workflow task."""
+        """Execute autonomous workflow task.
+
+        Args:
+            task: The autonomous workflow task to execute
+
+        Returns:
+            Tuple of (result_data, components_used, confidence)
+
+        """
         components_used: list[str] = []
         result_data: dict[str, Any] = {}
         confidence = 0.0
@@ -1104,7 +1291,15 @@ class AIOrchestrator:
         return result_data, components_used, confidence
 
     def submit_task(self, task: AITask) -> str:
-        """Submit a task for processing."""
+        """Submit a task for processing.
+
+        Args:
+            task: The task to submit for processing
+
+        Returns:
+            The task ID string
+
+        """
         # Add to priority queue (negative priority for max-heap behavior)
         self.task_queue.put((-task.priority, task))
         self.active_tasks[task.task_id] = task
@@ -1113,7 +1308,15 @@ class AIOrchestrator:
         return task.task_id
 
     def get_task_status(self, task_id: str) -> dict[str, Any] | None:
-        """Get the status of a task."""
+        """Get the status of a task.
+
+        Args:
+            task_id: The task identifier to check status for
+
+        Returns:
+            Dictionary with task status and details, or None if not found
+
+        """
         if task_id in self.active_tasks:
             return {
                 "status": "active",
@@ -1165,7 +1368,16 @@ class AIOrchestrator:
         )
 
     def quick_vulnerability_scan(self, binary_path: str, callback: Callable[[Any], None] | None = None) -> str:
-        """Quick vulnerability scan using fast ML models."""
+        """Quick vulnerability scan using fast ML models.
+
+        Args:
+            binary_path: Path to the binary to scan
+            callback: Optional callback function for task completion
+
+        Returns:
+            Task ID string for the submitted scan task
+
+        """
         task = AITask(
             task_id=f"vuln_scan_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
             task_type=AITaskType.VULNERABILITY_SCAN,
@@ -1177,7 +1389,16 @@ class AIOrchestrator:
         return self.submit_task(task)
 
     def complex_license_analysis(self, binary_path: str, callback: Callable[[Any], None] | None = None) -> str:
-        """Complex license analysis using LLM reasoning."""
+        """Complex license analysis using LLM reasoning.
+
+        Args:
+            binary_path: Path to the binary to analyze
+            callback: Optional callback function for task completion
+
+        Returns:
+            Task ID string for the submitted analysis task
+
+        """
         task = AITask(
             task_id=f"license_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
             task_type=AITaskType.LICENSE_ANALYSIS,
@@ -1189,7 +1410,16 @@ class AIOrchestrator:
         return self.submit_task(task)
 
     def comprehensive_analysis(self, binary_path: str, callback: Callable[[Any], None] | None = None) -> str:
-        """Comprehensive analysis using all available AI resources."""
+        """Comprehensive analysis using all available AI resources.
+
+        Args:
+            binary_path: Path to the binary to analyze
+            callback: Optional callback function for task completion
+
+        Returns:
+            Task ID string for the submitted analysis task
+
+        """
         task = AITask(
             task_id=f"comprehensive_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
             task_type=AITaskType.BINARY_ANALYSIS,
@@ -1201,7 +1431,12 @@ class AIOrchestrator:
         return self.submit_task(task)
 
     def get_component_status(self) -> dict[str, Any]:
-        """Get status of all AI components."""
+        """Get status of all AI components.
+
+        Returns:
+            Dictionary containing status of all AI system components
+
+        """
         llm_status = {}
         if self.llm_manager:
             llm_status = {
@@ -1280,11 +1515,21 @@ class AIOrchestrator:
         return self.task_progress.get(task_id)
 
     def get_all_task_progress(self) -> dict[str, dict[str, Any]]:
-        """Get progress information for all tasks."""
+        """Get progress information for all tasks.
+
+        Returns:
+            Dictionary mapping task IDs to their progress information
+
+        """
         return self.task_progress.copy()
 
     def clear_task_progress(self, task_id: str) -> None:
-        """Clear progress information for a completed task."""
+        """Clear progress information for a completed task.
+
+        Args:
+            task_id: Task identifier to clear progress for
+
+        """
         self.task_progress.pop(task_id, None)
         self.progress_callbacks.pop(task_id, None)
         logger.debug("Cleared progress tracking for task %s", task_id)
@@ -1310,7 +1555,12 @@ _ORCHESTRATOR_INSTANCE = None
 
 
 def get_orchestrator() -> AIOrchestrator:
-    """Get the global AI orchestrator instance."""
+    """Get the global AI orchestrator instance.
+
+    Returns:
+        The singleton AIOrchestrator instance
+
+    """
     global _ORCHESTRATOR_INSTANCE  # pylint: disable=global-statement
     if _ORCHESTRATOR_INSTANCE is None:
         _ORCHESTRATOR_INSTANCE = AIOrchestrator()
@@ -1318,7 +1568,11 @@ def get_orchestrator() -> AIOrchestrator:
 
 
 def shutdown_orchestrator() -> None:
-    """Shutdown the global orchestrator instance."""
+    """Shutdown the global orchestrator instance.
+
+    Performs cleanup and releases resources held by the orchestrator.
+
+    """
     global _ORCHESTRATOR_INSTANCE  # pylint: disable=global-statement
     if _ORCHESTRATOR_INSTANCE:
         _ORCHESTRATOR_INSTANCE.shutdown()

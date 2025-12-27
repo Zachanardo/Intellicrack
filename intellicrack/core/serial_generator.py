@@ -82,7 +82,12 @@ class SerialNumberGenerator:
         self.solver = z3.Solver()
 
     def _initialize_algorithms(self) -> dict[str, Callable[[int], str]]:
-        """Initialize common serial generation algorithms."""
+        """Initialize common serial generation algorithms.
+
+        Returns:
+            dict[str, Callable[[int], str]]: Mapping of algorithm names to their implementation functions.
+
+        """
         algorithms: dict[str, Callable[[int], str]] = {
             "luhn": self._generate_luhn_serial,
             "verhoeff": self._generate_verhoeff_serial,
@@ -99,7 +104,12 @@ class SerialNumberGenerator:
         return algorithms
 
     def _initialize_checksums(self) -> dict[str, Callable[[str], str]]:
-        """Initialize checksum calculation functions."""
+        """Initialize checksum calculation functions.
+
+        Returns:
+            dict[str, Callable[[str], str]]: Mapping of checksum algorithm names to their implementation functions.
+
+        """
         checksums: dict[str, Callable[[str], str]] = {
             "luhn": self._calculate_luhn,
             "verhoeff": self._calculate_verhoeff,
@@ -117,7 +127,15 @@ class SerialNumberGenerator:
         return checksums
 
     def analyze_serial_algorithm(self, valid_serials: list[str]) -> dict[str, Any]:
-        """Analyze valid serials to determine generation algorithm."""
+        """Analyze valid serials to determine generation algorithm.
+
+        Args:
+            valid_serials: List of known valid serial numbers to analyze.
+
+        Returns:
+            dict[str, Any]: Analysis results including detected format, length, structure, checksum algorithm, patterns, and confidence scores.
+
+        """
         logger.info("Starting serial algorithm analysis for %s valid serials.", len(valid_serials))
         analysis = {
             "format": self._detect_format(valid_serials),
@@ -153,7 +171,15 @@ class SerialNumberGenerator:
         return analysis
 
     def _detect_format(self, serials: list[str]) -> SerialFormat:
-        """Detect the format of serial numbers."""
+        """Detect the format of serial numbers.
+
+        Args:
+            serials: List of serial numbers to analyze for format detection.
+
+        Returns:
+            SerialFormat: The detected format (NUMERIC, ALPHANUMERIC, HEXADECIMAL, BASE32, UUID, MICROSOFT, or CUSTOM).
+
+        """
         if not serials:
             logger.debug("No serials provided, defaulting to CUSTOM format.")
             return SerialFormat.CUSTOM
@@ -187,7 +213,15 @@ class SerialNumberGenerator:
         return SerialFormat.CUSTOM
 
     def _analyze_length(self, serials: list[str]) -> dict[str, int]:
-        """Analyze length patterns in serials."""
+        """Analyze length patterns in serials.
+
+        Args:
+            serials: List of serial numbers to analyze for length patterns.
+
+        Returns:
+            dict[str, int]: Statistics including min, max, mode, and clean (separators removed) length metrics.
+
+        """
         lengths = [len(s) for s in serials]
         clean_lengths = [len(s.replace("-", "").replace(" ", "")) for s in serials]
 
@@ -203,7 +237,15 @@ class SerialNumberGenerator:
         return length_analysis
 
     def _analyze_structure(self, serials: list[str]) -> dict[str, Any]:
-        """Analyze structural patterns in serials."""
+        """Analyze structural patterns in serials.
+
+        Args:
+            serials: List of serial numbers to analyze for structural patterns.
+
+        Returns:
+            dict[str, Any]: Structure analysis including groups, separators, and group length statistics.
+
+        """
         structure: dict[str, Any] = {"groups": [], "separators": [], "group_lengths": []}
 
         for serial in serials:
@@ -224,7 +266,15 @@ class SerialNumberGenerator:
         return structure
 
     def _detect_checksum(self, serials: list[str]) -> dict[str, Any]:
-        """Detect checksum algorithm used in serials."""
+        """Detect checksum algorithm used in serials.
+
+        Args:
+            serials: List of serial numbers to analyze for checksum detection.
+
+        Returns:
+            dict[str, Any]: Mapping of detected checksum algorithms to their accuracy scores.
+
+        """
         results = {}
 
         for checksum_name, checksum_func in self.checksum_functions.items():
@@ -236,7 +286,16 @@ class SerialNumberGenerator:
         return results
 
     def _verify_checksum(self, serial: str, checksum_func: Callable[[str], str]) -> bool:
-        """Verify if serial passes checksum validation."""
+        """Verify if serial passes checksum validation.
+
+        Args:
+            serial: Serial number to verify.
+            checksum_func: Callable checksum function that takes a string and returns a checksum.
+
+        Returns:
+            bool: True if the serial passes checksum validation, False otherwise.
+
+        """
         try:
             # Remove separators
             clean_serial = serial.replace("-", "").replace(" ", "")
@@ -257,7 +316,15 @@ class SerialNumberGenerator:
             return False
 
     def _detect_patterns(self, serials: list[str]) -> list[dict[str, Any]]:
-        """Detect patterns in serial numbers."""
+        """Detect patterns in serial numbers.
+
+        Args:
+            serials: List of serial numbers to analyze for patterns.
+
+        Returns:
+            list[dict[str, Any]]: List of detected patterns with their characteristics.
+
+        """
         patterns = []
 
         # Check for incrementing patterns
@@ -292,7 +359,16 @@ class SerialNumberGenerator:
         return patterns
 
     def _test_algorithm(self, serials: list[str], algorithm: str) -> float:
-        """Test how well an algorithm matches the serials."""
+        """Test how well an algorithm matches the serials.
+
+        Args:
+            serials: List of serial numbers to test against.
+            algorithm: Name of the algorithm to test.
+
+        Returns:
+            float: Confidence score from 0.0 to 1.0 indicating match quality.
+
+        """
         score = 0.0
         tests = min(10, len(serials))  # Test up to 10 serials
         logger.debug("Testing algorithm '%s' with %s serials.", algorithm, tests)
@@ -462,7 +538,15 @@ class SerialNumberGenerator:
         return self._generate_random_serial(constraints)
 
     def _generate_random_serial(self, constraints: SerialConstraints) -> GeneratedSerial:
-        """Generate random serial as fallback."""
+        """Generate random serial as fallback.
+
+        Args:
+            constraints: SerialConstraints object specifying format and generation parameters.
+
+        Returns:
+            GeneratedSerial: The randomly generated serial number with metadata.
+
+        """
         if constraints.custom_alphabet:
             alphabet = constraints.custom_alphabet
         elif constraints.format == SerialFormat.NUMERIC:
@@ -502,7 +586,15 @@ class SerialNumberGenerator:
         )
 
     def _generate_microsoft_serial(self, constraints: SerialConstraints) -> GeneratedSerial:
-        """Generate Microsoft-style product key."""
+        """Generate Microsoft-style product key.
+
+        Args:
+            constraints: SerialConstraints object (unused but required by interface).
+
+        Returns:
+            GeneratedSerial: Microsoft-format serial with confidence score.
+
+        """
         # Microsoft uses specific algorithm with mod 7 check
         chars = "BCDFGHJKMPQRTVWXY2346789"  # pragma: allowlist secret
         groups = []
@@ -522,7 +614,15 @@ class SerialNumberGenerator:
         )
 
     def _generate_uuid_serial(self, constraints: SerialConstraints) -> GeneratedSerial:
-        """Generate UUID-format serial."""
+        """Generate UUID-format serial.
+
+        Args:
+            constraints: SerialConstraints object (unused but required by interface).
+
+        Returns:
+            GeneratedSerial: UUID v4 format serial with perfect confidence.
+
+        """
         import uuid
 
         # Generate UUID v4
@@ -537,7 +637,15 @@ class SerialNumberGenerator:
         )
 
     def _generate_luhn_serial(self, length: int = 16) -> str:
-        """Generate serial with Luhn checksum."""
+        """Generate serial with Luhn checksum.
+
+        Args:
+            length: Desired length of generated serial (default 16).
+
+        Returns:
+            str: Serial number with Luhn checksum validation.
+
+        """
         # Note: Using random module for generating serials, not cryptographic purposes
         digits = [random.randint(0, 9) for _ in range(length - 1)]  # noqa: S311
         checksum = self._calculate_luhn_digit(digits)
@@ -547,13 +655,29 @@ class SerialNumberGenerator:
         return serial
 
     def _calculate_luhn(self, data: str) -> str:
-        """Calculate Luhn checksum."""
+        """Calculate Luhn checksum.
+
+        Args:
+            data: String data to calculate checksum for.
+
+        Returns:
+            str: Luhn checksum digit as a string.
+
+        """
         digits = [int(d) for d in data if d.isdigit()]
         checksum = self._calculate_luhn_digit(digits)
         return str(checksum)
 
     def _calculate_luhn_digit(self, digits: list[int]) -> int:
-        """Calculate Luhn check digit."""
+        """Calculate Luhn check digit.
+
+        Args:
+            digits: List of integers to calculate check digit for.
+
+        Returns:
+            int: The Luhn check digit (0-9).
+
+        """
         total = 0
         for i, digit in enumerate(reversed(digits)):
             if i % 2 == 0:
@@ -567,7 +691,15 @@ class SerialNumberGenerator:
         return (10 - (total % 10)) % 10
 
     def _verify_luhn(self, serial: str) -> bool:
-        """Verify Luhn checksum."""
+        """Verify Luhn checksum.
+
+        Args:
+            serial: Serial number to verify.
+
+        Returns:
+            bool: True if Luhn checksum is valid, False otherwise.
+
+        """
         digits = [int(d) for d in serial if d.isdigit()]
         if not digits:
             return False
@@ -579,7 +711,15 @@ class SerialNumberGenerator:
         return checksum == expected
 
     def _generate_verhoeff_serial(self, length: int = 16) -> str:
-        """Generate serial with Verhoeff checksum."""
+        """Generate serial with Verhoeff checksum.
+
+        Args:
+            length: Desired length of generated serial (default 16).
+
+        Returns:
+            str: Serial number with Verhoeff checksum validation.
+
+        """
         # Verhoeff algorithm tables
         d = [
             [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
@@ -619,17 +759,41 @@ class SerialNumberGenerator:
         return serial
 
     def _calculate_verhoeff(self, data: str) -> str:
-        """Calculate Verhoeff checksum."""
+        """Calculate Verhoeff checksum.
+
+        Args:
+            data: String data to calculate checksum for.
+
+        Returns:
+            str: Verhoeff checksum digit as a string.
+
+        """
         # Implementation of Verhoeff algorithm
         return "0"  # Simplified
 
     def _verify_verhoeff(self, serial: str) -> bool:
-        """Verify Verhoeff checksum."""
+        """Verify Verhoeff checksum.
+
+        Args:
+            serial: Serial number to verify.
+
+        Returns:
+            bool: True if Verhoeff checksum is valid, False otherwise.
+
+        """
         # Implementation of Verhoeff verification
         return False  # Simplified
 
     def _generate_damm_serial(self, length: int = 16) -> str:
-        """Generate serial with Damm checksum."""
+        """Generate serial with Damm checksum.
+
+        Args:
+            length: Desired length of generated serial (default 16).
+
+        Returns:
+            str: Serial number with Damm checksum validation.
+
+        """
         # Damm algorithm table
         table = [
             [0, 3, 1, 7, 5, 9, 8, 6, 4, 2],
@@ -658,12 +822,28 @@ class SerialNumberGenerator:
         return serial
 
     def _calculate_damm(self, data: str) -> str:
-        """Calculate Damm checksum."""
+        """Calculate Damm checksum.
+
+        Args:
+            data: String data to calculate checksum for.
+
+        Returns:
+            str: Damm checksum digit as a string.
+
+        """
         # Implementation of Damm algorithm
         return "0"  # Simplified
 
     def _generate_crc32_serial(self, length: int = 16) -> str:
-        """Generate serial with CRC32 checksum."""
+        """Generate serial with CRC32 checksum.
+
+        Args:
+            length: Desired length of generated serial (default 16).
+
+        Returns:
+            str: Serial number with CRC32 checksum validation.
+
+        """
         import zlib
 
         # Note: Using random module for generating serials, not cryptographic purposes
@@ -677,7 +857,15 @@ class SerialNumberGenerator:
         return serial
 
     def _verify_crc32(self, serial: str) -> bool:
-        """Verify CRC32 checksum."""
+        """Verify CRC32 checksum.
+
+        Args:
+            serial: Serial number to verify.
+
+        Returns:
+            bool: True if CRC32 checksum is valid, False otherwise.
+
+        """
         import zlib
 
         if len(serial) < 8:
@@ -695,14 +883,30 @@ class SerialNumberGenerator:
             return False
 
     def _calculate_crc32(self, data: str) -> str:
-        """Calculate CRC32 checksum."""
+        """Calculate CRC32 checksum.
+
+        Args:
+            data: String data to calculate checksum for.
+
+        Returns:
+            str: CRC32 checksum as hexadecimal string.
+
+        """
         import zlib
 
         crc = zlib.crc32(data.encode()) & 0xFFFFFFFF
         return format(crc, "08X")
 
     def _generate_mod97_serial(self, length: int = 16) -> str:
-        """Generate serial with mod97 checksum (IBAN-style)."""
+        """Generate serial with mod97 checksum (IBAN-style).
+
+        Args:
+            length: Desired length of generated serial (default 16).
+
+        Returns:
+            str: Serial number with mod97 checksum validation.
+
+        """
         # Note: Using random module for generating serials, not cryptographic purposes
         data = "".join(random.choices("0123456789", k=length - 2))  # noqa: S311
 

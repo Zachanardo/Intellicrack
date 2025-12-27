@@ -98,7 +98,12 @@ class AIScriptGenerator:
         self.anti_detection_techniques = self._load_anti_detection_techniques()
 
     def _load_optimization_patterns(self) -> dict[str, dict[str, str | list[str]]]:
-        """Load optimization patterns for script enhancement."""
+        """Load optimization patterns for script enhancement.
+
+        Returns:
+            Dict mapping pattern categories to optimization strategies with regex patterns.
+
+        """
         return {
             "memory_hooks": {
                 "pattern": r"Memory\.read|Memory\.write|ptr\(",
@@ -139,7 +144,12 @@ class AIScriptGenerator:
         }
 
     def _load_anti_detection_techniques(self) -> dict[str, list[str]]:
-        """Load anti-detection techniques for enhanced stealth."""
+        """Load anti-detection techniques for enhanced stealth.
+
+        Returns:
+            Dict mapping anti-detection categories to stealth technique descriptions.
+
+        """
         return {
             "hook_obfuscation": [
                 "Randomize hook timing with jitter",
@@ -171,12 +181,16 @@ class AIScriptGenerator:
         """Generate enhanced bypass script using AI techniques.
 
         Args:
-            prompt: AI prompt with protection details
-            base_script: Base script to enhance
-            context: Context with protection info, difficulty, techniques
+            _prompt: AI prompt with protection details (unused).
+            base_script: Base script to enhance.
+            context: Dict with protection info, difficulty, techniques.
 
         Returns:
-            Enhanced script with AI optimizations
+            str: Enhanced script with AI optimizations and protection-specific enhancements.
+                 Returns original base_script on non-critical errors.
+
+        Raises:
+            Exception: Re-raised in development mode (IC_ENV=development) for debugging.
 
         """
         try:
@@ -217,7 +231,16 @@ class AIScriptGenerator:
             return base_script
 
     def _analyze_script_structure(self, script: str) -> dict[str, bool | int]:
-        """Analyze script structure to identify enhancement opportunities."""
+        """Analyze script structure to identify enhancement opportunities.
+
+        Args:
+            script: JavaScript source code to analyze.
+
+        Returns:
+            Dict with analysis results: has_memory_ops, has_hooks, has_crypto, has_timing,
+            module_count, function_count.
+
+        """
         return {
             "has_memory_ops": bool(re.search(r"Memory\.|ptr\(", script)),
             "has_hooks": bool(re.search(r"Interceptor\.", script)),
@@ -230,7 +253,15 @@ class AIScriptGenerator:
     def _count_functions_robust(self, script: str) -> int:
         """Count JavaScript functions with improved accuracy.
 
-        Handles various function styles while avoiding false positives.
+        Handles various function styles while avoiding false positives by removing
+        comments and string literals before pattern matching.
+
+        Args:
+            script: JavaScript source code to analyze.
+
+        Returns:
+            Estimated count of function definitions in the script, minimum 1.
+
         """
         # Remove comments to avoid false positives
         script_cleaned = self._remove_js_comments(script)
@@ -279,7 +310,15 @@ class AIScriptGenerator:
         return max(1, count)  # Return at least 1 if script has content
 
     def _remove_js_comments(self, script: str) -> str:
-        """Remove JavaScript comments from script to avoid false positives."""
+        """Remove JavaScript comments from script to avoid false positives.
+
+        Args:
+            script: JavaScript source code to clean.
+
+        Returns:
+            Script with all single-line and multi-line comments removed.
+
+        """
         # Remove single-line comments
         script = re.sub(r"//.*?$", "", script, flags=re.MULTILINE)
 
@@ -289,7 +328,15 @@ class AIScriptGenerator:
         return script
 
     def _remove_js_strings(self, script: str) -> str:
-        """Remove JavaScript string literals to avoid false positives."""
+        """Remove JavaScript string literals to avoid false positives.
+
+        Args:
+            script: JavaScript source code to clean.
+
+        Returns:
+            Script with all string literals (quoted and template) replaced with empty strings.
+
+        """
         # Remove double-quoted strings (handling escapes)
         script = re.sub(r'"(?:[^"\\]|\\.)*"', '""', script)
 
@@ -306,7 +353,19 @@ class AIScriptGenerator:
         return script
 
     def _apply_protection_enhancements(self, script: str, protection: dict[str, Any]) -> str:
-        """Apply protection-specific enhancements to the script."""
+        """Apply protection-specific enhancements to the script.
+
+        Analyzes the protection type and inserts appropriate bypass code, organized
+        by initialization, utilities, hooks, and main logic sections.
+
+        Args:
+            script: Base script to enhance.
+            protection: Protection information dict with 'type' key.
+
+        Returns:
+            Enhanced script with protection-specific bypass code inserted.
+
+        """
         protection_type = protection.get("type", "").lower()
 
         # Collect enhancements grouped by their logical position
@@ -357,14 +416,30 @@ class AIScriptGenerator:
         return self._insert_grouped_enhancements(script, enhancements_by_position)
 
     def _extract_initialization_code(self, code: str) -> str:
-        """Extract initialization/data definition code from enhancement."""
+        """Extract initialization/data definition code from enhancement.
+
+        Args:
+            code: Enhancement code block to parse.
+
+        Returns:
+            Extracted object definitions and initial data declarations, or empty string.
+
+        """
         # Extract object definitions and initial data
         init_pattern = r"const\s+\w+\s*=\s*\{[^}]*spoofedValues[^}]*\}"
         matches = re.findall(init_pattern, code, re.DOTALL)
         return "\n".join(matches) if matches else ""
 
     def _extract_hook_code(self, code: str) -> str:
-        """Extract hook installation code from enhancement."""
+        """Extract hook installation code from enhancement.
+
+        Args:
+            code: Enhancement code block to parse.
+
+        Returns:
+            Extracted function definitions and hook calls, or original code if none found.
+
+        """
         # Extract function definitions and hook calls
         lines = code.split("\n")
         hook_lines = []
@@ -381,7 +456,16 @@ class AIScriptGenerator:
         return "\n".join(hook_lines) if hook_lines else code
 
     def _insert_grouped_enhancements(self, script: str, enhancements_by_position: dict[str, list[str]]) -> str:
-        """Insert grouped enhancements at appropriate positions in the script."""
+        """Insert grouped enhancements at appropriate positions in the script.
+
+        Args:
+            script: Base script to enhance.
+            enhancements_by_position: Dict with 'initialization', 'utilities', 'hooks', 'main' keys.
+
+        Returns:
+            Script with enhancements inserted at appropriate logical positions.
+
+        """
         lines = script.split("\n")
 
         # Find insertion points
@@ -436,7 +520,15 @@ class AIScriptGenerator:
         return "\n".join(lines)
 
     def _add_advanced_evasion(self, script: str) -> str:
-        """Add advanced evasion techniques for difficult protections."""
+        """Add advanced evasion techniques for difficult protections.
+
+        Args:
+            script: Base script to enhance with anti-detection code.
+
+        Returns:
+            Script with advanced evasion framework prepended.
+
+        """
         evasion_code = """
 // Advanced Anti-Detection Framework
 const AntiDetection = {
@@ -495,7 +587,16 @@ AntiDetection.normalizeTiming();
         return evasion_code + "\n\n" + script
 
     def _optimize_script_performance(self, script: str, analysis: dict[str, bool | int]) -> str:
-        """Optimize script performance based on detected patterns."""
+        """Optimize script performance based on detected patterns.
+
+        Args:
+            script: Base script to optimize.
+            analysis: Script analysis dict with keys like 'has_memory_ops', 'has_hooks', etc.
+
+        Returns:
+            Optimized script with performance enhancements and caching mechanisms.
+
+        """
         optimized = script
 
         # Optimize memory operations
@@ -675,7 +776,15 @@ function getCachedExport(moduleName, exportName) {
         return optimized
 
     def _add_robust_error_handling(self, script: str) -> str:
-        """Add comprehensive error handling and recovery."""
+        """Add comprehensive error handling and recovery.
+
+        Args:
+            script: Base script to enhance with error handling code.
+
+        Returns:
+            Script with comprehensive error handling and recovery mechanisms.
+
+        """
         error_handler = """
 // Robust error handling framework
 const ErrorHandler = {
@@ -795,7 +904,15 @@ Interceptor.attach = ErrorHandler.wrapInterceptor(originalAttach);
         return error_handler + "\n\n" + script
 
     def _add_dynamic_adaptation(self, script: str) -> str:
-        """Add dynamic adaptation based on runtime conditions."""
+        """Add dynamic adaptation based on runtime conditions.
+
+        Args:
+            script: Base script to enhance with adaptation code.
+
+        Returns:
+            Script with dynamic adaptation engine for runtime behavior adjustment.
+
+        """
         adaptation_code = """
 // Dynamic adaptation engine
 const AdaptationEngine = {
@@ -875,7 +992,12 @@ AdaptationEngine.monitorEnvironment();
         return adaptation_code + "\n\n" + script
 
     def _generate_vm_bypass_code(self) -> str:
-        """Generate code to bypass VM-based protections."""
+        """Generate code to bypass VM-based protections.
+
+        Returns:
+            Frida JavaScript code for VM dispatcher hooking and bytecode interception.
+
+        """
         return """
 // VM-based protection bypass
 const VMBypass = {
@@ -913,7 +1035,12 @@ const VMBypass = {
 """
 
     def _generate_iat_reconstruction(self) -> str:
-        """Generate IAT reconstruction code."""
+        """Generate IAT reconstruction code.
+
+        Returns:
+            Frida JavaScript code for Import Address Table reconstruction and patching.
+
+        """
         return """
 // IAT reconstruction for packed binaries
 const IATReconstructor = {
@@ -960,7 +1087,12 @@ const IATReconstructor = {
 """
 
     def _generate_hwid_spoofer(self) -> str:
-        """Generate hardware ID spoofing code."""
+        """Generate hardware ID spoofing code.
+
+        Returns:
+            Frida JavaScript code for spoofing hardware identifiers and WMI queries.
+
+        """
         return """
 // Hardware ID spoofing system
 const HWIDSpoofer = {
@@ -1030,7 +1162,12 @@ HWIDSpoofer.hookSystemCalls();
 """
 
     def _generate_registry_emulation(self) -> str:
-        """Generate registry emulation for license data."""
+        """Generate registry emulation for license data.
+
+        Returns:
+            Frida JavaScript code for emulating registry operations with spoofed license data.
+
+        """
         return """
 // Registry emulation for license storage
 const RegistryEmulator = {
@@ -1089,7 +1226,12 @@ RegistryEmulator.hookRegistryAPIs();
 """
 
     def _generate_network_emulation(self) -> str:
-        """Generate network emulation for online activation."""
+        """Generate network emulation for online activation.
+
+        Returns:
+            Frida JavaScript code for emulating network responses to license activation requests.
+
+        """
         return """
 // Network activation emulator
 const NetworkEmulator = {
@@ -1214,7 +1356,12 @@ NetworkEmulator.hookNetworkAPIs();
 """
 
     def _generate_response_generator(self) -> str:
-        """Generate dynamic response generation for various protocols."""
+        """Generate dynamic response generation for various protocols.
+
+        Returns:
+            Frida JavaScript code for generating valid responses to license protocol challenges.
+
+        """
         return """
 // Dynamic response generator for protocols
 const ResponseGenerator = {
@@ -1494,7 +1641,12 @@ const ResponseGenerator = {
 """
 
     def _generate_time_manipulation(self) -> str:
-        """Generate time manipulation for trial bypass."""
+        """Generate time manipulation for trial bypass.
+
+        Returns:
+            Frida JavaScript code for intercepting and spoofing time-based license checks.
+
+        """
         return """
 // Time manipulation system
 const TimeManipulator = {
@@ -1565,7 +1717,12 @@ TimeManipulator.hookTimeFunctions();
 """
 
     def _generate_date_spoofing(self) -> str:
-        """Generate comprehensive date spoofing."""
+        """Generate comprehensive date spoofing.
+
+        Returns:
+            Frida JavaScript code for comprehensive date and time spoofing across all system sources.
+
+        """
         return """
 // Comprehensive date spoofing
 const DateSpoofer = {
@@ -1931,7 +2088,16 @@ DateSpoofer.spoofAllDateSources();
             return None
 
     def _analyze_binary_for_scripting(self, binary_path: str) -> dict[str, Any]:
-        """Analyze a binary to gather information for script generation."""
+        """Analyze a binary to gather information for script generation.
+
+        Args:
+            binary_path: Path to the binary file to analyze.
+
+        Returns:
+            Dict with binary analysis results: binary_path, exists, protections, imports,
+            exports, strings, size, name, and additional analyzer data.
+
+        """
         analysis: dict[str, Any] = {
             "binary_path": binary_path,
             "exists": False,
@@ -1959,7 +2125,15 @@ DateSpoofer.spoofAllDateSources();
         return analysis
 
     def _detect_protection_types(self, analysis_data: dict[str, Any]) -> list[ProtectionType]:
-        """Detect protection types from analysis data."""
+        """Detect protection types from analysis data.
+
+        Args:
+            analysis_data: Binary analysis results containing protection_info and imports.
+
+        Returns:
+            List of detected ProtectionType enums, minimum [ProtectionType.UNKNOWN].
+
+        """
         protection_types: list[ProtectionType] = []
 
         protection_info = analysis_data.get("protection_info", {})
@@ -2023,7 +2197,15 @@ DateSpoofer.spoofAllDateSources();
         return protection_types
 
     def _assess_difficulty(self, protection_types: list[ProtectionType]) -> str:
-        """Assess bypass difficulty based on protection types."""
+        """Assess bypass difficulty based on protection types.
+
+        Args:
+            protection_types: List of detected protection types.
+
+        Returns:
+            str: Difficulty level - one of 'Easy', 'Medium', 'Hard', or 'Very Hard'.
+
+        """
         high_difficulty = {ProtectionType.VM_PROTECTION, ProtectionType.ANTI_TAMPER, ProtectionType.OBFUSCATION}
         medium_difficulty = {ProtectionType.ONLINE_ACTIVATION, ProtectionType.HARDWARE_BINDING, ProtectionType.ANTI_DEBUG}
 
@@ -2037,7 +2219,16 @@ DateSpoofer.spoofAllDateSources();
         return "Medium" if medium_count >= 1 or len(protection_types) >= 3 else "Easy"
 
     def _calculate_success_probability(self, protection_types: list[ProtectionType], analysis_data: dict[str, Any]) -> float:
-        """Calculate estimated success probability."""
+        """Calculate estimated success probability.
+
+        Args:
+            protection_types: List of detected protection types.
+            analysis_data: Binary analysis results.
+
+        Returns:
+            Estimated success probability between 0.1 and 0.95.
+
+        """
         base_probability = 0.7
 
         difficulty_penalties = {
@@ -2066,7 +2257,17 @@ DateSpoofer.spoofAllDateSources();
         _analysis_data: dict[str, Any],
         protection_types: list[ProtectionType],
     ) -> str:
-        """Generate base Frida script targeting detected protections."""
+        """Generate base Frida script targeting detected protections.
+
+        Args:
+            binary_path: Path to the target binary file.
+            _analysis_data: Binary analysis results (unused in base generation).
+            protection_types: List of protection types to target.
+
+        Returns:
+            JavaScript string with Frida bypass script for detected protections.
+
+        """
         script_parts = [
             "'use strict';",
             "",
@@ -2107,7 +2308,12 @@ DateSpoofer.spoofAllDateSources();
         return "\n".join(script_parts)
 
     def _generate_license_check_bypass(self) -> str:
-        """Generate license check bypass code."""
+        """Generate license check bypass code.
+
+        Returns:
+            Frida JavaScript code for bypassing license check functions and registry queries.
+
+        """
         return """
 // License check bypass
 const licenseBypass = {
@@ -2156,7 +2362,12 @@ licenseBypass.init();
 """
 
     def _generate_anti_debug_bypass(self) -> str:
-        """Generate anti-debugging bypass code."""
+        """Generate anti-debugging bypass code.
+
+        Returns:
+            Frida JavaScript code for bypassing anti-debugging checks and detection methods.
+
+        """
         return """
 // Anti-debug bypass
 const antiDebugBypass = {
@@ -2207,7 +2418,17 @@ antiDebugBypass.init();
         _analysis_data: dict[str, Any],
         protection_types: list[ProtectionType],
     ) -> str:
-        """Generate Ghidra analysis and patching script."""
+        """Generate Ghidra analysis and patching script.
+
+        Args:
+            binary_path: Path to the target binary file.
+            _analysis_data: Binary analysis results (unused in base generation).
+            protection_types: List of protection types to target.
+
+        Returns:
+            Java code string with Ghidra script for binary analysis and patch recommendations.
+
+        """
         protections_str = ", ".join(pt.value for pt in protection_types)
 
         return f"""// Ghidra script for: {Path(binary_path).name}
@@ -2319,7 +2540,15 @@ public class IntellicrackAnalysis extends GhidraScript {{
 """
 
     def _extract_hooks_from_script(self, script_content: str) -> list[dict[str, Any]]:
-        """Extract hook information from Frida script."""
+        """Extract hook information from Frida script.
+
+        Args:
+            script_content: Frida JavaScript source code.
+
+        Returns:
+            List of dicts with hook info: type ('interceptor'), target, mode ('attach'/'replace').
+
+        """
         hooks: list[dict[str, Any]] = []
 
         interceptor_pattern = r"Interceptor\.attach\s*\(\s*([^,]+)"
@@ -2345,7 +2574,15 @@ public class IntellicrackAnalysis extends GhidraScript {{
         return hooks
 
     def _extract_patches_from_ghidra_script(self, script_content: str) -> list[dict[str, Any]]:
-        """Extract patch information from Ghidra script."""
+        """Extract patch information from Ghidra script.
+
+        Args:
+            script_content: Ghidra Java source code.
+
+        Returns:
+            List of dicts with patch info: description, type ('recommended').
+
+        """
         patches: list[dict[str, Any]] = []
 
         patch_pattern = r"\[PATCH\]\s*([^\n]+)"
@@ -2360,7 +2597,15 @@ public class IntellicrackAnalysis extends GhidraScript {{
         return patches
 
     def _generate_script_header(self, script: GeneratedScript) -> str:
-        """Generate a header comment for saved scripts."""
+        """Generate a header comment for saved scripts.
+
+        Args:
+            script: GeneratedScript object with metadata.
+
+        Returns:
+            Header comment string (JavaScript /** */ or Java /** */) with script metadata.
+
+        """
         if script.language == "javascript":
             return f"""/**
  * Intellicrack AI-Generated Script
@@ -2391,7 +2636,18 @@ public class IntellicrackAnalysis extends GhidraScript {{
         error_message: str,
         script_type: ScriptType,
     ) -> tuple[str, list[str]]:
-        """Fix errors in the script based on execution feedback."""
+        """Fix errors in the script based on execution feedback.
+
+        Args:
+            script_content: Script source code to fix.
+            errors: List of error objects from execution.
+            error_message: Error message string from execution.
+            script_type: ScriptType enum indicating Frida or Ghidra.
+
+        Returns:
+            Tuple of (improved_script, improvements_list) describing fixes applied.
+
+        """
         improvements: list[str] = []
         refined = script_content
 
@@ -2450,7 +2706,16 @@ function findExportSafe(moduleName, exportName) {
         script_content: str,
         _analysis_data: dict[str, Any],
     ) -> tuple[str, list[str]]:
-        """Improve hook targeting when no hooks are triggered."""
+        """Improve hook targeting when no hooks are triggered.
+
+        Args:
+            script_content: Frida script source code to enhance.
+            _analysis_data: Binary analysis results (unused).
+
+        Returns:
+            Tuple of (enhanced_script, improvements_list) with dynamic target discovery.
+
+        """
         refined = script_content
 
         dynamic_discovery = """
@@ -2498,7 +2763,17 @@ discoveredTargets.forEach(function(t) {
         _analysis_data: dict[str, Any],
         script_type: ScriptType,
     ) -> tuple[str, list[str]]:
-        """Strengthen bypass logic when protection is not bypassed."""
+        """Strengthen bypass logic when protection is not bypassed.
+
+        Args:
+            script_content: Script source code to strengthen.
+            _analysis_data: Binary analysis results (unused).
+            script_type: ScriptType enum indicating Frida or Ghidra.
+
+        Returns:
+            Tuple of (enhanced_script, improvements_list) with aggressive bypass techniques.
+
+        """
         improvements: list[str] = []
         refined = script_content
 
@@ -2539,7 +2814,17 @@ function forceReturnTrue(funcName, moduleName) {
         _protection_evasion: dict[str, Any],
         script_type: ScriptType,
     ) -> tuple[str, list[str]]:
-        """Add evasion techniques when protection detection is triggered."""
+        """Add evasion techniques when protection detection is triggered.
+
+        Args:
+            script_content: Script source code to enhance.
+            _protection_evasion: Protection detection results (unused).
+            script_type: ScriptType enum indicating Frida or Ghidra.
+
+        Returns:
+            Tuple of (enhanced_script, improvements_list) with stealth mechanisms.
+
+        """
         improvements: list[str] = []
         refined = script_content
 
@@ -2572,7 +2857,16 @@ const stealthMode = {
         return refined, improvements
 
     def _insert_enhancement(self, script: str, enhancement: str) -> str:
-        """Insert enhancement at appropriate location in script."""
+        """Insert enhancement at appropriate location in script.
+
+        Args:
+            script: Base script to enhance.
+            enhancement: Code enhancement to insert.
+
+        Returns:
+            Script with enhancement inserted after comments/directives but before main code.
+
+        """
         # Find appropriate insertion point
         if "// Main bypass logic" in script:
             return script.replace("// Main bypass logic", f"{enhancement}\n\n// Main bypass logic")

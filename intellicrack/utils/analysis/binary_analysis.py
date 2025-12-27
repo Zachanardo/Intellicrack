@@ -803,16 +803,16 @@ def analyze_elf_with_lief(binary_path: str, detailed: bool) -> ELFAnalysisResult
             for lib in binary.libraries:
                 libraries_list.append(str(lib))
 
-        return ELFAnalysisResult(
-            machine=machine_str,
-            class_=class_str,
-            type=type_str,
-            entry_point=hex(entrypoint) if isinstance(entrypoint, int) else "0x0",
-            sections=sections_list,
-            symbols=symbols_list,
-            libraries=libraries_list,
-            suspicious_indicators=suspicious_list,
-        )
+        return ELFAnalysisResult.model_validate({
+            "machine": machine_str,
+            "class": class_str,
+            "type": type_str,
+            "entry_point": hex(entrypoint) if isinstance(entrypoint, int) else "0x0",
+            "sections": sections_list,
+            "symbols": symbols_list,
+            "libraries": libraries_list,
+            "suspicious_indicators": suspicious_list,
+        })
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.exception("Error analyzing ELF with LIEF: %s", e)
@@ -846,14 +846,14 @@ def analyze_elf_with_pyelftools(binary_path: str, detailed: bool) -> ELFAnalysis
                         size=section_dict.get("sh_size", 0),
                     ))
 
-            return ELFAnalysisResult(
-                machine=str(elf_header.get("e_machine", "unknown")),
-                class_=str(elf_class),
-                type=str(elf_header.get("e_type", "unknown")),
-                entry_point=hex(elf_header.get("e_entry", 0)),
-                sections=sections_list,
-                suspicious_indicators=suspicious_list,
-            )
+            return ELFAnalysisResult.model_validate({
+                "machine": str(elf_header.get("e_machine", "unknown")),
+                "class": str(elf_class),
+                "type": str(elf_header.get("e_type", "unknown")),
+                "entry_point": hex(elf_header.get("e_entry", 0)),
+                "sections": sections_list,
+                "suspicious_indicators": suspicious_list,
+            })
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.exception("Error analyzing ELF with pyelftools: %s", e)
@@ -1451,17 +1451,17 @@ def extract_binary_info(binary_path: str) -> dict[str, Any]:
         Dict containing basic binary information
 
     """
-    info = get_basic_file_info(binary_path)
+    basic_info = get_basic_file_info(binary_path)
+    info: dict[str, Any] = basic_info.model_dump()
     info["format"] = identify_binary_format(binary_path)
 
-    # Add hash information
     try:
         import hashlib
 
         with open(binary_path, "rb") as f:
             data = f.read()
-            info["md5"] = hashlib.sha256(data).hexdigest()  # Using sha256 instead of md5 for security
-            info["sha1"] = hashlib.sha256(data).hexdigest()  # Using sha256 instead of sha1 for security
+            info["md5"] = hashlib.md5(data, usedforsecurity=False).hexdigest()
+            info["sha1"] = hashlib.sha1(data, usedforsecurity=False).hexdigest()
             info["sha256"] = hashlib.sha256(data).hexdigest()
     except (OSError, ValueError, RuntimeError) as e:
         logger.exception("Error calculating hashes: %s", e)

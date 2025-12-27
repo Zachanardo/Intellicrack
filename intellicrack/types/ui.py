@@ -133,6 +133,15 @@ class WidgetProtocol(Protocol):
         """
         ...
 
+    def setLayout(self, layout: object) -> None:  # noqa: N802
+        """Set the widget's layout.
+
+        Args:
+            layout: The layout to set (typically a QLayout or LayoutProtocol).
+
+        """
+        ...
+
 
 @runtime_checkable
 class MessageBoxProtocol(Protocol):
@@ -563,6 +572,14 @@ class HeadlessWidget:
         """
         self._visible = False
         return True
+
+    def setLayout(self, layout: object) -> None:  # noqa: N802
+        """Set the widget's layout (no-op for headless).
+
+        Args:
+            layout: The layout to set (ignored in headless mode).
+
+        """
 
 
 class HeadlessMessageBox:

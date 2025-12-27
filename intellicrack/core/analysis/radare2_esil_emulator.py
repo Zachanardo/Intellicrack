@@ -118,6 +118,7 @@ class RadareESILEmulator:
         session_pool: R2SessionPool | None = None,
         auto_analyze: bool = True,
         analysis_level: str = "aaa",
+        read_only: bool = False,
     ) -> None:
         """Initialize ESIL emulator with binary.
 
@@ -127,6 +128,7 @@ class RadareESILEmulator:
             session_pool: Optional R2SessionPool for session management
             auto_analyze: Whether to auto-analyze binary on load
             analysis_level: radare2 analysis level (a, aa, aaa, aaaa)
+            read_only: If True, open binary in read-only mode (no -w flag)
 
         Raises:
             RuntimeError: If r2pipe is not available
@@ -144,6 +146,7 @@ class RadareESILEmulator:
         self.session_pool = session_pool
         self.auto_analyze = auto_analyze
         self.analysis_level = analysis_level
+        self.read_only = read_only
 
         self.session: R2SessionWrapper | None = None
         self.state = ESILState.READY
@@ -191,7 +194,9 @@ class RadareESILEmulator:
 
         """
         try:
-            flags = ["-2", "-w"]
+            flags = ["-2"]
+            if not self.read_only:
+                flags.append("-w")
             if not self.auto_analyze:
                 flags.append("-n")
 

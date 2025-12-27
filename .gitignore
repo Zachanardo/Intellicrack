@@ -574,6 +574,13 @@ docker-compose.override.yml
 # ==============================================================================
 # ROOT DIRECTORY FILES AND TEMPORARY FILES
 # ==============================================================================
+# Runtime-generated files that should never be in root (use intellicrack/data/ paths)
+/exploitation.log
+/exploitation_logs.db
+/license_server.db
+/protection_knowledge_base.json
+/type_info.json
+
 # Temporary analysis files from mock/stub scanning
 mock_objects.txt
 placeholder_todos.txt

@@ -5,14 +5,18 @@ capabilities required for production-ready security research on licensing system
 All tests use real binary protocol data and validate genuine functionality.
 """
 
+from __future__ import annotations
+
 import asyncio
 import socket
 import struct
 import threading
 import time
-import pytest
-from typing import List, Dict, Any, Tuple
 from concurrent.futures import ThreadPoolExecutor
+from typing import TYPE_CHECKING, Any
+
+import pytest
+
 
 try:
     from intellicrack.core.network.generic_protocol_handler import GenericProtocolHandler
@@ -22,6 +26,24 @@ except ImportError:
     MODULE_AVAILABLE = False
 
 pytestmark = pytest.mark.skipif(not MODULE_AVAILABLE, reason="Module not available")
+
+# Concurrent connection thresholds
+MIN_CONNECTION_SUCCESS_RATE = 0.8
+
+# Response length thresholds for different protocols
+MIN_BINARY_RESPONSE_LENGTH = 20
+MIN_LICENSE_RESPONSE_LENGTH = 100
+MIN_TIMESTAMP_RESPONSE_LENGTH = 50
+MIN_FLEXLM_RESPONSE_LENGTH = 20
+MIN_HASP_RESPONSE_LENGTH = 48
+MIN_ENCRYPTED_RESPONSE_LENGTH = 100
+
+# Session tracking thresholds
+MIN_CAPTURED_REQUEST_COUNT = 2
+
+# Performance thresholds
+MAX_BATCH_PROCESSING_TIME = 5.0
+MAX_AVG_PROCESSING_TIME_PER_MSG = 0.005
 
 
 class TestGenericProtocolHandlerNetworkProxyCapabilities:
@@ -45,7 +67,7 @@ class TestGenericProtocolHandlerNetworkProxyCapabilities:
         """Create GenericProtocolHandler instance for testing."""
         return GenericProtocolHandler(handler_config)
 
-    def test_tcp_proxy_server_establishment(self, protocol_handler):
+    def test_tcp_proxy_server_establishment(self, protocol_handler: GenericProtocolHandler) -> None:
         """Validate TCP proxy server can be established and accepts connections."""
         test_port = 8080
 
@@ -73,7 +95,7 @@ class TestGenericProtocolHandlerNetworkProxyCapabilities:
         except Exception as e:
             pytest.fail(f"TCP proxy failed to accept connections: {e}")
 
-    def test_udp_proxy_server_establishment(self, protocol_handler):
+    def test_udp_proxy_server_establishment(self, protocol_handler: GenericProtocolHandler) -> None:
         """Validate UDP proxy server can handle datagram communications."""
         test_port = 8081
 
@@ -104,7 +126,7 @@ class TestGenericProtocolHandlerNetworkProxyCapabilities:
         except Exception as e:
             pytest.fail(f"UDP proxy failed to handle datagrams: {e}")
 
-    def test_concurrent_connection_handling(self, protocol_handler):
+    def test_concurrent_connection_handling(self, protocol_handler: GenericProtocolHandler) -> None:
         """Validate handling of multiple simultaneous network connections."""
         test_port = 8082
         num_connections = 50
@@ -142,7 +164,7 @@ class TestGenericProtocolHandlerNetworkProxyCapabilities:
 
         # Validate most connections succeeded (allowing for some system limits)
         success_rate = sum(results) / len(results)
-        assert success_rate > 0.8, f"Concurrent connection success rate too low: {success_rate}"
+        assert success_rate > MIN_CONNECTION_SUCCESS_RATE, f"Concurrent connection success rate too low: {success_rate}"
 
 
 class TestGenericProtocolHandlerBinaryProtocolParsing:
@@ -158,7 +180,7 @@ class TestGenericProtocolHandlerBinaryProtocolParsing:
         }
         return GenericProtocolHandler(config)
 
-    def test_license_protocol_message_parsing(self, protocol_handler):
+    def test_license_protocol_message_parsing(self, protocol_handler: GenericProtocolHandler) -> None:
         """Validate parsing of complex binary licensing protocol messages."""
         # Realistic FlexLM-style binary protocol message
         test_message = bytearray()
@@ -182,10 +204,10 @@ class TestGenericProtocolHandlerBinaryProtocolParsing:
 
         # Validate sophisticated response generation
         assert response is not None, "Must generate response to binary license request"
-        assert len(response) > 20, "Response must contain substantial protocol data"
+        assert len(response) > MIN_BINARY_RESPONSE_LENGTH, "Response must contain substantial protocol data"
         assert b'FLXM' in response or b'LICENSE' in response, "Response must contain license protocol markers"
 
-    def test_proprietary_protocol_structure_recognition(self, protocol_handler):
+    def test_proprietary_protocol_structure_recognition(self, protocol_handler: GenericProtocolHandler) -> None:
         """Validate recognition of proprietary binary protocol structures."""
         # Custom licensing protocol with variable-length fields
         test_message = bytearray()
@@ -222,7 +244,7 @@ class TestGenericProtocolHandlerBinaryProtocolParsing:
         captured_request = protocol_handler.captured_requests[-1]
         assert len(captured_request) == len(test_message), "Must capture complete request data"
 
-    def test_endianness_handling_in_protocols(self, protocol_handler):
+    def test_endianness_handling_in_protocols(self, protocol_handler: GenericProtocolHandler) -> None:
         """Validate correct handling of different endianness in binary protocols."""
         # Little-endian message
         le_message = bytearray()
@@ -260,7 +282,7 @@ class TestGenericProtocolHandlerLicenseManipulation:
         }
         return GenericProtocolHandler(config)
 
-    def test_license_response_generation(self, protocol_handler):
+    def test_license_response_generation(self, protocol_handler: GenericProtocolHandler) -> None:
         """Validate generation of realistic license server responses."""
         # Simulate license checkout request
         license_request = bytearray()
@@ -276,11 +298,11 @@ class TestGenericProtocolHandlerLicenseManipulation:
 
         # Validate sophisticated license response
         assert response is not None, "Must generate license server response"
-        assert len(response) > 100, "License response must contain substantial data"
+        assert len(response) > MIN_LICENSE_RESPONSE_LENGTH, "License response must contain substantial data"
         assert b'LICENSE_GRANTED' in response or b'SUCCESS' in response, "Response must indicate license grant"
         assert b'EXPIRE' in response or b'VALID' in response, "Response must contain validity information"
 
-    def test_authentication_token_manipulation(self, protocol_handler):
+    def test_authentication_token_manipulation(self, protocol_handler: GenericProtocolHandler) -> None:
         """Validate manipulation of authentication tokens in license protocols."""
         # Create message with authentication token
         auth_message = bytearray()
@@ -307,7 +329,7 @@ class TestGenericProtocolHandlerLicenseManipulation:
         assert len(response) > len(auth_message), "Response must contain manipulated token data"
         assert response != auth_message, "Response must be different from original (indicating manipulation)"
 
-    def test_timestamp_based_license_bypass(self, protocol_handler):
+    def test_timestamp_based_license_bypass(self, protocol_handler: GenericProtocolHandler) -> None:
         """Validate timestamp manipulation for license validity bypass."""
         # Create license check with expiration timestamp
         license_check = bytearray()
@@ -329,7 +351,7 @@ class TestGenericProtocolHandlerLicenseManipulation:
 
         # Validate timestamp manipulation capability
         assert response is not None, "Must handle timestamp-based licenses"
-        assert len(response) > 50, "Response must contain license validity data"
+        assert len(response) > MIN_TIMESTAMP_RESPONSE_LENGTH, "Response must contain license validity data"
 
         # Should indicate extended validity or bypass
         assert b'VALID' in response or b'EXTENDED' in response or b'PERMANENT' in response, \
@@ -350,14 +372,16 @@ class TestGenericProtocolHandlerConnectionManagement:
         }
         return GenericProtocolHandler(config)
 
-    def test_connection_state_tracking(self, protocol_handler):
+    def test_connection_state_tracking(self, protocol_handler: GenericProtocolHandler) -> None:
         """Validate tracking of connection states across multiple sessions."""
         # Create a real socket-like object for testing
         class TestSocket:
-            def __init__(self, peer_addr):
+            def __init__(self, peer_addr: tuple[str, int]) -> None:
                 self.peer_addr = peer_addr
-            def getpeername(self):
+
+            def getpeername(self) -> tuple[str, int]:
                 return self.peer_addr
+
             def close(self):
                 pass
 
@@ -377,16 +401,18 @@ class TestGenericProtocolHandlerConnectionManagement:
 
         # Validate session persistence
         assert response is not None, "Must handle follow-up data from existing connection"
-        assert len(protocol_handler.captured_requests) >= 2, "Must capture all session data"
+        assert len(protocol_handler.captured_requests) >= MIN_CAPTURED_REQUEST_COUNT, "Must capture all session data"
 
-    def test_resource_cleanup_on_termination(self, protocol_handler):
+    def test_resource_cleanup_on_termination(self, protocol_handler: GenericProtocolHandler) -> None:
         """Validate proper cleanup of network resources."""
         # Create a real socket-like object for testing
         class TestSocket:
-            def __init__(self, peer_addr):
+            def __init__(self, peer_addr: tuple[str, int]) -> None:
                 self.peer_addr = peer_addr
-            def getpeername(self):
+
+            def getpeername(self) -> tuple[str, int]:
                 return self.peer_addr
+
             def close(self):
                 pass
 
@@ -407,16 +433,19 @@ class TestGenericProtocolHandlerConnectionManagement:
         assert len(protocol_handler.captured_requests) == 0, "Must clear captured requests"
         assert len(protocol_handler.captured_responses) == 0, "Must clear captured responses"
 
-    def test_graceful_connection_failure_handling(self, protocol_handler):
+    def test_graceful_connection_failure_handling(self, protocol_handler: GenericProtocolHandler) -> None:
         """Validate graceful handling of connection failures and network errors."""
         # Create a socket-like object that raises exceptions for testing error handling
         class FailingTestSocket:
-            def getpeername(self):
+            def getpeername(self) -> None:
                 raise OSError("Connection lost")
-            def send(self, data):
+
+            def send(self, _data):
                 raise OSError("Send failed")
-            def recv(self, bufsize):
+
+            def recv(self, _bufsize):
                 raise OSError("Receive failed")
+
             def close(self):
                 pass
 
@@ -426,7 +455,7 @@ class TestGenericProtocolHandlerConnectionManagement:
 
         # Should handle errors gracefully without crashing
         try:
-            response = protocol_handler.handle_connection(failing_socket, test_data)
+            _response = protocol_handler.handle_connection(failing_socket, test_data)
         except Exception as e:
             # Should not propagate low-level network exceptions
             pytest.fail(f"Should handle network errors gracefully, but got: {e}")
@@ -446,7 +475,7 @@ class TestGenericProtocolHandlerRealWorldProtocolSupport:
         }
         return GenericProtocolHandler(config)
 
-    def test_flexlm_protocol_simulation(self, protocol_handler):
+    def test_flexlm_protocol_simulation(self, protocol_handler: GenericProtocolHandler) -> None:
         """Validate handling of FlexLM licensing protocol patterns."""
         # Simulate FlexLM license daemon communication
         flexlm_request = bytearray()
@@ -466,10 +495,10 @@ class TestGenericProtocolHandlerRealWorldProtocolSupport:
 
         # Validate FlexLM-aware response
         assert response is not None, "Must handle FlexLM protocol patterns"
-        assert len(response) > 20, "FlexLM response must contain protocol data"
+        assert len(response) > MIN_FLEXLM_RESPONSE_LENGTH, "FlexLM response must contain protocol data"
         assert struct.unpack('<I', response[:4])[0] > 0, "Response must have valid length field"
 
-    def test_hasp_sentinel_protocol_simulation(self, protocol_handler):
+    def test_hasp_sentinel_protocol_simulation(self, protocol_handler: GenericProtocolHandler) -> None:
         """Validate handling of HASP Sentinel hardware key protocol."""
         # Simulate HASP communication pattern
         hasp_request = bytearray()
@@ -493,9 +522,9 @@ class TestGenericProtocolHandlerRealWorldProtocolSupport:
         # Validate HASP-aware response
         assert response is not None, "Must handle HASP protocol patterns"
         assert b'HASP' in response[:10], "Response should maintain HASP protocol markers"
-        assert len(response) >= 48, "HASP response must contain challenge response data"
+        assert len(response) >= MIN_HASP_RESPONSE_LENGTH, "HASP response must contain challenge response data"
 
-    def test_custom_encrypted_protocol_handling(self, protocol_handler):
+    def test_custom_encrypted_protocol_handling(self, protocol_handler: GenericProtocolHandler) -> None:
         """Validate handling of custom encrypted licensing protocols."""
         # Simulate encrypted protocol with TLS-like structure
         encrypted_request = bytearray()
@@ -517,7 +546,7 @@ class TestGenericProtocolHandlerRealWorldProtocolSupport:
         assert (
             response[:1] == b'\x16'
         ), "Should maintain TLS-like structure in response"
-        assert len(response) > 100, "Encrypted response must be substantial"
+        assert len(response) > MIN_ENCRYPTED_RESPONSE_LENGTH, "Encrypted response must be substantial"
 
 
 class TestGenericProtocolHandlerPerformanceAndReliability:
@@ -534,7 +563,7 @@ class TestGenericProtocolHandlerPerformanceAndReliability:
         }
         return GenericProtocolHandler(config)
 
-    def test_high_volume_protocol_processing(self, protocol_handler):
+    def test_high_volume_protocol_processing(self, protocol_handler: GenericProtocolHandler) -> None:
         """Validate handling of high-volume protocol message processing."""
         # Generate large number of protocol messages
         messages = []
@@ -557,17 +586,18 @@ class TestGenericProtocolHandlerPerformanceAndReliability:
 
         # Validate performance characteristics
         assert all(r is not None for r in responses), "Must process all messages successfully"
-        assert processing_time < 5.0, f"Processing time too high: {processing_time:.2f}s"
+        assert processing_time < MAX_BATCH_PROCESSING_TIME, f"Processing time too high: {processing_time:.2f}s"
         assert len(responses) == len(messages), "Must generate response for each message"
 
         # Validate average processing time per message
         avg_time_per_message = processing_time / len(messages)
-        assert avg_time_per_message < 0.005, f"Average processing time too high: {avg_time_per_message:.6f}s"
+        assert avg_time_per_message < MAX_AVG_PROCESSING_TIME_PER_MSG, f"Average processing time too high: {avg_time_per_message:.6f}s"
 
-    def test_memory_efficiency_during_extended_operation(self, protocol_handler):
+    def test_memory_efficiency_during_extended_operation(self, protocol_handler: GenericProtocolHandler) -> None:
         """Validate memory efficiency during extended protocol operations."""
-        import psutil
         import os
+
+        import psutil
 
         # Get initial memory usage
         process = psutil.Process(os.getpid())
@@ -595,12 +625,12 @@ class TestGenericProtocolHandlerPerformanceAndReliability:
         # Validate memory efficiency (growth should be reasonable)
         assert memory_growth < 50 * 1024 * 1024, f"Memory growth too high: {memory_growth / 1024 / 1024:.2f}MB"
 
-    def test_concurrent_protocol_session_handling(self, protocol_handler):
+    def test_concurrent_protocol_session_handling(self, protocol_handler: GenericProtocolHandler) -> None:
         """Validate concurrent handling of multiple protocol sessions."""
         num_sessions = 50
         messages_per_session = 20
 
-        def simulate_protocol_session(session_id):
+        def simulate_protocol_session(session_id: int) -> bool:
             """Simulate a complete protocol session."""
             session_results = []
 
@@ -642,7 +672,7 @@ class TestGenericProtocolHandlerSecurityResearchCapabilities:
         }
         return GenericProtocolHandler(config)
 
-    def test_protocol_fuzzing_capability(self, protocol_handler):
+    def test_protocol_fuzzing_capability(self, protocol_handler: GenericProtocolHandler) -> None:
         """Validate protocol fuzzing for vulnerability discovery."""
         # Base valid message
         base_message = bytearray()
@@ -675,7 +705,7 @@ class TestGenericProtocolHandlerSecurityResearchCapabilities:
             try:
                 response = protocol_handler.generate_response(variant)
                 responses.append(response)
-            except Exception as e:
+            except Exception:
                 # Should handle malformed data gracefully
                 responses.append(None)
 
@@ -683,7 +713,7 @@ class TestGenericProtocolHandlerSecurityResearchCapabilities:
         assert len(responses) == len(fuzzing_variants), "Must process all fuzzing variants"
         # Some responses might be None due to malformed data, but should not crash
 
-    def test_man_in_the_middle_attack_simulation(self, protocol_handler):
+    def test_man_in_the_middle_attack_simulation(self, protocol_handler: GenericProtocolHandler) -> None:
         """Validate MITM attack capabilities on license protocols."""
         # Simulate client request to license server
         client_request = bytearray()
@@ -702,7 +732,7 @@ class TestGenericProtocolHandlerSecurityResearchCapabilities:
         assert b'LICENSE_GRANTED' in modified_response or b'SUCCESS' in modified_response, \
                "MITM should modify response to grant license"
 
-    def test_replay_attack_support(self, protocol_handler):
+    def test_replay_attack_support(self, protocol_handler: GenericProtocolHandler) -> None:
         """Validate replay attack capabilities for license protocols."""
         # Capture original license transaction
         original_request = bytearray()
@@ -720,9 +750,9 @@ class TestGenericProtocolHandlerSecurityResearchCapabilities:
         # Validate replay capability
         assert original_response is not None, "Must handle original request"
         assert replayed_response is not None, "Must support replay attacks"
-        assert len(protocol_handler.captured_requests) >= 2, "Must capture both original and replayed requests"
+        assert len(protocol_handler.captured_requests) >= MIN_CAPTURED_REQUEST_COUNT, "Must capture both original and replayed requests"
 
-    def test_certificate_bypass_simulation(self, protocol_handler):
+    def test_certificate_bypass_simulation(self, protocol_handler: GenericProtocolHandler) -> None:
         """Validate certificate validation bypass capabilities."""
         # Simulate certificate validation request
         cert_request = bytearray()

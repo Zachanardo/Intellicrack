@@ -144,7 +144,19 @@ class VMProtectHandler:
         }
 
     def identify_version(self, vm_data: bytes) -> ProtectionType:
-        """Identify VMProtect version."""
+        """Identify VMProtect version from binary data.
+
+        Matches byte signatures against known VMProtect version patterns to
+        determine which protection version has been applied to the binary.
+
+        Args:
+            vm_data: Binary data containing VMProtect-protected code.
+
+        Returns:
+            ProtectionType enum indicating the identified VMProtect version,
+            or ProtectionType.UNKNOWN_VM if no version signature matches.
+
+        """
         # Version signatures
         signatures = {
             ProtectionType.VMPROTECT_1X: [
@@ -170,7 +182,21 @@ class VMProtectHandler:
         return ProtectionType.UNKNOWN_VM
 
     def decrypt_vm_code(self, encrypted_data: bytes, key: bytes, version: ProtectionType) -> bytes:
-        """Decrypt VMProtect VM code."""
+        """Decrypt VMProtect VM code using version-specific decryption.
+
+        Applies the appropriate key schedule and decryption algorithm based on the
+        VMProtect version, supporting versions 1.x through 3.x with fallback to
+        generic XOR decryption for unknown versions.
+
+        Args:
+            encrypted_data: Encrypted VM code bytecode.
+            key: Decryption key material.
+            version: VMProtect version enum indicating which algorithm to use.
+
+        Returns:
+            Decrypted VM bytecode ready for execution or analysis.
+
+        """
         if version in self.key_schedules:
             key_schedule = self.key_schedules[version](key)
             return self._decrypt_with_schedule(encrypted_data, key_schedule)
@@ -178,7 +204,18 @@ class VMProtectHandler:
         return self._simple_decrypt(encrypted_data, key)
 
     def _vmprotect_1x_key_schedule(self, key: bytes) -> list[int]:
-        """VMProtect 1.x key schedule."""
+        """Generate key schedule for VMProtect 1.x decryption.
+
+        Expands the initial key material into 44 round keys using a simplified
+        AES-like key expansion algorithm specific to VMProtect 1.x protection.
+
+        Args:
+            key: 16-byte initial key material.
+
+        Returns:
+            List of 44 32-bit integers representing round keys for decryption.
+
+        """
         schedule = []
         key_ints = struct.unpack("<4I", key[:16])
 
@@ -197,7 +234,18 @@ class VMProtectHandler:
         return schedule
 
     def _vmprotect_2x_key_schedule(self, key: bytes) -> list[int]:
-        """VMProtect 2.x key schedule (more complex)."""
+        """Generate key schedule for VMProtect 2.x decryption.
+
+        Expands the initial key material into 60 round keys using an enhanced
+        key expansion with SubBytes and complex transformations for VMProtect 2.x.
+
+        Args:
+            key: 32-byte initial key material.
+
+        Returns:
+            List of 60 32-bit integers representing round keys for decryption.
+
+        """
         schedule = []
         key_ints = struct.unpack("<8I", key[:32])
 
@@ -217,7 +265,18 @@ class VMProtectHandler:
         return schedule
 
     def _vmprotect_3x_key_schedule(self, key: bytes) -> list[int]:
-        """VMProtect 3.x key schedule (most complex)."""
+        """Generate key schedule for VMProtect 3.x decryption.
+
+        Expands initial key material into 64 round keys using SHA-256-like
+        sigma functions and sophisticated key derivation for VMProtect 3.x.
+
+        Args:
+            key: Initial key material (padded to 64 bytes if shorter).
+
+        Returns:
+            List of 64 32-bit integers representing round keys for decryption.
+
+        """
         schedule: list[int] = []
         key_data = key[:64] if len(key) >= 64 else key.ljust(64, b"\x00")
 
@@ -235,7 +294,19 @@ class VMProtectHandler:
         return schedule
 
     def _complex_transform(self, value: int, round_num: int) -> int:
-        """Complex transformation for VMProtect 2.x."""
+        """Apply complex transformation for VMProtect 2.x key schedule.
+
+        Performs bitwise rotation and XOR with round-dependent constants to
+        increase key schedule complexity and improve protection against attacks.
+
+        Args:
+            value: 32-bit value to transform.
+            round_num: Round number for generating round-specific constants.
+
+        Returns:
+            Transformed 32-bit value after rotation and XOR operations.
+
+        """
         # Rotate left by round_num bits
         value = ((value << (round_num % 32)) | (value >> (32 - (round_num % 32)))) & 0xFFFFFFFF
 
@@ -246,7 +317,18 @@ class VMProtectHandler:
         return value
 
     def _substitute_bytes(self, value: int) -> int:
-        """Byte substitution (simplified S-Box)."""
+        """Apply byte substitution using S-Box transformation.
+
+        Performs non-linear byte substitution on each byte of the input value
+        using a simplified AES-like substitution box to strengthen the key schedule.
+
+        Args:
+            value: 32-bit value with four bytes to substitute.
+
+        Returns:
+            32-bit value with each byte substituted through the S-Box.
+
+        """
         sbox = [
             0x63,
             0x7C,
@@ -275,15 +357,49 @@ class VMProtectHandler:
         return result
 
     def _sigma0(self, value: int) -> int:
-        """SHA-256 sigma0 function."""
+        """Compute SHA-256 sigma0 function for key schedule.
+
+        Applies the sigma0 transformation used in SHA-256 key expansion,
+        combining rotate-right operations to enhance key schedule randomization.
+
+        Args:
+            value: 32-bit input value.
+
+        Returns:
+            Transformed 32-bit value after sigma0 operations.
+
+        """
         return (((value >> 7) | (value << 25)) ^ ((value >> 18) | (value << 14)) ^ (value >> 3)) & 0xFFFFFFFF
 
     def _sigma1(self, value: int) -> int:
-        """SHA-256 sigma1 function."""
+        """Compute SHA-256 sigma1 function for key schedule.
+
+        Applies the sigma1 transformation used in SHA-256 key expansion,
+        combining different rotate-right operations for key derivation.
+
+        Args:
+            value: 32-bit input value.
+
+        Returns:
+            Transformed 32-bit value after sigma1 operations.
+
+        """
         return (((value >> 17) | (value << 15)) ^ ((value >> 19) | (value << 13)) ^ (value >> 10)) & 0xFFFFFFFF
 
     def _decrypt_with_schedule(self, data: bytes, key_schedule: list[int]) -> bytes:
-        """Decrypt data using key schedule."""
+        """Decrypt data blocks using AES-like key schedule.
+
+        Performs AES-like decryption with inverse substitution, shift rows,
+        and mix columns operations using the provided key schedule rounds.
+
+        Args:
+            data: Encrypted data to decrypt (processed in 16-byte blocks).
+            key_schedule: List of 32-bit round keys for decryption rounds.
+
+        Returns:
+            Decrypted data with same length as input.
+
+        """
         result = bytearray()
 
         for i in range(0, len(data), 16):
@@ -319,12 +435,35 @@ class VMProtectHandler:
         return bytes(result)
 
     def _simple_decrypt(self, data: bytes, key: bytes) -> bytes:
-        """Perform simple XOR decryption for unknown versions."""
+        """Perform simple XOR decryption for unknown VMProtect versions.
+
+        Applies XOR-based decryption as a fallback when version-specific
+        decryption is unavailable, useful for basic key recovery attempts.
+
+        Args:
+            data: Encrypted bytecode.
+            key: Decryption key material.
+
+        Returns:
+            XOR-decrypted bytecode.
+
+        """
         key_len = len(key)
         return bytes(data[i] ^ key[i % key_len] for i in range(len(data)))
 
     def _inverse_substitute_bytes_block(self, state: list[int]) -> list[int]:
-        """Inverse S-Box substitution for block."""
+        """Apply inverse S-Box substitution to block state.
+
+        Transforms each 32-bit word in the state by applying inverse AES
+        S-Box substitution on each constituent byte.
+
+        Args:
+            state: List of four 32-bit integers representing block state.
+
+        Returns:
+            List of four 32-bit integers with inverse S-Box applied to all bytes.
+
+        """
         inv_sbox = [
             0x52,
             0x09,
@@ -356,12 +495,34 @@ class VMProtectHandler:
         return result
 
     def _inverse_shift_rows(self, state: list[int]) -> list[int]:
-        """Inverse shift rows transformation."""
+        """Apply inverse shift rows transformation to block state.
+
+        Rearranges the word order in the state array as the inverse of the
+        AES shift rows operation to maintain cipher structure during decryption.
+
+        Args:
+            state: List of four 32-bit integers representing block state.
+
+        Returns:
+            List of four 32-bit integers with inverse shift rows applied.
+
+        """
         # Simplified inverse shift rows
         return [state[0], state[3], state[2], state[1]]
 
     def _inverse_mix_columns(self, state: list[int]) -> list[int]:
-        """Inverse mix columns transformation."""
+        """Apply inverse mix columns transformation to block state.
+
+        Applies the inverse of the AES mix columns operation using simplified
+        Galois field multiplication for decryption operations.
+
+        Args:
+            state: List of four 32-bit integers representing block state.
+
+        Returns:
+            List of four 32-bit integers with inverse mix columns applied.
+
+        """
         return [((word << 1) ^ (word >> 31)) & 0xFFFFFFFF for word in state]
 
 
@@ -374,7 +535,15 @@ class CodeVirtualizerHandler:
         self.opcode_map = self._build_cv_opcode_map()
 
     def _build_cv_opcode_map(self) -> dict[int, tuple[str, VMInstructionType]]:
-        """Build Code Virtualizer opcode mapping."""
+        """Build Code Virtualizer opcode to instruction mapping.
+
+        Creates a dictionary mapping Code Virtualizer bytecode opcodes to their
+        corresponding mnemonic names and instruction type classifications.
+
+        Returns:
+            Dictionary with opcode bytes as keys and (mnemonic, VMInstructionType) tuples as values.
+
+        """
         return {
             # Code Virtualizer uses different opcode encoding
             0x10: ("CV_PUSH", VMInstructionType.STACK),
@@ -413,12 +582,36 @@ class CodeVirtualizerHandler:
         }
 
     def decrypt_cv_vm(self, vm_data: bytes, key: bytes) -> bytes:
-        """Decrypt Code Virtualizer VM code."""
+        """Decrypt Code Virtualizer VM bytecode using RC4 stream cipher.
+
+        Applies RC4-like stream cipher decryption to Code Virtualizer protected
+        VM code, recovering the underlying instruction stream.
+
+        Args:
+            vm_data: Encrypted Code Virtualizer VM bytecode.
+            key: Decryption key material for RC4 key scheduling.
+
+        Returns:
+            Decrypted VM bytecode ready for emulation or analysis.
+
+        """
         # Code Virtualizer uses RC4-like stream cipher
         return self._rc4_decrypt(vm_data, key)
 
     def _rc4_decrypt(self, data: bytes, key: bytes) -> bytes:
-        """RC4 stream cipher decryption."""
+        """Perform RC4 stream cipher decryption.
+
+        Implements the RC4 key scheduling and pseudo-random generation algorithms
+        to decrypt Code Virtualizer VM bytecode through stream cipher XOR.
+
+        Args:
+            data: Encrypted data to decrypt.
+            key: RC4 key material for key scheduling algorithm.
+
+        Returns:
+            Decrypted data with same length as input.
+
+        """
         S = list(range(256))
         j = 0
 
@@ -450,7 +643,15 @@ class ThemidaHandler:
         self.opcode_map = self._build_themida_opcode_map()
 
     def _build_themida_opcode_map(self) -> dict[int, tuple[str, VMInstructionType]]:
-        """Build Themida opcode mapping."""
+        """Build Themida opcode to instruction mapping.
+
+        Creates a dictionary mapping Themida bytecode opcodes to their corresponding
+        mnemonic names and instruction type classifications for VM emulation.
+
+        Returns:
+            Dictionary with opcode bytes as keys and (mnemonic, VMInstructionType) tuples as values.
+
+        """
         return {
             0x00: ("VM_NOP", VMInstructionType.CUSTOM),
             0x01: ("VM_PUSH_IMM", VMInstructionType.STACK),
@@ -485,7 +686,19 @@ class ThemidaHandler:
         }
 
     def decrypt_themida_vm(self, vm_data: bytes, key: bytes) -> bytes:
-        """Decrypt Themida VM code."""
+        """Decrypt Themida VM bytecode using rolling XOR with key rotation.
+
+        Applies position-dependent key rotation and XOR decryption to recover
+        Themida-protected VM instructions from encrypted bytecode.
+
+        Args:
+            vm_data: Encrypted Themida VM bytecode.
+            key: Decryption key material for rotation-based decryption.
+
+        Returns:
+            Decrypted VM bytecode ready for analysis.
+
+        """
         # Themida uses a rolling XOR with key rotation
         result = bytearray()
 
@@ -498,7 +711,19 @@ class ThemidaHandler:
         return bytes(result)
 
     def _rotate_key(self, key: bytes, position: int) -> bytes:
-        """Rotate key based on position."""
+        """Rotate key material based on current processing position.
+
+        Performs cyclic left rotation of the key based on the byte position
+        in the data stream to implement position-dependent decryption.
+
+        Args:
+            key: Key material to rotate.
+            position: Current byte position in the data stream.
+
+        Returns:
+            Rotated key with same length as input.
+
+        """
         rotation = position % len(key)
         return key[rotation:] + key[:rotation]
 
@@ -507,7 +732,16 @@ class VMEmulator:
     """VM instruction emulator."""
 
     def __init__(self, protection_type: ProtectionType) -> None:
-        """Initialize VM emulator with protection type and Unicorn engine."""
+        """Initialize VM emulator with specified protection type.
+
+        Sets up the VM emulation environment including handlers for the specified
+        protection type and optionally initializes the Unicorn x86 emulation engine
+        if available for enhanced dynamic analysis.
+
+        Args:
+            protection_type: ProtectionType enum indicating which VM protection to emulate.
+
+        """
         self.protection_type = protection_type
         self.context = VMContext()
         self.logger = logging.getLogger(f"{__name__}.VMEmulator")
@@ -516,7 +750,15 @@ class VMEmulator:
         self._init_unicorn()
 
     def _init_handlers(self) -> dict[ProtectionType, Any]:
-        """Initialize protection-specific handlers."""
+        """Initialize protection-specific handlers for VM emulation.
+
+        Creates instances of handler classes for each supported VM protection type,
+        enabling the emulator to handle diverse protection mechanisms.
+
+        Returns:
+            Dictionary mapping ProtectionType to handler instances.
+
+        """
         handlers: dict[ProtectionType, Any] = {ProtectionType.VMPROTECT_1X: VMProtectHandler()}
         handlers[ProtectionType.VMPROTECT_2X] = VMProtectHandler()
         handlers[ProtectionType.VMPROTECT_3X] = VMProtectHandler()
@@ -548,7 +790,23 @@ class VMEmulator:
             self.logger.warning("Unicorn setup failed: %s", e, exc_info=True)
 
     def parse_vm_instruction(self, vm_data: bytes, offset: int) -> VMInstruction:
-        """Parse VM instruction."""
+        """Parse a single VM instruction from bytecode.
+
+        Extracts a VM instruction at the specified offset, decoding the opcode,
+        determining instruction type, and extracting any operands according to
+        the protection type's opcode mapping.
+
+        Args:
+            vm_data: Binary bytecode containing VM instructions.
+            offset: Byte offset where instruction parsing begins.
+
+        Returns:
+            VMInstruction object with decoded opcode, operands, and metadata.
+
+        Raises:
+            ValueError: If offset exceeds bytecode length or handler is unavailable.
+
+        """
         if offset >= len(vm_data):
             raise ValueError("Offset out of bounds")
 
@@ -589,7 +847,18 @@ class VMEmulator:
         )
 
     def execute_vm_instruction(self, instruction: VMInstruction) -> bool:
-        """Execute VM instruction."""
+        """Execute a parsed VM instruction within the emulation context.
+
+        Dispatches the instruction to the appropriate execution handler based on its
+        type and updates the VM context (registers, stack, memory, flags) accordingly.
+
+        Args:
+            instruction: VMInstruction object to execute.
+
+        Returns:
+            True if instruction executed successfully, False on error.
+
+        """
         try:
             if instruction.vm_type == VMInstructionType.STACK:
                 return self._execute_stack_op(instruction)
@@ -611,7 +880,18 @@ class VMEmulator:
             return False
 
     def _execute_stack_op(self, instruction: VMInstruction) -> bool:
-        """Execute stack operations."""
+        """Execute VM stack operations.
+
+        Handles PUSH and POP instructions, managing the VM context's stack
+        and updating registers as needed for stack-based operations.
+
+        Args:
+            instruction: VMInstruction with PUSH or POP operation.
+
+        Returns:
+            True if operation completed successfully.
+
+        """
         if "PUSH" in instruction.mnemonic:
             if instruction.operands:
                 self.context.stack.append(instruction.operands[0])
@@ -627,7 +907,18 @@ class VMEmulator:
         return True
 
     def _execute_arithmetic_op(self, instruction: VMInstruction) -> bool:
-        """Execute arithmetic operations."""
+        """Execute VM arithmetic operations.
+
+        Handles ADD, SUB, MUL, and DIV instructions, popping two operands from
+        the stack, performing the operation, and pushing the result while updating flags.
+
+        Args:
+            instruction: VMInstruction with arithmetic operation.
+
+        Returns:
+            True if operation completed successfully, False if insufficient operands.
+
+        """
         if len(self.context.stack) < 2:
             return False
 
@@ -654,7 +945,18 @@ class VMEmulator:
         return True
 
     def _execute_logical_op(self, instruction: VMInstruction) -> bool:
-        """Execute logical operations."""
+        """Execute VM logical operations.
+
+        Handles AND, OR, XOR, NOT, SHL, and SHR instructions, performing
+        bitwise operations on stack operands with proper masking for 32-bit values.
+
+        Args:
+            instruction: VMInstruction with logical operation.
+
+        Returns:
+            True if operation completed successfully, False if insufficient operands.
+
+        """
         if "NOT" in instruction.mnemonic:
             if self.context.stack:
                 a = self.context.stack.pop()
@@ -685,7 +987,19 @@ class VMEmulator:
         return True
 
     def _execute_memory_op(self, instruction: VMInstruction) -> bool:
-        """Execute memory operations."""
+        """Execute VM memory operations.
+
+        Handles LOAD and STORE instructions for memory access, manipulating the
+        VM's memory dictionary and stack to implement load/store operations
+        within the emulation context.
+
+        Args:
+            instruction: VMInstruction with memory operation.
+
+        Returns:
+            True if operation completed successfully.
+
+        """
         if "LOAD" in instruction.mnemonic:
             if self.context.stack:
                 address = self.context.stack.pop()
@@ -703,7 +1017,18 @@ class VMEmulator:
         return True
 
     def _execute_control_flow_op(self, instruction: VMInstruction) -> bool:
-        """Execute control flow operations."""
+        """Execute VM control flow operations.
+
+        Handles JMP, conditional jumps (JZ, JE, JNZ, JNE), CALL, and RET instructions,
+        managing instruction pointer and stack for branching control.
+
+        Args:
+            instruction: VMInstruction with control flow operation.
+
+        Returns:
+            True if operation completed successfully.
+
+        """
         if "JMP" in instruction.mnemonic:
             if instruction.operands:
                 self.context.registers["EIP"] = instruction.operands[0]
@@ -729,7 +1054,18 @@ class VMEmulator:
         return True
 
     def _execute_register_op(self, instruction: VMInstruction) -> bool:
-        """Execute register operations."""
+        """Execute VM register operations.
+
+        Handles MOV and XCHG instructions for moving and exchanging values
+        between the register set and stack-based VM architecture.
+
+        Args:
+            instruction: VMInstruction with register operation.
+
+        Returns:
+            True if operation completed successfully.
+
+        """
         if "MOV" in instruction.mnemonic:
             if len(self.context.stack) >= 2:
                 self.context.stack.pop()
@@ -757,7 +1093,15 @@ class VMAnalyzer:
         self.patterns = self._load_vm_patterns()
 
     def _load_vm_patterns(self) -> dict[ProtectionType, list[bytes]]:
-        """Load VM detection patterns."""
+        """Load VM protection type detection patterns.
+
+        Creates a dictionary of byte patterns that identify different VM protection
+        types by matching against known signatures in protected binaries.
+
+        Returns:
+            Dictionary mapping ProtectionType to lists of byte signatures.
+
+        """
         return {
             ProtectionType.VMPROTECT_1X: [
                 b"\x60\x8b\x04\x24",  # VM entry pattern
@@ -787,7 +1131,19 @@ class VMAnalyzer:
         }
 
     def detect_vm_protection(self, binary_data: bytes) -> ProtectionType:
-        """Detect VM protection type."""
+        """Detect VM protection type in binary data.
+
+        Analyzes binary data using signature matching and entropy analysis to
+        identify the VM protection mechanism applied to the code.
+
+        Args:
+            binary_data: Complete binary file contents to analyze.
+
+        Returns:
+            ProtectionType enum indicating the detected protection type,
+            or ProtectionType.UNKNOWN_VM if detection fails.
+
+        """
         for protection, patterns in self.patterns.items():
             for pattern in patterns:
                 if pattern in binary_data:
@@ -803,7 +1159,18 @@ class VMAnalyzer:
         return ProtectionType.UNKNOWN_VM
 
     def _calculate_entropy(self, data: bytes) -> float:
-        """Calculate Shannon entropy."""
+        """Calculate Shannon entropy of binary data.
+
+        Computes the Shannon entropy metric to measure randomness and detect
+        encrypted or compressed sections in binary data.
+
+        Args:
+            data: Binary data to analyze.
+
+        Returns:
+            Shannon entropy value between 0.0 (minimum) and 8.0 (maximum).
+
+        """
         if not data:
             return 0.0
 
@@ -824,7 +1191,19 @@ class VMAnalyzer:
         return entropy
 
     def find_vm_entry_points(self, binary_data: bytes, protection_type: ProtectionType) -> list[int]:
-        """Find VM entry points."""
+        """Find all VM entry points in binary data.
+
+        Scans binary data for VM entry point markers based on protection type,
+        returning a list of offsets where VM-protected code begins.
+
+        Args:
+            binary_data: Binary file contents to scan.
+            protection_type: ProtectionType enum for pattern selection.
+
+        Returns:
+            List of byte offsets pointing to VM entry points in the binary.
+
+        """
         entry_points = []
         patterns = self.patterns.get(protection_type, [])
 
@@ -841,7 +1220,24 @@ class VMAnalyzer:
         return entry_points
 
     def analyze_vm_structure(self, vm_data: bytes, entry_point: int) -> dict[str, Any]:
-        """Analyze VM structure."""
+        """Analyze VM structure and extract metadata.
+
+        Performs comprehensive analysis of VM-protected code at a given entry point,
+        identifying handler tables, code sections, and computing structural statistics.
+
+        Args:
+            vm_data: Binary data containing VM code.
+            entry_point: Starting offset for analysis.
+
+        Returns:
+            Dictionary containing:
+            - entry_point: Starting offset analyzed
+            - vm_code_sections: List of identified VM code sections with metadata
+            - handler_table: Offset of VM handler table if found
+            - key_schedule: Offset of key schedule data if found
+            - statistics: Analysis metrics including entropy and size information
+
+        """
         analysis = {
             "entry_point": entry_point,
             "vm_code_sections": [],
@@ -868,7 +1264,19 @@ class VMAnalyzer:
         return analysis
 
     def _find_handler_table(self, vm_data: bytes, entry_point: int) -> int | None:
-        """Find VM handler table."""
+        """Find VM handler table offset in binary data.
+
+        Uses heuristics to locate VM handler lookup tables by identifying sequences
+        of valid address pointers within reasonable ranges of the entry point.
+
+        Args:
+            vm_data: Binary data containing handler table.
+            entry_point: Approximate starting location for search.
+
+        Returns:
+            Byte offset of handler table if found, None otherwise.
+
+        """
         # Look for patterns indicating handler table
         # This is a simplified heuristic
 
@@ -889,7 +1297,24 @@ class VMAnalyzer:
         return None
 
     def _extract_vm_sections(self, vm_data: bytes, entry_point: int) -> list[dict[str, Any]]:
-        """Extract VM code sections."""
+        """Extract and classify VM code sections from binary data.
+
+        Identifies contiguous VM code sections starting from an entry point,
+        classifying each by content type and computing entropy metrics.
+
+        Args:
+            vm_data: Binary data containing VM sections.
+            entry_point: Starting offset for section extraction.
+
+        Returns:
+            List of dictionaries, each containing:
+            - offset: Byte offset in binary
+            - size: Section size in bytes
+            - data: Raw section bytecode
+            - entropy: Shannon entropy of section
+            - type: Classification (encrypted, code, data, handler_table, string_pool, padding, unknown)
+
+        """
         sections = []
 
         # Simple section extraction based on patterns
@@ -1042,7 +1467,28 @@ class VMProtectionUnwrapper:
         }
 
     def unwrap_file(self, input_file: str, output_file: str) -> dict[str, Any]:
-        """Unwrap VM-protected file."""
+        """Unwrap VM-protected executable file.
+
+        Performs complete VM protection removal: detection, analysis, decryption,
+        and reconstruction of original x86 code from VM-protected binary.
+
+        Args:
+            input_file: Path to VM-protected binary file.
+            output_file: Path to save unwrapped binary.
+
+        Returns:
+            Dictionary containing:
+            - success: Boolean indicating operation success
+            - protection_type: Identified protection type
+            - entry_points: Number of VM entry points found
+            - vm_sections: Number of VM code sections identified
+            - original_size: Input file size in bytes
+            - unwrapped_size: Output file size in bytes
+            - processing_time: Execution time in seconds
+            - statistics: Additional analysis metrics
+            - error: Error message if operation failed
+
+        """
         self.logger.info("Starting unwrap of %s", input_file)
 
         start_time = time.time()
@@ -1116,7 +1562,20 @@ class VMProtectionUnwrapper:
                 self.stats["files_processed"] = files_processed + 1
 
     def _unwrap_vm_sections(self, binary_data: bytes, vm_analysis: dict[str, Any], protection_type: ProtectionType) -> list[bytes]:
-        """Unwrap VM sections."""
+        """Decrypt and unwrap VM-protected code sections.
+
+        Applies protection-specific decryption to each identified VM section,
+        recovering plaintext VM bytecode for conversion to native x86 instructions.
+
+        Args:
+            binary_data: Complete binary file contents.
+            vm_analysis: Analysis results containing identified VM sections.
+            protection_type: ProtectionType enum for handler selection.
+
+        Returns:
+            List of decrypted VM bytecode sections ready for reconstruction.
+
+        """
         unwrapped_sections: list[bytes] = []
 
         # Get appropriate handler
@@ -1164,7 +1623,21 @@ class VMProtectionUnwrapper:
         return unwrapped_sections
 
     def _extract_encryption_key(self, binary_data: bytes, vm_analysis: dict[str, Any], protection_type: ProtectionType) -> bytes:
-        """Extract encryption key from binary using advanced techniques."""
+        """Extract VM encryption key from binary data.
+
+        Attempts multiple key extraction strategies including constant pool analysis,
+        initialization routines, data sections, TLS callbacks, and resource analysis,
+        with fallback to cryptographic key derivation from binary characteristics.
+
+        Args:
+            binary_data: Complete binary file contents.
+            vm_analysis: Analysis results containing structural information.
+            protection_type: ProtectionType enum for targeted extraction.
+
+        Returns:
+            Extracted or derived encryption key material.
+
+        """
         entry_point = vm_analysis["entry_point"]
 
         # Multi-stage key extraction approach
@@ -1189,7 +1662,20 @@ class VMProtectionUnwrapper:
         return self._generate_key_from_binary_characteristics(binary_data, entry_point, protection_type)
 
     def _extract_key_from_constants(self, binary_data: bytes, entry_point: int, protection_type: ProtectionType) -> bytes | None:
-        """Extract key from constant pool analysis."""
+        """Extract key from constant pool analysis.
+
+        Scans for AES S-box patterns and associated key material in constant sections,
+        identifying keys stored near cryptographic lookup tables.
+
+        Args:
+            binary_data: Binary file to search.
+            entry_point: Approximate location to begin searching.
+            protection_type: Protection type for context.
+
+        Returns:
+            Extracted key material or None if not found.
+
+        """
         # Scan for AES S-box patterns indicating key schedule
         aes_sbox = bytes([0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5])
         pos = binary_data.find(aes_sbox)
@@ -1203,7 +1689,20 @@ class VMProtectionUnwrapper:
         return None
 
     def _extract_key_from_init_routines(self, binary_data: bytes, entry_point: int, protection_type: ProtectionType) -> bytes | None:
-        """Extract key from initialization routines."""
+        """Extract key from initialization routines.
+
+        Identifies x86 instruction patterns typical of key initialization in
+        function prologues and setup code.
+
+        Args:
+            binary_data: Binary file to search.
+            entry_point: Approximate location to begin searching.
+            protection_type: Protection type for context.
+
+        Returns:
+            Extracted key material or None if not found.
+
+        """
         # Pattern matching for key initialization sequences
         init_patterns = [
             b"\x8b\x45\x08\x89\x45",  # mov eax,[ebp+8]; mov [ebp+X],eax
@@ -1221,7 +1720,20 @@ class VMProtectionUnwrapper:
         return None
 
     def _extract_key_from_data_sections(self, binary_data: bytes, entry_point: int, protection_type: ProtectionType) -> bytes | None:
-        """Extract key from data sections using PE structure analysis."""
+        """Extract key from PE data sections using structural analysis.
+
+        Parses PE section headers to identify data segments and scans for key
+        material based on entropy characteristics.
+
+        Args:
+            binary_data: Binary file to analyze.
+            entry_point: Approximate location to begin searching.
+            protection_type: Protection type for context.
+
+        Returns:
+            Extracted key material or None if not found.
+
+        """
         try:
             # Parse PE header
             if binary_data[:2] != b"MZ":
@@ -1256,7 +1768,20 @@ class VMProtectionUnwrapper:
         return None
 
     def _extract_key_from_tls_callbacks(self, binary_data: bytes, entry_point: int, protection_type: ProtectionType) -> bytes | None:
-        """Extract key from TLS callback analysis."""
+        """Extract key from TLS callback routines.
+
+        Analyzes TLS (Thread Local Storage) callback functions which often contain
+        initialization code that sets up encryption keys.
+
+        Args:
+            binary_data: Binary file to analyze.
+            entry_point: Approximate location to begin searching.
+            protection_type: Protection type for context.
+
+        Returns:
+            Extracted key material or None if not found.
+
+        """
         try:
             pe_offset = struct.unpack("<I", binary_data[0x3C:0x40])[0]
             # TLS directory is at index 9 in data directories
@@ -1274,7 +1799,20 @@ class VMProtectionUnwrapper:
         return None
 
     def _extract_key_from_resource_section(self, binary_data: bytes, entry_point: int, protection_type: ProtectionType) -> bytes | None:
-        """Extract key from resource section."""
+        """Extract key from binary resource section.
+
+        Scans the resource section of PE binaries for embedded key material,
+        which some protections use for key storage.
+
+        Args:
+            binary_data: Binary file to analyze.
+            entry_point: Approximate location to begin searching.
+            protection_type: Protection type for context.
+
+        Returns:
+            Extracted key material or None if not found.
+
+        """
         try:
             pe_offset = struct.unpack("<I", binary_data[0x3C:0x40])[0]
             # Resource directory is at index 2
@@ -1293,7 +1831,19 @@ class VMProtectionUnwrapper:
         return None
 
     def _rva_to_offset(self, binary_data: bytes, rva: int) -> int | None:
-        """Convert RVA to file offset."""
+        """Convert PE Relative Virtual Address to file offset.
+
+        Maps a PE RVA (address relative to image base) to its corresponding
+        file offset by examining PE section headers.
+
+        Args:
+            binary_data: Binary file to analyze.
+            rva: Relative Virtual Address to convert.
+
+        Returns:
+            File offset or None if RVA is not in any section.
+
+        """
         try:
             pe_offset = struct.unpack("<I", binary_data[0x3C:0x40])[0]
             num_sections = struct.unpack("<H", binary_data[pe_offset + 6 : pe_offset + 8])[0]
@@ -1313,7 +1863,18 @@ class VMProtectionUnwrapper:
         return None
 
     def _is_valid_key_material(self, data: bytes) -> bool:
-        """Validate potential key material."""
+        """Validate whether extracted bytes are valid key material.
+
+        Applies heuristics including entropy checks and pattern analysis to
+        determine if candidate bytes represent legitimate encryption key data.
+
+        Args:
+            data: Bytes to validate as key material.
+
+        Returns:
+            True if data passes key validation heuristics.
+
+        """
         if len(data) < 16:
             return False
 
@@ -1331,7 +1892,20 @@ class VMProtectionUnwrapper:
         return not null_count > len(data) * 0.5
 
     def _validate_key(self, key: bytes, binary_data: bytes, entry_point: int) -> bool:
-        """Validate extracted key by testing decryption."""
+        """Validate extracted encryption key through test decryption.
+
+        Tests a candidate key on data at the entry point, checking if decrypted
+        output contains valid x86 opcodes to confirm key validity.
+
+        Args:
+            key: Encryption key to validate.
+            binary_data: Binary data containing encrypted code.
+            entry_point: Offset to test decryption on.
+
+        Returns:
+            True if test decryption produces valid x86 instructions.
+
+        """
         # Test decryption on known encrypted sections
         test_offset = entry_point + 0x100
         if test_offset + 16 > len(binary_data):
@@ -1349,7 +1923,20 @@ class VMProtectionUnwrapper:
         return valid_count >= 2
 
     def _generate_key_from_binary_characteristics(self, binary_data: bytes, entry_point: int, protection_type: ProtectionType) -> bytes:
-        """Generate key from binary characteristics using cryptographic derivation."""
+        """Generate encryption key from binary characteristics using PBKDF2.
+
+        When direct key extraction fails, derives a key from binary properties
+        including entry point bytes, PE header timestamp, and protection-specific markers.
+
+        Args:
+            binary_data: Binary file to analyze.
+            entry_point: VM entry point offset for characteristic collection.
+            protection_type: Protection type to identify markers.
+
+        Returns:
+            Derived 32-byte encryption key.
+
+        """
         # Collect binary characteristics
         characteristics = bytearray()
 
@@ -1391,7 +1978,19 @@ class VMProtectionUnwrapper:
         return bytes(derived_key[:32])
 
     def _reconstruct_original_code(self, unwrapped_sections: list[bytes], vm_analysis: dict[str, Any]) -> bytes:
-        """Reconstruct original x86 code from VM sections."""
+        """Reconstruct original x86 code from VM bytecode sections.
+
+        Converts decrypted VM bytecode through multiple optimization and conversion
+        passes to recover high-quality x86 machine code matching original semantics.
+
+        Args:
+            unwrapped_sections: List of decrypted VM bytecode sections.
+            vm_analysis: Analysis results containing structural metadata.
+
+        Returns:
+            Complete reconstructed x86 binary code.
+
+        """
         reconstructed = bytearray()
 
         # Advanced multi-pass reconstruction
@@ -1558,10 +2157,11 @@ class VMProtectionUnwrapper:
         return bytes(x86_code)
 
     def _detect_compound_pattern(self, instructions: list[VMInstruction], start: int) -> bytes | None:
-        """Detect and convert compound VM patterns to x86.
+        """Detect and convert compound VM patterns to x86 bytecode.
 
         Recognizes multi-instruction patterns such as function prologues,
-        epilogues, and loops, converting them to optimized x86 bytecode.
+        epilogues, and loops from the VM instruction stream, converting them
+        to optimized x86 bytecode for improved code quality.
 
         Args:
             instructions: List of VMInstruction objects to analyze.
@@ -1604,7 +2204,20 @@ class VMProtectionUnwrapper:
         return None
 
     def _enhanced_vm_instruction_to_asm(self, instruction: VMInstruction, vm_analysis: dict[str, Any]) -> str | None:
-        """Enhanced VM to x86 assembly conversion."""
+        """Convert single VM instruction to x86 assembly with context awareness.
+
+        Translates a parsed VM instruction to x86 assembly mnemonic, applying
+        context-aware optimizations and pattern-matched conversions for improved
+        code generation quality.
+
+        Args:
+            instruction: VMInstruction to convert.
+            vm_analysis: Binary analysis results for context.
+
+        Returns:
+            X86 assembly mnemonic string or None for unrecognized instructions.
+
+        """
         mnemonic = instruction.mnemonic
         operands = instruction.operands
 
@@ -1721,16 +2334,16 @@ class VMProtectionUnwrapper:
         return None
 
     def _fallback_vm_to_x86(self, vm_instructions: list[VMInstruction]) -> bytes:
-        """Fallback conversion using pre-compiled x86 opcode patterns.
+        """Convert VM instructions to x86 using pre-compiled opcode patterns.
 
-        Provides an alternative conversion mechanism when Keystone is unavailable,
-        using a lookup table of pre-compiled instruction sequences.
+        Provides an alternative conversion mechanism when Keystone assembler is unavailable,
+        using a lookup table of pre-compiled instruction patterns for common operations.
 
         Args:
             vm_instructions: List of VMInstruction objects to convert.
 
         Returns:
-            Binary x86 code assembled from pre-compiled patterns.
+            Binary x86 machine code assembled from pre-compiled patterns.
 
         """
         x86_code = bytearray()
@@ -1784,10 +2397,10 @@ class VMProtectionUnwrapper:
         return bytes(x86_code)
 
     def _post_process_x86_code(self, x86_code: bytes) -> bytes:
-        """Post-process x86 code for coherent execution flow.
+        """Post-process x86 code for correct execution flow.
 
-        Validates and corrects relative jump/call offsets and ensures proper
-        instruction alignment with NOP padding.
+        Fixes relative jump and call instruction offsets that may have become invalid
+        during conversion, and ensures proper alignment with NOP padding for optimized execution.
 
         Args:
             x86_code: Binary x86 code to post-process.
@@ -1826,16 +2439,16 @@ class VMProtectionUnwrapper:
         return bytes(code)
 
     def _parse_vm_instructions(self, vm_data: bytes) -> list[VMInstruction]:
-        """Parse VM instructions from binary data.
+        """Parse VM instructions from binary bytecode.
 
-        Iterates through binary data and extracts VM instructions sequentially.
-        Handles parsing failures gracefully by skipping invalid instructions.
+        Sequentially extracts VM instructions from binary data, handling
+        invalid bytecode gracefully with error recovery.
 
         Args:
             vm_data: Binary data containing VM instructions.
 
         Returns:
-            List of parsed VMInstruction objects.
+            List of parsed VMInstruction objects with decoded metadata.
 
         """
         instructions = []
@@ -1860,16 +2473,16 @@ class VMProtectionUnwrapper:
         return instructions
 
     def _vm_to_x86(self, vm_instructions: list[VMInstruction]) -> bytes:
-        """Convert VM instructions to x86 machine code.
+        """Convert VM instructions to x86 machine code using Keystone.
 
         Translates a sequence of parsed VM instructions into executable x86 bytecode
-        using Keystone assembler. Falls back to pre-compiled patterns if assembly fails.
+        using the Keystone assembler, with fallback to NOP padding on assembly failure.
 
         Args:
             vm_instructions: List of VMInstruction objects to convert.
 
         Returns:
-            Binary x86 machine code.
+            Binary x86 machine code representing instruction semantics.
 
         """
         x86_code = bytearray()
@@ -1902,14 +2515,14 @@ class VMProtectionUnwrapper:
     def _vm_instruction_to_asm(self, instruction: VMInstruction) -> str | None:
         """Convert VM instruction to x86 assembly mnemonic.
 
-        Maps a single VM instruction to an equivalent x86 assembly instruction
-        string, handling operand encoding and register allocation.
+        Maps a single parsed VM instruction to its x86 assembly equivalent,
+        handling operands and register allocation automatically.
 
         Args:
             instruction: VMInstruction object to convert.
 
         Returns:
-            X86 assembly string (e.g., "push eax") or None for unknown instructions.
+            X86 assembly mnemonic string or None for unrecognized instructions.
 
         """
         mnemonic = instruction.mnemonic
@@ -1976,7 +2589,27 @@ class VMProtectionUnwrapper:
         return None  # Unknown instruction
 
     def batch_unwrap(self, input_dir: str, output_dir: str) -> dict[str, Any]:
-        """Batch unwrap multiple files."""
+        """Unwrap multiple VM-protected files in batch mode.
+
+        Processes all executable files in an input directory, unwrapping each
+        and storing results in the output directory with progress reporting.
+
+        Args:
+            input_dir: Directory containing VM-protected executable files.
+            output_dir: Directory to store unwrapped binaries.
+
+        Returns:
+            Dictionary containing:
+            - total_files: Number of files processed
+            - successful: Number of successfully unwrapped files
+            - failed: Number of failed unwraps
+            - results: List of individual file processing results
+            - statistics: Aggregate statistics
+
+        Raises:
+            ValueError: If input directory does not exist.
+
+        """
         input_path = Path(input_dir)
         output_path = Path(output_dir)
 
@@ -2018,7 +2651,18 @@ class VMProtectionUnwrapper:
         }
 
     def get_statistics(self) -> dict[str, Any]:
-        """Get unwrapper statistics."""
+        """Get unwrapper runtime statistics and capabilities.
+
+        Returns aggregate statistics collected during unwrapping operations,
+        including file counts and supported protection type information.
+
+        Returns:
+            Dictionary containing:
+            - stats: Cumulative statistics from all unwrapping operations
+            - supported_protections: List of supported protection types
+            - detection_patterns: Number of available detection patterns
+
+        """
         return {
             "stats": self.stats.copy(),
             "supported_protections": [pt.value for pt in ProtectionType],

@@ -42,7 +42,7 @@ pytestmark = pytest.mark.skipif(not MODULE_AVAILABLE, reason="Module not availab
 class TestNetworkLicenseServerEmulatorInitialization:
     """Test suite for NetworkLicenseServerEmulator initialization and configuration"""
 
-    def test_emulator_initialization_with_comprehensive_config(self):
+    def test_emulator_initialization_with_comprehensive_config(self) -> None:
         """Test that NetworkLicenseServerEmulator initializes with sophisticated configuration"""
         config = {
             'ports': '27000-27010,7467,1947',
@@ -69,7 +69,7 @@ class TestNetworkLicenseServerEmulatorInitialization:
         assert hasattr(emulator, 'traffic_engine')
         assert hasattr(emulator, 'response_generator')
 
-    def test_port_parsing_with_complex_ranges(self):
+    def test_port_parsing_with_complex_ranges(self) -> None:
         """Test advanced port range parsing for multi-protocol support"""
         config = {'ports': '27000-27010,7467,1947,5093-5100,22350'}
         emulator = NetworkLicenseServerEmulator(config)
@@ -83,7 +83,7 @@ class TestNetworkLicenseServerEmulatorInitialization:
         assert 7467 in parsed_ports   # Sentinel/SafeNet
         assert 1947 in parsed_ports   # HASP
 
-    def test_protocol_fingerprint_loading(self):
+    def test_protocol_fingerprint_loading(self) -> None:
         """Test loading of sophisticated protocol fingerprints for license server detection"""
         config = {'protocol': 'auto', 'learning_mode': True}
         emulator = NetworkLicenseServerEmulator(config)
@@ -103,7 +103,7 @@ class TestNetworkLicenseServerEmulatorInitialization:
                 assert 'ports' in fingerprint
                 assert isinstance(fingerprint['patterns'], list)
 
-    def test_response_template_loading(self):
+    def test_response_template_loading(self) -> None:
         """Test loading of production-ready response templates for license protocols"""
         config = {'protocols': ['flexlm', 'hasp', 'sentinel']}
         emulator = NetworkLicenseServerEmulator(config)
@@ -123,7 +123,7 @@ class TestNetworkLicenseServerEmulatorInitialization:
 class TestNetworkLicenseServerEmulatorProtocolIdentification:
     """Test suite for advanced protocol identification and fingerprinting"""
 
-    def test_flexlm_protocol_identification(self):
+    def test_flexlm_protocol_identification(self) -> None:
         """Test FlexLM protocol identification using real FlexLM packet patterns"""
         config = {'protocol': 'auto'}
         emulator = NetworkLicenseServerEmulator(config)
@@ -150,7 +150,7 @@ class TestNetworkLicenseServerEmulatorProtocolIdentification:
         if identified_protocol:
             assert 'flexlm' in identified_protocol.lower() or 'flex' in identified_protocol.lower()
 
-    def test_hasp_protocol_identification(self):
+    def test_hasp_protocol_identification(self) -> None:
         """Test HASP/Sentinel protocol identification using real HASP packet patterns"""
         config = {'protocol': 'auto'}
         emulator = NetworkLicenseServerEmulator(config)
@@ -176,7 +176,7 @@ class TestNetworkLicenseServerEmulatorProtocolIdentification:
         if identified_protocol:
             assert 'hasp' in identified_protocol.lower() or 'sentinel' in identified_protocol.lower()
 
-    def test_wibu_codemeter_protocol_identification(self):
+    def test_wibu_codemeter_protocol_identification(self) -> None:
         """Test Wibu-Systems CodeMeter protocol identification"""
         config = {'protocol': 'auto'}
         emulator = NetworkLicenseServerEmulator(config)
@@ -203,7 +203,7 @@ class TestNetworkLicenseServerEmulatorProtocolIdentification:
         if identified_protocol:
             assert 'wibu' in identified_protocol.lower() or 'codemeter' in identified_protocol.lower()
 
-    def test_unknown_protocol_learning(self):
+    def test_unknown_protocol_learning(self) -> None:
         """Test dynamic learning of unknown license protocols"""
         config = {'learning_mode': True}
         emulator = NetworkLicenseServerEmulator(config)
@@ -241,7 +241,7 @@ class TestNetworkLicenseServerEmulatorProtocolIdentification:
 class TestNetworkLicenseServerEmulatorResponseGeneration:
     """Test suite for sophisticated license server response generation"""
 
-    def test_flexlm_license_checkout_response(self):
+    def test_flexlm_license_checkout_response(self) -> None:
         """Test generation of valid FlexLM license checkout responses"""
         config = {'protocols': ['flexlm']}
         emulator = NetworkLicenseServerEmulator(config)
@@ -276,7 +276,7 @@ class TestNetworkLicenseServerEmulatorResponseGeneration:
             'license', 'granted', 'checkout', 'ok', 'success'
         ])
 
-    def test_hasp_dongle_authentication_response(self):
+    def test_hasp_dongle_authentication_response(self) -> None:
         """Test generation of valid HASP dongle authentication responses"""
         config = {'protocols': ['hasp']}
         emulator = NetworkLicenseServerEmulator(config)
@@ -318,7 +318,7 @@ class TestNetworkLicenseServerEmulatorResponseGeneration:
             status_code = struct.unpack('<I', response[:4])[0]
             assert status_code != 0  # Should not be null response
 
-    def test_dynamic_response_adaptation(self):
+    def test_dynamic_response_adaptation(self) -> None:
         """Test adaptive response generation based on client behavior"""
         config = {'learning_mode': True, 'adaptive_responses': True}
         emulator = NetworkLicenseServerEmulator(config)
@@ -371,7 +371,7 @@ class TestNetworkLicenseServerEmulatorResponseGeneration:
 class TestNetworkLicenseServerEmulatorNetworkOperations:
     """Test suite for advanced network operations and server management"""
 
-    def test_multi_port_tcp_server_startup(self):
+    def test_multi_port_tcp_server_startup(self) -> None:
         """Test concurrent TCP server startup on multiple license ports"""
         config = {
             'ports': '27000,27001,1947,7467',
@@ -404,7 +404,7 @@ class TestNetworkLicenseServerEmulatorNetworkOperations:
         finally:
             emulator.stop()
 
-    def test_dns_redirection_setup(self):
+    def test_dns_redirection_setup(self) -> None:
         """Test DNS redirection for license server hostnames"""
         config = {
             'dns_redirection': True,
@@ -427,7 +427,7 @@ class TestNetworkLicenseServerEmulatorNetworkOperations:
             if hostname in emulator.license_hostnames:
                 assert emulator.license_hostnames[hostname] == '127.0.0.1'
 
-    def test_ssl_certificate_generation_and_interception(self):
+    def test_ssl_certificate_generation_and_interception(self) -> None:
         """Test SSL certificate generation for license server HTTPS interception"""
         config = {
             'ssl_interception': True,
@@ -445,7 +445,7 @@ class TestNetworkLicenseServerEmulatorNetworkOperations:
             # SSL setup might fail in test environment, but should handle gracefully
             assert emulator.ssl_interceptor is not None or "ssl" in str(e).lower()
 
-    def test_concurrent_client_connection_handling(self):
+    def test_concurrent_client_connection_handling(self) -> None:
         """Test handling multiple simultaneous client connections"""
         config = {'ports': '27000', 'max_clients': 50}
         emulator = NetworkLicenseServerEmulator(config)
@@ -494,7 +494,7 @@ class TestNetworkLicenseServerEmulatorNetworkOperations:
 class TestNetworkLicenseServerEmulatorTrafficAnalysis:
     """Test suite for traffic recording and protocol learning capabilities"""
 
-    def test_traffic_recording_and_analysis(self):
+    def test_traffic_recording_and_analysis(self) -> None:
         """Test comprehensive traffic recording and analysis capabilities"""
         config = {
             'traffic_recording': True,
@@ -542,7 +542,7 @@ class TestNetworkLicenseServerEmulatorTrafficAnalysis:
             # Traffic recording might have dependencies, handle gracefully
             assert "traffic" in str(e).lower() or emulator.traffic_recorder is not None
 
-    def test_protocol_pattern_learning(self):
+    def test_protocol_pattern_learning(self) -> None:
         """Test dynamic protocol pattern learning from captured traffic"""
         config = {'learning_mode': True}
         emulator = NetworkLicenseServerEmulator(config)
@@ -589,7 +589,7 @@ class TestNetworkLicenseServerEmulatorTrafficAnalysis:
             assert 'patterns' in fingerprint
             assert len(fingerprint['patterns']) > 0
 
-    def test_traffic_statistics_and_metrics(self):
+    def test_traffic_statistics_and_metrics(self) -> None:
         """Test comprehensive traffic statistics and performance metrics"""
         config = {'statistics_enabled': True}
         emulator = NetworkLicenseServerEmulator(config)
@@ -610,7 +610,7 @@ class TestNetworkLicenseServerEmulatorTrafficAnalysis:
             if metric in stats:
                 assert isinstance(stats[metric], (int, float, str))
 
-    def test_captured_protocol_analysis(self):
+    def test_captured_protocol_analysis(self) -> None:
         """Test analysis of captured license protocols for security research"""
         config = {'analysis_mode': 'comprehensive'}
         emulator = NetworkLicenseServerEmulator(config)
@@ -632,7 +632,7 @@ class TestNetworkLicenseServerEmulatorTrafficAnalysis:
 class TestNetworkLicenseServerEmulatorAdvancedFeatures:
     """Test suite for advanced security research features"""
 
-    def test_learning_data_export_import(self):
+    def test_learning_data_export_import(self) -> None:
         """Test export/import of learned protocol data for research sharing"""
         config = {'learning_mode': True}
         emulator = NetworkLicenseServerEmulator(config)
@@ -659,7 +659,7 @@ class TestNetworkLicenseServerEmulatorAdvancedFeatures:
         # Should maintain learned patterns
         assert emulator.protocol_fingerprints is not None
 
-    def test_transparent_proxy_setup(self):
+    def test_transparent_proxy_setup(self) -> None:
         """Test transparent proxy setup for license server interception"""
         config = {'transparent_proxy': True}
         emulator = NetworkLicenseServerEmulator(config)
@@ -671,7 +671,7 @@ class TestNetworkLicenseServerEmulatorAdvancedFeatures:
         assert result is not None
         assert isinstance(result, bool)
 
-    def test_emulator_status_monitoring(self):
+    def test_emulator_status_monitoring(self) -> None:
         """Test comprehensive status monitoring for production deployment"""
         config = {'monitoring_enabled': True}
         emulator = NetworkLicenseServerEmulator(config)
@@ -692,7 +692,7 @@ class TestNetworkLicenseServerEmulatorAdvancedFeatures:
 class TestRunNetworkLicenseEmulatorFunction:
     """Test suite for run_network_license_emulator orchestration function"""
 
-    def test_emulator_orchestration_with_comprehensive_config(self):
+    def test_emulator_orchestration_with_comprehensive_config(self) -> None:
         """Test orchestration function with comprehensive configuration"""
         config = {
             'ports': '27000,1947',
@@ -715,7 +715,7 @@ class TestRunNetworkLicenseEmulatorFunction:
         elif isinstance(result, bool):
             assert result is True or result is False
 
-    def test_emulator_with_real_world_scenario_config(self):
+    def test_emulator_with_real_world_scenario_config(self) -> None:
         """Test emulator with realistic security research configuration"""
         config = {
             'scenario': 'autodesk_maya_license_analysis',
@@ -740,7 +740,7 @@ class TestRunNetworkLicenseEmulatorFunction:
 class TestNetworkLicenseServerEmulatorSecurityResearchCapabilities:
     """Test suite validating security research effectiveness"""
 
-    def test_license_bypass_research_scenarios(self):
+    def test_license_bypass_research_scenarios(self) -> None:
         """Test license bypass research capabilities for security analysis"""
         config = {
             'research_mode': 'license_bypass',
@@ -788,7 +788,7 @@ class TestNetworkLicenseServerEmulatorSecurityResearchCapabilities:
             assert response is not None
             assert len(response) > 0
 
-    def test_multi_protocol_concurrent_emulation(self):
+    def test_multi_protocol_concurrent_emulation(self) -> None:
         """Test concurrent emulation of multiple license protocols"""
         config = {
             'concurrent_protocols': True,
@@ -812,7 +812,7 @@ class TestNetworkLicenseServerEmulatorSecurityResearchCapabilities:
         finally:
             emulator.stop()
 
-    def test_real_world_license_server_emulation_effectiveness(self):
+    def test_real_world_license_server_emulation_effectiveness(self) -> None:
         """Test that emulator can effectively fool real license clients"""
         config = {
             'effectiveness_mode': 'production',
@@ -845,7 +845,7 @@ class TestNetworkLicenseServerEmulatorSecurityResearchCapabilities:
 
 
 # Test execution and coverage validation
-def test_comprehensive_coverage_validation():
+def test_comprehensive_coverage_validation() -> None:
     """Validate that test suite provides comprehensive coverage of license emulator"""
 
     # This test ensures we've covered all major functionality areas

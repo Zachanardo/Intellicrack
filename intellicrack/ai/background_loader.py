@@ -45,11 +45,21 @@ class ConsoleProgressCallback(ProgressCallback):
         self._logger = logging.getLogger(f"{__name__}.ConsoleProgressCallback")
 
     def on_progress(self, progress: LoadingProgress) -> None:
-        """Log progress to console."""
+        """Log progress to console.
+
+        Args:
+            progress: Progress information to log.
+        """
         self._logger.info("[%s] %s: %.1f%% - %s", progress.model_id, progress.state.value, progress.progress * 100, progress.message)
 
     def on_completed(self, model_id: str, success: bool, error: str | None = None) -> None:
-        """Log completion status."""
+        """Log completion status.
+
+        Args:
+            model_id: Unique identifier for the model.
+            success: Whether the operation was successful.
+            error: Error message if the operation failed.
+        """
         status = "SUCCESS" if success else f"FAILED: {error}"
         self._logger.info("[%s] Loading completed: %s", model_id, status)
 
@@ -68,15 +78,29 @@ class QueuedProgressCallback(ProgressCallback):
         self.logger = logging.getLogger(f"{__name__}.QueuedProgressCallback")
 
     def on_progress(self, progress: LoadingProgress) -> None:
-        """Add progress to queue."""
+        """Add progress to queue.
+
+        Args:
+            progress: Progress information to queue.
+        """
         self.progress_queue.put(progress)
 
     def on_completed(self, model_id: str, success: bool, error: str | None = None) -> None:
-        """Add completion to queue."""
+        """Add completion to queue.
+
+        Args:
+            model_id: Unique identifier for the model.
+            success: Whether the operation was successful.
+            error: Error message if the operation failed.
+        """
         self.completion_queue.put((model_id, success, error))
 
     def get_progress_updates(self) -> list[LoadingProgress]:
-        """Get all pending progress updates."""
+        """Get all pending progress updates.
+
+        Returns:
+            A list of all pending LoadingProgress updates from the queue.
+        """
         updates = []
         try:
             while True:
@@ -86,7 +110,11 @@ class QueuedProgressCallback(ProgressCallback):
         return updates
 
     def get_completion_updates(self) -> list[tuple[str, bool, str | None]]:
-        """Get all pending completion updates."""
+        """Get all pending completion updates.
+
+        Returns:
+            A list of tuples containing (model_id, success, error) for each completion.
+        """
         updates: list[tuple[str, bool, str | None]] = []
         try:
             while True:
@@ -132,7 +160,13 @@ class LoadingTask:
         self.cancelled = False
 
     def update_progress(self, progress: float, message: str, state: LoadingState | None = None) -> None:
-        """Update task progress."""
+        """Update task progress.
+
+        Args:
+            progress: Progress value between 0.0 and 1.0.
+            message: Status message describing the current operation.
+            state: Optional LoadingState to update. If not provided, state remains unchanged.
+        """
         if state:
             self.state = state
         self.progress = min(1.0, max(0.0, progress))
@@ -156,7 +190,13 @@ class LoadingTask:
             self.callback.on_progress(progress_info)
 
     def mark_completed(self, success: bool, result: Optional["LLMBackend"] = None, error: str | None = None) -> None:
-        """Mark task as completed."""
+        """Mark task as completed.
+
+        Args:
+            success: Whether the task completed successfully.
+            result: The loaded LLMBackend instance if successful.
+            error: Error message if the task failed.
+        """
         self.end_time = time.time()
         self.result = result
         self.error = error
@@ -168,7 +208,10 @@ class LoadingTask:
             self.callback.on_completed(self.model_id, success, error)
 
     def cancel(self) -> None:
-        """Cancel the task."""
+        """Cancel the task.
+
+        Sets the task state to CANCELLED and notifies the callback if present.
+        """
         self.cancelled = True
         self.state = LoadingState.CANCELLED
         self.message = "Loading cancelled"
@@ -218,7 +261,18 @@ class BackgroundModelLoader:
         priority: int = 0,
         callback: ProgressCallback | None = None,
     ) -> LoadingTask:
-        """Submit a model loading task."""
+        """Submit a model loading task.
+
+        Args:
+            model_id: Unique identifier for the model.
+            backend_class: Backend class to instantiate for loading.
+            config: Configuration for the LLM backend.
+            priority: Loading priority (higher numbers loaded first).
+            callback: Optional progress callback for status updates.
+
+        Returns:
+            The created LoadingTask instance.
+        """
         with self.lock:
             # Cancel any existing task for this model
             if model_id in self.active_tasks:
@@ -234,7 +288,14 @@ class BackgroundModelLoader:
             return task
 
     def cancel_task(self, model_id: str) -> bool:
-        """Cancel a pending or active task."""
+        """Cancel a pending or active task.
+
+        Args:
+            model_id: Unique identifier for the model task to cancel.
+
+        Returns:
+            True if a task was found and cancelled, False otherwise.
+        """
         with self.lock:
             # Check active tasks
             if model_id in self.active_tasks:
@@ -252,7 +313,14 @@ class BackgroundModelLoader:
             return False
 
     def get_task_status(self, model_id: str) -> LoadingTask | None:
-        """Get the status of a loading task."""
+        """Get the status of a loading task.
+
+        Args:
+            model_id: Unique identifier for the model task.
+
+        Returns:
+            The LoadingTask instance if found, None otherwise.
+        """
         with self.lock:
             if model_id in self.active_tasks:
                 return self.active_tasks[model_id]
@@ -264,7 +332,11 @@ class BackgroundModelLoader:
             )
 
     def get_all_tasks(self) -> dict[str, LoadingTask]:
-        """Get all tasks (pending, active, and completed)."""
+        """Get all tasks (pending, active, and completed).
+
+        Returns:
+            Dictionary mapping model IDs to their LoadingTask instances.
+        """
         with self.lock:
             all_tasks = {task.model_id: task for task in self.pending_tasks}
             # Add active tasks
@@ -276,7 +348,12 @@ class BackgroundModelLoader:
             return all_tasks
 
     def get_loading_statistics(self) -> dict[str, Any]:
-        """Get loading statistics."""
+        """Get loading statistics.
+
+        Returns:
+            Dictionary containing statistics about pending, active, and completed tasks,
+            including success rate and worker thread information.
+        """
         with self.lock:
             stats: dict[str, Any] = {
                 "pending": len(self.pending_tasks),
@@ -295,7 +372,11 @@ class BackgroundModelLoader:
             return stats
 
     def _worker_thread(self) -> None:
-        """Worker thread for loading models."""
+        """Worker thread for loading models.
+
+        Processes tasks from the priority queue, manages task lifecycle transitions,
+        and handles errors during model loading operations.
+        """
         thread_name = threading.current_thread().name
         logger.info("Model loader worker %s started", thread_name)
 
@@ -329,7 +410,13 @@ class BackgroundModelLoader:
                 logger.exception("Error in worker thread %s: %s", thread_name, e)
 
     def _load_model(self, task: LoadingTask) -> None:
-        """Load a model with progress tracking."""
+        """Load a model with progress tracking.
+
+        Args:
+            task: The LoadingTask to execute.
+
+        Handles errors gracefully by marking the task as failed with an error message.
+        """
         task.start_time = time.time()
 
         try:
@@ -341,7 +428,14 @@ class BackgroundModelLoader:
                 logger.exception("Error loading model %s: %s", task.model_id, e)
 
     def _execute_load_stages(self, task: LoadingTask) -> None:
-        """Execute all loading stages with cancellation checks."""
+        """Execute all loading stages with cancellation checks.
+
+        Args:
+            task: The LoadingTask to execute stages for.
+
+        Manages the complete loading pipeline including backend initialization,
+        preparation, and model loading with regular cancellation checks.
+        """
         cancelled = task.cancelled
         if cancelled:
             return
@@ -379,7 +473,15 @@ class BackgroundModelLoader:
         self._finalize_load(task, success, backend)
 
     def _finalize_load(self, task: LoadingTask, success: bool, backend: "LLMBackend") -> None:
-        """Finalize model loading after initialization."""
+        """Finalize model loading after initialization.
+
+        Args:
+            task: The LoadingTask to finalize.
+            success: Whether backend initialization was successful.
+            backend: The LLMBackend instance that was loaded.
+
+        Marks the task as completed with appropriate state based on success status.
+        """
         if success:
             task.update_progress(1.0, "Model loaded successfully", LoadingState.COMPLETED)
             task.mark_completed(True, backend)
@@ -389,7 +491,11 @@ class BackgroundModelLoader:
             logger.error("Failed to initialize backend for %s", task.model_id)
 
     def shutdown(self) -> None:
-        """Shutdown the background loader."""
+        """Shutdown the background loader.
+
+        Signals worker threads to stop, cancels all pending tasks, and waits
+        for threads to complete with a timeout of 5 seconds per thread.
+        """
         logger.info("Shutting down background model loader...")
         self.shutdown_event.set()
 
@@ -425,24 +531,51 @@ class IntegratedBackgroundLoader:
         self.model_tasks: dict[str, LoadingTask] = {}
 
     def add_progress_callback(self, callback: ProgressCallback) -> None:
-        """Add a progress callback."""
+        """Add a progress callback.
+
+        Args:
+            callback: Progress callback to add to the callback list.
+        """
         self.progress_callbacks.append(callback)
 
     def remove_progress_callback(self, callback: ProgressCallback) -> None:
-        """Remove a progress callback."""
+        """Remove a progress callback.
+
+        Args:
+            callback: Progress callback to remove from the callback list.
+        """
         if callback in self.progress_callbacks:
             self.progress_callbacks.remove(callback)
 
     def load_model_in_background(self, model_id: str, backend_class: type, config: "LLMConfig", priority: int = 0) -> LoadingTask:
-        """Load a model in the background with integrated callbacks."""
+        """Load a model in the background with integrated callbacks.
+
+        Args:
+            model_id: Unique identifier for the model.
+            backend_class: Backend class to instantiate for loading.
+            config: Configuration for the LLM backend.
+            priority: Loading priority (higher numbers loaded first).
+
+        Returns:
+            The created LoadingTask instance.
+        """
 
         # Create a callback that notifies all registered callbacks
         class MultiCallback(ProgressCallback):
             def __init__(self, callbacks: list[ProgressCallback]) -> None:
-                """Initialize multi-callback handler with list of callbacks."""
+                """Initialize multi-callback handler with list of callbacks.
+
+                Args:
+                    callbacks: List of ProgressCallback instances to aggregate.
+                """
                 self.callbacks = callbacks
 
             def on_progress(self, progress: LoadingProgress) -> None:
+                """Notify all registered callbacks of progress.
+
+                Args:
+                    progress: Progress information to pass to callbacks.
+                """
                 for callback in self.callbacks:
                     try:
                         callback.on_progress(progress)
@@ -450,6 +583,13 @@ class IntegratedBackgroundLoader:
                         logger.warning("Error in progress callback: %s", e, exc_info=True)
 
             def on_completed(self, model_id: str, success: bool, error: str | None = None) -> None:
+                """Notify all registered callbacks of completion.
+
+                Args:
+                    model_id: Unique identifier for the model.
+                    success: Whether the operation was successful.
+                    error: Error message if the operation failed.
+                """
                 for callback in self.callbacks:
                     try:
                         callback.on_completed(model_id, success, error)
@@ -470,23 +610,48 @@ class IntegratedBackgroundLoader:
         return task
 
     def get_loading_progress(self, model_id: str) -> LoadingTask | None:
-        """Get loading progress for a model."""
+        """Get loading progress for a model.
+
+        Args:
+            model_id: Unique identifier for the model.
+
+        Returns:
+            The LoadingTask instance if found, None otherwise.
+        """
         return self.background_loader.get_task_status(model_id)
 
     def cancel_loading(self, model_id: str) -> bool:
-        """Cancel loading a model."""
+        """Cancel loading a model.
+
+        Args:
+            model_id: Unique identifier for the model task to cancel.
+
+        Returns:
+            True if a task was found and cancelled, False otherwise.
+        """
         return self.background_loader.cancel_task(model_id)
 
     def get_all_loading_tasks(self) -> dict[str, LoadingTask]:
-        """Get all loading tasks."""
+        """Get all loading tasks.
+
+        Returns:
+            Dictionary mapping model IDs to their LoadingTask instances.
+        """
         return self.background_loader.get_all_tasks()
 
     def get_statistics(self) -> dict[str, Any]:
-        """Get loading statistics."""
+        """Get loading statistics.
+
+        Returns:
+            Dictionary containing statistics about pending, active, and completed tasks.
+        """
         return self.background_loader.get_loading_statistics()
 
     def shutdown(self) -> None:
-        """Shutdown the integrated loader."""
+        """Shutdown the integrated loader.
+
+        Delegates shutdown to the underlying BackgroundModelLoader instance.
+        """
         self.background_loader.shutdown()
 
 
@@ -528,7 +693,20 @@ def load_model_with_progress(
     priority: int = 0,
     callback: ProgressCallback | None = None,
 ) -> LoadingTask:
-    """Load a model with progress."""
+    """Load a model with progress.
+
+    Args:
+        model_id: Unique identifier for the model.
+        backend_class: Backend class to instantiate for loading.
+        config: Configuration for the LLM backend.
+        priority: Loading priority (higher numbers loaded first).
+        callback: Optional progress callback for status updates.
+
+    Returns:
+        The created LoadingTask instance.
+
+    Falls back to synchronous loading if background loader is disabled.
+    """
     loader = get_background_loader()
     if loader is None:
         logger.info("Background loader not initialized for %s, using synchronous fallback", model_id)

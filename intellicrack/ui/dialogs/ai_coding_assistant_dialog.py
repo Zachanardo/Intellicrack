@@ -23,7 +23,17 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Protocol, cast
+
+
+class SavableEditorProtocol(Protocol):
+    """Protocol for editors with save capability."""
+
+    is_modified: bool
+
+    def save_file(self) -> bool:
+        """Save the file and return success status."""
+        ...
 
 from intellicrack.handlers.pyqt6_handler import (
     QAction,
@@ -4385,7 +4395,7 @@ class AICodingAssistantDialog(QDialog):
             )
 
             if reply == QMessageBox.StandardButton.Save:
-                if hasattr(editor, "save_file") and callable(getattr(editor, "save_file", None)) and not cast("Any", editor).save_file():
+                if hasattr(editor, "save_file") and callable(getattr(editor, "save_file", None)) and not cast(SavableEditorProtocol, editor).save_file():
                     return
             elif reply == QMessageBox.StandardButton.Cancel:
                 return
@@ -4412,7 +4422,7 @@ class AICodingAssistantDialog(QDialog):
                 and getattr(editor, "is_modified", False)
                 and (hasattr(editor, "save_file") and callable(getattr(editor, "save_file", None)))
             ):
-                cast("Any", editor).save_file()
+                cast(SavableEditorProtocol, editor).save_file()
 
         self.update_modified_status()
 

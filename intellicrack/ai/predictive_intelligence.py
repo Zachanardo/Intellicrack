@@ -138,7 +138,15 @@ class FeatureExtractor:
         logger.info("Feature extractor initialized")
 
     def extract_operation_features(self, operation_type: str, context: dict[str, Any]) -> dict[str, float]:
-        """Extract features for operation prediction."""
+        """Extract features for operation prediction.
+
+        Args:
+            operation_type: Type of operation to extract features for.
+            context: Contextual information about the operation.
+
+        Returns:
+            Dictionary mapping feature names to normalized float values.
+        """
         features = {"operation_complexity": self._calculate_operation_complexity(operation_type, context)}
 
         features["input_size"] = self._calculate_input_size(context)
@@ -159,7 +167,15 @@ class FeatureExtractor:
         return features
 
     def _calculate_operation_complexity(self, operation_type: str, context: dict[str, Any]) -> float:
-        """Calculate complexity score for operation."""
+        """Calculate complexity score for operation.
+
+        Args:
+            operation_type: Type of operation to evaluate.
+            context: Operation context including file size and analysis depth.
+
+        Returns:
+            Normalized complexity score between 0.0 and 2.0.
+        """
         complexity_map = {
             "binary_analysis": 0.7,
             "vulnerability_analysis": 0.8,
@@ -183,7 +199,14 @@ class FeatureExtractor:
         return min(base_complexity, 2.0)
 
     def _calculate_input_size(self, context: dict[str, Any]) -> float:
-        """Calculate normalized input size."""
+        """Calculate normalized input size.
+
+        Args:
+            context: Context dictionary containing size indicators.
+
+        Returns:
+            Normalized input size on 0-1 scale using logarithmic scaling.
+        """
         size_indicators = ["file_size", "data_size", "input_length", "code_lines"]
 
         for indicator in size_indicators:
@@ -197,7 +220,14 @@ class FeatureExtractor:
         return 0.1  # Default small size
 
     def _get_historical_performance(self, operation_type: str) -> dict[str, float]:
-        """Get historical performance features."""
+        """Get historical performance features.
+
+        Args:
+            operation_type: The type of operation to retrieve performance metrics for.
+
+        Returns:
+            Dictionary with historical success rate, execution time, and confidence metrics.
+        """
         try:
             insights = self.learning_engine.get_learning_insights()
 
@@ -230,7 +260,11 @@ class FeatureExtractor:
             }
 
     def _extract_system_features(self) -> dict[str, float]:
-        """Extract current system state features."""
+        """Extract current system state features.
+
+        Returns:
+            Dictionary containing CPU usage, memory usage, system load, and disk activity metrics.
+        """
         if not PSUTIL_AVAILABLE:
             return {
                 "cpu_usage": 0.5,
@@ -279,7 +313,11 @@ class FeatureExtractor:
             }
 
     def _extract_time_features(self) -> dict[str, float]:
-        """Extract time-based features."""
+        """Extract time-based features.
+
+        Returns:
+            Dictionary with hour of day, day of week, and business hours indicator.
+        """
         now = datetime.now()
 
         # Hour of day (0-23 normalized to 0-1)
@@ -298,7 +336,14 @@ class FeatureExtractor:
         }
 
     def extract_vulnerability_features(self, vulnerability_context: dict[str, Any]) -> dict[str, float]:
-        """Extract features for vulnerability prediction."""
+        """Extract features for vulnerability prediction.
+
+        Args:
+            vulnerability_context: Context containing file properties and characteristics.
+
+        Returns:
+            Dictionary mapping vulnerability features to normalized scores.
+        """
         # File type features
         file_extension = vulnerability_context.get("file_extension", "").lower()
         extension_risk = {
@@ -335,7 +380,14 @@ class FeatureExtractor:
         return features
 
     def extract_exploit_features(self, exploit_context: dict[str, Any]) -> dict[str, float]:
-        """Extract features for exploit success prediction."""
+        """Extract features for exploit success prediction.
+
+        Args:
+            exploit_context: Context with vulnerability type, target OS, and protections.
+
+        Returns:
+            Dictionary with vulnerability baseline, difficulty, and complexity scores.
+        """
         # Vulnerability type features
         vuln_type = exploit_context.get("vulnerability_type", "unknown")
         type_success_rates = {
@@ -381,13 +433,24 @@ class PredictiveModel:
         self.last_training: datetime | None = None
 
     def train(self, training_data: list[dict[str, Any]]) -> None:
-        """Train the model with provided data."""
+        """Train the model with provided data.
+
+        Args:
+            training_data: List of training samples with features and targets.
+        """
         self.training_data = training_data
         self.last_training = datetime.now()
         logger.info("Model %s trained with %d samples", self.model_name, len(training_data))
 
     def predict(self, features: dict[str, float]) -> tuple[float, float]:
-        """Make prediction. Returns (prediction, confidence)."""
+        """Make prediction.
+
+        Args:
+            features: Dictionary of feature names to float values.
+
+        Returns:
+            Tuple of (prediction value, confidence score).
+        """
         # Implementation should use features to make actual predictions
         if not features:
             return 0.0, 0.0
@@ -402,7 +465,11 @@ class PredictiveModel:
         return avg_value, confidence
 
     def update_model(self, new_data: dict[str, Any]) -> None:
-        """Update model with new data point."""
+        """Update model with new data point.
+
+        Args:
+            new_data: New training sample with features and target.
+        """
         self.training_data.append(new_data)
 
         # Retrain if we have enough new data
@@ -426,7 +493,14 @@ class LinearRegressionModel(PredictiveModel):
         self.learning_rate = 0.01
 
     def _extract_feature_names(self, training_data: list[dict[str, Any]]) -> list[str]:
-        """Extract unique feature names from training data."""
+        """Extract unique feature names from training data.
+
+        Args:
+            training_data: List of training samples with features.
+
+        Returns:
+            List of unique feature names found in training data.
+        """
         feature_names = set()
         for sample in training_data:
             if "features" in sample:
@@ -434,12 +508,20 @@ class LinearRegressionModel(PredictiveModel):
         return list(feature_names)
 
     def _initialize_weights(self, feature_names: list[str]) -> None:
-        """Initialize weights for features if not already set."""
+        """Initialize weights for features if not already set.
+
+        Args:
+            feature_names: List of feature names to initialize weights for.
+        """
         if not self.weights:
             self.weights = dict.fromkeys(feature_names, 0.1)
 
     def train(self, training_data: list[dict[str, Any]]) -> None:
-        """Train linear regression model."""
+        """Train linear regression model.
+
+        Args:
+            training_data: List of training samples with features and targets.
+        """
         super().train(training_data)
 
         if not training_data:
@@ -487,7 +569,14 @@ class LinearRegressionModel(PredictiveModel):
         logger.info("Linear model %s training completed", self.model_name)
 
     def predict(self, features: dict[str, float]) -> tuple[float, float]:
-        """Make prediction using linear model."""
+        """Make prediction using linear model.
+
+        Args:
+            features: Dictionary of feature names to float values.
+
+        Returns:
+            Tuple of (prediction value, confidence score).
+        """
         if not self.weights:
             # No training data - return default prediction
             return 0.5, 0.3
@@ -526,7 +615,11 @@ class SuccessProbabilityPredictor:
         logger.info("Success probability predictor initialized")
 
     def _initialize_model(self) -> None:
-        """Initialize model with real historical training data."""
+        """Initialize model with real historical training data.
+
+        Loads training data from historical database, JSON cache, live analysis results,
+        or uses baseline patterns if no historical data is available.
+        """
         import json
         import os
         import sqlite3
@@ -721,7 +814,15 @@ class SuccessProbabilityPredictor:
 
     @profile_ai_operation("success_prediction")
     def predict_success_probability(self, operation_type: str, context: dict[str, Any]) -> PredictionResult:
-        """Predict success probability for operation."""
+        """Predict success probability for operation.
+
+        Args:
+            operation_type: Type of operation being performed.
+            context: Contextual information about the operation.
+
+        Returns:
+            PredictionResult with success probability estimate and confidence metrics.
+        """
         # Extract features
         features = self.feature_extractor.extract_operation_features(operation_type, context)
 
@@ -762,7 +863,15 @@ class SuccessProbabilityPredictor:
         )
 
     def _generate_success_reasoning(self, features: dict[str, float], predicted_value: float) -> str:
-        """Generate reasoning for success prediction."""
+        """Generate reasoning for success prediction.
+
+        Args:
+            features: Feature dictionary with prediction inputs.
+            predicted_value: Predicted success probability value.
+
+        Returns:
+            Human-readable explanation of the prediction.
+        """
         factors = []
 
         if features.get("historical_success_rate", 0.8) > 0.9:
@@ -790,7 +899,14 @@ class SuccessProbabilityPredictor:
         return f"Predicted {outcome} based on overall system analysis"
 
     def _get_important_factors(self, features: dict[str, float]) -> dict[str, float]:
-        """Get most important contributing factors."""
+        """Get most important contributing factors.
+
+        Args:
+            features: Feature dictionary used in prediction.
+
+        Returns:
+            Dictionary with top 5 contributing factors and their weights.
+        """
         factor_weights = self.model.feature_importance or {name: 1.0 / len(features) for name in features}
 
         # Return top contributing factors
@@ -819,7 +935,11 @@ class ExecutionTimePredictor:
         logger.info("Execution time predictor initialized")
 
     def _initialize_model(self) -> None:
-        """Initialize model with real execution time training data."""
+        """Initialize model with real execution time training data.
+
+        Loads performance metrics from historical database, benchmarks, profiling results,
+        execution time logs, or uses baseline measurements if no data is available.
+        """
         import json
         import os
         import sqlite3
@@ -1056,7 +1176,15 @@ class ExecutionTimePredictor:
 
     @profile_ai_operation("time_prediction")
     def predict_execution_time(self, operation_type: str, context: dict[str, Any]) -> PredictionResult:
-        """Predict execution time for operation."""
+        """Predict execution time for operation.
+
+        Args:
+            operation_type: Type of operation being performed.
+            context: Contextual information about the operation.
+
+        Returns:
+            PredictionResult with estimated execution time in seconds.
+        """
         features = self.feature_extractor.extract_operation_features(operation_type, context)
 
         predicted_time, confidence_score = self.model.predict(features)
@@ -1096,7 +1224,14 @@ class ExecutionTimePredictor:
         )
 
     def _get_time_factors(self, features: dict[str, float]) -> dict[str, float]:
-        """Get factors affecting execution time."""
+        """Get factors affecting execution time.
+
+        Args:
+            features: Feature dictionary with prediction inputs.
+
+        Returns:
+            Dictionary with complexity, size, load, and CPU impact factors.
+        """
         return {
             "complexity_impact": features.get("operation_complexity", 0.5),
             "size_impact": features.get("input_size", 0.5),
@@ -1124,7 +1259,11 @@ class VulnerabilityPredictor:
         logger.info("Vulnerability predictor initialized")
 
     def _initialize_model(self) -> None:
-        """Initialize with real vulnerability training data."""
+        """Initialize with real vulnerability training data.
+
+        Loads vulnerability analysis data from database, CVE analysis, fuzzing results,
+        static analysis reports, or uses baseline vulnerability patterns if no data is available.
+        """
         import json
         import os
         import sqlite3
@@ -1399,7 +1538,14 @@ class VulnerabilityPredictor:
 
     @profile_ai_operation("vulnerability_prediction")
     def predict_vulnerability_likelihood(self, file_context: dict[str, Any]) -> PredictionResult:
-        """Predict likelihood of finding vulnerabilities."""
+        """Predict likelihood of finding vulnerabilities.
+
+        Args:
+            file_context: Context information about the binary file being analyzed.
+
+        Returns:
+            PredictionResult with vulnerability discovery probability.
+        """
         features = self.feature_extractor.extract_vulnerability_features(file_context)
 
         predicted_likelihood, confidence_score = self.model.predict(features)
@@ -1432,7 +1578,15 @@ class VulnerabilityPredictor:
         )
 
     def _generate_vuln_reasoning(self, features: dict[str, float], likelihood: float) -> str:
-        """Generate reasoning for vulnerability prediction."""
+        """Generate reasoning for vulnerability prediction.
+
+        Args:
+            features: Feature dictionary used in prediction.
+            likelihood: Predicted vulnerability likelihood score.
+
+        Returns:
+            Human-readable explanation of the vulnerability prediction.
+        """
         risk_factors = []
 
         if features.get("file_type_risk", 0.5) > 0.7:
@@ -1456,7 +1610,14 @@ class VulnerabilityPredictor:
         return f"{level} vulnerability likelihood based on file analysis"
 
     def predict(self, binary_path: str) -> list[dict[str, Any]]:
-        """Predict vulnerabilities for a binary file."""
+        """Predict vulnerabilities for a binary file.
+
+        Args:
+            binary_path: Path to the binary file to analyze.
+
+        Returns:
+            List of vulnerability prediction results with likelihood and factors.
+        """
         try:
             import os
 
@@ -1487,7 +1648,14 @@ class VulnerabilityPredictor:
             return []
 
     def get_confidence_score(self, binary_path: str) -> float:
-        """Get confidence score for vulnerability predictions."""
+        """Get confidence score for vulnerability predictions.
+
+        Args:
+            binary_path: Path to the binary file to analyze.
+
+        Returns:
+            Confidence score between 0.0 and 1.0.
+        """
         try:
             import os
 
@@ -1532,7 +1700,15 @@ class PredictiveIntelligenceEngine:
 
     @profile_ai_operation("make_prediction")
     def make_prediction(self, prediction_type: PredictionType, context: dict[str, Any]) -> PredictionResult:
-        """Make a prediction of specified type."""
+        """Make a prediction of specified type.
+
+        Args:
+            prediction_type: The type of prediction to make.
+            context: Context information for the prediction.
+
+        Returns:
+            PredictionResult with predicted value and confidence metrics.
+        """
         # Check cache first
         cache_key = self._generate_cache_key(prediction_type, context)
 
@@ -1582,14 +1758,27 @@ class PredictiveIntelligenceEngine:
         return result
 
     def _generate_cache_key(self, prediction_type: PredictionType, context: dict[str, Any]) -> str:
-        """Generate cache key for prediction."""
+        """Generate cache key for prediction.
+
+        Args:
+            prediction_type: The type of prediction.
+            context: Context information for the prediction.
+
+        Returns:
+            MD5 hash string serving as cache key.
+        """
         import hashlib
 
         key_data = f"{prediction_type.value}_{json.dumps(context, sort_keys=True)}"
         return hashlib.md5(key_data.encode(), usedforsecurity=False).hexdigest()
 
     def verify_prediction_accuracy(self, prediction_id: str, actual_value: float) -> None:
-        """Record actual outcome to improve accuracy tracking."""
+        """Record actual outcome to improve accuracy tracking.
+
+        Args:
+            prediction_id: ID of the prediction to verify.
+            actual_value: The actual observed value for verification.
+        """
         prediction = next(
             (pred for pred in self.prediction_history if pred.prediction_id == prediction_id),
             None,
@@ -1626,7 +1815,11 @@ class PredictiveIntelligenceEngine:
         logger.info("Updated prediction accuracy for %s: %.3f", prediction.prediction_type.value, accuracy)
 
     def get_prediction_analytics(self) -> dict[str, Any]:
-        """Get analytics about prediction performance."""
+        """Get analytics about prediction performance.
+
+        Returns:
+            Dictionary with prediction statistics, cache hit rate, and accuracy metrics.
+        """
         total_predictions_val = self.prediction_stats["total_predictions"]
         cache_hits_val = self.prediction_stats["cache_hits"]
 
@@ -1659,7 +1852,11 @@ class PredictiveIntelligenceEngine:
         return analytics
 
     def get_prediction_insights(self) -> dict[str, Any]:
-        """Get insights from prediction patterns."""
+        """Get insights from prediction patterns.
+
+        Returns:
+            Dictionary with prediction insights, confidence distribution, and type distribution.
+        """
         insights = []
 
         # Analyze recent predictions
@@ -1694,14 +1891,22 @@ class PredictiveIntelligenceEngine:
         }
 
     def _get_confidence_distribution(self) -> dict[str, int]:
-        """Get distribution of confidence levels."""
+        """Get distribution of confidence levels.
+
+        Returns:
+            Dictionary with counts of predictions at each confidence level.
+        """
         distribution: dict[str, int] = defaultdict(int)
         for prediction in self.prediction_history:
             distribution[prediction.confidence.value] += 1
         return dict(distribution)
 
     def _get_prediction_type_distribution(self) -> dict[str, int]:
-        """Get distribution of prediction types."""
+        """Get distribution of prediction types.
+
+        Returns:
+            Dictionary with counts of each prediction type made.
+        """
         distribution: dict[str, int] = defaultdict(int)
         for prediction in self.prediction_history:
             distribution[prediction.prediction_type.value] += 1

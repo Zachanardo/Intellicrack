@@ -78,13 +78,25 @@ class _ConsoleApprovalDialog:
     """Console-based approval dialog fallback."""
 
     def __init__(self, operation_type: str, details: str, _parent: Any = None) -> None:
-        """Initialize console-based approval dialog."""
+        """Initialize console-based approval dialog.
+
+        Args:
+            operation_type: Type of operation requiring approval (e.g., "Search", "Read")
+            details: Details about the operation to display to the user
+            _parent: Optional parent widget (unused for console dialog)
+
+        """
         self.operation_type = operation_type
         self.details = details
         self.approved = False
 
     def exec(self) -> int:
-        """Display console approval prompt and return user choice."""
+        """Display console approval prompt and return user choice.
+
+        Returns:
+            int: 1 if user approves, 0 if user denies or cancels
+
+        """
         logger.info("\n%s", "=" * 70)
         logger.info("AI FILE %s REQUEST", self.operation_type.upper())
         logger.info("=" * 70)
@@ -116,7 +128,14 @@ if QDialog is not None:
         """Dialog for requesting user approval for AI file operations."""
 
         def __init__(self, operation_type: str, details: str, parent: Any = None) -> None:
-            """Initialize file operation confirmation dialog."""
+            """Initialize file operation confirmation dialog.
+
+            Args:
+                operation_type: Type of operation requiring approval (e.g., "Search", "Read")
+                details: Details about the operation to display to the user
+                parent: Optional parent widget for the dialog
+
+            """
             super().__init__(parent)
             self.setWindowTitle(f"AI File {operation_type} Request")
             self.setMinimumSize(600, 400)
@@ -158,7 +177,17 @@ else:
 
 
 def create_approval_dialog(operation_type: str, details: str, parent: Any = None) -> bool:
-    """Create and show approval dialog for AI file operations."""
+    """Create and show approval dialog for AI file operations.
+
+    Args:
+        operation_type: Type of operation requiring approval
+        details: Details about the operation to display to the user
+        parent: Optional parent widget for the dialog
+
+    Returns:
+        bool: True if user approved, False if user denied or cancelled
+
+    """
     dialog = FileApprovalDialog(operation_type, details, parent)
     if QDialog is not None:
         return dialog.exec() == QDialog.DialogCode.Accepted
@@ -170,7 +199,12 @@ class FileSearchTool:
     """Tool for AI to search the file system for licensing-related files."""
 
     def __init__(self, app_instance: Any = None) -> None:
-        """Initialize file search tool with app instance."""
+        """Initialize file search tool with app instance.
+
+        Args:
+            app_instance: Optional Qt application instance for UI updates
+
+        """
         self.app_instance = app_instance
         self.common_license_patterns = [
             "*license*",
@@ -198,7 +232,16 @@ class FileSearchTool:
         ]
 
     def search_license_files(self, search_path: str, custom_patterns: list[str] | None = None) -> dict[str, Any]:
-        """Search for license-related files in the specified path."""
+        """Search for license-related files in the specified path.
+
+        Args:
+            search_path: Root directory path to search for license files
+            custom_patterns: Optional list of additional glob patterns to match
+
+        Returns:
+            dict[str, Any]: Dictionary with 'status' key and search results or error message
+
+        """
         if not self._request_search_approval(search_path, custom_patterns):
             return {"status": "denied", "message": "User denied file search request"}
 
@@ -209,7 +252,16 @@ class FileSearchTool:
             return {"status": "error", "message": str(e)}
 
     def _request_search_approval(self, search_path: str, custom_patterns: list[str] | None) -> bool:
-        """Request user approval for the search operation."""
+        """Request user approval for the search operation.
+
+        Args:
+            search_path: Root directory path to search
+            custom_patterns: Optional list of additional glob patterns
+
+        Returns:
+            bool: True if user approved, False otherwise
+
+        """
         details = f"""Search Path: {search_path}
 
 Patterns to search for:
@@ -219,7 +271,16 @@ Purpose: Find licensing-related files for analysis to identify protection mechan
         return create_approval_dialog("Search", details, self.app_instance)
 
     def _perform_file_search(self, search_path: str, custom_patterns: list[str] | None) -> dict[str, Any]:
-        """Perform the actual file search."""
+        """Perform the actual file search.
+
+        Args:
+            search_path: Root directory path to search
+            custom_patterns: Optional list of additional glob patterns
+
+        Returns:
+            dict[str, Any]: Dictionary with search results including status, paths, and file info
+
+        """
         results: dict[str, Any] = {
             "status": "success",
             "search_path": search_path,
@@ -254,7 +315,15 @@ Purpose: Find licensing-related files for analysis to identify protection mechan
         return results
 
     def _process_files_in_directory(self, root: str, files: list[str], patterns: list[str], results: dict[str, Any]) -> None:
-        """Process files in a directory and update results."""
+        """Process files in a directory and update results.
+
+        Args:
+            root: Current directory path being processed
+            files: List of filenames in the current directory
+            patterns: List of glob patterns to match against filenames
+            results: Dictionary to accumulate results (modified in place)
+
+        """
         for file in files:
             total_checked = results["total_files_checked"]
             if isinstance(total_checked, int):
@@ -276,7 +345,12 @@ Purpose: Find licensing-related files for analysis to identify protection mechan
                     break
 
     def _log_search_results(self, results: dict[str, Any]) -> None:
-        """Log the results of the file search."""
+        """Log the results of the file search.
+
+        Args:
+            results: Dictionary containing search results to log
+
+        """
         if self.app_instance and hasattr(self.app_instance, "update_output"):
             files_found = results.get("files_found", [])
             if isinstance(files_found, list):
@@ -291,7 +365,7 @@ Purpose: Find licensing-related files for analysis to identify protection mechan
             program_directory: Main program directory to scan
 
         Returns:
-            Dictionary with found license files
+            dict[str, Any]: Dictionary with found license files and search results
 
         """
         high_priority_patterns = [
@@ -327,6 +401,9 @@ class FileReadTool:
 
         Args:
             max_file_size: Maximum file size in bytes
+
+        Raises:
+            ValueError: If max_file_size is not positive.
 
         """
         if max_file_size <= 0:
@@ -480,15 +557,42 @@ class AIFileTools:
         self.read_tool = FileReadTool(app_instance, max_file_size)
 
     def search_for_license_files(self, base_path: str, custom_patterns: list[str] | None = None) -> dict[str, Any]:
-        """Search for license-related files."""
+        """Search for license-related files.
+
+        Args:
+            base_path: Root directory path to search for license files
+            custom_patterns: Optional list of additional glob patterns to match
+
+        Returns:
+            dict[str, Any]: Dictionary with search results
+
+        """
         return self.search_tool.search_license_files(base_path, custom_patterns)
 
     def read_file(self, file_path: str, purpose: str = DEFAULT_PURPOSE) -> dict[str, Any]:
-        """Read a single file."""
+        """Read a single file.
+
+        Args:
+            file_path: Path to the file to read
+            purpose: Explanation of why the AI wants to read this file
+
+        Returns:
+            dict[str, Any]: Dictionary with file content and metadata
+
+        """
         return self.read_tool.read_file_content(file_path, purpose)
 
     def read_multiple_files(self, file_paths: list[str], purpose: str = DEFAULT_PURPOSE) -> dict[str, Any]:
-        """Read multiple files."""
+        """Read multiple files.
+
+        Args:
+            file_paths: List of file paths to read
+            purpose: Explanation of why the AI wants to read these files
+
+        Returns:
+            dict[str, Any]: Dictionary with results for each file
+
+        """
         return self.read_tool.read_multiple_files(file_paths, purpose)
 
     def analyze_program_directory(self, program_path: str) -> dict[str, Any]:
@@ -498,7 +602,7 @@ class AIFileTools:
             program_path: Path to the main program executable
 
         Returns:
-            Dictionary with comprehensive analysis results
+            dict[str, Any]: Dictionary with comprehensive analysis results including license files found
 
         """
         program_path_obj = Path(program_path)
@@ -559,7 +663,7 @@ def get_ai_file_tools(app_instance: Any = None, max_file_size: int = DEFAULT_MAX
         max_file_size: Maximum file size limit in bytes (default: 10MB)
 
     Returns:
-        AIFileTools: Configured AI file tools instance
+        AIFileTools: Configured AI file tools instance for file operations
 
     """
     return AIFileTools(app_instance, max_file_size)

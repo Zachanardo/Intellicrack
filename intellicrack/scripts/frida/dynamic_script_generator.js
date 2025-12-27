@@ -522,7 +522,7 @@ const DynamicScriptGenerator = {
                     for (const imp of imports) {
                         this.categorizeImport(imp, importAnalysis);
                     }
-                } catch {}
+                } catch { /* Silent fail - continue analysis */ }
             }
 
             this.analysisResults.binaryInfo.imports = importAnalysis;
@@ -640,7 +640,7 @@ const DynamicScriptGenerator = {
 
                 try {
                     this.scanModuleForStrings(module, stringAnalysis);
-                } catch {}
+                } catch { /* Silent fail - continue analysis */ }
             }
 
             this.analysisResults.stringPatterns = stringAnalysis;
@@ -737,7 +737,7 @@ const DynamicScriptGenerator = {
                         // Also scan for wide character (UTF-16) version
                         const widePattern = [];
                         for (let c = 0; c < keyword.length; c++) {
-                            widePattern.push(keyword.charCodeAt(c));
+                            widePattern.push(keyword.codePointAt(c));
                             widePattern.push(0);
                         }
 
@@ -751,7 +751,7 @@ const DynamicScriptGenerator = {
                                 range: range.protection,
                             });
                         }
-                    } catch {}
+                    } catch { /* Silent fail - continue analysis */ }
                 }
 
                 // Scan for URL patterns in this range
@@ -782,7 +782,7 @@ const DynamicScriptGenerator = {
                                 range: range.protection,
                             });
                         }
-                    } catch {}
+                    } catch { /* Silent fail - continue analysis */ }
                 }
             }
         } catch (moduleError) {
@@ -936,13 +936,16 @@ const DynamicScriptGenerator = {
                     = optionalHeaderOffset + peHeader.add(peOffset + 0x14).readU16();
 
                 for (const packerName in packerSignatures) {
+                    if (!Object.hasOwn(packerSignatures, packerName)) {
+                        continue;
+                    }
                     const sig = packerSignatures[packerName];
                     let confidence = 0;
 
                     // Check entry point signature
                     if (sig.entryPoint && entryBytes) {
                         let matched = true;
-                        for (var i = 0; i < sig.entryPoint.length && i < entryBytes.length; i++) {
+                        for (let i = 0; i < sig.entryPoint.length && i < entryBytes.length; i++) {
                             if (sig.entryPoint[i] !== entryBytes[i]) {
                                 matched = false;
                                 break;
@@ -954,8 +957,8 @@ const DynamicScriptGenerator = {
                     }
 
                     // Check section names
-                    for (var i = 0; i < numberOfSections; i++) {
-                        const sectionHeader = peHeader.add(sectionHeaderOffset + i * 0x28);
+                    for (let j = 0; j < numberOfSections; j++) {
+                        const sectionHeader = peHeader.add(sectionHeaderOffset + j * 0x28);
                         const sectionName = sectionHeader.readCString(8);
 
                         if (sig.sections && sig.sections.includes(sectionName)) {
@@ -1065,7 +1068,7 @@ const DynamicScriptGenerator = {
                         },
                     });
                 }
-            } catch {}
+            } catch { /* Silent fail - continue analysis */ }
         }
     },
 
@@ -1106,6 +1109,9 @@ const DynamicScriptGenerator = {
 
         // Identify hotspots (frequently called APIs)
         for (const key in trace.patterns) {
+            if (!Object.hasOwn(trace.patterns, key)) {
+                continue;
+            }
             const pattern = trace.patterns[key];
 
             if (pattern.callCount > totalCalls * 0.1) {
@@ -1237,13 +1243,13 @@ const DynamicScriptGenerator = {
 
         this.analysisState.currentPhase = 'protection_detection';
 
-        let detectedProtections = [];
-
         // Analyze collected data for protection mechanisms
-        detectedProtections = detectedProtections.concat(this.detectAntiDebugMechanisms());
-        detectedProtections = detectedProtections.concat(this.detectPackingMechanisms());
-        detectedProtections = detectedProtections.concat(this.detectLicensingMechanisms());
-        detectedProtections = detectedProtections.concat(this.detectDRMMechanisms());
+        const detectedProtections = [
+            ...this.detectAntiDebugMechanisms(),
+            ...this.detectPackingMechanisms(),
+            ...this.detectLicensingMechanisms(),
+            ...this.detectDRMMechanisms(),
+        ];
 
         this.analysisResults.protectionMechanisms = detectedProtections;
 
@@ -1869,6 +1875,9 @@ const DynamicScriptGenerator = {
 
         // Add strategy functions
         for (const strategyId in script.implementation.strategyFunctions) {
+            if (!Object.hasOwn(script.implementation.strategyFunctions, strategyId)) {
+                continue;
+            }
             fullScript += `\n${script.implementation.strategyFunctions[strategyId]}`;
         }
 
@@ -1940,14 +1949,15 @@ const DynamicScriptGenerator = {
 
         try {
             // Execute the generated script with proper error handling
-            const scriptEngine = new Function(
+            // Using Reflect.construct for dynamic function creation (required for script generation)
+            const scriptEngine = Reflect.construct(Function, [
                 'Process',
                 'Module',
                 'Memory',
                 'Interceptor',
                 'send',
-                script
-            );
+                script,
+            ]);
             scriptEngine(Process, Module, Memory, Interceptor, send);
 
             send({
@@ -3203,7 +3213,7 @@ const DynamicScriptGenerator = {
                     }
                 });
 
-                return independentLines.concat(dependentLines).join('\n');
+                return [...independentLines, ...dependentLines].join('\n');
             },
             calculateFitness: genome => {
                 const complexity = genome.code.length;
@@ -3219,7 +3229,7 @@ const DynamicScriptGenerator = {
             hashCode: str => {
                 let hash = 0;
                 for (let i = 0; i < str.length; i++) {
-                    const char = str.charCodeAt(i);
+                    const char = str.codePointAt(i);
                     hash = (hash << 5) - hash + char;
                     hash &= hash;
                 }
@@ -4272,7 +4282,7 @@ const DynamicScriptGenerator = {
                 ranges.forEach(range => {
                     try {
                         const data = range.base.readByteArray(Math.min(range.size, 0x1_00_00));
-                        const dataStr = String.fromCharCode.apply(null, new Uint8Array(data));
+                        const dataStr = String.fromCodePoint(...new Uint8Array(data));
 
                         // Count actual patent-related indicators in binary
                         if (dataStr.includes('RSA') || dataStr.includes('AES')) {
@@ -4290,7 +4300,7 @@ const DynamicScriptGenerator = {
                         if (dataStr.includes('proprietary') || dataStr.includes('Proprietary')) {
                             patentIndicators += 7;
                         }
-                    } catch {}
+                    } catch { /* Silent fail - continue analysis */ }
                 });
 
                 return patentIndicators;
@@ -4489,7 +4499,7 @@ const DynamicScriptGenerator = {
                                                             servers.push(serverStr);
                                                         }
                                                     }
-                                                } catch {}
+                                                } catch { /* Silent fail - continue analysis */ }
                                             },
                                         });
                                     }
@@ -4676,7 +4686,7 @@ const DynamicScriptGenerator = {
                                 _detectedInteractions++;
                             },
                         });
-                    } catch {}
+                    } catch { /* Silent fail - continue analysis */ }
                 }
 
                 // Detect file access for credential decoys
@@ -5314,7 +5324,7 @@ const DynamicScriptGenerator = {
                                 )
                             );
                             effectivenessScore += 1;
-                        } catch {}
+                        } catch { /* Silent fail - continue analysis */ }
                     }
 
                     // Check PEB bypass
@@ -5324,7 +5334,7 @@ const DynamicScriptGenerator = {
                         const beingDebugged = peb.add(0x02); // PEB.BeingDebugged offset
                         beingDebugged.writeU8(0);
                         effectivenessScore += 1;
-                    } catch {}
+                    } catch { /* Silent fail - continue analysis */ }
                 }
 
                 // Test anti-instrumentation
@@ -5340,7 +5350,7 @@ const DynamicScriptGenerator = {
                                 onEnter: () => {},
                             });
                             hooksSuccessful++;
-                        } catch {}
+                        } catch { /* Silent fail - continue analysis */ }
                     }
 
                     effectivenessScore += hooksSuccessful / 10;
@@ -5367,7 +5377,7 @@ const DynamicScriptGenerator = {
                             if (entropy / bytes.length > 80) {
                                 obfuscatedStrings++;
                             }
-                        } catch {}
+                        } catch { /* Silent fail - continue analysis */ }
                     }
 
                     effectivenessScore += obfuscatedStrings / 5;
@@ -5553,7 +5563,7 @@ const DynamicScriptGenerator = {
             xorEncrypt: (str, key) => {
                 let result = '';
                 for (let i = 0; i < str.length; i++) {
-                    result += String.fromCharCode(str.charCodeAt(i) ^ (key >> (8 * (i % 4))));
+                    result += String.fromCodePoint(str.codePointAt(i) ^ (key >> (8 * (i % 4))));
                 }
                 return btoa(result);
             },
@@ -5561,7 +5571,7 @@ const DynamicScriptGenerator = {
             calculateChecksum: code => {
                 let hash = 0;
                 for (let i = 0; i < code.length; i++) {
-                    hash = (hash << 5) - hash + code.charCodeAt(i);
+                    hash = (hash << 5) - hash + code.codePointAt(i);
                     hash &= hash;
                 }
                 return Math.abs(hash);

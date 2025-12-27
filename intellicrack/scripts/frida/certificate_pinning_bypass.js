@@ -807,6 +807,13 @@ const CertificatePinningBypass = {
                 // Apply trust manager analysis
                 trustManagerAnalysis.analyzeTrustManagerImplementation.call(this, TrustManager);
 
+                // Create bypass trust manager wrapper for enhanced bypass capabilities
+                const bypassWrapper = trustManagerAnalysis.createBypassTrustManager.call(
+                    this,
+                    TrustManager
+                );
+                this.state.bypass_trust_wrapper = bypassWrapper;
+
                 const PermissiveTrustManager = Java.registerClass({
                     name: 'com.intellicrack.PermissiveTrustManager',
                     implements: [X509TrustManager],
@@ -6897,38 +6904,25 @@ Object.assign(CertificatePinningBypass, {
                                                         };
 
                                                         // Analyze domain security characteristics
+                                                        const secImpls
+                                                            = dnsSecurityAnalysis.domain_analysis
+                                                                .security_implications;
                                                         if (domainString.includes('*.')) {
-                                                            dnsSecurityAnalysis.domain_analysis.security_implications.push(
-                                                                'wildcard_domain_dnssec_bypass'
-                                                            );
+                                                            secImpls.push('wildcard_domain_dnssec_bypass');
                                                         }
                                                         if (domainString.length > 253) {
-                                                            dnsSecurityAnalysis.domain_analysis.security_implications.push(
-                                                                'suspiciously_long_domain'
-                                                            );
+                                                            secImpls.push('suspiciously_long_domain');
                                                         }
                                                         if (domainString.split('.').length > 5) {
-                                                            dnsSecurityAnalysis.domain_analysis.security_implications.push(
-                                                                'deep_subdomain_hierarchy'
-                                                            );
+                                                            secImpls.push('deep_subdomain_hierarchy');
                                                         }
 
                                                         // Check for suspicious TLDs or patterns
-                                                        const suspiciousTlds = [
-                                                            'tk',
-                                                            'ml',
-                                                            'ga',
-                                                            'cf',
-                                                        ];
-                                                        if (
-                                                            suspiciousTlds.includes(
-                                                                dnsSecurityAnalysis.domain_analysis
-                                                                    .tld
-                                                            )
-                                                        ) {
-                                                            dnsSecurityAnalysis.domain_analysis.security_implications.push(
-                                                                'suspicious_tld_dnssec_bypass'
-                                                            );
+                                                        const suspiciousTlds = ['tk', 'ml', 'ga', 'cf'];
+                                                        const domTld
+                                                            = dnsSecurityAnalysis.domain_analysis.tld;
+                                                        if (suspiciousTlds.includes(domTld)) {
+                                                            secImpls.push('suspicious_tld_dnssec_bypass');
                                                         }
                                                     }
                                                 } else {
@@ -6994,27 +6988,22 @@ Object.assign(CertificatePinningBypass, {
                                                                         recordsData.push(caaRecord);
 
                                                                         // Analyze CAA record security implications
-                                                                        if (
-                                                                            tag === 'issue'
-                                                                            && value
-                                                                        ) {
-                                                                            dnsSecurityAnalysis.caa_records_analysis.security_implications.push(
+                                                                        const caaSecImpls
+                                                                            = dnsSecurityAnalysis
+                                                                                .caa_records_analysis
+                                                                                .security_implications;
+                                                                        if (tag === 'issue' && value) {
+                                                                            caaSecImpls.push(
                                                                                 'caa_issue_policy_bypassed'
                                                                             );
                                                                         }
-                                                                        if (
-                                                                            tag === 'issuewild'
-                                                                            && value
-                                                                        ) {
-                                                                            dnsSecurityAnalysis.caa_records_analysis.security_implications.push(
+                                                                        if (tag === 'issuewild' && value) {
+                                                                            caaSecImpls.push(
                                                                                 'caa_wildcard_policy_bypassed'
                                                                             );
                                                                         }
-                                                                        if (
-                                                                            tag === 'iodef'
-                                                                            && value
-                                                                        ) {
-                                                                            dnsSecurityAnalysis.caa_records_analysis.security_implications.push(
+                                                                        if (tag === 'iodef' && value) {
+                                                                            caaSecImpls.push(
                                                                                 'caa_iodef_reporting_bypassed'
                                                                             );
                                                                         }
@@ -7085,32 +7074,28 @@ Object.assign(CertificatePinningBypass, {
                                                     };
 
                                                     // Interpret DNSSEC status codes
+                                                    const dnssecImpls
+                                                        = dnsSecurityAnalysis.dnssec_status_analysis
+                                                            .security_implications;
                                                     switch (statusValue) {
                                                         case 0: {
-                                                            dnsSecurityAnalysis.dnssec_status_analysis.security_implications.push(
-                                                                'dnssec_validation_disabled'
-                                                            );
-
+                                                            dnssecImpls.push('dnssec_validation_disabled');
                                                             break;
                                                         }
                                                         case 1: {
-                                                            dnsSecurityAnalysis.dnssec_status_analysis.security_implications.push(
+                                                            dnssecImpls.push(
                                                                 'dnssec_validation_enabled_but_bypassed'
                                                             );
-
                                                             break;
                                                         }
                                                         case -1: {
-                                                            dnsSecurityAnalysis.dnssec_status_analysis.security_implications.push(
+                                                            dnssecImpls.push(
                                                                 'dnssec_validation_failed_but_accepted'
                                                             );
-
                                                             break;
                                                         }
                                                         default: {
-                                                            dnsSecurityAnalysis.dnssec_status_analysis.security_implications.push(
-                                                                'unknown_dnssec_status_bypassed'
-                                                            );
+                                                            dnssecImpls.push('unknown_dnssec_status_bypassed');
                                                         }
                                                     }
                                                 } else {
@@ -7603,13 +7588,13 @@ Object.assign(CertificatePinningBypass, {
                                     };
 
                                     // Process Android CAA records for security bypass
+                                    const caaAnalysis
+                                        = androidDnssecAnalysis.android_caa_records_analysis;
                                     if (caaRecords) {
                                         try {
                                             if (Array.isArray(caaRecords)) {
-                                                androidDnssecAnalysis.android_caa_records_analysis.record_count
-                                                    = caaRecords.length;
-                                                androidDnssecAnalysis.android_caa_records_analysis.processed_android_records
-                                                    = [];
+                                                caaAnalysis.record_count = caaRecords.length;
+                                                caaAnalysis.processed_android_records = [];
 
                                                 caaRecords.forEach((caaRecord, index) => {
                                                     const androidRecordAnalysis = {
@@ -7621,33 +7606,31 @@ Object.assign(CertificatePinningBypass, {
                                                         android_bypass_action:
                                                             'caa_record_neutralization',
                                                     };
-                                                    androidDnssecAnalysis.android_caa_records_analysis.processed_android_records.push(
+                                                    caaAnalysis.processed_android_records.push(
                                                         androidRecordAnalysis
                                                     );
                                                 });
                                             } else {
-                                                androidDnssecAnalysis.android_caa_records_analysis.single_record
-                                                    = {
-                                                        flags: caaRecords.flags || 0,
-                                                        tag: caaRecords.tag || 'unknown',
-                                                        value: caaRecords.value || 'unknown',
-                                                        bypass_action: 'single_caa_record_bypass',
-                                                    };
+                                                caaAnalysis.single_record = {
+                                                    flags: caaRecords.flags || 0,
+                                                    tag: caaRecords.tag || 'unknown',
+                                                    value: caaRecords.value || 'unknown',
+                                                    bypass_action: 'single_caa_record_bypass',
+                                                };
                                             }
                                         } catch (caaError) {
-                                            androidDnssecAnalysis.android_caa_records_analysis.processing_error
-                                                = caaError.message;
+                                            caaAnalysis.processing_error = caaError.message;
                                         }
                                     }
 
                                     // Process Android RRSIG signatures for authentication bypass
+                                    const rrsigAnalysis
+                                        = androidDnssecAnalysis.android_rrsig_analysis;
                                     if (rrsigs) {
                                         try {
                                             if (Array.isArray(rrsigs)) {
-                                                androidDnssecAnalysis.android_rrsig_analysis.signature_count
-                                                    = rrsigs.length;
-                                                androidDnssecAnalysis.android_rrsig_analysis.processed_android_signatures
-                                                    = [];
+                                                rrsigAnalysis.signature_count = rrsigs.length;
+                                                rrsigAnalysis.processed_android_signatures = [];
 
                                                 rrsigs.forEach((rrsig, index) => {
                                                     const androidSignatureAnalysis = {
@@ -7662,7 +7645,7 @@ Object.assign(CertificatePinningBypass, {
                                                         android_bypass_action:
                                                             'signature_authentication_override',
                                                     };
-                                                    androidDnssecAnalysis.android_rrsig_analysis.processed_android_signatures.push(
+                                                    rrsigAnalysis.processed_android_signatures.push(
                                                         androidSignatureAnalysis
                                                     );
                                                 });

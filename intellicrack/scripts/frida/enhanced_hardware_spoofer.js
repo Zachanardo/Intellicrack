@@ -16,6 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+function generateWindowsProductId() {
+    const seg1 = Math.floor(Math.random() * 89_999) + 10_000;
+    const seg2 = Math.floor(Math.random() * 899) + 100;
+    const seg3 = Math.floor(Math.random() * 8_999_999) + 1_000_000;
+    const seg4 = Math.floor(Math.random() * 89_999) + 10_000;
+    return `${seg1}-${seg2}-${seg3}-${seg4}`;
+}
+
 const EnhancedHardwareSpoofer = {
     name: 'Enhanced Hardware Spoofer',
     description:
@@ -45,7 +53,7 @@ const EnhancedHardwareSpoofer = {
             machineGuid:
                 `{`
                 + `A1B2C3D4-E5F6-7890-ABCD-${Math.random().toString(16).slice(2, 14).toUpperCase()}}`,
-            productId: 'XXXXX-XXXXX-XXXXX-XXXXX',
+            productId: generateWindowsProductId(),
             windowsSerial: `00330-80000-00000-AA${Math.floor(Math.random() * 1000)
                 .toString()
                 .padStart(3, '0')}`,
@@ -146,7 +154,10 @@ const EnhancedHardwareSpoofer = {
                                 action: 'processor_info_queried',
                                 infoClass: this.infoClass,
                             });
-                        } catch {}
+                        } catch {
+                            self.stats.cpuidHooks--;
+                            self.stats.totalBypasses--;
+                        }
                     }
                 },
             });
@@ -214,7 +225,9 @@ const EnhancedHardwareSpoofer = {
             try {
                 Module.load('oleaut32.dll');
                 oleaut32 = Module.findBaseAddress('oleaut32.dll');
-            } catch {}
+            } catch {
+                oleaut32 = null;
+            }
         }
 
         const sysAllocString = Module.findExportByName('oleaut32.dll', 'SysAllocString');
@@ -235,7 +248,9 @@ const EnhancedHardwareSpoofer = {
                                     }
                                 }
                             }
-                        } catch {}
+                        } catch {
+                            this.isWmiQuery = false;
+                        }
                     }
                 },
                 onLeave(_retval) {
@@ -334,7 +349,9 @@ const EnhancedHardwareSpoofer = {
                                     break;
                                 }
                             }
-                        } catch {}
+                        } catch {
+                            this.isHardwareValue = false;
+                        }
                     }
                 },
                 onLeave(retval) {
@@ -360,7 +377,9 @@ const EnhancedHardwareSpoofer = {
                                         Memory.copy(this.dataPtr, encoded, encodedSize);
                                     }
                                 }
-                            } catch {}
+                            } catch {
+                                return;
+                            }
                         }
 
                         send({
@@ -392,7 +411,9 @@ const EnhancedHardwareSpoofer = {
                                     break;
                                 }
                             }
-                        } catch {}
+                        } catch {
+                            this.isHardwareKey = false;
+                        }
                     }
                 },
                 onLeave(retval) {
@@ -456,7 +477,9 @@ const EnhancedHardwareSpoofer = {
                         if (this.signature === 0x52_53_4D_42) {
                             try {
                                 self.spoofSmbiosTable(this.buffer, returnedSize);
-                            } catch {}
+                            } catch {
+                                return;
+                            }
                         }
 
                         send({
@@ -554,7 +577,9 @@ const EnhancedHardwareSpoofer = {
                     offset++;
                 }
             }
-        } catch {}
+        } catch {
+            this.stats.smbiosHooks--;
+        }
     },
 
     spoofBiosInfo(_structPtr, _length) {
@@ -622,7 +647,9 @@ const EnhancedHardwareSpoofer = {
                                 this.isDiskAccess = true;
                                 this.diskPath = path;
                             }
-                        } catch {}
+                        } catch {
+                            this.isDiskAccess = false;
+                        }
                     }
                 },
                 onLeave(retval) {
@@ -669,7 +696,9 @@ const EnhancedHardwareSpoofer = {
                                     .add(404 + i)
                                     .writeU8(Number.parseInt(macBytes[i], 16));
                             }
-                        } catch {}
+                        } catch {
+                            return;
+                        }
 
                         send({
                             type: 'bypass',
@@ -750,9 +779,11 @@ const EnhancedHardwareSpoofer = {
                                 const serialBytes = [];
                                 const serial = self.config.spoofedValues.diskSerial;
                                 for (let i = 0; i < serial.length && i < 20; i++) {
-                                    serialBytes.push(serial.charCodeAt(i));
+                                    serialBytes.push(serial.codePointAt(i) || 0);
                                 }
-                            } catch {}
+                            } catch {
+                                return;
+                            }
                         }
 
                         send({

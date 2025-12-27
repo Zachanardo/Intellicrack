@@ -1,5 +1,18 @@
 """Integration Manager for AI Components.
 
+This module provides orchestration and management of AI-driven analysis and
+exploitation workflows for software licensing protection research. It manages
+task queues, dependencies, and coordinates multiple AI components including
+script generation, code modification, and autonomous analysis agents.
+
+Key features:
+- Task queue management with dependency resolution
+- Workflow orchestration for complex multi-step operations
+- Integration with QEMU for script validation in isolated environments
+- LLM backend support for AI-driven analysis
+- Performance monitoring and metrics collection
+- Event-driven architecture for task lifecycle management
+
 Copyright (C) 2025 Zachary Flint
 
 This file is part of Intellicrack.
@@ -252,7 +265,12 @@ Script Analysis:
                 }
 
         def _create_protected_binary(self, target_path: str) -> None:
-            """Create a protected binary with real license checking for testing."""
+            """Create a protected binary with real license checking for testing.
+
+            Args:
+                target_path: Path where the protected binary will be created.
+
+            """
             try:
                 import struct
 
@@ -414,6 +432,9 @@ Script Analysis:
             Returns:
                 Dictionary containing execution results with success, output, error,
                 exit_code, and method
+
+            Raises:
+                FileNotFoundError: If QEMU binary is not found on the system PATH.
 
             """
             import shutil
@@ -587,8 +608,12 @@ class IntegrationManager:
     def __init__(self, llm_manager: LLMManager | None = None) -> None:
         """Initialize the integration manager.
 
+        Sets up all component managers, task queues, and worker thread pools
+        for managing integration workflows and tasks.
+
         Args:
-            llm_manager: Optional LLM manager for AI components
+            llm_manager: Optional LLM manager for AI components. If not provided,
+                a new LLMManager instance will be created.
 
         """
         self.logger = get_logger(f"{__name__}.IntegrationManager")
@@ -629,7 +654,15 @@ class IntegrationManager:
         logger.info("Integration manager initialized")
 
     def start(self) -> None:
-        """Start the integration manager."""
+        """Start the integration manager and initialize worker threads.
+
+        Starts the performance monitoring system and spawns the configured number
+        of worker threads to process tasks from the task queue.
+
+        Returns:
+            None
+
+        """
         if self.running:
             return
 
@@ -649,7 +682,15 @@ class IntegrationManager:
         logger.info("Integration manager started with %d workers", self.max_workers)
 
     def stop(self) -> None:
-        """Stop the integration manager."""
+        """Stop the integration manager and shutdown worker threads.
+
+        Gracefully shuts down all worker threads with a timeout period and stops
+        the performance monitoring system.
+
+        Returns:
+            None
+
+        """
         if not self.running:
             return
 
@@ -665,7 +706,13 @@ class IntegrationManager:
         logger.info("Integration manager stopped")
 
     def _worker_loop(self) -> None:
-        """Process tasks in the main worker loop."""
+        """Process tasks in the main worker loop.
+
+        Continuously retrieves tasks from the task queue and executes them after
+        verifying their dependencies are satisfied. Handles queue timeouts and
+        exceptions gracefully.
+
+        """
         while self.running:
             try:
                 try:
@@ -688,7 +735,17 @@ class IntegrationManager:
                 time.sleep(1.0)
 
     def _are_dependencies_satisfied(self, task: IntegrationTask) -> bool:
-        """Check if task dependencies are satisfied."""
+        """Check if task dependencies are satisfied.
+
+        Verifies that all task dependencies have been completed successfully.
+
+        Args:
+            task: The integration task to check
+
+        Returns:
+            True if all dependencies are satisfied, False otherwise
+
+        """
         for dep_id in task.dependencies:
             if dep_id not in self.completed_tasks:
                 return False
@@ -698,7 +755,19 @@ class IntegrationManager:
 
     @profile_ai_operation("integration.execute_task")
     def _execute_task(self, task: IntegrationTask) -> None:
-        """Execute a single task."""
+        """Execute a single task and emit lifecycle events.
+
+        Executes a task based on its type and manages its status transitions.
+        Emits events for task lifecycle stages (started, completed, failed).
+        Updates task result and error information as appropriate.
+
+        Args:
+            task: The integration task to execute
+
+        Raises:
+            ValueError: If the task type is unknown (caught internally).
+
+        """
         task.status = "running"
         task.started_at = datetime.now()
         with self._state_lock:
@@ -745,7 +814,23 @@ class IntegrationManager:
                 self.completed_tasks[task.task_id] = task
 
     def _execute_script_generation(self, task: IntegrationTask) -> dict[str, Any]:
-        """Execute script generation task."""
+        """Execute script generation task.
+
+        Generates bypass or analysis scripts based on the specified script type
+        (Frida or Ghidra). Processes the request data and delegates to the
+        appropriate script generator.
+
+        Args:
+            task: The integration task containing request and script_type in input_data
+
+        Returns:
+            Dictionary with keys 'scripts' and 'script_type' containing the generated
+            scripts and the type that was used
+
+        Raises:
+            ValueError: If the script type is unknown or not supported
+
+        """
         request = task.input_data["request"]
         script_type = task.input_data.get("script_type", "frida")
 
@@ -759,7 +844,19 @@ class IntegrationManager:
         return {"scripts": scripts, "script_type": script_type}
 
     def _execute_code_modification(self, task: IntegrationTask) -> dict[str, Any]:
-        """Execute code modification task."""
+        """Execute code modification task.
+
+        Analyzes code modification requests and generates changes for target code.
+        Optionally applies changes immediately if requested in the task input.
+
+        Args:
+            task: The integration task with request data and apply_immediately flag
+
+        Returns:
+            Dictionary with keys 'changes', 'apply_results', and 'request' containing
+            the generated modifications and application results if applicable
+
+        """
         request_data = task.input_data["request"]
 
         # Create modification request
@@ -783,7 +880,19 @@ class IntegrationManager:
         }
 
     def _execute_script_testing(self, task: IntegrationTask) -> dict[str, Any]:
-        """Execute script testing task."""
+        """Execute script testing task in QEMU environment.
+
+        Validates scripts by executing them in a virtual machine through the
+        QEMU manager. Falls back to error response if QEMU manager is unavailable.
+
+        Args:
+            task: The integration task with script, target_binary, and vm_config data
+
+        Returns:
+            Dictionary with keys 'success', 'output', 'error', and 'exit_code'
+            indicating the test results
+
+        """
         script = task.input_data["script"]
         target_binary = task.input_data["target_binary"]
         vm_config = task.input_data.get("vm_config", {})
@@ -807,13 +916,35 @@ class IntegrationManager:
             }
 
     def _execute_autonomous_analysis(self, task: IntegrationTask) -> dict[str, Any]:
-        """Execute autonomous analysis task."""
+        """Execute autonomous analysis task.
+
+        Delegates analysis task execution to the AI agent for autonomous
+        security or protection analysis of a binary target.
+
+        Args:
+            task: The integration task with task_config in input_data
+
+        Returns:
+            Dictionary containing analysis results from the AI agent
+
+        """
         task_config = task.input_data["task_config"]
 
         return self.ai_agent.execute_autonomous_task(task_config)
 
     def _execute_result_combination(self, task: IntegrationTask) -> dict[str, Any]:
-        """Combine results from dependent tasks."""
+        """Combine results from dependent tasks.
+
+        Merges or selects results from completed dependency tasks according to
+        the specified combination logic (merge, select_best, or custom).
+
+        Args:
+            task: The integration task with combination_logic in input_data
+
+        Returns:
+            Dictionary containing combined results from dependent tasks
+
+        """
         dependency_results = {dep_id: self.completed_tasks[dep_id].result for dep_id in task.dependencies if dep_id in self.completed_tasks}
         combination_logic = task.input_data.get("combination_logic", "merge")
 
@@ -879,7 +1010,22 @@ class IntegrationManager:
         dependencies: list[str] | None = None,
         priority: int = 1,
     ) -> str:
-        """Create a new integration task."""
+        """Create a new integration task.
+
+        Creates an integration task with specified configuration and adds it to
+        the task queue for processing. Tasks can have dependencies on other tasks.
+
+        Args:
+            task_type: Type of task (e.g., 'generate_script', 'modify_code')
+            description: Human-readable description of the task
+            input_data: Dictionary containing task-specific input parameters
+            dependencies: List of task IDs that must complete before this task
+            priority: Task priority level (1=high, 5=low)
+
+        Returns:
+            The generated task ID for tracking task progress
+
+        """
         task_id = f"{task_type}_{int(time.time() * 1000)}"
 
         task = IntegrationTask(
@@ -898,7 +1044,20 @@ class IntegrationManager:
         return task_id
 
     def create_workflow(self, workflow_definition: dict[str, Any]) -> str:
-        """Create a complex workflow with multiple tasks."""
+        """Create a complex workflow with multiple tasks.
+
+        Creates a workflow that orchestrates multiple interdependent tasks.
+        Tasks are created with proper dependency resolution based on the workflow
+        definition.
+
+        Args:
+            workflow_definition: Dictionary defining the workflow with 'tasks' key
+                containing list of task definitions
+
+        Returns:
+            The generated workflow ID for tracking workflow progress
+
+        """
         workflow_id = f"workflow_{int(time.time() * 1000)}"
 
         workflow: dict[str, Any] = {
@@ -935,7 +1094,22 @@ class IntegrationManager:
         return workflow_id
 
     def wait_for_task(self, task_id: str, timeout: float | None = None) -> IntegrationTask:
-        """Wait for a task to complete."""
+        """Wait for a task to complete.
+
+        Blocks until the specified task completes or the timeout is reached.
+        Polls the completed tasks dictionary at regular intervals.
+
+        Args:
+            task_id: ID of the task to wait for
+            timeout: Optional maximum time to wait in seconds
+
+        Returns:
+            The completed IntegrationTask object
+
+        Raises:
+            TimeoutError: If timeout is exceeded before task completion
+
+        """
         start_time = time.time()
 
         while True:
@@ -948,7 +1122,24 @@ class IntegrationManager:
             time.sleep(0.1)
 
     def wait_for_workflow(self, workflow_id: str, timeout: float | None = None) -> WorkflowResult:
-        """Wait for a workflow to complete."""
+        """Wait for a workflow to complete.
+
+        Blocks until all tasks in the workflow complete or the timeout is reached.
+        Aggregates results from all completed tasks and error information from
+        failed tasks.
+
+        Args:
+            workflow_id: ID of the workflow to wait for
+            timeout: Optional maximum time to wait in seconds
+
+        Returns:
+            WorkflowResult object containing aggregated results from all tasks
+
+        Raises:
+            TimeoutError: If timeout is exceeded before workflow completion
+            ValueError: If the workflow_id is not found
+
+        """
         if workflow_id not in self.active_workflows:
             raise ValueError(f"Workflow {workflow_id} not found")
 
@@ -1013,7 +1204,19 @@ class IntegrationManager:
         return workflow_result
 
     def get_task_status(self, task_id: str) -> dict[str, Any]:
-        """Get status of a task."""
+        """Get status of a task.
+
+        Retrieves the current status and details of a specific task, including
+        timestamps and error information if applicable.
+
+        Args:
+            task_id: ID of the task to query
+
+        Returns:
+            Dictionary with task status information including task_id, status,
+            description, timestamps, and error details
+
+        """
         if task_id in self.active_tasks:
             task = self.active_tasks[task_id]
         elif task_id in self.completed_tasks:
@@ -1032,7 +1235,19 @@ class IntegrationManager:
         }
 
     def get_workflow_status(self, workflow_id: str) -> dict[str, Any]:
-        """Get status of a workflow."""
+        """Get status of a workflow.
+
+        Retrieves the current status and progress of a workflow, including
+        task counts by status and execution metrics.
+
+        Args:
+            workflow_id: ID of the workflow to query
+
+        Returns:
+            Dictionary with workflow status information including workflow_id,
+            overall status, task counts, and execution metrics
+
+        """
         if workflow_id in self.active_workflows:
             workflow = self.active_workflows[workflow_id]
             task_ids = list(workflow["tasks"].keys())
@@ -1064,7 +1279,18 @@ class IntegrationManager:
         return {"status": "not_found"}
 
     def cancel_task(self, task_id: str) -> bool:
-        """Cancel a pending task."""
+        """Cancel a pending task.
+
+        Attempts to cancel a task before it starts execution. Removes the task
+        from the queue or from active tasks if possible.
+
+        Args:
+            task_id: ID of the task to cancel
+
+        Returns:
+            True if the task was successfully cancelled, False otherwise
+
+        """
         cancelled = False
 
         # Requeue all except the one to cancel
@@ -1095,13 +1321,26 @@ class IntegrationManager:
         return cancelled
 
     def add_event_handler(self, event_type: str, handler: Callable[..., Any]) -> None:
-        """Add event handler."""
+        """Add event handler.
+
+        Registers a callback function to be invoked when a specific event type
+        is emitted by the integration manager.
+
+        Args:
+            event_type: Type of event to listen for (e.g., 'task_started', 'task_completed')
+            handler: Callable that accepts IntegrationTask data parameter
+
+        """
         if event_type not in self.event_handlers:
             self.event_handlers[event_type] = []
         self.event_handlers[event_type].append(handler)
 
     def _emit_event(self, event_type: str, data: IntegrationTask) -> None:
         """Emit event to handlers.
+
+        Invokes all registered handlers for a specific event type with the
+        provided task data. Exceptions in handlers are caught and logged but
+        do not prevent other handlers from executing.
 
         Args:
             event_type: Type of event to emit
@@ -1116,7 +1355,20 @@ class IntegrationManager:
                 logger.exception("Error in event handler: %s", e)
 
     def create_bypass_workflow(self, target_binary: str, bypass_type: str = "license_validation") -> str:
-        """Create a complete bypass workflow."""
+        """Create a complete bypass workflow.
+
+        Constructs an end-to-end workflow for analyzing a binary and generating
+        bypass scripts. Orchestrates analysis, script generation, and validation
+        tasks with proper dependencies.
+
+        Args:
+            target_binary: Path to the target binary file to analyze and bypass
+            bypass_type: Type of bypass to perform (default: "license_validation")
+
+        Returns:
+            The generated workflow ID for tracking execution
+
+        """
         workflow_def = {
             "name": "Complete Bypass Workflow",
             "description": f"End-to-end {bypass_type} bypass for {target_binary}",
@@ -1201,6 +1453,9 @@ class IntegrationManager:
     ) -> str:
         """Generate a response using the configured LLM backend.
 
+        Uses the active LLM manager to generate text responses based on input
+        prompts. Handles model detection and initialization as needed.
+
         Args:
             prompt: The input prompt to send to the language model
             model: Optional model name to use (defaults to active backend)
@@ -1208,7 +1463,7 @@ class IntegrationManager:
             max_tokens: Maximum number of tokens in the response
 
         Returns:
-            Generated response text from the language model
+            Generated response text from the language model or error message
 
         """
         from .llm_backends import LLMConfig, LLMMessage
@@ -1291,11 +1546,24 @@ class IntegrationManager:
         return LLMProvider.LOCAL_GGUF if model_lower.endswith(".gguf") else None
 
     def get_performance_summary(self) -> dict[str, Any]:
-        """Get performance summary for integration operations."""
+        """Get performance summary for integration operations.
+
+        Retrieves aggregated performance metrics from the performance monitoring
+        system for all integration operations.
+
+        Returns:
+            Dictionary containing performance metrics and summary data
+
+        """
         return performance_monitor.get_metrics_summary()
 
     def cleanup(self) -> None:
-        """Cleanup resources and old data."""
+        """Cleanup resources and old data.
+
+        Removes old completed tasks and workflow results to prevent unbounded
+        memory growth. Keeps the most recent tasks and workflows.
+
+        """
         # Clean old completed tasks (keep last 100)
         if len(self.completed_tasks) > 100:
             sorted_tasks = sorted(

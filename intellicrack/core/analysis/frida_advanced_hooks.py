@@ -9,7 +9,7 @@ Licensed under GNU General Public License v3.0
 
 import logging
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Protocol, cast
 
 import frida
 
@@ -23,6 +23,30 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
+
+
+class MemoryExportsProtocol(Protocol):
+    """Protocol for Frida memory exports with read/write/scan methods."""
+
+    def read(self, address: int, size: int) -> bytes:
+        """Read memory at address."""
+        ...
+
+    def write(self, address: int, data: bytes) -> bool:
+        """Write data to memory at address."""
+        ...
+
+    def scan(self, pattern: str, limit: int) -> list[dict[str, Any]]:
+        """Scan memory for pattern."""
+        ...
+
+
+class ModuleExportsProtocol(Protocol):
+    """Protocol for Frida module exports with find_export method."""
+
+    def find_export(self, module: str, name: str) -> int | None:
+        """Find export by name in module."""
+        ...
 
 
 @dataclass
@@ -1589,7 +1613,7 @@ send({ type: 'rpc_ready' });
 
         """
         exports: ScriptExportsSync = self.script.exports_sync
-        memory = cast("Any", exports.memory)
+        memory = cast(MemoryExportsProtocol, exports.memory)
         result = memory.read(address, size)
         return result if isinstance(result, bytes) else bytes(result)
 
@@ -1605,7 +1629,7 @@ send({ type: 'rpc_ready' });
 
         """
         exports: ScriptExportsSync = self.script.exports_sync
-        memory = cast("Any", exports.memory)
+        memory = cast(MemoryExportsProtocol, exports.memory)
         result = memory.write(address, data)
         return bool(result)
 
@@ -1621,7 +1645,7 @@ send({ type: 'rpc_ready' });
 
         """
         exports: ScriptExportsSync = self.script.exports_sync
-        memory = cast("Any", exports.memory)
+        memory = cast(MemoryExportsProtocol, exports.memory)
         return validate_type(memory.scan(pattern, limit), list)
 
     def module_find_export(self, module: str, name: str) -> int | None:
@@ -1636,7 +1660,7 @@ send({ type: 'rpc_ready' });
 
         """
         exports: ScriptExportsSync = self.script.exports_sync
-        module_obj = cast("Any", exports.module)
+        module_obj = cast(ModuleExportsProtocol, exports.module)
         result = module_obj.find_export(module, name)
         return int(result) if result is not None else None
 

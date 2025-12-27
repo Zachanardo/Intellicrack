@@ -7,6 +7,7 @@ monitoring, priority queueing, and result aggregation for distributed binary ana
 import json
 import os
 import socket
+import sys
 import tempfile
 import threading
 import time
@@ -14,6 +15,11 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+
+requires_multiprocessing = pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="Multiprocessing cluster tests hang on Windows",
+)
 
 from intellicrack.core.processing.distributed_manager import (
     AnalysisTask,
@@ -171,6 +177,7 @@ class TestTaskSubmission:
             )
 
 
+@requires_multiprocessing
 class TestTaskExecution:
     """Test task execution and result handling."""
 
@@ -252,6 +259,7 @@ class TestTaskExecution:
         assert result["file_type"] == "PE"
 
 
+@requires_multiprocessing
 class TestFaultTolerance:
     """Test fault tolerance and error handling."""
 
@@ -412,6 +420,7 @@ class TestClusterManagement:
         assert "performance" in status
 
 
+@requires_multiprocessing
 class TestResultAggregation:
     """Test result collection and aggregation."""
 
@@ -557,6 +566,7 @@ class TestNetworkProtocol:
             sock2.close()
 
 
+@requires_multiprocessing
 class TestClusterStartup:
     """Test cluster startup and initialization."""
 
@@ -579,6 +589,7 @@ class TestClusterStartup:
         assert not manager_local.running
 
 
+@requires_multiprocessing
 class TestTaskTimeout:
     """Test task timeout handling."""
 
@@ -621,6 +632,7 @@ class TestFactoryFunction:
         mgr.shutdown()
 
 
+@requires_multiprocessing
 class TestEdgeCases:
     """Test edge cases and error conditions."""
 
@@ -661,6 +673,7 @@ class TestEdgeCases:
         assert result is None
 
 
+@requires_multiprocessing
 class TestRealWorldScenarios:
     """Test realistic distributed analysis scenarios."""
 

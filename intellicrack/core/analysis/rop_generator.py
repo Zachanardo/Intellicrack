@@ -21,6 +21,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import logging
 from typing import Any, cast
 
+from ...types.ui import WidgetProtocol
 from ...utils.ui.ui_common import ask_open_report
 
 
@@ -57,7 +58,14 @@ class ROPChainGenerator:
         self.arch = self.config.get("arch", "x86_64")
 
     def set_binary(self, binary_path: str) -> bool:
-        """Set the binary to analyze."""
+        """Set the binary to analyze.
+
+        Args:
+            binary_path: Path to the binary file to analyze.
+
+        Returns:
+            bool: True if binary was successfully set, False otherwise.
+        """
         from ...utils.binary.binary_utils import validate_binary_path
 
         if not validate_binary_path(binary_path, self.logger):
@@ -72,7 +80,13 @@ class ROPChainGenerator:
         function_address: str | None = None,
         description: str | None = None,
     ) -> None:
-        """Add a target function for ROP chain generation."""
+        """Add a target function for ROP chain generation.
+
+        Args:
+            function_name: Name of the target function to add.
+            function_address: Optional address of the target function in hex format.
+            description: Optional description of the target function.
+        """
         target = {
             "name": function_name,
             "address": function_address,
@@ -83,7 +97,16 @@ class ROPChainGenerator:
         self.logger.info("Added target function: %s", function_name)
 
     def find_gadgets(self) -> bool:
-        """Find ROP gadgets in the binary."""
+        """Find ROP gadgets in the binary.
+
+        Returns:
+            bool: True if gadgets were found successfully, False otherwise.
+
+        Raises:
+            OSError: If binary file cannot be read.
+            ValueError: If binary format is invalid.
+            RuntimeError: If gadget analysis fails unexpectedly.
+        """
         if not self.binary_path:
             self.logger.exception("No binary set")
             return False
@@ -103,7 +126,16 @@ class ROPChainGenerator:
             return False
 
     def generate_chains(self) -> bool:
-        """Generate ROP chains for target functions."""
+        """Generate ROP chains for target functions.
+
+        Returns:
+            bool: True if chains were generated successfully, False otherwise.
+
+        Raises:
+            OSError: If binary file cannot be read.
+            ValueError: If chain generation parameters are invalid.
+            RuntimeError: If chain generation fails unexpectedly.
+        """
         if not self.binary_path:
             self.logger.exception("No binary set")
             return False
@@ -131,7 +163,12 @@ class ROPChainGenerator:
             return False
 
     def _add_default_targets(self) -> None:
-        """Add default license-related target functions."""
+        """Add default license-related target functions.
+
+        Adds commonly analyzed license protection functions as targets for
+        ROP chain generation, including license validation, activation checks,
+        and memory comparison routines.
+        """
         # Common license check functions
         self.add_target_function("check_license", None, "License check function")
         self.add_target_function("validate_key", None, "License key validation function")
@@ -180,7 +217,14 @@ class ROPChainGenerator:
             self._fallback_gadget_search()
 
     def _load_binary_data(self) -> bytes | None:
-        """Load binary data from file."""
+        """Load binary data from file.
+
+        Returns:
+            bytes | None: Binary file data, or None if loading failed.
+
+        Raises:
+            OSError: If binary file cannot be opened or read.
+        """
         if self.binary_path is None:
             self.logger.exception("No binary path set")
             return None
@@ -194,9 +238,11 @@ class ROPChainGenerator:
     def _disassemble_binary(self, binary_data: bytes) -> list[dict[str, Any]]:
         """Disassemble binary using available disassembly engines.
 
-        Returns:
-            List of instruction dictionaries
+        Args:
+            binary_data: Raw binary file data to disassemble.
 
+        Returns:
+            list[dict[str, Any]]: List of instruction dictionaries with address, mnemonic, operands, and size.
         """
         instructions = []
 
@@ -258,7 +304,14 @@ class ROPChainGenerator:
         return []
 
     def _get_code_base_address(self, binary_data: bytes) -> int:
-        """Get the base address for code sections."""
+        """Get the base address for code sections.
+
+        Args:
+            binary_data: Raw binary file data to analyze.
+
+        Returns:
+            int: Base address for code sections based on binary format detection.
+        """
         # Simple heuristic for PE files
         if binary_data[:2] == b"MZ":
             return 0x400000  # Standard PE base
@@ -266,7 +319,17 @@ class ROPChainGenerator:
         return 0x8048000 if binary_data[:4] == b"\x7fELF" else 0x400000
 
     def _extract_code_sections(self, binary_data: bytes) -> list[tuple[bytes, int]]:
-        """Extract code sections from binary."""
+        """Extract code sections from binary.
+
+        Args:
+            binary_data: Raw binary file data to parse.
+
+        Returns:
+            list[tuple[bytes, int]]: List of (section_data, base_address) tuples for code sections.
+
+        Raises:
+            ImportError: If LIEF library is not available.
+        """
         sections: list[tuple[bytes, int]] = []
 
         try:
@@ -317,7 +380,14 @@ class ROPChainGenerator:
         return sections
 
     def _parse_objdump_output(self, objdump_output: str) -> list[dict[str, Any]]:
-        """Parse objdump disassembly output."""
+        """Parse objdump disassembly output.
+
+        Args:
+            objdump_output: Raw objdump disassembly output text.
+
+        Returns:
+            list[dict[str, Any]]: List of parsed instruction dictionaries.
+        """
         from ...utils.system.windows_structures import parse_objdump_line
 
         instructions = []
@@ -331,7 +401,14 @@ class ROPChainGenerator:
         return instructions
 
     def _pattern_based_gadget_search(self, binary_data: bytes) -> list[dict[str, Any]]:
-        """Search for gadgets using byte patterns when disassembly isn't available."""
+        """Search for gadgets using byte patterns when disassembly isn't available.
+
+        Args:
+            binary_data: Raw binary file data to search.
+
+        Returns:
+            list[dict[str, Any]]: List of detected gadget instructions via pattern matching.
+        """
         instructions = []
 
         # Common x86/x64 instruction patterns ending in ret (0xC3)
@@ -381,7 +458,14 @@ class ROPChainGenerator:
         return instructions
 
     def _extract_gadget_sequences(self, instructions: list[dict[str, Any]]) -> list[list[dict[str, Any]]]:
-        """Extract instruction sequences that end in control transfer instructions."""
+        """Extract instruction sequences that end in control transfer instructions.
+
+        Args:
+            instructions: List of instruction dictionaries with mnemonics and operands.
+
+        Returns:
+            list[list[dict[str, Any]]]: List of instruction sequences forming potential gadgets.
+        """
         sequences = []
         max_gadget_length = min(self.max_gadget_size, 8)  # Reasonable limit
 
@@ -407,7 +491,14 @@ class ROPChainGenerator:
         return sequences
 
     def _is_valid_gadget_sequence(self, sequence: list[dict[str, Any]]) -> bool:
-        """Check if instruction sequence is a valid ROP gadget."""
+        """Check if instruction sequence is a valid ROP gadget.
+
+        Args:
+            sequence: List of instruction dictionaries to validate.
+
+        Returns:
+            bool: True if sequence is a valid gadget, False if it contains forbidden instructions.
+        """
         # Reject sequences with control flow in the middle
         for instr in sequence[:-1]:  # All but last instruction
             mnemonic = instr["mnemonic"].lower()
@@ -419,7 +510,14 @@ class ROPChainGenerator:
         return all(instr["mnemonic"].lower() not in privileged for instr in sequence)
 
     def _classify_gadgets(self, sequences: list[list[dict[str, Any]]]) -> list[dict[str, Any]]:
-        """Classify gadget sequences by their functionality."""
+        """Classify gadget sequences by their functionality.
+
+        Args:
+            sequences: List of instruction sequences to classify.
+
+        Returns:
+            list[dict[str, Any]]: List of classified gadget information dictionaries.
+        """
         classified = []
 
         for sequence in sequences:
@@ -440,7 +538,14 @@ class ROPChainGenerator:
         return classified
 
     def _determine_gadget_type(self, sequence: list[dict[str, Any]]) -> str:
-        """Determine the type/category of a gadget sequence."""
+        """Determine the type/category of a gadget sequence.
+
+        Args:
+            sequence: List of instruction dictionaries to analyze.
+
+        Returns:
+            str: Category type of the gadget (e.g., 'pop_reg', 'mov_reg_reg', 'ret').
+        """
         if len(sequence) == 1:
             mnemonic = sequence[0]["mnemonic"].lower()
             if mnemonic == "ret":
@@ -464,7 +569,14 @@ class ROPChainGenerator:
         return "inc_dec_reg" if first_instr in ["inc", "dec"] else "misc"
 
     def _determine_gadget_utility(self, sequence: list[dict[str, Any]]) -> list[str]:
-        """Determine what this gadget is useful for in ROP chains."""
+        """Determine what this gadget is useful for in ROP chains.
+
+        Args:
+            sequence: List of instruction dictionaries to analyze.
+
+        Returns:
+            list[str]: List of utility categories the gadget can be used for.
+        """
         utilities = []
 
         for instr in sequence:
@@ -490,7 +602,14 @@ class ROPChainGenerator:
         return utilities
 
     def _filter_useful_gadgets(self, gadgets: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Filter gadgets to keep only the most useful ones."""
+        """Filter gadgets to keep only the most useful ones.
+
+        Args:
+            gadgets: List of gadget dictionaries to filter.
+
+        Returns:
+            list[dict[str, Any]]: Filtered list of useful gadgets, prioritized by type.
+        """
         useful_gadgets = []
         seen_instructions = set()
 
@@ -521,7 +640,10 @@ class ROPChainGenerator:
         return useful_gadgets
 
     def _fallback_gadget_search(self) -> None:
-        """Fallback gadget search when all else fails."""
+        """Fallback gadget search when all else fails.
+
+        Creates a minimal set of common ROP gadgets when primary analysis methods fail.
+        """
         self.logger.info("Using fallback gadget search")
 
         # Create a minimal set of common gadgets
@@ -759,17 +881,38 @@ class ROPChainGenerator:
             }
 
     def _is_control_gadget(self, gadget: dict[str, Any]) -> bool:
-        """Check if gadget provides control flow functionality."""
+        """Check if gadget provides control flow functionality.
+
+        Args:
+            gadget: Gadget dictionary to analyze.
+
+        Returns:
+            bool: True if gadget performs control flow operations.
+        """
         disasm = gadget.get("disasm", "").lower()
         return any(instr in disasm for instr in ["ret", "call", "jmp", "pop eip", "pop rip"])
 
     def _is_stack_gadget(self, gadget: dict[str, Any]) -> bool:
-        """Check if gadget manipulates stack."""
+        """Check if gadget manipulates stack.
+
+        Args:
+            gadget: Gadget dictionary to analyze.
+
+        Returns:
+            bool: True if gadget performs stack manipulation.
+        """
         disasm = gadget.get("disasm", "").lower()
         return any(instr in disasm for instr in ["pop", "push", "add esp", "add rsp", "sub esp", "sub rsp"])
 
     def _is_arithmetic_gadget(self, gadget: dict[str, Any]) -> bool:
-        """Check if gadget performs arithmetic operations."""
+        """Check if gadget performs arithmetic operations.
+
+        Args:
+            gadget: Gadget dictionary to analyze.
+
+        Returns:
+            bool: True if gadget performs arithmetic or logical operations.
+        """
         disasm = gadget.get("disasm", "").lower()
         return any(instr in disasm for instr in ["add", "sub", "xor", "or", "and", "mov", "lea"])
 
@@ -1862,7 +2005,7 @@ def _handle_rop_report_generation(app: object, generator: ROPChainGenerator) -> 
                 app.update_output.emit(f"log_message([ROP Chain Generator] Report saved to {report_path})")
 
             # Ask if user wants to open the report
-            ask_open_report(cast("Any", app), report_path)
+            ask_open_report(cast("WidgetProtocol | None", app), report_path)
         elif hasattr(app, "update_output"):
             app.update_output.emit("log_message([ROP Chain Generator] Failed to generate report)")
 

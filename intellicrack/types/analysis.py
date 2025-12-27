@@ -125,7 +125,7 @@ class PEAnalysisResult(BaseModel):
 class ELFAnalysisResult(BaseModel):
     """Result of ELF (Linux) binary analysis."""
 
-    model_config = ConfigDict(frozen=False, extra="allow")
+    model_config = ConfigDict(frozen=False, extra="allow", populate_by_name=True)
 
     format: Literal["ELF"] = Field(default="ELF", description="Binary format identifier")
     machine: str = Field(default="unknown", description="Machine architecture")

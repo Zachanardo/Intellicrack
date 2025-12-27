@@ -131,6 +131,9 @@ class AsyncPerformanceMonitor:
         Returns:
             The result of the coroutine execution.
 
+        Raises:
+            Exception: If the monitored coroutine raises any exception.
+
         """
         start_time = time.time()
         operation_id = f"{operation_name}_{start_time}_{id(coroutine)}"

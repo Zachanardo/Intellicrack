@@ -1,0 +1,14 @@
+{
+  "script_id": "test_deploy_123",
+  "script_type": "frida",
+  "target_binary": "test.exe",
+  "protection_types": [],
+  "success_probability": 0.5,
+  "creation_time": "2025-12-27T07:59:01.949059+00:00",
+  "iterations": 0,
+  "language": "javascript",
+  "entry_point": "main",
+  "dependencies": [],
+  "hooks_count": 0,
+  "patches_count": 0
+}

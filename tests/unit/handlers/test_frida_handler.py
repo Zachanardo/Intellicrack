@@ -15,7 +15,18 @@ from typing import Any
 
 import pytest
 
-from intellicrack.handlers import frida_handler
+try:
+    from intellicrack.handlers import frida_handler
+    FRIDA_HANDLER_AVAILABLE = True
+except ImportError:
+    frida_handler = None
+    FRIDA_HANDLER_AVAILABLE = False
+
+
+pytestmark = pytest.mark.skipif(
+    not FRIDA_HANDLER_AVAILABLE,
+    reason="frida_handler not available"
+)
 
 
 class TestFridaHandlerAvailability:

@@ -1620,7 +1620,7 @@ const MemoryIntegrityBypass = {
                 count: this.config.codeIntegrity.protectedRegions.size,
             });
 
-            const { config } = this;
+            const { config, hooksInstalled } = this;
             send({
                 type: 'status',
                 target: 'memory_integrity_bypass',
@@ -1687,7 +1687,7 @@ const MemoryIntegrityBypass = {
                 type: 'info',
                 target: 'memory_integrity_bypass',
                 action: 'total_hooks_installed',
-                count: Object.keys(this.hooksInstalled).length,
+                count: Object.keys(hooksInstalled).length,
             });
             send({
                 type: 'status',
@@ -2029,6 +2029,7 @@ const MemoryIntegrityBypass = {
                 }
                 return checksum;
             }
+            return 0;
         } catch {
             return 0;
         }
@@ -2222,7 +2223,7 @@ const MemoryIntegrityBypass = {
             let fillData = [];
 
             while (fillData.length < size) {
-                fillData = fillData.concat(decoy);
+                fillData = [...fillData, ...decoy];
             }
 
             Memory.protect(address, size, 'rwx');
@@ -2295,7 +2296,7 @@ const MemoryIntegrityBypass = {
             ['pointer', 'pointer']
         );
 
-        const SetThreadContext = new NativeFunction(
+        const _SetThreadContext = new NativeFunction(
             Module.getExportByName('kernel32.dll', 'SetThreadContext'),
             'int',
             ['pointer', 'pointer']
@@ -2446,7 +2447,7 @@ const MemoryIntegrityBypass = {
                                         * this.polymorphicEngine.mutationEngine.junkOpcodes.length
                                 )
                             ];
-                        mutated = mutated.concat(junk);
+                        mutated = [...mutated, ...junk];
                     }
                     mutated.push(byte);
                 }
@@ -2455,6 +2456,7 @@ const MemoryIntegrityBypass = {
                 mutatedBuffer.writeByteArray(mutated);
                 return mutatedBuffer;
             }
+            return null;
         } catch {
             return null;
         }

@@ -12,6 +12,18 @@ const ALL_CERT_IGNORE_FLAGS
 const activity = [];
 const MAX_ACTIVITY_LOG = 1000;
 
+let _kernel32Module = null;
+let getLastErrorFn = null;
+try {
+    _kernel32Module = Process.getModuleByName('kernel32.dll');
+    const getLastErrorExport = Module.findExportByName('kernel32.dll', 'GetLastError');
+    if (getLastErrorExport) {
+        getLastErrorFn = new NativeFunction(getLastErrorExport, 'uint32', []);
+    }
+} catch {
+    // kernel32 unavailable
+}
+
 function log(message, level = 'info') {
     const entry = {
         timestamp: new Date().toISOString(),
@@ -138,7 +150,7 @@ if (winhttp) {
                     if (success) {
                         log('WinHttpReceiveResponse: Succeeded');
                     } else {
-                        const lastError = ptr(new kernel32.GetLastError());
+                        const lastError = getLastErrorFn ? getLastErrorFn() : 0;
                         log(
                             `WinHttpReceiveResponse: Failed with error ${lastError}, forcing success`
                         );
@@ -187,11 +199,6 @@ if (winhttp) {
     logError('WinHTTP module not found');
 }
 
-try {
-    var kernel32 = Process.getModuleByName('kernel32.dll');
-} catch (error) {
-    logError(`Failed to get kernel32.dll: ${error.message}`);
-}
 
 rpc.exports = {
     getWinHttpActivity: () => activity,

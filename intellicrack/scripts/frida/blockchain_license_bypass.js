@@ -198,7 +198,7 @@ const BlockchainLicenseBypass = {
             // Hook global web3 object
             if (typeof web3 !== 'undefined') {
                 const original_send = web3.eth.send;
-                web3.eth.send = function (method, params) {
+                web3.eth.send = function (method, params, ...restArgs) {
                     send({
                         type: 'info',
                         target: 'blockchain_license_bypass',
@@ -212,7 +212,7 @@ const BlockchainLicenseBypass = {
                         return this.bypassLicenseCall(method, params);
                     }
 
-                    return Reflect.apply(original_send, this, arguments);
+                    return Reflect.apply(original_send, this, [method, params, ...restArgs]);
                 }.bind(this);
             }
 
@@ -464,7 +464,8 @@ const BlockchainLicenseBypass = {
     hookJSONRPC() {
         // Hook XMLHttpRequest
         const xhr_send = XMLHttpRequest.prototype.send;
-        XMLHttpRequest.prototype.send = function (data) {
+        XMLHttpRequest.prototype.send = function (...sendArgs) {
+            const data = sendArgs[0];
             if (data && typeof data === 'string') {
                 try {
                     const json = JSON.parse(data);
@@ -491,7 +492,7 @@ const BlockchainLicenseBypass = {
                 }
             }
 
-            Reflect.apply(xhr_send, this, arguments);
+            Reflect.apply(xhr_send, this, sendArgs);
         }.bind(this);
 
         // Hook fetch API
@@ -501,7 +502,7 @@ const BlockchainLicenseBypass = {
     // Hook fetch API for Web3 calls
     hookFetchAPI() {
         const originalFetch = window.fetch;
-        window.fetch = async function (url, options) {
+        window.fetch = async function (url, options, ...restFetchArgs) {
             // Check if this is a blockchain RPC call
             if (this.isBlockchainURL(url)) {
                 send({
@@ -551,7 +552,7 @@ const BlockchainLicenseBypass = {
             }
 
             // Call original fetch
-            const response = await Reflect.apply(originalFetch, this, arguments);
+            const response = await Reflect.apply(originalFetch, this, [url, options, ...restFetchArgs]);
 
             // Intercept response
             if (this.isBlockchainURL(url)) {
@@ -607,7 +608,8 @@ const BlockchainLicenseBypass = {
             });
 
             const originalRequest = window.ethereum.request;
-            window.ethereum.request = async function (args) {
+            window.ethereum.request = async function (...requestArgs) {
+                const args = requestArgs[0];
                 send({
                     type: 'info',
                     target: 'blockchain_license_bypass',
@@ -634,7 +636,8 @@ const BlockchainLicenseBypass = {
                 }
 
                 // Call original
-                return originalRequest.apply(window.ethereum, arguments);
+                const result = await Reflect.apply(originalRequest, window.ethereum, requestArgs);
+                return result;
             }.bind(this);
 
             // Hook account/network changes

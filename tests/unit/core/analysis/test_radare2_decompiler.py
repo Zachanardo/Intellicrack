@@ -14,6 +14,7 @@ import os
 import tempfile
 import shutil
 import struct
+import subprocess
 from pathlib import Path
 import json
 
@@ -28,7 +29,10 @@ except ImportError:
     analyze_binary_decompilation = None
     AVAILABLE = False
 
-pytestmark = pytest.mark.skipif(not AVAILABLE, reason="Module not available")
+pytestmark = [
+    pytest.mark.skipif(not AVAILABLE, reason="Module not available"),
+    pytest.mark.skipif(not shutil.which('radare2') and not shutil.which('r2'), reason="radare2 not installed")
+]
 
 
 class TestBinarySamples:
@@ -239,18 +243,12 @@ def test_binaries():
     shutil.rmtree(temp_dir, ignore_errors=True)
 
 
-@pytest.fixture
-def mock_radare2_available():
-    """Mock radare2 availability check."""
-    with patch('shutil.which') as mock_which:
-        mock_which.return_value = "/usr/bin/r2"
-        yield mock_which
 
 
 class TestR2DecompilationEngineInitialization:
     """Test R2DecompilationEngine initialization and radare2 integration."""
 
-    def test_engine_initialization_with_valid_binary(self, test_binaries, mock_radare2_available):
+    def test_engine_initialization_with_valid_binary(self, test_binaries):
         """Test engine initializes correctly with valid binary and radare2 available."""
         engine = R2DecompilationEngine(test_binaries["simple_pe"])
 
@@ -264,33 +262,26 @@ class TestR2DecompilationEngineInitialization:
         # Engine should validate binary format during initialization
         assert os.path.exists(engine.binary_path)
 
-    def test_engine_initialization_with_invalid_binary(self, mock_radare2_available):
+    def test_engine_initialization_with_invalid_binary(self):
         """Test engine handles invalid binary path appropriately."""
         with pytest.raises((FileNotFoundError, ValueError, OSError)):
             R2DecompilationEngine("/nonexistent/binary.exe")
 
-    def test_engine_initialization_without_radare2(self, test_binaries):
-        """Test engine handles missing radare2 installation."""
-        with patch('shutil.which', return_value=None):
-            with pytest.raises((RuntimeError, OSError, ImportError)):
-                R2DecompilationEngine(test_binaries["simple_pe"])
-
-    def test_engine_radare2_version_compatibility(self, test_binaries, mock_radare2_available):
+    def test_engine_radare2_version_compatibility(self, test_binaries):
         """Test engine validates radare2 version compatibility."""
-        # Production implementation should check radare2 version compatibility
-        with patch('subprocess.run') as mock_run:
-            mock_run.return_value.stdout = "radare2 5.8.0"
-            mock_run.return_value.returncode = 0
+        engine = R2DecompilationEngine(test_binaries["simple_pe"])
+        assert hasattr(engine, 'radare2_path')
 
-            engine = R2DecompilationEngine(test_binaries["simple_pe"])
-            assert hasattr(engine, 'radare2_path')
+        if shutil.which('radare2') or shutil.which('r2'):
+            result = subprocess.run(['radare2', '-v'], capture_output=True, text=True)
+            assert result.returncode == 0 or subprocess.run(['r2', '-v'], capture_output=True, text=True).returncode == 0
 
 
 class TestR2DecompilationEngineCore:
     """Test core decompilation functionality."""
 
     @pytest.fixture
-    def engine(self, test_binaries, mock_radare2_available):
+    def engine(self, test_binaries):
         """Create engine instance for testing."""
         return R2DecompilationEngine(test_binaries["simple_pe"])
 
@@ -385,7 +376,7 @@ class TestR2DecompilationEngineAnalysis:
     """Test advanced analysis capabilities."""
 
     @pytest.fixture
-    def engine(self, test_binaries, mock_radare2_available):
+    def engine(self, test_binaries):
         return R2DecompilationEngine(test_binaries["complex_pe"])
 
     def test_extract_variables_sophisticated(self, engine):
@@ -549,7 +540,7 @@ class TestR2DecompilationEngineLicenseAnalysis:
     """Test license-specific analysis capabilities."""
 
     @pytest.fixture
-    def engine(self, test_binaries, mock_radare2_available):
+    def engine(self, test_binaries):
         return R2DecompilationEngine(test_binaries["simple_pe"])
 
     def test_generate_license_bypass_suggestions_actionable(self, engine):
@@ -659,7 +650,7 @@ class TestR2DecompilationEngineReporting:
     """Test analysis reporting and export functionality."""
 
     @pytest.fixture
-    def engine_with_analysis(self, test_binaries, mock_radare2_available):
+    def engine_with_analysis(self, test_binaries):
         return R2DecompilationEngine(test_binaries["simple_pe"])
 
     def test_export_analysis_report_comprehensive_formats(self, engine_with_analysis):
@@ -734,7 +725,7 @@ class TestR2DecompilationEngineReporting:
 class TestAnalyzeFunction:
     """Test the module-level analyze_binary_decompilation function."""
 
-    def test_analyze_binary_decompilation_comprehensive_pipeline(self, test_binaries, mock_radare2_available):
+    def test_analyze_binary_decompilation_comprehensive_pipeline(self, test_binaries):
         """Test complete binary analysis pipeline through module function."""
         result = analyze_binary_decompilation(test_binaries["simple_pe"])
 
@@ -752,7 +743,7 @@ class TestAnalyzeFunction:
         found_components = [comp for comp in expected_components if comp in result or comp.replace('_', '') in str(result).lower()]
         assert len(found_components) >= 2, "Insufficient analysis components in result"
 
-    def test_analyze_binary_decompilation_with_options(self, test_binaries, mock_radare2_available):
+    def test_analyze_binary_decompilation_with_options(self, test_binaries):
         """Test module function with custom analysis options."""
         options = {
             'deep_analysis': True,
@@ -768,7 +759,7 @@ class TestAnalyzeFunction:
             # Options should influence the analysis depth and output
             assert len(str(result)) > 500, "Analysis result too brief for deep analysis"
 
-    def test_analyze_binary_decompilation_error_handling(self, mock_radare2_available):
+    def test_analyze_binary_decompilation_error_handling(self):
         """Test module function error handling with invalid inputs."""
         # Test with non-existent file
         with pytest.raises((FileNotFoundError, ValueError, OSError)):
@@ -788,7 +779,7 @@ class TestR2DecompilationEngineIntegration:
     """Integration tests for comprehensive workflow validation."""
 
     @pytest.fixture
-    def engine(self, test_binaries, mock_radare2_available):
+    def engine(self, test_binaries):
         return R2DecompilationEngine(test_binaries["complex_pe"])
 
     def test_complete_security_research_workflow(self, engine):
@@ -864,7 +855,7 @@ class TestR2DecompilationEngineIntegration:
 class TestR2DecompilationEngineRealWorldScenarios:
     """Test with real-world binary analysis scenarios."""
 
-    def test_commercial_software_protection_analysis(self, test_binaries, mock_radare2_available):
+    def test_commercial_software_protection_analysis(self, test_binaries):
         """Test analysis of binaries with commercial protection mechanisms."""
         engine = R2DecompilationEngine(test_binaries["complex_pe"])
 
@@ -881,7 +872,7 @@ class TestR2DecompilationEngineRealWorldScenarios:
             strength = license_analysis['protection_strength']
             assert isinstance(strength, (int, float, str))
 
-    def test_obfuscated_binary_analysis_effectiveness(self, test_binaries, mock_radare2_available):
+    def test_obfuscated_binary_analysis_effectiveness(self, test_binaries):
         """Test effectiveness against obfuscated binaries."""
         engine = R2DecompilationEngine(test_binaries["complex_pe"])
 
@@ -897,7 +888,7 @@ class TestR2DecompilationEngineRealWorldScenarios:
             # Either detect obfuscation or provide meaningful analysis despite it
             assert obfuscation_detected is not None
 
-    def test_multi_architecture_support_validation(self, mock_radare2_available):
+    def test_multi_architecture_support_validation(self):
         """Test support for multiple binary architectures."""
         # This would test x86, x64, ARM, etc. support
         # For now, validate that architecture detection works

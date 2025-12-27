@@ -139,6 +139,9 @@ if not SKLEARN_AVAILABLE:
             Returns:
                 Cluster labels for each sample.
 
+            Raises:
+                RuntimeError: If labels are not initialized after fit operation.
+
             """
             self.fit(X)
             if self.labels_ is None:
@@ -355,7 +358,7 @@ class RestrictedUnpickler(pickle.Unpickler):  # noqa: S301
             The class object if allowed.
 
         Raises:
-            pickle.UnpicklingError: If the class is not in the allowed list.
+            UnpicklingError: If the class is not in the allowed list.
 
         """
         # Allow only safe modules and classes
@@ -482,12 +485,32 @@ class PatternGene:
             self.id = self.generate_id()
 
     def generate_id(self) -> str:
-        """Generate unique ID for pattern."""
+        """Generate unique ID for pattern.
+
+        Creates a SHA256-based identifier incorporating pattern type, data, and timestamp
+        to ensure uniqueness across pattern instances.
+
+        Returns:
+            Hexadecimal string of first 16 characters of SHA256 hash of pattern.
+
+        """
         data = f"{self.type.value}_{self.pattern_data}_{time.time()}"
         return hashlib.sha256(data.encode()).hexdigest()[:16]
 
     def mutate(self, mutation_type: MutationType, mutation_rate: float = 0.1) -> "PatternGene":
-        """Create mutated copy of this gene."""
+        """Create mutated copy of this gene.
+
+        Generates a new pattern gene by applying the specified mutation type to this
+        pattern's data while maintaining parent-child relationships and mutation history.
+
+        Args:
+            mutation_type: Type of mutation to apply to pattern data.
+            mutation_rate: Probability controlling magnitude of mutations (default 0.1).
+
+        Returns:
+            New PatternGene instance with mutated pattern data and updated metadata.
+
+        """
         mutated_data = self._apply_mutation(self.pattern_data, mutation_type, mutation_rate)
 
         return PatternGene(
@@ -527,7 +550,20 @@ class PatternGene:
         return data  # No mutation for unsupported types
 
     def _mutate_byte_sequence(self, data: bytes, mutation_type: MutationType, rate: float) -> bytes:
-        """Mutate byte sequence pattern."""
+        """Mutate byte sequence pattern using various genetic operators.
+
+        Applies bit flipping, insertion, deletion, substitution, or transposition
+        operations to byte sequences based on mutation type and rate.
+
+        Args:
+            data: Byte sequence to mutate.
+            mutation_type: Type of mutation operation to apply.
+            rate: Probability controlling frequency of mutations.
+
+        Returns:
+            Mutated byte sequence.
+
+        """
         byte_list = list(data)
 
         if mutation_type == MutationType.BIT_FLIP:
@@ -555,7 +591,20 @@ class PatternGene:
         return bytes(byte_list)
 
     def _mutate_api_sequence(self, data: list[str], mutation_type: MutationType, rate: float) -> list[str]:
-        """Mutate API sequence pattern based on mutation rate."""
+        """Mutate API sequence pattern based on mutation rate.
+
+        Modifies Windows API call sequences through insertion, deletion, or substitution
+        of API names from a common Windows API pool.
+
+        Args:
+            data: List of API names to mutate.
+            mutation_type: Type of mutation operation to apply.
+            rate: Probability controlling frequency of mutations.
+
+        Returns:
+            Mutated API sequence as list of strings.
+
+        """
         api_list = data.copy()
 
         # Common Windows APIs for mutation pool
@@ -600,7 +649,20 @@ class PatternGene:
         return api_list
 
     def _mutate_string_pattern(self, data: str, mutation_type: MutationType, rate: float) -> str:
-        """Mutate string pattern (regex)."""
+        """Mutate string pattern (regex) while maintaining validity.
+
+        Modifies regex patterns by adding optional quantifiers or character classes
+        while preserving regex syntax validity.
+
+        Args:
+            data: Regex pattern string to mutate.
+            mutation_type: Type of mutation operation to apply.
+            rate: Probability controlling frequency of mutations.
+
+        Returns:
+            Mutated regex pattern string.
+
+        """
         # For regex patterns, we need careful mutations to maintain validity
         if mutation_type == MutationType.SUBSTITUTION:
             # Add optional components
@@ -618,7 +680,20 @@ class PatternGene:
         return data
 
     def _mutate_opcode_sequence(self, data: list[str], mutation_type: MutationType, rate: float) -> list[str]:
-        """Mutate opcode sequence pattern based on mutation rate."""
+        """Mutate opcode sequence pattern based on mutation rate.
+
+        Modifies x86/x64 instruction sequences through insertion, deletion, or substitution
+        of opcodes from a common opcode pool.
+
+        Args:
+            data: List of opcode names to mutate.
+            mutation_type: Type of mutation operation to apply.
+            rate: Probability controlling frequency of mutations.
+
+        Returns:
+            Mutated opcode sequence as list of strings.
+
+        """
         opcode_list = data.copy()
 
         # Common x86/x64 opcodes for mutation
@@ -663,7 +738,19 @@ class PatternGene:
         return opcode_list
 
     def crossover(self, other: "PatternGene", crossover_point: int | None = None) -> tuple["PatternGene", "PatternGene"]:
-        """Perform crossover with another gene."""
+        """Perform crossover with another gene to produce offspring.
+
+        Generates two child patterns by swapping pattern data at a crossover point
+        if both parents are the same type. Only supports byte sequence crossover.
+
+        Args:
+            other: Another PatternGene to crossover with.
+            crossover_point: Index to split pattern data (randomly selected if None).
+
+        Returns:
+            Tuple of two child PatternGene instances resulting from crossover.
+
+        """
         if self.type != other.type:
             # Can't crossover different types
             return self, other
@@ -716,7 +803,18 @@ class QLearningAgent:
         epsilon_decay: float = 0.995,
         epsilon_min: float = 0.01,
     ) -> None:
-        """Initialize the Q-learning agent with specified parameters and experience buffer."""
+        """Initialize the Q-learning agent with specified parameters and experience buffer.
+
+        Args:
+            state_size: Number of discrete states in the state space.
+            action_size: Number of possible actions for the agent.
+            learning_rate: Learning rate (alpha) for Q-value updates (default 0.1).
+            discount_factor: Discount factor (gamma) for future rewards (default 0.95).
+            epsilon: Initial exploration rate for epsilon-greedy policy (default 1.0).
+            epsilon_decay: Decay rate for epsilon after each learning iteration (default 0.995).
+            epsilon_min: Minimum epsilon value to prevent complete exploitation (default 0.01).
+
+        """
         self.state_size = state_size
         self.action_size = action_size
         self.learning_rate = learning_rate
@@ -732,13 +830,36 @@ class QLearningAgent:
         self.memory: deque[tuple[np.ndarray, int, float, np.ndarray, bool]] = deque(maxlen=10000)
 
     def get_state_key(self, state: np.ndarray) -> str:
-        """Convert state to hashable key."""
+        """Convert state to hashable key.
+
+        Discretizes continuous state values to two decimal places and converts to
+        string representation for use as dictionary keys in Q-table lookup.
+
+        Args:
+            state: Continuous state vector from environment.
+
+        Returns:
+            String representation of discretized state bytes for Q-table indexing.
+
+        """
         # Discretize continuous values
         discretized = np.round(state, decimals=2)
         return str(discretized.tobytes())
 
     def act(self, state: np.ndarray) -> int:
-        """Choose action using epsilon-greedy policy."""
+        """Choose action using epsilon-greedy policy.
+
+        Selects an action probabilistically: with probability epsilon, explores by
+        choosing a random action; otherwise exploits by selecting the action with
+        highest Q-value for the current state.
+
+        Args:
+            state: Current state vector for action selection.
+
+        Returns:
+            Integer index of selected action in action space.
+
+        """
         if random.random() <= self.epsilon:  # noqa: S311 - ML Q-learning epsilon-greedy exploration
             return random.randint(0, self.action_size - 1)  # noqa: S311 - ML Q-learning random action selection
 
@@ -746,11 +867,32 @@ class QLearningAgent:
         return int(np.argmax(self.q_table[state_key]))
 
     def remember(self, state: np.ndarray, action: int, reward: float, next_state: np.ndarray, done: bool) -> None:
-        """Store experience in replay buffer."""
+        """Store experience in replay buffer.
+
+        Appends experience tuple to deque memory buffer for later batch learning.
+        Memory is bounded by maxlen=10000 to maintain computational efficiency.
+
+        Args:
+            state: Initial state of the transition.
+            action: Action taken in the state.
+            reward: Reward received from environment.
+            next_state: Resulting state after action.
+            done: Boolean indicating if episode terminated.
+
+        """
         self.memory.append((state, action, reward, next_state, done))
 
     def learn(self, batch_size: int = 32) -> None:
-        """Learn from batch of experiences."""
+        """Learn from batch of experiences.
+
+        Performs Q-learning updates using experience replay. Samples random batches
+        from memory, computes Q-value targets, and updates the Q-table. Decays
+        exploration parameter epsilon.
+
+        Args:
+            batch_size: Number of experiences to sample per learning iteration (default 32).
+
+        """
         if len(self.memory) < batch_size:
             return
 
@@ -776,7 +918,13 @@ class PatternStorage:
     """SQLite-based pattern storage with versioning."""
 
     def __init__(self, db_path: str | None = None) -> None:
-        """Initialize pattern storage with SQLite database and thread safety."""
+        """Initialize pattern storage with SQLite database and thread safety.
+
+        Args:
+            db_path: Path to SQLite database file. If None, creates default database
+                at intellicrack/data/database/pattern_evolution.db.
+
+        """
         if db_path is None:
             db_path = str(Path(__file__).parent.parent / "data" / "database" / "pattern_evolution.db")
         self.db_path = db_path
@@ -785,7 +933,12 @@ class PatternStorage:
         self._init_database()
 
     def _init_database(self) -> None:
-        """Initialize database schema."""
+        """Initialize database schema.
+
+        Creates SQLite tables for patterns, performance metrics, and evolution history
+        with appropriate indexes for efficient queries. Thread-safe with locking.
+
+        """
         with self.lock:
             cursor = self.conn.cursor()
 
@@ -839,7 +992,15 @@ class PatternStorage:
             self.conn.commit()
 
     def save_pattern(self, pattern: PatternGene) -> None:
-        """Save pattern to database."""
+        """Save pattern to database.
+
+        Persists pattern gene to database with serialized pattern data, metadata,
+        and mutation history. Updates evolution history table. Thread-safe.
+
+        Args:
+            pattern: PatternGene instance to save to database.
+
+        """
         with self.lock:
             cursor = self.conn.cursor()
 
@@ -880,7 +1041,18 @@ class PatternStorage:
             self.conn.commit()
 
     def load_pattern(self, pattern_id: str) -> PatternGene | None:
-        """Load pattern from database."""
+        """Load pattern from database.
+
+        Retrieves and reconstructs a PatternGene instance from database storage
+        by pattern ID, deserializing metadata and mutation history.
+
+        Args:
+            pattern_id: Unique identifier of pattern to load.
+
+        Returns:
+            PatternGene instance if found, None otherwise.
+
+        """
         with self.lock:
             cursor = self.conn.cursor()
 
@@ -919,7 +1091,19 @@ class PatternStorage:
             )
 
     def get_top_patterns(self, pattern_type: PatternType | None = None, limit: int = 10) -> list[PatternGene]:
-        """Get top performing patterns."""
+        """Get top performing patterns.
+
+        Retrieves highest fitness patterns from database, optionally filtered by type.
+        Returns up to limit patterns sorted by descending fitness score.
+
+        Args:
+            pattern_type: Filter by specific PatternType (None returns all types).
+            limit: Maximum number of patterns to retrieve (default 10).
+
+        Returns:
+            List of PatternGene instances sorted by fitness (highest first).
+
+        """
         with self.lock:
             cursor = self.conn.cursor()
 
@@ -953,7 +1137,20 @@ class PatternStorage:
         return loaded_patterns
 
     def update_metrics(self, pattern_id: str, tp: int, fp: int, tn: int, fn: int, detection_time_ms: float) -> None:
-        """Update pattern performance metrics."""
+        """Update pattern performance metrics.
+
+        Records pattern detection performance metrics and recalculates fitness based
+        on precision, recall, and detection speed. Updates database atomically.
+
+        Args:
+            pattern_id: Unique identifier of pattern to update.
+            tp: Count of true positive detections.
+            fp: Count of false positive detections.
+            tn: Count of true negative detections.
+            fn: Count of false negative detections.
+            detection_time_ms: Time to perform detection in milliseconds.
+
+        """
         with self.lock:
             cursor = self.conn.cursor()
 
@@ -992,7 +1189,14 @@ class PatternMatcher:
     """Fast pattern matching engine using Bloom filters and optimized algorithms."""
 
     def __init__(self, bloom_size: int = 1000000, num_hashes: int = 7) -> None:
-        """Initialize pattern matcher with bloom filter and pattern caching."""
+        """Initialize pattern matcher with bloom filter and pattern caching.
+
+        Args:
+            bloom_size: Size of the bloom filter bit array for fast negative checks
+                (default 1000000).
+            num_hashes: Number of hash functions for bloom filter (default 7).
+
+        """
         self.logger = logging.getLogger(__name__)
         self.bloom_size = bloom_size
         self.num_hashes = num_hashes
@@ -1001,7 +1205,15 @@ class PatternMatcher:
         self.compiled_patterns: dict[str, re.Pattern[str]] = {}
 
     def add_pattern(self, pattern: PatternGene) -> None:
-        """Add pattern to matcher."""
+        """Add pattern to matcher.
+
+        Registers pattern with bloom filter for fast negative checks, caches pattern
+        in memory, and pre-compiles regex patterns for efficient matching.
+
+        Args:
+            pattern: PatternGene instance to add to matcher.
+
+        """
         # Add to bloom filter for fast negative checks
         for i in range(self.num_hashes):
             hash_val = hash((pattern.id, i)) % self.bloom_size
@@ -1018,7 +1230,20 @@ class PatternMatcher:
                 self.logger.debug("Invalid regex pattern %s", pattern.id, exc_info=True)
 
     def match(self, data: bytes, pattern_type: PatternType) -> list[tuple[str, float]]:
-        """Match data against patterns, return (``pattern_id``, confidence) tuples."""
+        """Match data against patterns, return (pattern_id, confidence) tuples.
+
+        Performs fast pattern matching using bloom filter for negative checks,
+        then evaluates cached patterns of matching type. Returns matches sorted
+        by confidence score in descending order.
+
+        Args:
+            data: Binary data to match against patterns.
+            pattern_type: Type of patterns to match (filters cache).
+
+        Returns:
+            List of (pattern_id, confidence_score) tuples sorted by confidence.
+
+        """
         matches: list[tuple[str, float]] = []
 
         # Quick bloom filter check
@@ -1041,7 +1266,19 @@ class PatternMatcher:
         return matches
 
     def _match_pattern(self, data: bytes, pattern: PatternGene) -> float:
-        """Match specific pattern against data."""
+        """Match specific pattern against data.
+
+        Routes pattern matching to appropriate type-specific handler and returns
+        confidence score between 0.0 and 1.0 indicating match strength.
+
+        Args:
+            data: Binary data to match.
+            pattern: PatternGene instance to match.
+
+        Returns:
+            Confidence score between 0.0 (no match) and 1.0 (perfect match).
+
+        """
         if pattern.type == PatternType.BYTE_SEQUENCE:
             return self._match_byte_sequence(data, pattern.pattern_data)
         if pattern.type == PatternType.STRING_PATTERN:
@@ -1053,7 +1290,19 @@ class PatternMatcher:
         return 0.0
 
     def _match_byte_sequence(self, data: bytes, pattern: bytes) -> float:
-        """Match byte sequence using Boyer-Moore algorithm."""
+        """Match byte sequence using Boyer-Moore algorithm.
+
+        Performs exact sequence matching, then falls back to fuzzy matching by
+        calculating character-by-character similarity if exact match fails.
+
+        Args:
+            data: Binary data to search within.
+            pattern: Byte sequence pattern to locate.
+
+        Returns:
+            Confidence score between 0.0 and 1.0 based on match quality.
+
+        """
         if not pattern:
             return 0.0
 
@@ -1070,7 +1319,19 @@ class PatternMatcher:
         return matches / len(pattern)
 
     def _match_string_pattern(self, data: bytes, pattern: PatternGene) -> float:
-        """Match string pattern (regex)."""
+        """Match string pattern (regex).
+
+        Decodes binary data to text and applies precompiled regex pattern matching.
+        Confidence scales with number of matches found (normalized to 0-1 range).
+
+        Args:
+            data: Binary data to decode and match.
+            pattern: PatternGene containing compiled regex pattern.
+
+        Returns:
+            Confidence score scaled from match count.
+
+        """
         if pattern.id not in self.compiled_patterns:
             return 0.0
 
@@ -1089,7 +1350,19 @@ class PatternMatcher:
         return 0.0
 
     def _match_api_sequence(self, data: bytes, pattern: list[str]) -> float:
-        """Match API call sequence."""
+        """Match API call sequence.
+
+        Decodes binary data to text and searches for API names from pattern list.
+        Confidence is ratio of found APIs to total pattern APIs.
+
+        Args:
+            data: Binary data to search for API names.
+            pattern: List of API names to locate.
+
+        Returns:
+            Confidence score as ratio of matched APIs to pattern size.
+
+        """
         # Extract API calls from data (simplified)
         text = data.decode("utf-8", errors="ignore")
 
@@ -1097,7 +1370,19 @@ class PatternMatcher:
         return len(found_apis) / len(pattern) if pattern else 0.0
 
     def _match_opcode_sequence(self, data: bytes, pattern: list[str]) -> float:
-        """Match opcode sequence by analyzing binary data for instruction patterns."""
+        """Match opcode sequence by analyzing binary data for instruction patterns.
+
+        Searches binary data for known opcode byte representations from x86/x64 instruction
+        set. Combines instruction match ratio with data size normalization for final confidence.
+
+        Args:
+            data: Binary data to analyze for opcode patterns.
+            pattern: List of opcode names to search for.
+
+        Returns:
+            Confidence score combining matched opcodes and data size factors.
+
+        """
         if not pattern or not data:
             return 0.0
 
@@ -1208,7 +1493,13 @@ class PatternEvolutionTracker:
         self._initialize_populations()
 
     def _initialize_populations(self) -> None:
-        """Initialize pattern populations from storage or create new."""
+        """Initialize pattern populations from storage or create new.
+
+        Loads existing patterns from database for each pattern type. If insufficient
+        patterns exist, generates random patterns to reach configured population size.
+        Adds all patterns to matcher for active use.
+
+        """
         self.logger.info("Initializing pattern populations")
 
         # Load existing patterns
@@ -1231,7 +1522,19 @@ class PatternEvolutionTracker:
                 self.matcher.add_pattern(pattern)
 
     def _generate_random_patterns(self, pattern_type: PatternType, count: int) -> list[PatternGene]:
-        """Generate random initial patterns."""
+        """Generate random initial patterns.
+
+        Creates new random patterns of specified type to seed population. Generates
+        appropriate data for each pattern type (bytes, API lists, regex, opcodes).
+
+        Args:
+            pattern_type: Type of patterns to generate.
+            count: Number of random patterns to create.
+
+        Returns:
+            List of newly created PatternGene instances with generation 0.
+
+        """
         patterns = []
 
         for _ in range(count):
@@ -1310,7 +1613,20 @@ class PatternEvolutionTracker:
         return patterns
 
     def _calculate_pattern_similarity(self, pattern1: PatternGene, pattern2: PatternGene) -> float:
-        """Calculate similarity between two patterns."""
+        """Calculate similarity between two patterns.
+
+        Computes pattern similarity using chi-squared test for categorical patterns
+        or fallback to basic similarity for other types. Returns value between 0.0
+        (completely different) and 1.0 (identical).
+
+        Args:
+            pattern1: First pattern to compare.
+            pattern2: Second pattern to compare.
+
+        Returns:
+            Similarity score between 0.0 and 1.0.
+
+        """
         # Use chi2_contingency for calculating similarity if available
         if SCIPY_AVAILABLE and pattern1.type == PatternType.STRING_PATTERN and pattern2.type == PatternType.STRING_PATTERN:
             # Create contingency table for chi2 test
@@ -1340,7 +1656,19 @@ class PatternEvolutionTracker:
         return self._calculate_basic_similarity(pattern1, pattern2)
 
     def _calculate_basic_similarity(self, pattern1: PatternGene, pattern2: PatternGene) -> float:
-        """Calculate basic similarity between two patterns."""
+        """Calculate basic similarity between two patterns.
+
+        Computes type-specific similarity for byte sequences (character matching),
+        API sequences (Jaccard similarity), and string patterns (character alignment).
+
+        Args:
+            pattern1: First pattern to compare.
+            pattern2: Second pattern to compare.
+
+        Returns:
+            Similarity score between 0.0 and 1.0, or 0.5 for unsupported types.
+
+        """
         if pattern1.type != pattern2.type:
             return 0.0
 
@@ -1370,7 +1698,18 @@ class PatternEvolutionTracker:
         return 0.5
 
     def detect_pattern_mutations(self, pattern: PatternGene) -> list[dict[str, Any]]:
-        """Detect mutations in a pattern compared to its parents."""
+        """Detect mutations in a pattern compared to its parents.
+
+        Analyzes parent-child pattern relationships and computes mutation metrics
+        including similarity scores, generation deltas, and fitness improvements.
+
+        Args:
+            pattern: PatternGene to analyze for mutations from parents.
+
+        Returns:
+            List of dictionaries containing mutation analysis for each parent.
+
+        """
         mutations: list[dict[str, Any]] = []
 
         for parent_id in pattern.parent_ids:
@@ -1381,7 +1720,19 @@ class PatternEvolutionTracker:
         return mutations
 
     def _detect_mutation(self, parent: PatternGene, child: PatternGene) -> dict[str, Any]:
-        """Detect mutation between parent and child patterns."""
+        """Detect mutation between parent and child patterns.
+
+        Computes quantitative metrics for how a child pattern differs from its parent
+        including similarity, generation advancement, and fitness changes.
+
+        Args:
+            parent: Parent PatternGene instance.
+            child: Child PatternGene instance descended from parent.
+
+        Returns:
+            Dictionary with 'similarity', 'generation_diff', 'fitness_diff', and 'mutations' keys.
+
+        """
         return {
             "similarity": self._calculate_basic_similarity(parent, child),
             "generation_diff": child.generation - parent.generation,
@@ -1390,7 +1741,19 @@ class PatternEvolutionTracker:
         }
 
     def cluster_into_families(self, pattern_type: PatternType, similarity_threshold: float = 0.7) -> dict[str, set[str]]:
-        """Cluster patterns into families based on similarity."""
+        """Cluster patterns into families based on similarity.
+
+        Uses hierarchical agglomerative clustering to group similar patterns by type.
+        Selects highest-fitness pattern as family representative for each cluster.
+
+        Args:
+            pattern_type: Type of patterns to cluster.
+            similarity_threshold: Minimum similarity to merge clusters (default 0.7).
+
+        Returns:
+            Dictionary mapping family IDs to sets of pattern IDs in each family.
+
+        """
         population = self.populations[pattern_type]
         if not population:
             return {}
@@ -1431,7 +1794,19 @@ class PatternEvolutionTracker:
         return dict(families)
 
     def analyze_temporal_evolution(self, pattern_type: PatternType) -> dict[str, Any]:
-        """Analyze temporal evolution patterns."""
+        """Analyze temporal evolution patterns.
+
+        Computes evolutionary statistics including rate of evolution, active lineages,
+        and fitness predictions for pattern type across all generations.
+
+        Args:
+            pattern_type: Type of patterns to analyze.
+
+        Returns:
+            Dictionary containing evolution_rate, evolutionary_branches, prediction,
+            active_lineages, and pattern_type keys.
+
+        """
         population = self.populations[pattern_type]
 
         if not population:
@@ -1465,7 +1840,16 @@ class PatternEvolutionTracker:
         }
 
     def evolve_generation(self, pattern_type: PatternType | None = None) -> None:
-        """Evolve one generation of patterns with advanced learning."""
+        """Evolve one generation of patterns with advanced learning.
+
+        Performs complete evolutionary cycle: evaluates fitness in parallel,
+        selects elite patterns, generates offspring via crossover and mutation,
+        detects mutations, clusters into families, and analyzes temporal evolution.
+
+        Args:
+            pattern_type: Specific type to evolve (None evolves all types).
+
+        """
         types_to_evolve = [pattern_type] if pattern_type else list(PatternType)
         for ptype in types_to_evolve:
             self.logger.info("Evolving %s patterns", ptype.value)
@@ -1553,7 +1937,18 @@ class PatternEvolutionTracker:
         self._notify_observers()
 
     def _evaluate_fitness(self, pattern: PatternGene) -> float:
-        """Evaluate pattern fitness using stored metrics and pattern characteristics."""
+        """Evaluate pattern fitness using stored metrics and pattern characteristics.
+
+        Computes fitness as weighted combination of pattern complexity, generation bonus,
+        and historical fitness. Adds exploration randomness for genetic diversity.
+
+        Args:
+            pattern: PatternGene instance to evaluate.
+
+        Returns:
+            Fitness score between 0.0 and 1.0.
+
+        """
         if not pattern or not pattern.pattern_data:
             return 0.0
 
@@ -1598,12 +1993,37 @@ class PatternEvolutionTracker:
         return min(1.0, final_fitness)
 
     def _tournament_selection(self, population: list[PatternGene], tournament_size: int = 3) -> PatternGene:
-        """Tournament selection for genetic algorithm."""
+        """Tournament selection for genetic algorithm.
+
+        Randomly samples tournament_size patterns from population and returns the
+        highest fitness individual. Implements selection pressure for genetic algorithm.
+
+        Args:
+            population: List of PatternGene instances to select from.
+            tournament_size: Number of patterns to sample for tournament (default 3).
+
+        Returns:
+            PatternGene with highest fitness from tournament sample.
+
+        """
         tournament = random.sample(population, min(tournament_size, len(population)))
         return max(tournament, key=lambda p: p.fitness)
 
     def detect(self, data: bytes, pattern_types: list[PatternType] | None = None) -> dict[str, Any]:
-        """Detect patterns in data using evolved patterns."""
+        """Detect patterns in data using evolved patterns.
+
+        Matches binary data against all patterns of specified types. Updates Q-learning
+        agent and detection statistics. Returns detailed detection results with
+        confidence scores.
+
+        Args:
+            data: Binary data to analyze for patterns.
+            pattern_types: List of PatternTypes to match (None matches all types).
+
+        Returns:
+            Dictionary with 'detections', 'confidence', and 'patterns_matched' keys.
+
+        """
         if not pattern_types:
             pattern_types = list(PatternType)
 
@@ -1643,7 +2063,16 @@ class PatternEvolutionTracker:
         return results
 
     def _update_q_learning(self, data: bytes, results: dict[str, Any]) -> None:
-        """Update Q-learning agent based on detection results."""
+        """Update Q-learning agent based on detection results.
+
+        Extracts state features from data, computes reward based on detection confidence,
+        and updates Q-learning agent experience for reinforcement learning.
+
+        Args:
+            data: Binary data that was analyzed.
+            results: Detection results dictionary from detect() method.
+
+        """
         # Extract features for state
         state = self._extract_state_features(data)
 
@@ -1660,7 +2089,18 @@ class PatternEvolutionTracker:
         self.q_agent.learn()
 
     def _extract_state_features(self, data: bytes) -> np.ndarray:
-        """Extract features from data for Q-learning state."""
+        """Extract features from data for Q-learning state.
+
+        Computes feature vector from binary data including size, Shannon entropy,
+        and counts of licensing-related keywords. Pads or truncates to 50 dimensions.
+
+        Args:
+            data: Binary data to extract features from.
+
+        Returns:
+            NumPy array of 50 feature values for Q-learning state representation.
+
+        """
         features = [len(data)]
 
         # Entropy
@@ -1682,7 +2122,17 @@ class PatternEvolutionTracker:
         return np.array(features[:50])
 
     def feedback(self, pattern_id: str, correct: bool, detection_time_ms: float) -> None:
-        """Provide feedback on pattern detection."""
+        """Provide feedback on pattern detection.
+
+        Records correctness feedback for a pattern detection, updates performance metrics,
+        and synchronizes pattern state from storage back to population cache.
+
+        Args:
+            pattern_id: Identifier of pattern to provide feedback for.
+            correct: Boolean indicating if detection was correct (true positive).
+            detection_time_ms: Time taken to perform detection in milliseconds.
+
+        """
         pattern = self.storage.load_pattern(pattern_id)
         if not pattern:
             return
@@ -1712,7 +2162,12 @@ class PatternEvolutionTracker:
         self.observers.append(observer)
 
     def _notify_observers(self) -> None:
-        """Notify observers of pattern updates."""
+        """Notify observers of pattern updates.
+
+        Calls on_patterns_updated() on each registered observer. Exceptions from
+        observers are logged but do not halt notification propagation.
+
+        """
         for observer in self.observers:
             try:
                 observer.on_patterns_updated(self)
@@ -1720,7 +2175,16 @@ class PatternEvolutionTracker:
                 self.logger.exception("Error notifying observer")
 
     def export_patterns(self, output_file: str, pattern_type: PatternType | None = None) -> None:
-        """Export patterns to JSON file."""
+        """Export patterns to JSON file.
+
+        Serializes pattern population(s) to JSON format for persistence or sharing.
+        Includes pattern data, fitness, genealogy, and evolution statistics.
+
+        Args:
+            output_file: Path to output JSON file.
+            pattern_type: Specific type to export (None exports all types).
+
+        """
         patterns_data = []
 
         types_to_export = [pattern_type] if pattern_type else list(PatternType)
@@ -1751,7 +2215,16 @@ class PatternEvolutionTracker:
         self.logger.info("Exported %d patterns to %s", len(patterns_data), output_file)
 
     def import_patterns(self, input_file: str) -> None:
-        """Import patterns from JSON file."""
+        """Import patterns from JSON file.
+
+        Deserializes patterns from JSON export file, reconstructing PatternGene
+        instances and integrating high-fitness patterns into active population.
+        Trims populations to configured size after import.
+
+        Args:
+            input_file: Path to input JSON file containing patterns.
+
+        """
         with open(input_file) as f:
             data = json.load(f)
 
@@ -1805,7 +2278,15 @@ class PatternEvolutionTracker:
                 self.populations[ptype] = self.populations[ptype][: self.population_size]
 
     def get_statistics(self) -> dict[str, Any]:
-        """Get current statistics."""
+        """Get current statistics.
+
+        Aggregates global evolution statistics and per-type population statistics
+        including counts, average fitness, and best fitness across all pattern types.
+
+        Returns:
+            Dictionary with generation count, detection stats, and per-type metrics.
+
+        """
         stats = self.stats.copy()
 
         # Add population statistics
@@ -1818,7 +2299,19 @@ class PatternEvolutionTracker:
         return stats
 
     def cluster_patterns(self, pattern_type: PatternType, min_samples: int = 5) -> dict[int, list[PatternGene]]:
-        """Cluster similar patterns using DBSCAN."""
+        """Cluster similar patterns using DBSCAN.
+
+        Groups patterns of specified type using density-based clustering. Extracts
+        appropriate features per pattern type (byte histograms vs fitness/generation).
+
+        Args:
+            pattern_type: Type of patterns to cluster.
+            min_samples: Minimum samples in cluster neighborhood (default 5).
+
+        Returns:
+            Dictionary mapping cluster labels to lists of PatternGene instances.
+
+        """
         population = self.populations[pattern_type]
         if len(population) < min_samples:
             return {0: population}
@@ -1847,7 +2340,11 @@ class PatternEvolutionTracker:
         return dict(clusters)
 
     def shutdown(self) -> None:
-        """Clean shutdown."""
+        """Clean shutdown.
+
+        Gracefully terminates thread pool executor and closes database connection.
+
+        """
         self.executor.shutdown(wait=True)
         self.storage.conn.close()
 
@@ -1861,7 +2358,15 @@ class PatternUpdateObserver:
         self.logger = logging.getLogger(__name__)
 
     def on_patterns_updated(self, tracker: PatternEvolutionTracker) -> None:
-        """Handle pattern updates."""
+        """Handle pattern updates.
+
+        Callback invoked after evolution generation completes. Logs current
+        statistics including generation, best fitness, and detection count.
+
+        Args:
+            tracker: PatternEvolutionTracker instance with updated patterns.
+
+        """
         stats = tracker.get_statistics()
         self.logger.info(
             "Generation %d: Best fitness: %.3f, Detections: %d",
@@ -1872,7 +2377,13 @@ class PatternUpdateObserver:
 
 
 def main() -> None:
-    """Run the pattern evolution command-line interface."""
+    """Run the pattern evolution command-line interface.
+
+    Provides CLI for pattern evolution tracker operations including generating
+    patterns through evolution, detecting patterns in files, exporting/importing
+    pattern libraries, and displaying evolution statistics.
+
+    """
     import argparse
 
     main_logger = logging.getLogger(__name__)

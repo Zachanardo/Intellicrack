@@ -162,7 +162,19 @@ class NLPCodeProcessor:
         logger.info("NLP code processor initialized")
 
     def _build_code_vocabulary(self) -> dict[str, list[str]]:
-        """Build vocabulary for code analysis."""
+        """Build vocabulary for code analysis.
+
+        Constructs a comprehensive vocabulary dictionary mapping semantic
+        categories to relevant keywords used in licensing and security
+        protection analysis.
+
+        Returns:
+            dict[str, list[str]]: Dictionary mapping category names to lists
+                of keywords. Categories include authentication, authorization,
+                validation, encryption, communication, security, license, and
+                error_handling.
+
+        """
         return {
             "authentication": [
                 "login",
@@ -270,7 +282,19 @@ class NLPCodeProcessor:
         }
 
     def _load_semantic_patterns(self) -> dict[str, list[str]]:
-        """Load semantic patterns for intent recognition."""
+        """Load semantic patterns for intent recognition.
+
+        Defines regular expression patterns for identifying semantic intent
+        in code, including validation, authentication, licensing, and
+        security-related patterns used in protection mechanism detection.
+
+        Returns:
+            dict[str, list[str]]: Dictionary mapping pattern category names
+                to lists of regex patterns. Categories include
+                validation_pattern, authentication_pattern, license_pattern,
+                and security_pattern.
+
+        """
         return {
             "validation_pattern": [
                 r"if\s+not\s+\w+",
@@ -305,7 +329,19 @@ class NLPCodeProcessor:
         }
 
     def _load_intent_keywords(self) -> dict[SemanticIntent, list[str]]:
-        """Load keywords for intent classification."""
+        """Load keywords for intent classification.
+
+        Constructs a mapping of SemanticIntent enum values to lists of
+        keywords that indicate those intents in code. Used for classifying
+        code elements into protection-related semantic categories.
+
+        Returns:
+            dict[SemanticIntent, list[str]]: Dictionary mapping SemanticIntent
+                enum values to lists of keywords. Intents include
+                AUTHENTICATION, AUTHORIZATION, VALIDATION, ENCRYPTION, and
+                BUSINESS_LOGIC.
+
+        """
         return {
             SemanticIntent.AUTHENTICATION: [
                 "authenticate",
@@ -370,7 +406,19 @@ class NLPCodeProcessor:
         }
 
     def _load_business_keywords(self) -> dict[BusinessLogicPattern, list[str]]:
-        """Load keywords for business logic pattern recognition."""
+        """Load keywords for business logic pattern recognition.
+
+        Constructs a mapping of BusinessLogicPattern enum values to lists of
+        keywords used to identify business logic patterns in code, particularly
+        those related to licensing, user management, and access control.
+
+        Returns:
+            dict[BusinessLogicPattern, list[str]]: Dictionary mapping
+                BusinessLogicPattern enum values to lists of keywords.
+                Patterns include LICENSE_VALIDATION, USER_MANAGEMENT,
+                ACCESS_CONTROL, DATA_VALIDATION, and AUDIT_LOGGING.
+
+        """
         return {
             BusinessLogicPattern.LICENSE_VALIDATION: [
                 "license",
@@ -422,7 +470,24 @@ class NLPCodeProcessor:
         }
 
     def extract_semantic_features(self, code: str, function_name: str = "") -> dict[str, Any]:
-        """Extract semantic features from code."""
+        """Extract semantic features from code.
+
+        Analyzes code to extract semantic features including vocabulary matches,
+        pattern matches, intent scores, business logic scores, complexity
+        indicators, and semantic tokens. Used for identifying protection
+        mechanisms and licensing-related code patterns.
+
+        Args:
+            code: Source code to analyze as a string.
+            function_name: Optional name of the function being analyzed,
+                used to enhance semantic token extraction.
+
+        Returns:
+            dict[str, Any]: Dictionary containing extracted features with keys:
+                vocabulary_matches, pattern_matches, intent_scores,
+                business_scores, complexity_indicators, and semantic_tokens.
+
+        """
         features: dict[str, Any] = {
             "vocabulary_matches": {},
             "pattern_matches": {},
@@ -472,7 +537,20 @@ class NLPCodeProcessor:
         return features
 
     def _normalize_code(self, code: str) -> str:
-        """Normalize code for analysis."""
+        """Normalize code for analysis.
+
+        Removes comments and normalizes whitespace in code to prepare it
+        for semantic analysis. Strips trailing/leading whitespace and
+        preserves code structure for keyword matching.
+
+        Args:
+            code: Source code to normalize.
+
+        Returns:
+            str: Normalized code with comments removed and whitespace
+                standardized.
+
+        """
         # Remove comments
         code = re.sub(r"#.*$", "", code, flags=re.MULTILINE)
         code = re.sub(r"/\*.*?\*/", "", code, flags=re.DOTALL)
@@ -485,7 +563,21 @@ class NLPCodeProcessor:
         return code.strip()
 
     def _extract_complexity_indicators(self, code: str) -> dict[str, int]:
-        """Extract complexity indicators from code."""
+        """Extract complexity indicators from code.
+
+        Analyzes code to identify and count complexity metrics including
+        conditional statements, loops, function calls, return statements,
+        exception handling, and nested block depth.
+
+        Args:
+            code: Source code to analyze.
+
+        Returns:
+            dict[str, int]: Dictionary with keys: conditional_statements,
+                loop_statements, function_calls, return_statements,
+                exception_handling, and nested_blocks.
+
+        """
         return {
             "conditional_statements": len(re.findall(r"\bif\b", code, re.IGNORECASE)),
             "loop_statements": len(re.findall(r"\b(for|while)\b", code, re.IGNORECASE)),
@@ -496,7 +588,18 @@ class NLPCodeProcessor:
         }
 
     def _count_nested_blocks(self, code: str) -> int:
-        """Count nested blocks in code."""
+        """Count nested blocks in code.
+
+        Calculates the maximum nesting depth of code blocks by tracking
+        opening and closing braces and parentheses.
+
+        Args:
+            code: Source code to analyze.
+
+        Returns:
+            int: Maximum nesting depth found in the code.
+
+        """
         max_depth = 0
         current_depth = 0
 
@@ -510,7 +613,20 @@ class NLPCodeProcessor:
         return max_depth
 
     def _extract_semantic_tokens(self, code: str, function_name: str) -> list[str]:
-        """Extract meaningful semantic tokens."""
+        """Extract meaningful semantic tokens.
+
+        Identifies and extracts semantic tokens from code by parsing camelCase
+        and snake_case identifiers, filtering out common utility terms and
+        returning only meaningful semantic words.
+
+        Args:
+            code: Source code to extract tokens from.
+            function_name: Name of the function to extract tokens from.
+
+        Returns:
+            list[str]: List of unique, meaningful semantic tokens in lowercase.
+
+        """
         tokens = []
 
         # Add function name components
@@ -543,7 +659,18 @@ class NLPCodeProcessor:
         return list(set(meaningful_tokens))
 
     def _split_camel_case(self, text: str) -> list[str]:
-        """Split camelCase or ``snake_case`` text into words."""
+        """Split camelCase or ``snake_case`` text into words.
+
+        Parses identifiers written in camelCase or snake_case format and
+        splits them into individual word components.
+
+        Args:
+            text: Text to split, in camelCase or snake_case format.
+
+        Returns:
+            list[str]: List of individual words extracted from the identifier.
+
+        """
         # Handle camelCase
         camel_split = re.sub(r"([a-z])([A-Z])", r"\1 \2", text).split()
 
@@ -581,7 +708,23 @@ class SemanticCodeAnalyzer:
 
     @profile_ai_operation("semantic_code_analysis")
     def analyze_file(self, file_path: str, content: str | None = None) -> SemanticAnalysisResult:
-        """Perform semantic analysis of a code file."""
+        """Perform semantic analysis of a code file.
+
+        Analyzes a code file to extract semantic nodes, relationships,
+        intent mismatches, and business logic patterns. Includes caching
+        of results and learning experience recording.
+
+        Args:
+            file_path: Path to the code file to analyze.
+            content: Optional file content. If not provided, content will be
+                read from the file path.
+
+        Returns:
+            SemanticAnalysisResult: Comprehensive analysis result containing
+                semantic nodes, relationships, mismatches, business logic map,
+                complexity metrics, semantic summary, and confidence score.
+
+        """
         start_time = datetime.now()
 
         # Check cache
@@ -661,7 +804,21 @@ class SemanticCodeAnalyzer:
             return self._create_empty_result(file_path)
 
     def _perform_semantic_analysis(self, file_path: str, content: str) -> SemanticAnalysisResult:
-        """Perform the actual semantic analysis."""
+        """Perform the actual semantic analysis.
+
+        Executes the core semantic analysis workflow including parsing code
+        structure, extracting semantic nodes, analyzing relationships, detecting
+        intent mismatches, mapping business logic, and calculating metrics.
+
+        Args:
+            file_path: Path to the file being analyzed, used for context.
+            content: Source code content to analyze.
+
+        Returns:
+            SemanticAnalysisResult: Complete semantic analysis result with all
+                extracted information.
+
+        """
         analysis_id = f"semantic_{hashlib.md5(f'{file_path}{datetime.now()}'.encode(), usedforsecurity=False).hexdigest()[:8]}"
 
         # Parse code structure
@@ -705,7 +862,21 @@ class SemanticCodeAnalyzer:
         )
 
     def _parse_code_structure(self, content: str, file_path: str) -> list[dict[str, Any]]:
-        """Parse code structure using AST."""
+        """Parse code structure using AST.
+
+        Parses source code structure using Python's AST module for Python files
+        or regex-based parsing for other languages. Extracts function and class
+        definitions with metadata.
+
+        Args:
+            content: Source code content to parse.
+            file_path: Path to the file, used to determine parsing strategy.
+
+        Returns:
+            list[dict[str, Any]]: List of AST node dictionaries containing
+                type, name, line, column, content, and docstring information.
+
+        """
         ast_nodes: list[dict[str, Any]] = []
 
         try:
@@ -737,7 +908,21 @@ class SemanticCodeAnalyzer:
         return ast_nodes
 
     def _parse_non_python_structure(self, content: str, file_path: str) -> list[dict[str, Any]]:
-        """Parse non-Python code structure using regex."""
+        """Parse non-Python code structure using regex.
+
+        Uses regex patterns to extract function and class definitions from
+        non-Python source files including JavaScript, TypeScript, C, and C++.
+
+        Args:
+            content: Source code content to parse.
+            file_path: Path to the file, used to determine language-specific
+                regex patterns.
+
+        Returns:
+            list[dict[str, Any]]: List of parsed node dictionaries containing
+                type, name, line, column, content, and docstring metadata.
+
+        """
         ast_nodes: list[dict[str, Any]] = []
 
         # JavaScript/TypeScript function patterns
@@ -785,7 +970,19 @@ class SemanticCodeAnalyzer:
         return ast_nodes
 
     def _extract_node_content(self, content: str, node: ast.AST) -> str:
-        """Extract content for AST node."""
+        """Extract content for AST node.
+
+        Extracts the source code content for a given AST node using line
+        number information.
+
+        Args:
+            content: Complete source code content.
+            node: AST node object with lineno and end_lineno attributes.
+
+        Returns:
+            str: Source code lines corresponding to the AST node.
+
+        """
         lines = content.split("\n")
 
         if hasattr(node, "lineno") and hasattr(node, "end_lineno"):
@@ -796,7 +993,19 @@ class SemanticCodeAnalyzer:
         return ""
 
     def _extract_function_body(self, content: str, start_pos: int) -> str:
-        """Extract function body from position."""
+        """Extract function body from position.
+
+        Extracts the complete function body starting from a given position
+        by tracking brace and parenthesis nesting until the function closes.
+
+        Args:
+            content: Source code content.
+            start_pos: Starting position in the content for extraction.
+
+        Returns:
+            str: Function body code from start_pos until the closing brace.
+
+        """
         brace_count = 0
         in_function = False
         end_pos = start_pos
@@ -814,11 +1023,37 @@ class SemanticCodeAnalyzer:
         return content[start_pos:end_pos]
 
     def _extract_class_body(self, content: str, start_pos: int) -> str:
-        """Extract class body from position."""
-        return self._extract_function_body(content, start_pos)  # Same logic
+        """Extract class body from position.
+
+        Extracts the complete class body starting from a given position
+        using the same brace-tracking logic as function extraction.
+
+        Args:
+            content: Source code content.
+            start_pos: Starting position in the content for extraction.
+
+        Returns:
+            str: Class body code from start_pos until the closing brace.
+
+        """
+        return self._extract_function_body(content, start_pos)
 
     def _create_semantic_node(self, ast_node: dict[str, Any], content: str) -> SemanticNode | None:
-        """Create semantic node from AST node."""
+        """Create semantic node from AST node.
+
+        Constructs a SemanticNode object from an AST node dictionary by
+        extracting NLP features, determining semantic intent, identifying
+        business patterns, and calculating confidence scores.
+
+        Args:
+            ast_node: Dictionary containing parsed AST node information.
+            content: Full source code content for feature extraction.
+
+        Returns:
+            SemanticNode | None: Constructed semantic node object, or None if
+                creation fails.
+
+        """
         try:
             node_content = ast_node.get("content", "") or content
             node_name = ast_node.get("name", "")
@@ -861,7 +1096,24 @@ class SemanticCodeAnalyzer:
             return None
 
     def _determine_semantic_intent(self, nlp_features: dict[str, Any], node_name: str, content: str) -> SemanticIntent:
-        """Determine semantic intent of code node."""
+        """Determine semantic intent of code node.
+
+        Analyzes NLP features, node name, and content to classify the semantic
+        intent of a code element into categories like authentication, validation,
+        encryption, or business logic.
+
+        Args:
+            nlp_features: Dictionary containing extracted NLP features including
+                intent_scores and vocabulary matches.
+            node_name: Name of the code node being analyzed.
+            content: Source code content of the node.
+
+        Returns:
+            SemanticIntent: Enum value representing the determined semantic
+                intent. Falls back to BUSINESS_LOGIC if intent cannot be
+                determined.
+
+        """
         if intent_scores := nlp_features.get("intent_scores", {}):
             max_intent = max(intent_scores.items(), key=lambda x: x[1])
             if max_intent[1] > 0:
@@ -893,7 +1145,23 @@ class SemanticCodeAnalyzer:
         return SemanticIntent.BUSINESS_LOGIC
 
     def _determine_business_pattern(self, nlp_features: dict[str, Any], node_name: str, content: str) -> BusinessLogicPattern | None:
-        """Determine business logic pattern."""
+        """Determine business logic pattern.
+
+        Analyzes NLP features, node name, and content to identify business
+        logic patterns such as license validation, user management, access
+        control, data validation, and audit logging.
+
+        Args:
+            nlp_features: Dictionary containing extracted NLP features including
+                business_scores.
+            node_name: Name of the code node being analyzed.
+            content: Source code content of the node.
+
+        Returns:
+            BusinessLogicPattern | None: Enum value representing the identified
+                business logic pattern, or None if no pattern is detected.
+
+        """
         if business_scores := nlp_features.get("business_scores", {}):
             max_pattern = max(business_scores.items(), key=lambda x: x[1])
             if max_pattern[1] > 0:
@@ -920,8 +1188,22 @@ class SemanticCodeAnalyzer:
         return None
 
     def _calculate_node_confidence(self, nlp_features: dict[str, Any], semantic_intent: SemanticIntent) -> float:
-        """Calculate confidence score for semantic node."""
-        confidence = 0.5  # Base confidence
+        """Calculate confidence score for semantic node.
+
+        Computes a confidence score for a semantic node classification based on
+        vocabulary matches, pattern matches, and the semantic intent type.
+
+        Args:
+            nlp_features: Dictionary containing vocabulary and pattern match
+                counts from NLP analysis.
+            semantic_intent: The classified semantic intent for the node.
+
+        Returns:
+            float: Confidence score between 0.0 and 1.0 indicating certainty
+                of the classification.
+
+        """
+        confidence = 0.5
 
         # Add confidence boost for high-value intents
         high_value_intents = [
@@ -944,7 +1226,20 @@ class SemanticCodeAnalyzer:
         return min(1.0, confidence)
 
     def _analyze_relationships(self, semantic_nodes: list[SemanticNode]) -> list[SemanticRelationship]:
-        """Analyze relationships between semantic nodes."""
+        """Analyze relationships between semantic nodes.
+
+        Detects relationships between pairs of semantic nodes based on function
+        calls, similar intent, sequential proximity, and other connection
+        patterns.
+
+        Args:
+            semantic_nodes: List of semantic nodes to analyze for relationships.
+
+        Returns:
+            list[SemanticRelationship]: List of detected relationship objects
+                between semantic nodes.
+
+        """
         relationships = []
 
         for i, node1 in enumerate(semantic_nodes):
@@ -955,7 +1250,20 @@ class SemanticCodeAnalyzer:
         return relationships
 
     def _detect_relationship(self, node1: SemanticNode, node2: SemanticNode) -> SemanticRelationship | None:
-        """Detect relationship between two semantic nodes."""
+        """Detect relationship between two semantic nodes.
+
+        Analyzes two semantic nodes to identify potential relationships including
+        function calls, similar intents, and sequential proximity.
+
+        Args:
+            node1: First semantic node to compare.
+            node2: Second semantic node to compare.
+
+        Returns:
+            SemanticRelationship | None: Relationship object if a connection
+                is detected, None otherwise.
+
+        """
         # Check for function calls
         if node2.name in node1.content or node1.name in node2.content:
             relationship_type = "calls"
@@ -992,7 +1300,21 @@ class SemanticCodeAnalyzer:
         )
 
     def _detect_intent_mismatches(self, semantic_nodes: list[SemanticNode], content: str) -> list[IntentMismatch]:
-        """Detect mismatches between intent and implementation."""
+        """Detect mismatches between intent and implementation.
+
+        Analyzes semantic nodes to identify cases where the semantic intent
+        does not match the actual implementation, such as validation functions
+        that don't properly validate or weak authentication.
+
+        Args:
+            semantic_nodes: List of semantic nodes to analyze.
+            content: Full source code content for context.
+
+        Returns:
+            list[IntentMismatch]: List of identified intent mismatches with
+                details and suggested fixes.
+
+        """
         mismatches = []
 
         for node in semantic_nodes:
@@ -1002,7 +1324,19 @@ class SemanticCodeAnalyzer:
         return mismatches
 
     def _analyze_node_for_mismatch(self, node: SemanticNode, content: str) -> IntentMismatch | None:
-        """Analyze single node for intent mismatch."""
+        """Analyze single node for intent mismatch.
+
+        Examines a semantic node to detect intent mismatches such as trivial
+        validation implementations or weak authentication mechanisms.
+
+        Args:
+            node: Semantic node to analyze.
+            content: Full source code content for context.
+
+        Returns:
+            IntentMismatch | None: Mismatch object if detected, None otherwise.
+
+        """
         # Use node content or fallback to full content for analysis
         analysis_content = node.content or content
 
@@ -1052,7 +1386,18 @@ class SemanticCodeAnalyzer:
         return None
 
     def _has_trivial_validation(self, content: str) -> bool:
-        """Check if validation is trivial."""
+        """Check if validation is trivial.
+
+        Detects validation functions that contain trivial implementations
+        such as unconditional returns or empty pass statements.
+
+        Args:
+            content: Source code content to analyze.
+
+        Returns:
+            bool: True if trivial validation patterns are found.
+
+        """
         # Look for patterns indicating trivial validation
         trivial_patterns = [
             r"return\s+True",
@@ -1064,7 +1409,18 @@ class SemanticCodeAnalyzer:
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in trivial_patterns)
 
     def _has_weak_authentication(self, content: str) -> bool:
-        """Check if authentication is weak."""
+        """Check if authentication is weak.
+
+        Detects weak authentication implementations such as plaintext password
+        comparisons, missing hashing, or unconditional acceptance.
+
+        Args:
+            content: Source code content to analyze.
+
+        Returns:
+            bool: True if weak authentication patterns are detected.
+
+        """
         weak_patterns = [
             r'password\s*==\s*["\']',  # Plain text password comparison
             r"if\s+password\s*:",  # Just checking if password exists
@@ -1074,7 +1430,18 @@ class SemanticCodeAnalyzer:
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in weak_patterns)
 
     def _find_trivial_patterns(self, content: str) -> list[str]:
-        """Find trivial validation patterns."""
+        """Find trivial validation patterns.
+
+        Searches code for patterns indicating trivial or incomplete
+        validation implementations.
+
+        Args:
+            content: Source code content to analyze.
+
+        Returns:
+            list[str]: List of detected trivial pattern types.
+
+        """
         patterns = []
 
         if re.search(r"return\s+True", content, re.IGNORECASE):
@@ -1086,7 +1453,18 @@ class SemanticCodeAnalyzer:
         return patterns
 
     def _find_missing_validation_checks(self, content: str) -> list[str]:
-        """Find missing validation checks."""
+        """Find missing validation checks.
+
+        Identifies common validation checks that are absent from the code,
+        such as null checks, length checks, or type checks.
+
+        Args:
+            content: Source code content to analyze.
+
+        Returns:
+            list[str]: List of missing validation check types.
+
+        """
         missing = []
 
         if not re.search(r"if\s+not\s+", content):
@@ -1101,7 +1479,18 @@ class SemanticCodeAnalyzer:
         return missing
 
     def _find_weak_auth_patterns(self, content: str) -> list[str]:
-        """Find weak authentication patterns."""
+        """Find weak authentication patterns.
+
+        Identifies patterns in code that indicate weak or insecure
+        authentication implementations.
+
+        Args:
+            content: Source code content to analyze.
+
+        Returns:
+            list[str]: List of detected weak authentication pattern types.
+
+        """
         patterns = []
 
         if re.search(r'password\s*==\s*["\']', content):
@@ -1113,11 +1502,38 @@ class SemanticCodeAnalyzer:
         return patterns
 
     def _map_business_logic(self, semantic_nodes: list[SemanticNode]) -> dict[str, BusinessLogicPattern]:
-        """Map business logic patterns in the code."""
+        """Map business logic patterns in the code.
+
+        Creates a mapping of semantic node IDs to their identified business
+        logic patterns for easy lookup and analysis.
+
+        Args:
+            semantic_nodes: List of semantic nodes with business patterns.
+
+        Returns:
+            dict[str, BusinessLogicPattern]: Dictionary mapping node IDs to
+                their corresponding business logic patterns.
+
+        """
         return {node.node_id: node.business_pattern for node in semantic_nodes if node.business_pattern}
 
     def _calculate_complexity_metrics(self, semantic_nodes: list[SemanticNode], content: str) -> dict[str, float]:
-        """Calculate complexity metrics."""
+        """Calculate complexity metrics.
+
+        Computes various complexity metrics for the analyzed code including
+        semantic complexity, intent diversity, business pattern count, and
+        average confidence scores.
+
+        Args:
+            semantic_nodes: List of extracted semantic nodes.
+            content: Full source code content.
+
+        Returns:
+            dict[str, float]: Dictionary of computed complexity metrics with
+                keys like semantic_complexity, intent_diversity, avg_node_confidence,
+                content_length, and function_count.
+
+        """
         return {
             "semantic_complexity": len(semantic_nodes),
             "intent_diversity": len({node.semantic_intent for node in semantic_nodes}),
@@ -1128,7 +1544,21 @@ class SemanticCodeAnalyzer:
         }
 
     def _generate_semantic_summary(self, semantic_nodes: list[SemanticNode], relationships: list[SemanticRelationship]) -> dict[str, Any]:
-        """Generate semantic summary."""
+        """Generate semantic summary.
+
+        Creates a comprehensive summary of semantic analysis including intent
+        distribution, business pattern distribution, primary intent, and
+        complexity level.
+
+        Args:
+            semantic_nodes: List of extracted semantic nodes.
+            relationships: List of detected relationships between nodes.
+
+        Returns:
+            dict[str, Any]: Summary dictionary containing total counts,
+                distributions, primary intent, and complexity assessment.
+
+        """
         intent_counts = Counter(node.semantic_intent for node in semantic_nodes)
         pattern_counts = Counter(node.business_pattern for node in semantic_nodes if node.business_pattern)
 
@@ -1142,13 +1572,36 @@ class SemanticCodeAnalyzer:
         }
 
     def _assess_complexity_level(self, semantic_nodes: list[SemanticNode]) -> str:
-        """Assess complexity level of the code."""
+        """Assess complexity level of the code.
+
+        Evaluates code complexity as low, medium, or high based on the number
+        of semantic nodes detected.
+
+        Args:
+            semantic_nodes: List of semantic nodes in the analyzed code.
+
+        Returns:
+            str: Complexity level: "low", "medium", or "high".
+
+        """
         if len(semantic_nodes) < LOW_COMPLEXITY_THRESHOLD:
             return "low"
         return "medium" if len(semantic_nodes) < MEDIUM_COMPLEXITY_THRESHOLD else "high"
 
     def _calculate_analysis_confidence(self, semantic_nodes: list[SemanticNode], relationships: list[SemanticRelationship]) -> float:
-        """Calculate overall analysis confidence."""
+        """Calculate overall analysis confidence.
+
+        Computes overall confidence score for the semantic analysis by averaging
+        node confidence and relationship confidence with weighted combination.
+
+        Args:
+            semantic_nodes: List of extracted semantic nodes.
+            relationships: List of detected relationships.
+
+        Returns:
+            float: Overall confidence score between 0.0 and 1.0.
+
+        """
         if not semantic_nodes:
             return 0.0
 
@@ -1164,7 +1617,20 @@ class SemanticCodeAnalyzer:
         return min(1.0, overall_confidence)
 
     def _calculate_file_hash(self, file_path: str, content: str | None) -> str:
-        """Calculate hash for caching."""
+        """Calculate hash for caching.
+
+        Computes an MD5 hash of the file path and content for caching purposes.
+        If content is not provided, attempts to read the file.
+
+        Args:
+            file_path: Path to the file being analyzed.
+            content: Optional file content. If None, will attempt to read
+                from file_path.
+
+        Returns:
+            str: MD5 hash of the file path and content for caching keys.
+
+        """
         if content is None:
             try:
                 from .ai_file_tools import get_ai_file_tools
@@ -1191,7 +1657,18 @@ class SemanticCodeAnalyzer:
         return hashlib.md5(f"{file_path}:{content}".encode(), usedforsecurity=False).hexdigest()
 
     def _create_empty_result(self, file_path: str) -> SemanticAnalysisResult:
-        """Create empty analysis result for failed analysis."""
+        """Create empty analysis result for failed analysis.
+
+        Constructs a SemanticAnalysisResult with empty/zero values when
+        analysis fails, allowing graceful degradation.
+
+        Args:
+            file_path: Path to the file that failed analysis.
+
+        Returns:
+            SemanticAnalysisResult: Empty result object with zero confidence.
+
+        """
         return SemanticAnalysisResult(
             analysis_id="empty",
             file_path=file_path,
@@ -1206,7 +1683,21 @@ class SemanticCodeAnalyzer:
         )
 
     def get_semantic_insights(self, file_paths: list[str]) -> dict[str, Any]:
-        """Get semantic insights across multiple files."""
+        """Get semantic insights across multiple files.
+
+        Analyzes multiple files and aggregates semantic insights including
+        intent distribution, business pattern distribution, and complexity
+        overview.
+
+        Args:
+            file_paths: List of file paths to analyze.
+
+        Returns:
+            dict[str, Any]: Aggregated insights dictionary containing
+                files_analyzed, total_nodes, intent_distribution,
+                business_pattern_distribution, and complexity_overview.
+
+        """
         intent_dist: Counter[str] = Counter()
         business_dist: Counter[str] = Counter()
 
@@ -1273,7 +1764,12 @@ class SemanticKnowledgeBase:
         self._initialize_knowledge_base()
 
     def _initialize_knowledge_base(self) -> None:
-        """Initialize knowledge base with common patterns."""
+        """Initialize knowledge base with common patterns.
+
+        Populates the semantic knowledge base with security patterns,
+        authentication patterns, and anti-patterns for code analysis.
+
+        """
         # Security patterns
         self.patterns["security_validation"] = {
             "description": "Proper input validation for security",

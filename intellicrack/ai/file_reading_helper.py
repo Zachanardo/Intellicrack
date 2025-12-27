@@ -55,7 +55,15 @@ def read_file_with_ai_tools(
     """
 
     def _process_ai_content(raw_content: str | bytes | bytearray) -> str | bytes | None:
-        """Normalize AI-provided content according to mode and max_bytes."""
+        """Normalize AI-provided content according to mode and max_bytes.
+
+        Args:
+            raw_content: Raw content from AIFileTools (str, bytes, or bytearray)
+
+        Returns:
+            str | bytes | None: Normalized content as bytes (binary mode) or str (text mode), or None if conversion fails
+
+        """
         if mode == "binary":
             data: bytes
             if isinstance(raw_content, str):

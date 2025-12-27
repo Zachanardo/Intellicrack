@@ -295,14 +295,32 @@ class HASPCrypto:
         self.rsa_keys[0] = (private_key, public_key)
 
     def generate_session_key(self, session_id: int, vendor_code: int) -> bytes:
-        """Generate session-specific AES key."""
+        """Generate session-specific AES key.
+
+        Args:
+            session_id: Session identifier
+            vendor_code: Vendor code for key derivation
+
+        Returns:
+            bytes: Derived AES-256 session key
+
+        """
         key_material = f"{session_id}:{vendor_code}:{time.time()}".encode()
         session_key = hashlib.sha256(key_material).digest()
         self.aes_keys[session_id] = session_key
         return session_key
 
     def aes_encrypt(self, data: bytes, session_id: int = 0) -> bytes:
-        """Encrypt data using AES-256-CBC."""
+        """Encrypt data using AES-256-CBC.
+
+        Args:
+            data: Plaintext data to encrypt
+            session_id: Session ID for key lookup
+
+        Returns:
+            bytes: IV concatenated with ciphertext
+
+        """
         if session_id not in self.aes_keys:
             session_id = 0
 
@@ -324,7 +342,16 @@ class HASPCrypto:
         return iv + ciphertext
 
     def aes_decrypt(self, data: bytes, session_id: int = 0) -> bytes:
-        """Decrypt data using AES-256-CBC."""
+        """Decrypt data using AES-256-CBC.
+
+        Args:
+            data: Ciphertext with IV prepended
+            session_id: Session ID for key lookup
+
+        Returns:
+            bytes: Decrypted plaintext
+
+        """
         if len(data) < 16:
             return data
 
@@ -352,7 +379,16 @@ class HASPCrypto:
         return padded_plaintext
 
     def rsa_sign(self, data: bytes, session_id: int = 0) -> bytes:
-        """Sign data using RSA-PSS."""
+        """Sign data using RSA-PSS.
+
+        Args:
+            data: Data to sign
+            session_id: Session ID for key lookup
+
+        Returns:
+            bytes: RSA signature
+
+        """
         if session_id not in self.rsa_keys:
             session_id = 0
 
@@ -368,7 +404,17 @@ class HASPCrypto:
         )
 
     def rsa_verify(self, data: bytes, signature: bytes, session_id: int = 0) -> bool:
-        """Verify RSA signature."""
+        """Verify RSA signature.
+
+        Args:
+            data: Signed data
+            signature: Signature bytes
+            session_id: Session ID for key lookup
+
+        Returns:
+            bool: True if signature is valid, False otherwise
+
+        """
         try:
             if session_id not in self.rsa_keys:
                 session_id = 0
@@ -389,7 +435,16 @@ class HASPCrypto:
             return False
 
     def hasp4_encrypt(self, data: bytes, seed: int) -> bytes:
-        """HASP4 legacy encryption algorithm."""
+        """HASP4 legacy encryption algorithm.
+
+        Args:
+            data: Plaintext to encrypt
+            seed: LFSR seed for keystream generation
+
+        Returns:
+            bytes: Encrypted data
+
+        """
         key_stream = self._generate_hasp4_keystream(seed, len(data))
         encrypted = bytearray()
 
@@ -399,11 +454,29 @@ class HASPCrypto:
         return bytes(encrypted)
 
     def hasp4_decrypt(self, data: bytes, seed: int) -> bytes:
-        """HASP4 legacy decryption (same as encryption for stream cipher)."""
+        """HASP4 legacy decryption (same as encryption for stream cipher).
+
+        Args:
+            data: Ciphertext to decrypt
+            seed: LFSR seed for keystream generation
+
+        Returns:
+            bytes: Decrypted data
+
+        """
         return self.hasp4_encrypt(data, seed)
 
     def _generate_hasp4_keystream(self, seed: int, length: int) -> bytes:
-        """Generate HASP4 keystream using LFSR-based PRNG."""
+        """Generate HASP4 keystream using LFSR-based PRNG.
+
+        Args:
+            seed: Initial LFSR state
+            length: Number of bytes to generate
+
+        Returns:
+            bytes: Keystream bytes
+
+        """
         state = seed & 0xFFFFFFFF
         keystream = bytearray()
 
@@ -417,7 +490,16 @@ class HASPCrypto:
         return bytes(keystream)
 
     def envelope_encrypt(self, data: bytes, session_id: int = 0) -> bytes:
-        """Envelope encryption: RSA for session key + AES for data."""
+        """Envelope encryption: RSA for session key + AES for data.
+
+        Args:
+            data: Plaintext to encrypt
+            session_id: Session ID for RSA key lookup
+
+        Returns:
+            bytes: Key length, encrypted key, IV, and ciphertext
+
+        """
         session_key = secrets.token_bytes(32)
 
         if session_id not in self.rsa_keys:
@@ -454,7 +536,16 @@ class HASPCrypto:
         return result
 
     def envelope_decrypt(self, data: bytes, session_id: int = 0) -> bytes:
-        """Envelope decryption."""
+        """Envelope decryption.
+
+        Args:
+            data: Envelope-encrypted data
+            session_id: Session ID for RSA key lookup
+
+        Returns:
+            bytes: Decrypted plaintext
+
+        """
         if len(data) < 2:
             return data
 
@@ -535,7 +626,12 @@ class HASPSentinelParser:
         self._initialize_default_features()
 
     def _initialize_default_features(self) -> None:
-        """Initialize default HASP features for major applications."""
+        """Initialize default HASP features for major applications.
+
+        Sets up pre-configured features for major CAD and engineering software
+        applications with realistic constraints and configuration.
+
+        """
         default_features = [
             HASPFeature(
                 feature_id=100,
@@ -634,7 +730,12 @@ class HASPSentinelParser:
             self._initialize_feature_memory(feature.feature_id)
 
     def _initialize_feature_memory(self, feature_id: int) -> None:
-        """Initialize HASP memory with realistic data."""
+        """Initialize HASP memory with realistic data.
+
+        Args:
+            feature_id: Feature ID to initialize memory for
+
+        """
         if feature_id not in self.memory_storage:
             return
 
@@ -653,7 +754,12 @@ class HASPSentinelParser:
             memory[i] = (i * 13 + 37) & 0xFF
 
     def _generate_hardware_fingerprint(self) -> dict[str, Any]:
-        """Generate realistic HASP hardware fingerprint."""
+        """Generate realistic HASP hardware fingerprint.
+
+        Returns:
+            dict[str, Any]: Hardware information dictionary
+
+        """
         hasp_id = secrets.randbelow(900000) + 100000
 
         return {
@@ -798,7 +904,15 @@ class HASPSentinelParser:
             return None
 
     def _parse_additional_params(self, data: bytes) -> dict[str, Any]:
-        """Parse additional HASP TLV parameters."""
+        """Parse additional HASP TLV parameters.
+
+        Args:
+            data: Raw TLV parameter data
+
+        Returns:
+            dict[str, Any]: Parsed parameters
+
+        """
         params: dict[str, Any] = {}
         try:
             offset = 0
@@ -889,7 +1003,15 @@ class HASPSentinelParser:
         return response
 
     def _prepare_signature_data(self, response: HASPResponse) -> bytes:
-        """Prepare response data for signing."""
+        """Prepare response data for signing.
+
+        Args:
+            response: HASP response to sign
+
+        Returns:
+            bytes: Serialized response data for signing
+
+        """
         data = struct.pack("<I", response.status)
         data += struct.pack("<I", response.session_id)
         data += struct.pack("<I", response.feature_id)
@@ -897,7 +1019,15 @@ class HASPSentinelParser:
         return data
 
     def _handle_login(self, request: HASPRequest) -> HASPResponse:
-        """Handle HASP login request."""
+        """Handle HASP login request.
+
+        Args:
+            request: HASP login request
+
+        Returns:
+            HASPResponse: Login response with session ID and encryption key
+
+        """
         if request.vendor_code not in self.VENDOR_CODES:
             return self._create_error_response(
                 request,
@@ -939,7 +1069,15 @@ class HASPSentinelParser:
         )
 
     def _handle_logout(self, request: HASPRequest) -> HASPResponse:
-        """Handle HASP logout request."""
+        """Handle HASP logout request.
+
+        Args:
+            request: HASP logout request
+
+        Returns:
+            HASPResponse: Logout confirmation
+
+        """
         if request.session_id in self.active_sessions:
             del self.active_sessions[request.session_id]
             if request.session_id in self.sequence_numbers:
@@ -959,7 +1097,15 @@ class HASPSentinelParser:
         )
 
     def _handle_feature_login(self, request: HASPRequest) -> HASPResponse:
-        """Handle feature-specific login with full validation."""
+        """Handle feature-specific login with full validation.
+
+        Args:
+            request: Feature login request
+
+        Returns:
+            HASPResponse: Feature login response with details
+
+        """
         if request.session_id not in self.active_sessions:
             return self._create_error_response(request, HASPStatusCode.NOT_LOGGED_IN)
 
@@ -1003,7 +1149,15 @@ class HASPSentinelParser:
         )
 
     def _handle_encrypt(self, request: HASPRequest) -> HASPResponse:
-        """Handle encryption request with multiple cipher support."""
+        """Handle encryption request with multiple cipher support.
+
+        Args:
+            request: Encryption request with data and cipher type
+
+        Returns:
+            HASPResponse: Encrypted data response
+
+        """
         if request.session_id not in self.active_sessions:
             return self._create_error_response(request, HASPStatusCode.NOT_LOGGED_IN)
 
@@ -1030,7 +1184,15 @@ class HASPSentinelParser:
         )
 
     def _handle_decrypt(self, request: HASPRequest) -> HASPResponse:
-        """Handle decryption request with multiple cipher support."""
+        """Handle decryption request with multiple cipher support.
+
+        Args:
+            request: Decryption request with ciphertext and cipher type
+
+        Returns:
+            HASPResponse: Decrypted data response
+
+        """
         if request.session_id not in self.active_sessions:
             return self._create_error_response(request, HASPStatusCode.NOT_LOGGED_IN)
 
@@ -1057,7 +1219,15 @@ class HASPSentinelParser:
         )
 
     def _handle_legacy_encrypt(self, request: HASPRequest) -> HASPResponse:
-        """Handle HASP4 legacy encryption."""
+        """Handle HASP4 legacy encryption.
+
+        Args:
+            request: Legacy encryption request
+
+        Returns:
+            HASPResponse: Encrypted data response
+
+        """
         if request.session_id not in self.active_sessions:
             return self._create_error_response(request, HASPStatusCode.NOT_LOGGED_IN)
 
@@ -1075,7 +1245,15 @@ class HASPSentinelParser:
         )
 
     def _handle_legacy_decrypt(self, request: HASPRequest) -> HASPResponse:
-        """Handle HASP4 legacy decryption."""
+        """Handle HASP4 legacy decryption.
+
+        Args:
+            request: Legacy decryption request
+
+        Returns:
+            HASPResponse: Decrypted data response
+
+        """
         if request.session_id not in self.active_sessions:
             return self._create_error_response(request, HASPStatusCode.NOT_LOGGED_IN)
 
@@ -1093,7 +1271,15 @@ class HASPSentinelParser:
         )
 
     def _handle_get_size(self, request: HASPRequest) -> HASPResponse:
-        """Handle get memory size request."""
+        """Handle get memory size request.
+
+        Args:
+            request: Get size request
+
+        Returns:
+            HASPResponse: Memory size response
+
+        """
         if request.feature_id in self.features:
             memory_size = self.features[request.feature_id].memory_size
         else:
@@ -1110,7 +1296,15 @@ class HASPSentinelParser:
         )
 
     def _handle_read(self, request: HASPRequest) -> HASPResponse:
-        """Handle memory read request from HASP dongle memory."""
+        """Handle memory read request from HASP dongle memory.
+
+        Args:
+            request: Memory read request with address and length
+
+        Returns:
+            HASPResponse: Memory read response with data
+
+        """
         if request.session_id not in self.active_sessions:
             return self._create_error_response(request, HASPStatusCode.NOT_LOGGED_IN)
 
@@ -1143,7 +1337,15 @@ class HASPSentinelParser:
         )
 
     def _handle_write(self, request: HASPRequest) -> HASPResponse:
-        """Handle memory write request to HASP dongle memory."""
+        """Handle memory write request to HASP dongle memory.
+
+        Args:
+            request: Memory write request with address and data
+
+        Returns:
+            HASPResponse: Write confirmation response
+
+        """
         if request.session_id not in self.active_sessions:
             return self._create_error_response(request, HASPStatusCode.NOT_LOGGED_IN)
 

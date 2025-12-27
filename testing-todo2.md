@@ -1,147 +1,121 @@
 # Testing Coverage: Group 2
 
-## Scope
+## Recent Fixes (2025-12-27)
 
-AI/ML modules, exploitation tools, vulnerability research, UI components, CLI, dashboard, monitoring, reporting
-
-## Summary Statistics
-
-- Total source files analyzed: 156
-- Files with zero tests: 19 (14,284 LOC untested)
-- Files with inadequate coverage: 30+ modules below recommended 1.5 tests per entity
-- Mock-heavy test files: 61-72% in AI/CLI/UI categories
-
----
+### Fixed Test Files
+- [x] `tests/unit/ai/test_background_loader.py` - **FIXED** - Removed all mock backends, replaced with real LLMConfig-based test implementations
+- [x] `tests/unit/ml/test_license_protection_neural_network.py` - **FIXED** - Removed unused mock imports
 
 ## Missing Tests
 
-### AI Module (14 Untested Files - 10,162 LOC)
-
-- [ ] `intellicrack/ai/lora_adapter_manager.py` - No test coverage exists - 780 LOC, 2 classes, 16 methods - LoRA adapter management
-- [ ] `intellicrack/ai/model_batch_tester.py` - No test coverage exists - 747 LOC, 4 classes, 11 methods - Model batch testing
-- [ ] `intellicrack/ai/model_comparison.py` - No test coverage exists - 689 LOC, 3 classes, 11 methods - Model comparison utilities
-- [ ] `intellicrack/ai/model_download_manager.py` - No test coverage exists - 726 LOC, 3 classes, 16 methods - Model downloading
-- [ ] `intellicrack/ai/model_performance_monitor.py` - No test coverage exists - 856 LOC, 3 classes, 19 methods - Performance monitoring
-- [ ] `intellicrack/ai/pattern_library.py` - No test coverage exists - 699 LOC, 3 classes, 8 methods - Pattern library management
-- [ ] `intellicrack/ai/performance_monitor_simple.py` - No test coverage exists - 233 LOC, 2 classes, 11 methods - Simple performance monitoring
-- [ ] `intellicrack/ai/performance_optimization_layer.py` - No test coverage exists - 1386 LOC, 10 classes, 45 methods - GPU optimization, memory profiling
-- [ ] `intellicrack/ai/qemu_test_manager_enhanced.py` - No test coverage exists - 393 LOC, 1 class, 6 methods - QEMU test management
-- [ ] `intellicrack/ai/quantization_manager.py` - No test coverage exists - 1030 LOC, 1 class, 20 methods - Model quantization
-- [ ] `intellicrack/ai/script_editor.py` - No test coverage exists - 1225 LOC, 8 classes, 46 methods - Script editing UI
-- [ ] `intellicrack/ai/semantic_code_analyzer.py` - No test coverage exists - 1311 LOC, 9 classes, 42 methods - AST analysis, code transformation
-- [ ] `intellicrack/ai/vulnerability_research_integration.py` - No test coverage exists - 946 LOC, 1 class, 26 methods - Vulnerability research AI
-- [ ] `intellicrack/ai/vulnerability_research_integration_helper.py` - No test coverage exists - 141 LOC, 2 functions - Helper utilities
-
-### CLI Module (2 Untested Files - 2,138 LOC)
-
-- [ ] `intellicrack/cli/terminal_dashboard.py` - No test coverage exists - 825 LOC, 4 classes, 26 methods - Terminal dashboard UI
-- [ ] `intellicrack/cli/tutorial_system.py` - No test coverage exists - 1313 LOC, 3 classes, 30 methods - Tutorial and onboarding system
-
-### Dashboard Module (1 Untested File - 780 LOC)
-
-- [ ] `intellicrack/dashboard/dashboard_widgets.py` - No test coverage exists - 780 LOC, 12 classes, 20 methods - Dashboard widget components
-
-### Utils/UI Module (1 Untested File - 173 LOC)
-
-- [ ] `intellicrack/utils/ui/ui_common.py` - No test coverage exists - 173 LOC, 3 functions - Common UI utilities
-
-### Other (1 Untested File - 31 LOC)
-
-- [ ] `intellicrack/core/vulnerability_research/common_enums.py` - No test coverage exists - 31 LOC - Enum definitions
-
----
+- [x] `intellicrack/ai/background_loader.py` - **COMPLETED AND FIXED** (tests/unit/ai/test_background_loader.py)
+- [ ] `intellicrack/ai/llm_config_as_code.py` - No test coverage exists
+- [ ] `intellicrack/ai/llm_fallback_chains.py` - No test coverage exists
+- [ ] `intellicrack/ai/file_reading_helper.py` - No test coverage exists
+- [ ] `intellicrack/ai/local_gguf_server.py` - No test coverage exists
+- [ ] `intellicrack/ai/coordination_layer.py` - No dedicated test coverage
+- [ ] `intellicrack/ai/gpu_integration.py` - No dedicated test coverage
+- [ ] `intellicrack/ai/integration_manager.py` - No dedicated test coverage
+- [ ] `intellicrack/ai/lazy_model_loader.py` - No dedicated test coverage
+- [ ] `intellicrack/ai/lora_adapter_manager.py` - No dedicated test coverage
+- [ ] `intellicrack/ai/model_cache_manager.py` - No dedicated test coverage
+- [ ] `intellicrack/ai/model_discovery_service.py` - No dedicated test coverage
+- [ ] `intellicrack/ai/model_download_manager.py` - No dedicated test coverage
+- [ ] `intellicrack/ai/model_format_converter.py` - No dedicated test coverage
+- [ ] `intellicrack/ai/model_performance_monitor.py` - No dedicated test coverage
+- [ ] `intellicrack/ai/model_sharding.py` - No dedicated test coverage
+- [ ] `intellicrack/ai/quantization_manager.py` - No dedicated test coverage
+- [x] `intellicrack/ml/binary_feature_extractor.py` - **COMPLETED** (tests/unit/ml/test_binary_feature_extractor.py)
+- [x] `intellicrack/ml/license_protection_neural_network.py` - **COMPLETED AND FIXED** (tests/unit/ml/test_license_protection_neural_network.py)
+- [x] `intellicrack/core/ml/incremental_learner.py` - **COMPLETED** (tests/unit/core/ml/test_incremental_learner.py - already existed)
+- [ ] `intellicrack/core/vulnerability_research/research_manager.py` - No dedicated test coverage
+- [ ] `intellicrack/core/vulnerability_research/vulnerability_analyzer.py` - No dedicated test coverage
+- [ ] `intellicrack/ui/dialogs/ci_cd_dialog.py` - No test coverage
+- [ ] `intellicrack/ui/dialogs/code_modification_dialog.py` - No test coverage
+- [ ] `intellicrack/ui/dialogs/debugger_dialog.py` - No test coverage
+- [ ] `intellicrack/ui/dialogs/export_dialog.py` - No test coverage
+- [ ] `intellicrack/ui/dialogs/frida_bypass_wizard_dialog.py` - No test coverage
+- [ ] `intellicrack/ui/dialogs/frida_manager_dialog.py` - No test coverage
+- [ ] `intellicrack/ui/dialogs/guided_workflow_wizard.py` - No test coverage
+- [ ] `intellicrack/ui/dialogs/llm_config_dialog.py` - No test coverage
+- [ ] `intellicrack/ui/dialogs/model_finetuning_dialog.py` - No test coverage
+- [ ] `intellicrack/ui/dialogs/model_loading_dialog.py` - No test coverage
+- [ ] `intellicrack/ui/dialogs/model_manager_dialog.py` - No test coverage
+- [ ] `intellicrack/ui/dialogs/nodejs_setup_dialog.py` - No test coverage
+- [ ] `intellicrack/ui/dialogs/plugin_dialog_base.py` - No test coverage
+- [ ] `intellicrack/ui/dialogs/preferences_dialog.py` - No test coverage
+- [ ] `intellicrack/ui/dialogs/qemu_test_results_dialog.py` - No test coverage
+- [ ] `intellicrack/ui/dialogs/similarity_search_dialog.py` - No test coverage
+- [ ] `intellicrack/ui/dialogs/smart_program_selector_dialog.py` - No test coverage
+- [ ] `intellicrack/ui/dialogs/trial_reset_dialog.py` - No test coverage
+- [ ] `intellicrack/ui/tabs/adobe_injector_tab.py` - No test coverage
+- [ ] `intellicrack/ui/tabs/ai_assistant_tab.py` - No test coverage
+- [ ] `intellicrack/ui/tabs/analysis_tab.py` - No test coverage
+- [ ] `intellicrack/ui/tabs/exploitation_tab.py` - No test coverage
+- [ ] `intellicrack/ui/tabs/project_workspace_tab.py` - No test coverage
+- [ ] `intellicrack/ui/tabs/terminal_tab.py` - No test coverage
+- [ ] `intellicrack/ui/tabs/workspace_tab.py` - No test coverage
+- [ ] `intellicrack/ui/widgets/ai_assistant_widget.py` - No test coverage
+- [ ] `intellicrack/ui/widgets/console_widget.py` - No test coverage
+- [ ] `intellicrack/ui/widgets/entropy_graph_widget.py` - No test coverage
+- [ ] `intellicrack/ui/widgets/entropy_visualizer.py` - No test coverage
+- [ ] `intellicrack/ui/widgets/hex_viewer_widget.py` - No test coverage
+- [ ] `intellicrack/ui/widgets/icp_analysis_widget.py` - No test coverage
+- [ ] `intellicrack/ui/widgets/intellicrack_advanced_protection_widget.py` - No test coverage
+- [ ] `intellicrack/ui/widgets/intellicrack_protection_widget.py` - No test coverage
+- [ ] `intellicrack/ui/widgets/string_extraction_widget.py` - No test coverage
+- [ ] `intellicrack/cli/advanced_export.py` - No test coverage
+- [ ] `intellicrack/cli/ai_chat_interface.py` - No test coverage
+- [ ] `intellicrack/cli/hex_viewer_cli.py` - No test coverage
+- [ ] `intellicrack/cli/interactive_mode.py` - No test coverage
+- [ ] `intellicrack/cli/pipeline.py` - No test coverage
+- [ ] `intellicrack/cli/terminal_dashboard.py` - No test coverage
+- [ ] `intellicrack/dashboard/dashboard_widgets.py` - No test coverage
+- [ ] `intellicrack/dashboard/websocket_stream.py` - No test coverage
+- [ ] `intellicrack/core/monitoring/api_monitor.py` - No test coverage
+- [ ] `intellicrack/core/monitoring/file_monitor.py` - No test coverage
+- [ ] `intellicrack/core/monitoring/memory_monitor.py` - No test coverage
+- [ ] `intellicrack/core/reporting/report_generator.py` - No dedicated test coverage
 
 ## Inadequate Tests
 
-### AI Modules - Severely Inadequate Coverage (Below 0.6 tests per entity)
+- [ ] `intellicrack/ai/llm_backends.py::LLMBackends` - Tests exist but mock LLM API calls, don't validate actual model inference
+- [ ] `intellicrack/ai/llm_config_manager.py::LLMConfigManager` - Tests validate config parsing but not real provider connections
+- [ ] `intellicrack/ai/model_manager_module.py::ModelManager` - Tests mock model loading, don't test actual GGUF/ONNX loading
+- [ ] `intellicrack/ai/multi_agent_system.py::MultiAgentSystem` - Tests validate message passing but not real agent coordination
+- [ ] `intellicrack/ai/pattern_library.py::PatternLibrary` - Tests check pattern storage but not actual pattern matching on binaries
+- [ ] `intellicrack/ai/script_generation_agent.py::ScriptGenerationAgent` - Tests validate script structure but not actual script execution
+- [ ] `intellicrack/ai/enhanced_training_interface.py::TrainingInterface` - Tests don't validate actual model fine-tuning
+- [ ] `intellicrack/ai/interactive_assistant.py::InteractiveAssistant` - Tests mock conversation but don't test real LLM responses
+- [ ] `intellicrack/core/exploitation/automated_unpacker.py::AutomatedUnpacker` - Tests may use synthetic packed samples, not real protectors
+- [ ] `intellicrack/core/exploitation/license_bypass_code_generator.py::LicenseBypassGenerator` - Tests validate code structure but not actual bypass effectiveness
+- [ ] `intellicrack/ui/main_app.py::MainApp` - Tests don't validate actual UI rendering or event handling
+- [ ] `intellicrack/ui/ui_manager.py::UIManager` - Tests validate initialization but not real widget interactions
+- [ ] `intellicrack/cli/cli.py::CLI` - Tests validate argument parsing but not actual command execution
+- [ ] `intellicrack/cli/main.py::main` - Tests validate entry point but not real workflow execution
 
-- [ ] `intellicrack/ai/multi_agent_system.py::MultiAgentSystem` - 111 entities (17 classes, 93 methods) vs 25 tests (0.23 ratio) - CRITICALLY INADEQUATE
-- [ ] `intellicrack/ai/intelligent_code_modifier.py::IntelligentCodeModifier` - 32 entities (8 classes, 24 methods) vs 18 tests (0.56 ratio) - Missing code transformation validation
-- [ ] `intellicrack/ai/interactive_assistant.py::InteractiveAssistant` - 47 entities (4 classes, 42 methods) vs 18 tests (0.38 ratio) - Missing multi-turn conversation tests
+## Edge Case Gaps
 
-### AI Modules - Below Recommended 1.5 Tests Per Entity
-
-- [ ] `intellicrack/ai/llm_backends.py::LLMBackends` - 128 entities vs 146 tests (1.14 ratio) - Missing method variations, parameter combinations
-- [ ] `intellicrack/ai/script_generation_agent.py::ScriptGenerationAgent` - 134 entities vs 153 tests (1.14 ratio) - Missing edge cases for model types
-- [ ] `intellicrack/ai/headless_training_interface.py` - 38 entities vs 46 tests (1.21 ratio) - Limited error handling validation
-
-### Exploitation Module - Weak Coverage
-
-- [ ] `intellicrack/core/exploitation/keygen_generator.py::KeygenGenerator` - 63 entities vs 53 tests (0.84 ratio) - Missing RSA, ECC, AES key algorithm tests
-- [ ] `intellicrack/core/exploitation/crypto_key_extractor.py::CryptoKeyExtractor` - 138 entities vs 95 tests (0.69 ratio) - Missing crypto implementation coverage
-- [ ] `intellicrack/core/exploitation/automated_unpacker.py::AutomatedUnpacker` - 124 entities vs 92 tests (0.74 ratio) - Missing corrupted/protected binary edge cases
-
-### ML Module Gaps
-
-- [ ] `intellicrack/ml/pattern_evolution_tracker.py::PatternEvolutionTracker` - Tests don't validate concurrent updates and thread safety
-- [ ] `intellicrack/core/ml/protection_classifier.py::ProtectionClassifier` - Missing model prediction accuracy tests on diverse binaries
-
-### Mock-Heavy Tests (61-72% mock usage)
-
-- [ ] CLI tests: 72% use mocks (13/18 test files) - Most mock user input, file I/O, subprocess without validating actual CLI behavior
-- [ ] UI tests: 68% use mocks (23/34 test files) - Heavy Qt mocking, insufficient real widget interaction
-- [ ] AI tests: 61% use mocks (30/49 test files) - Model loading/inference often mocked
-
-### Specific Test Files Needing Real Validation
-
-- [ ] `tests/ui/test_main_app.py` - Uses patches for ModelManager, DashboardManager - doesn't validate actual UI initialization
-- [ ] `tests/cli/test_config_manager_production.py` - Heavily mocked - doesn't validate actual file I/O and config persistence
-- [ ] `tests/ui/dialogs/test_llm_config_dialog_production.py` - Mocked dialog creation - doesn't validate actual LLM configuration workflows
-
----
-
-## Inadequate Tests - Error/Edge Case Coverage
-
-### CLI Modules - Insufficient Error Coverage
-
-- [ ] `intellicrack/cli/cli.py` - 9% error test coverage (9/67 tests) vs recommended 20% - Missing invalid argument handling
-- [ ] `intellicrack/cli/pipeline.py` - Missing tests for invalid command sequences, malformed inputs
-- [ ] `intellicrack/cli/interactive_mode.py` - Inadequate user input validation error handling
-
-### Missing Boundary Condition Tests
-
-- [ ] AI model loading - No tests for extremely large models, corrupted model files, unsupported architectures
-- [ ] Exploitation - No tests for edge case license key formats, unusual binary structures
-- [ ] UI rendering - No tests for extreme window sizes, unusual screen DPI settings
-
-### Missing Concurrency/Thread Safety Tests
-
-- [ ] `intellicrack/core/monitoring/base_monitor.py::BaseMonitor` - Inadequate parallel monitoring validation
-- [ ] `intellicrack/ai/multi_agent_system.py::MultiAgentSystem` - Race condition scenarios not tested
-- [ ] `intellicrack/dashboard/live_data_pipeline.py` - Concurrent data updates not validated
-
----
+- [ ] `intellicrack/ai/llm_backends.py` - No tests for API rate limits, timeout handling, or fallback chains
+- [ ] `intellicrack/ai/model_manager_module.py` - No tests for corrupted model files or out-of-memory during loading
+- [ ] `intellicrack/ai/multi_agent_system.py` - No tests for agent deadlocks or infinite loops
+- [ ] `intellicrack/core/exploitation/automated_unpacker.py` - No tests for nested packers or anti-unpacking tricks
+- [ ] `intellicrack/core/exploitation/license_bypass_code_generator.py` - No tests for code injection failures or AV detection
+- [ ] `intellicrack/ui/main_app.py` - No tests for window resize, multi-monitor, or DPI scaling
+- [ ] `intellicrack/cli/cli.py` - No tests for malformed input, shell injection, or encoding issues
+- [ ] `intellicrack/dashboard/websocket_stream.py` - No tests for connection drops, reconnection, or message ordering
 
 ## Recommendations
 
-### Priority 1 - Critical Large Modules (14,284 LOC total)
-
-- [ ] Create comprehensive test for `semantic_code_analyzer.py` - Validate AST analysis, code transformation, edge cases for various code patterns
-- [ ] Create comprehensive test for `performance_optimization_layer.py` - Validate GPU optimization decisions, memory profiling, actual performance improvements
-- [ ] Create comprehensive test for `script_editor.py` - Validate script parsing, syntax validation, code generation for complex Frida scripts
-- [ ] Create comprehensive test for `tutorial_system.py` - Validate tutorial state management, workflow completion, user progression tracking
-- [ ] Create comprehensive test for `quantization_manager.py` - Validate model quantization accuracy, performance gains, format compatibility
-
-### Priority 2 - High-Complexity Exploitation (405 weak tests for 325 entities)
-
-- [ ] Enhance `keygen_generator.py` tests - Add tests for RSA, ECC, AES key generation; validate key length/format compliance
-- [ ] Enhance `crypto_key_extractor.py` tests - Add tests for key extraction from different crypto contexts (memory, registry, files)
-- [ ] Enhance `automated_unpacker.py` tests - Add tests for UPX, ASPack, Themida unpacking; validate decompression integrity
-
-### Priority 3 - AI Module Adequacy (improve 0.23-0.56 ratio modules to 1.5+)
-
-- [ ] Create 86+ tests for `multi_agent_system.py` to reach 1.5 ratio - Focus on agent communication, task coordination, error propagation
-- [ ] Create 16+ tests for `intelligent_code_modifier.py` - Validate code modification without breaking syntax/semantics
-- [ ] Create 53+ tests for `interactive_assistant.py` - Validate multi-turn conversation, context management, tool invocation
-
-### Priority 4 - Dashboard and UI Widgets
-
-- [ ] Create 30+ tests for `dashboard_widgets.py` - Validate widget rendering, data updates, interactive features
-- [ ] Create 25+ tests for `terminal_dashboard.py` - Validate terminal emulation, command execution, output rendering
-- [ ] Convert `test_main_app.py` UI tests to remove mocks - Validate actual Qt widget initialization and interaction
-
-### Priority 5 - Edge Case and Error Handling
-
-- [ ] Add 15+ error scenario tests to CLI modules - Cover invalid arguments, missing files, permission errors
-- [ ] Add boundary tests - Extreme file sizes, deeply nested structures, unusual character encodings
-- [ ] Add concurrency tests - Simultaneous analysis, parallel processing, thread-safe data structures
+- [ ] Create comprehensive AI module tests with real model inference (use small test models)
+- [ ] Create ML module tests with real feature extraction on actual binaries
+- [ ] Create exploitation module integration tests that validate actual license bypass
+- [ ] Create UI component tests with headless PyQt testing
+- [ ] Create CLI integration tests that execute real analysis pipelines
+- [ ] Create dashboard tests with real WebSocket connections
+- [ ] Create monitoring module tests with real process/file/memory monitoring
+- [ ] Add tests for LLM provider failover and fallback chains
+- [ ] Add tests for model loading with various quantization levels
+- [ ] Add tests for multi-agent coordination under load
+- [ ] Add tests for unpacker effectiveness against real protected binaries
+- [ ] Add tests for license bypass code execution in sandboxed environment

@@ -1,0 +1,4667 @@
+[
+    {
+        "path": "intellicrack/core/config_manager.py",
+        "line": 66,
+        "func_name": "__new__",
+        "type_comments": [
+            "() -> intellicrack.core.config_manager.IntellicrackConfig"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/config_manager.py",
+        "line": 78,
+        "func_name": "IntellicrackConfig.__init__",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/config_manager.py",
+        "line": 115,
+        "func_name": "IntellicrackConfig._get_intellicrack_root",
+        "type_comments": [
+            "() -> pathlib.Path"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/config_manager.py",
+        "line": 134,
+        "func_name": "IntellicrackConfig._get_user_config_dir",
+        "type_comments": [
+            "() -> pathlib.Path"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/config_manager.py",
+        "line": 145,
+        "func_name": "IntellicrackConfig._ensure_directories_exist",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/config_manager.py",
+        "line": 159,
+        "func_name": "IntellicrackConfig._load_layered_config",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/config_manager.py",
+        "line": 226,
+        "func_name": "IntellicrackConfig._load_defaults_from_file",
+        "type_comments": [
+            "(pathlib.Path) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/config_manager.py",
+        "line": 245,
+        "func_name": "IntellicrackConfig._merge_user_config",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/config_manager.py",
+        "line": 261,
+        "func_name": "IntellicrackConfig._merge_runtime_state",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/config_manager.py",
+        "line": 277,
+        "func_name": "IntellicrackConfig._deep_merge",
+        "type_comments": [
+            "(Dict[str, Dict[str, Union[bool, int, str]]], Dict[str, Union[bool, int, str]]) -> None",
+            "(Dict[str, Union[List, bool]], Dict[str, Union[List, bool]]) -> None",
+            "(Dict[str, Union[bool, str]], Dict[str, Union[bool, str]]) -> None"
+        ],
+        "samples": 5
+    },
+    {
+        "path": "intellicrack/core/config_manager.py",
+        "line": 360,
+        "func_name": "IntellicrackConfig.get",
+        "type_comments": [
+            "(str, None) -> None"
+        ],
+        "samples": 14
+    },
+    {
+        "path": "intellicrack/core/config_manager.py",
+        "line": 440,
+        "func_name": "IntellicrackConfig._save_config",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack/core/config_manager.py",
+        "line": 544,
+        "func_name": "IntellicrackConfig._upgrade_config_if_needed",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 3
+    },
+    {
+        "path": "intellicrack/core/config_manager.py",
+        "line": 736,
+        "func_name": "get_config",
+        "type_comments": [
+            "() -> intellicrack.core.config_manager.IntellicrackConfig"
+        ],
+        "samples": 14
+    },
+    {
+        "path": "intellicrack/core/exceptions.py",
+        "line": 29,
+        "func_name": "ConfigurationError.__init__",
+        "type_comments": [
+            "(str, str, str) -> None"
+        ],
+        "samples": 14
+    },
+    {
+        "path": "intellicrack/core/network/base_network_analyzer.py",
+        "line": 31,
+        "func_name": "BaseNetworkAnalyzer.__init__",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 20
+    },
+    {
+        "path": "intellicrack/core/network/base_network_analyzer.py",
+        "line": 35,
+        "func_name": "BaseNetworkAnalyzer.create_packet_handler",
+        "type_comments": [
+            "(module, function, function) -> function"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/base_network_analyzer.py",
+        "line": 54,
+        "func_name": "packet_handler",
+        "type_comments": [
+            "(scapy.layers.l2.Ether) -> None"
+        ],
+        "samples": 23
+    },
+    {
+        "path": "intellicrack/core/network/dynamic_response_generator.py",
+        "line": 68,
+        "func_name": "FlexLMProtocolHandler.__init__",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/dynamic_response_generator.py",
+        "line": 153,
+        "func_name": "HASPProtocolHandler.__init__",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/dynamic_response_generator.py",
+        "line": 220,
+        "func_name": "AdobeProtocolHandler.__init__",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/dynamic_response_generator.py",
+        "line": 312,
+        "func_name": "MicrosoftKMSHandler.__init__",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/dynamic_response_generator.py",
+        "line": 365,
+        "func_name": "AutodeskProtocolHandler.__init__",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/generic_protocol_handler.py",
+        "line": 70,
+        "func_name": "GenericProtocolHandler._run_tcp_proxy",
+        "type_comments": [
+            "(int) -> None"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack/core/network/generic_protocol_handler.py",
+        "line": 115,
+        "func_name": "GenericProtocolHandler._run_udp_proxy",
+        "type_comments": [
+            "(int) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/generic_protocol_handler.py",
+        "line": 253,
+        "func_name": "GenericProtocolHandler.generate_response",
+        "type_comments": [
+            "(bytes) -> None"
+        ],
+        "samples": 191
+    },
+    {
+        "path": "intellicrack/core/network/generic_protocol_handler.py",
+        "line": 294,
+        "func_name": "GenericProtocolHandler.clear_data",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 5
+    },
+    {
+        "path": "intellicrack/core/network/license_protocol_handler.py",
+        "line": 61,
+        "func_name": "LicenseProtocolHandler.__init__",
+        "type_comments": [
+            "(Dict[str, Union[List[str], int, str]]) -> None",
+            "(None) -> None",
+            "(Dict[str, Union[int, str]]) -> None",
+            "(Dict[str, str]) -> None",
+            "(Dict[str, List[str]]) -> None",
+            "(Dict[str, int]) -> None"
+        ],
+        "samples": 64
+    },
+    {
+        "path": "intellicrack/core/network/license_protocol_handler.py",
+        "line": 84,
+        "func_name": "LicenseProtocolHandler.clear_data",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 6
+    },
+    {
+        "path": "intellicrack/core/network/license_protocol_handler.py",
+        "line": 194,
+        "func_name": "LicenseProtocolHandler.get_status",
+        "type_comments": [
+            "() -> Dict[str, Union[bool, int, str]]"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/license_protocol_handler.py",
+        "line": 311,
+        "func_name": "LicenseProtocolHandler.log_request",
+        "type_comments": [
+            "(bytes, str) -> None"
+        ],
+        "samples": 7
+    },
+    {
+        "path": "intellicrack/core/network/license_protocol_handler.py",
+        "line": 326,
+        "func_name": "LicenseProtocolHandler.log_response",
+        "type_comments": [
+            "(bytes, str) -> None"
+        ],
+        "samples": 7
+    },
+    {
+        "path": "intellicrack/core/network/license_protocol_handler.py",
+        "line": 349,
+        "func_name": "FlexLMProtocolHandler.__init__",
+        "type_comments": [
+            "(None) -> None",
+            "(Dict[str, Union[int, str]]) -> None",
+            "(Dict[str, str]) -> None"
+        ],
+        "samples": 28
+    },
+    {
+        "path": "intellicrack/core/network/license_protocol_handler.py",
+        "line": 454,
+        "func_name": "FlexLMProtocolHandler.generate_response",
+        "type_comments": [
+            "(bytes) -> bytes",
+            "(bytes) -> None"
+        ],
+        "samples": 88
+    },
+    {
+        "path": "intellicrack/core/network/license_protocol_handler.py",
+        "line": 530,
+        "func_name": "HASPProtocolHandler.__init__",
+        "type_comments": [
+            "(Dict[str, int]) -> None",
+            "(Dict[str, List[str]]) -> None",
+            "(None) -> None",
+            "(Dict[str, Union[List[str], int, str]]) -> None",
+            "(Dict[str, str]) -> None"
+        ],
+        "samples": 30
+    },
+    {
+        "path": "intellicrack/core/network/license_protocol_handler.py",
+        "line": 644,
+        "func_name": "HASPProtocolHandler.generate_response",
+        "type_comments": [
+            "(bytes) -> bytes",
+            "(bytes) -> None"
+        ],
+        "samples": 73
+    },
+    {
+        "path": "intellicrack/core/network/protocol_fingerprinter.py",
+        "line": 54,
+        "func_name": "ProtocolFingerprinter.__init__",
+        "type_comments": [
+            "(Dict[str, Union[bool, float, int]]) -> None",
+            "(None) -> None",
+            "(Dict[str, bool]) -> None"
+        ],
+        "samples": 3
+    },
+    {
+        "path": "intellicrack/core/network/protocol_fingerprinter.py",
+        "line": 99,
+        "func_name": "ProtocolFingerprinter._load_signatures",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 3
+    },
+    {
+        "path": "intellicrack/core/network/protocol_fingerprinter.py",
+        "line": 241,
+        "func_name": "ProtocolFingerprinter.analyze_traffic",
+        "type_comments": [
+            "(bytes, int) -> None"
+        ],
+        "samples": 12
+    },
+    {
+        "path": "intellicrack/core/network/protocol_fingerprinter.py",
+        "line": 261,
+        "func_name": "ProtocolFingerprinter._store_traffic_sample",
+        "type_comments": [
+            "(bytes, int) -> None"
+        ],
+        "samples": 12
+    },
+    {
+        "path": "intellicrack/core/network/protocol_fingerprinter.py",
+        "line": 277,
+        "func_name": "ProtocolFingerprinter._analyze_protocol_signatures",
+        "type_comments": [
+            "(bytes, int) -> None"
+        ],
+        "samples": 12
+    },
+    {
+        "path": "intellicrack/core/network/protocol_fingerprinter.py",
+        "line": 303,
+        "func_name": "ProtocolFingerprinter._calculate_protocol_confidence",
+        "type_comments": [
+            "(bytes, int, Dict[str, Union[List[Dict[str, Union[int, str]]], List[int], List[str], str]]) -> None"
+        ],
+        "samples": 12
+    },
+    {
+        "path": "intellicrack/core/network/protocol_fingerprinter.py",
+        "line": 314,
+        "func_name": "ProtocolFingerprinter._check_port_match",
+        "type_comments": [
+            "(int, Dict[str, Union[List[Dict[str, Union[int, str]]], List[int], List[str], str]]) -> float"
+        ],
+        "samples": 12
+    },
+    {
+        "path": "intellicrack/core/network/protocol_fingerprinter.py",
+        "line": 318,
+        "func_name": "ProtocolFingerprinter._check_statistical_features",
+        "type_comments": [
+            "(bytes, Dict[str, Union[List[Dict[str, Union[int, str]]], List[int], List[str], str]]) -> None"
+        ],
+        "samples": 12
+    },
+    {
+        "path": "intellicrack/core/network/protocol_fingerprinter.py",
+        "line": 355,
+        "func_name": "ProtocolFingerprinter._check_binary_patterns",
+        "type_comments": [
+            "(bytes, Dict[str, Union[List[Dict[str, Union[int, str]]], List[int], List[str], str]]) -> None"
+        ],
+        "samples": 12
+    },
+    {
+        "path": "intellicrack/core/network/protocol_fingerprinter.py",
+        "line": 368,
+        "func_name": "ProtocolFingerprinter._match_binary_pattern",
+        "type_comments": [
+            "(bytes, Dict[str, Union[int, str]]) -> None"
+        ],
+        "samples": 12
+    },
+    {
+        "path": "intellicrack/core/network/protocol_fingerprinter.py",
+        "line": 635,
+        "func_name": "ProtocolFingerprinter.fingerprint_packet",
+        "type_comments": [
+            "(bytes, int) -> None"
+        ],
+        "samples": 6
+    },
+    {
+        "path": "intellicrack/core/network/protocol_fingerprinter.py",
+        "line": 710,
+        "func_name": "ProtocolFingerprinter.parse_packet",
+        "type_comments": [
+            "(str, bytes) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/protocol_fingerprinter.py",
+        "line": 760,
+        "func_name": "ProtocolFingerprinter.generate_response",
+        "type_comments": [
+            "(str, bytes, str) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/protocol_fingerprinter.py",
+        "line": 938,
+        "func_name": "ProtocolFingerprinter.analyze_pcap",
+        "type_comments": [
+            "(str) -> Dict[str, Union[Dict[str, int], List, str]]"
+        ],
+        "samples": 3
+    },
+    {
+        "path": "intellicrack/core/network/protocol_fingerprinter.py",
+        "line": 1106,
+        "func_name": "ProtocolFingerprinter.analyze_binary",
+        "type_comments": [
+            "(str) -> Dict[str, Union[List, str]]",
+            "(str) -> Dict[str, Union[List[Dict[str, str]], List[str], str]]"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack/core/network/protocol_tool.py",
+        "line": 84,
+        "func_name": "__new__",
+        "type_comments": [
+            "() -> intellicrack.core.network.protocol_tool.ProtocolToolWindow"
+        ],
+        "samples": 7
+    },
+    {
+        "path": "intellicrack/core/network/protocol_tool.py",
+        "line": 90,
+        "func_name": "ProtocolToolWindow.__init__",
+        "type_comments": [
+            "(None) -> None"
+        ],
+        "samples": 7
+    },
+    {
+        "path": "intellicrack/core/network/protocol_tool.py",
+        "line": 439,
+        "func_name": "update_protocol_tool_description",
+        "type_comments": [
+            "(str, str) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/protocols/flexlm_parser.py",
+        "line": 184,
+        "func_name": "FlexLMProtocolParser.parse_request",
+        "type_comments": [
+            "(bytes) -> intellicrack.core.network.protocols.flexlm_parser.FlexLMRequest",
+            "(bytes) -> None"
+        ],
+        "samples": 11
+    },
+    {
+        "path": "intellicrack/core/network/protocols/flexlm_parser.py",
+        "line": 284,
+        "func_name": "FlexLMProtocolParser._parse_string_field",
+        "type_comments": [
+            "(bytes, int) -> str"
+        ],
+        "samples": 30
+    },
+    {
+        "path": "intellicrack/core/network/protocols/flexlm_parser.py",
+        "line": 295,
+        "func_name": "FlexLMProtocolParser._parse_additional_data",
+        "type_comments": [
+            "(bytes) -> Dict[str, str]"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/protocols/flexlm_parser.py",
+        "line": 328,
+        "func_name": "FlexLMProtocolParser.generate_response",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMRequest) -> intellicrack.core.network.protocols.flexlm_parser.FlexLMResponse"
+        ],
+        "samples": 47
+    },
+    {
+        "path": "intellicrack/core/network/protocols/flexlm_parser.py",
+        "line": 359,
+        "func_name": "FlexLMProtocolParser._handle_checkout",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMRequest) -> intellicrack.core.network.protocols.flexlm_parser.FlexLMResponse"
+        ],
+        "samples": 29
+    },
+    {
+        "path": "intellicrack/core/network/protocols/flexlm_parser.py",
+        "line": 408,
+        "func_name": "FlexLMProtocolParser._handle_checkin",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMRequest) -> intellicrack.core.network.protocols.flexlm_parser.FlexLMResponse"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack/core/network/protocols/flexlm_parser.py",
+        "line": 426,
+        "func_name": "FlexLMProtocolParser._handle_status",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMRequest) -> intellicrack.core.network.protocols.flexlm_parser.FlexLMResponse"
+        ],
+        "samples": 3
+    },
+    {
+        "path": "intellicrack/core/network/protocols/flexlm_parser.py",
+        "line": 444,
+        "func_name": "FlexLMProtocolParser._handle_heartbeat",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMRequest) -> intellicrack.core.network.protocols.flexlm_parser.FlexLMResponse"
+        ],
+        "samples": 4
+    },
+    {
+        "path": "intellicrack/core/network/protocols/flexlm_parser.py",
+        "line": 466,
+        "func_name": "FlexLMProtocolParser._handle_feature_info",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMRequest) -> intellicrack.core.network.protocols.flexlm_parser.FlexLMResponse"
+        ],
+        "samples": 6
+    },
+    {
+        "path": "intellicrack/core/network/protocols/flexlm_parser.py",
+        "line": 493,
+        "func_name": "FlexLMProtocolParser._handle_server_info",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMRequest) -> intellicrack.core.network.protocols.flexlm_parser.FlexLMResponse"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/protocols/flexlm_parser.py",
+        "line": 512,
+        "func_name": "FlexLMProtocolParser._handle_hostid_request",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMRequest) -> intellicrack.core.network.protocols.flexlm_parser.FlexLMResponse"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack/core/network/protocols/flexlm_parser.py",
+        "line": 528,
+        "func_name": "FlexLMProtocolParser._handle_encryption_seed",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMRequest) -> intellicrack.core.network.protocols.flexlm_parser.FlexLMResponse"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/protocols/flexlm_parser.py",
+        "line": 555,
+        "func_name": "FlexLMProtocolParser._generate_checkout_key",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMRequest, Dict[str, Union[int, str]]) -> str"
+        ],
+        "samples": 28
+    },
+    {
+        "path": "intellicrack/core/network/protocols/flexlm_parser.py",
+        "line": 583,
+        "func_name": "FlexLMProtocolParser.serialize_response",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMResponse) -> bytes"
+        ],
+        "samples": 3
+    },
+    {
+        "path": "intellicrack/core/network/protocols/flexlm_parser.py",
+        "line": 642,
+        "func_name": "FlexLMProtocolParser._serialize_additional_data",
+        "type_comments": [
+            "(Dict[str, str]) -> bytes",
+            "(Dict[str, Union[int, str]]) -> bytes"
+        ],
+        "samples": 3
+    },
+    {
+        "path": "intellicrack/core/network/protocols/hasp_parser.py",
+        "line": 277,
+        "func_name": "HASPCrypto.__init__",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 8
+    },
+    {
+        "path": "intellicrack/core/network/protocols/hasp_parser.py",
+        "line": 284,
+        "func_name": "HASPCrypto._initialize_default_keys",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 8
+    },
+    {
+        "path": "intellicrack/core/network/protocols/hasp_parser.py",
+        "line": 297,
+        "func_name": "HASPCrypto.generate_session_key",
+        "type_comments": [
+            "(int, int) -> bytes"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/protocols/hasp_parser.py",
+        "line": 304,
+        "func_name": "HASPCrypto.aes_encrypt",
+        "type_comments": [
+            "(bytes, int) -> bytes"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/protocols/hasp_parser.py",
+        "line": 326,
+        "func_name": "HASPCrypto.aes_decrypt",
+        "type_comments": [
+            "(bytes, int) -> bytes"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/protocols/hasp_parser.py",
+        "line": 354,
+        "func_name": "HASPCrypto.rsa_sign",
+        "type_comments": [
+            "(bytes, int) -> bytes"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/protocols/hasp_parser.py",
+        "line": 370,
+        "func_name": "HASPCrypto.rsa_verify",
+        "type_comments": [
+            "(bytes, bytes, int) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/protocols/hasp_parser.py",
+        "line": 391,
+        "func_name": "HASPCrypto.hasp4_encrypt",
+        "type_comments": [
+            "(bytes, int) -> bytes"
+        ],
+        "samples": 4
+    },
+    {
+        "path": "intellicrack/core/network/protocols/hasp_parser.py",
+        "line": 401,
+        "func_name": "HASPCrypto.hasp4_decrypt",
+        "type_comments": [
+            "(bytes, int) -> bytes"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack/core/network/protocols/hasp_parser.py",
+        "line": 405,
+        "func_name": "HASPCrypto._generate_hasp4_keystream",
+        "type_comments": [
+            "(int, int) -> bytes"
+        ],
+        "samples": 4
+    },
+    {
+        "path": "intellicrack/core/network/protocols/hasp_parser.py",
+        "line": 419,
+        "func_name": "HASPCrypto.envelope_encrypt",
+        "type_comments": [
+            "(bytes, int) -> bytes"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/protocols/hasp_parser.py",
+        "line": 456,
+        "func_name": "HASPCrypto.envelope_decrypt",
+        "type_comments": [
+            "(bytes, int) -> bytes"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/protocols/hasp_parser.py",
+        "line": 526,
+        "func_name": "HASPSentinelParser.__init__",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 8
+    },
+    {
+        "path": "intellicrack/core/network/protocols/hasp_parser.py",
+        "line": 537,
+        "func_name": "HASPSentinelParser._initialize_default_features",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 8
+    },
+    {
+        "path": "intellicrack/core/network/protocols/hasp_parser.py",
+        "line": 636,
+        "func_name": "HASPSentinelParser._initialize_feature_memory",
+        "type_comments": [
+            "(int) -> None"
+        ],
+        "samples": 40
+    },
+    {
+        "path": "intellicrack/core/network/protocols/hasp_parser.py",
+        "line": 655,
+        "func_name": "HASPSentinelParser._generate_hardware_fingerprint",
+        "type_comments": [
+            "() -> Dict[str, Union[bool, int, str]]"
+        ],
+        "samples": 8
+    },
+    {
+        "path": "intellicrack/core/network/protocols/hasp_parser.py",
+        "line": 675,
+        "func_name": "HASPSentinelParser.parse_request",
+        "type_comments": [
+            "(bytes) -> intellicrack.core.network.protocols.hasp_parser.HASPRequest",
+            "(bytes) -> None"
+        ],
+        "samples": 3
+    },
+    {
+        "path": "intellicrack/core/network/protocols/hasp_parser.py",
+        "line": 843,
+        "func_name": "HASPSentinelParser.generate_response",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.hasp_parser.HASPRequest) -> intellicrack.core.network.protocols.hasp_parser.HASPResponse"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/protocols/hasp_parser.py",
+        "line": 899,
+        "func_name": "HASPSentinelParser._handle_login",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.hasp_parser.HASPRequest) -> intellicrack.core.network.protocols.hasp_parser.HASPResponse"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/protocols/hasp_parser.py",
+        "line": 1439,
+        "func_name": "HASPSentinelParser.serialize_response",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.hasp_parser.HASPResponse) -> bytes"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/protocols/hasp_parser.py",
+        "line": 1488,
+        "func_name": "HASPSentinelParser.add_feature",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.hasp_parser.HASPFeature) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/protocols/hasp_parser.py",
+        "line": 1562,
+        "func_name": "HASPPacketAnalyzer.__init__",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/protocols/hasp_parser.py",
+        "line": 1570,
+        "func_name": "HASPPacketAnalyzer.parse_pcap_file",
+        "type_comments": [
+            "(pathlib.Path) -> List[intellicrack.core.network.protocols.hasp_parser.HASPPacketCapture]"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/protocols/hasp_parser.py",
+        "line": 1604,
+        "func_name": "HASPPacketAnalyzer._parse_pcap_packet",
+        "type_comments": [
+            "(float, bytes) -> intellicrack.core.network.protocols.hasp_parser.HASPPacketCapture"
+        ],
+        "samples": 4
+    },
+    {
+        "path": "intellicrack/core/network/protocols/hasp_parser.py",
+        "line": 1663,
+        "func_name": "HASPPacketAnalyzer._ip_to_str",
+        "type_comments": [
+            "(bytes) -> str"
+        ],
+        "samples": 5
+    },
+    {
+        "path": "intellicrack/core/network/protocols/hasp_parser.py",
+        "line": 1667,
+        "func_name": "HASPPacketAnalyzer._is_hasp_packet",
+        "type_comments": [
+            "(bytes, int, int) -> None"
+        ],
+        "samples": 4
+    },
+    {
+        "path": "intellicrack/core/network/protocols/hasp_parser.py",
+        "line": 1685,
+        "func_name": "HASPPacketAnalyzer._identify_packet_type",
+        "type_comments": [
+            "(bytes) -> None"
+        ],
+        "samples": 4
+    },
+    {
+        "path": "intellicrack/core/network/protocols/hasp_parser.py",
+        "line": 1718,
+        "func_name": "HASPPacketAnalyzer.extract_license_info_from_capture",
+        "type_comments": [
+            "() -> Dict[str, Union[List, List[Dict[str, str]]]]"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/protocols/hasp_parser.py",
+        "line": 1761,
+        "func_name": "HASPPacketAnalyzer._extract_server_info",
+        "type_comments": [
+            "(bytes) -> Dict[str, str]"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/protocols/hasp_parser.py",
+        "line": 1845,
+        "func_name": "HASPUSBEmulator.__init__",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/protocols/hasp_parser.py",
+        "line": 1851,
+        "func_name": "HASPUSBEmulator._generate_usb_device_info",
+        "type_comments": [
+            "() -> Dict[str, Union[int, str]]"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/protocols/hasp_parser.py",
+        "line": 1930,
+        "func_name": "HASPUSBEmulator._handle_usb_encrypt",
+        "type_comments": [
+            "(bytes) -> bytes"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/protocols/hasp_parser.py",
+        "line": 1935,
+        "func_name": "HASPUSBEmulator._handle_usb_decrypt",
+        "type_comments": [
+            "(bytes) -> bytes"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/protocols/hasp_parser.py",
+        "line": 1955,
+        "func_name": "HASPUSBEmulator.emulate_usb_device",
+        "type_comments": [
+            "() -> Dict[str, Union[Dict[int, str], Dict[str, int]]]"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/protocols/hasp_parser.py",
+        "line": 2000,
+        "func_name": "HASPServerEmulator.__init__",
+        "type_comments": [
+            "(str, int) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/protocols/hasp_parser.py",
+        "line": 2015,
+        "func_name": "HASPServerEmulator.generate_discovery_response",
+        "type_comments": [
+            "() -> bytes"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/ssl_interceptor.py",
+        "line": 56,
+        "func_name": "SSLTLSInterceptor.__init__",
+        "type_comments": [
+            "(Dict[str, Union[List[str], bool, int, str]]) -> None",
+            "(None) -> None",
+            "(Dict[str, Union[List[str], int, str]]) -> None"
+        ],
+        "samples": 4
+    },
+    {
+        "path": "intellicrack/core/network/ssl_interceptor.py",
+        "line": 89,
+        "func_name": "SSLTLSInterceptor.generate_ca_certificate",
+        "type_comments": [
+            "() -> Tuple[bytes, bytes]"
+        ],
+        "samples": 6
+    },
+    {
+        "path": "intellicrack/core/network/ssl_interceptor.py",
+        "line": 318,
+        "func_name": "SSLTLSInterceptor.get_traffic_log",
+        "type_comments": [
+            "() -> List[Dict[str, Union[float, str]]]",
+            "() -> List[Dict[str, Union[bool, float, int, str]]]"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack/core/network/ssl_interceptor.py",
+        "line": 327,
+        "func_name": "SSLTLSInterceptor.add_target_host",
+        "type_comments": [
+            "(str) -> None"
+        ],
+        "samples": 5
+    },
+    {
+        "path": "intellicrack/core/network/ssl_interceptor.py",
+        "line": 351,
+        "func_name": "SSLTLSInterceptor.get_target_hosts",
+        "type_comments": [
+            "() -> List[str]"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/traffic_analyzer.py",
+        "line": 103,
+        "func_name": "NetworkTrafficAnalyzer.__init__",
+        "type_comments": [
+            "(Dict[str, Union[int, str]]) -> None",
+            "(None) -> None"
+        ],
+        "samples": 6
+    },
+    {
+        "path": "intellicrack/core/network/traffic_analyzer.py",
+        "line": 268,
+        "func_name": "NetworkTrafficAnalyzer._capture_with_socket",
+        "type_comments": [
+            "(None, None, None, int, float) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/traffic_analyzer.py",
+        "line": 434,
+        "func_name": "NetworkTrafficAnalyzer._process_captured_packet",
+        "type_comments": [
+            "(bytes) -> None"
+        ],
+        "samples": 146
+    },
+    {
+        "path": "intellicrack/core/network/traffic_analyzer.py",
+        "line": 470,
+        "func_name": "NetworkTrafficAnalyzer._capture_with_pyshark",
+        "type_comments": [
+            "(None, str, None, int, float) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/traffic_analyzer.py",
+        "line": 785,
+        "func_name": "NetworkTrafficAnalyzer._capture_with_scapy",
+        "type_comments": [
+            "(None) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/traffic_analyzer.py",
+        "line": 811,
+        "func_name": "process_tcp_packet",
+        "type_comments": [
+            "(scapy.layers.l2.Ether, scapy.base_classes.Packet_metaclass, scapy.base_classes.Packet_metaclass) -> None"
+        ],
+        "samples": 23
+    },
+    {
+        "path": "intellicrack/core/network/traffic_analyzer.py",
+        "line": 910,
+        "func_name": "stop_filter",
+        "type_comments": [
+            "(scapy.layers.l2.Ether) -> bool"
+        ],
+        "samples": 23
+    },
+    {
+        "path": "intellicrack/core/network/traffic_analyzer.py",
+        "line": 930,
+        "func_name": "NetworkTrafficAnalyzer.analyze_traffic",
+        "type_comments": [
+            "() -> Dict[str, Union[List[Dict[str, Union[int, str]]], List[str], int]]",
+            "() -> Dict[str, Union[List, int]]",
+            "() -> Dict[str, Union[List[Dict[str, Union[int, str]]], int]]"
+        ],
+        "samples": 21
+    },
+    {
+        "path": "intellicrack/core/network/traffic_analyzer.py",
+        "line": 993,
+        "func_name": "NetworkTrafficAnalyzer._generate_visualizations",
+        "type_comments": [
+            "(Dict[str, Union[List, int]]) -> None",
+            "(Dict[str, Union[List[Dict[str, Union[int, str]]], int]]) -> None",
+            "(Dict[str, Union[List[Dict[str, Union[int, str]]], List[str], int]]) -> None"
+        ],
+        "samples": 22
+    },
+    {
+        "path": "intellicrack/core/network/traffic_analyzer.py",
+        "line": 1077,
+        "func_name": "NetworkTrafficAnalyzer.get_results",
+        "type_comments": [
+            "() -> Dict[str, Union[Dict[str, Union[Dict[str, int], List[Dict[str, Union[int, str]]], float, int]], List[Dict[str, Union[int, str]]], List[str], int]]",
+            "() -> Dict[str, Union[Dict[str, Union[Dict[str, int], List[Dict[str, Union[int, str]]], float, int]], List, List[str], int]]"
+        ],
+        "samples": 3
+    },
+    {
+        "path": "intellicrack/core/network/traffic_analyzer.py",
+        "line": 1211,
+        "func_name": "NetworkTrafficAnalyzer._assess_threat_level",
+        "type_comments": [
+            "(List[str]) -> str",
+            "(List[str]) -> None"
+        ],
+        "samples": 3
+    },
+    {
+        "path": "intellicrack/core/network/traffic_analyzer.py",
+        "line": 1225,
+        "func_name": "NetworkTrafficAnalyzer._calculate_capture_duration",
+        "type_comments": [
+            "() -> float",
+            "() -> None"
+        ],
+        "samples": 6
+    },
+    {
+        "path": "intellicrack/core/network/traffic_analyzer.py",
+        "line": 1239,
+        "func_name": "NetworkTrafficAnalyzer._calculate_packet_rate",
+        "type_comments": [
+            "() -> float"
+        ],
+        "samples": 3
+    },
+    {
+        "path": "intellicrack/core/network/traffic_analyzer.py",
+        "line": 1249,
+        "func_name": "NetworkTrafficAnalyzer._calculate_protocol_distribution",
+        "type_comments": [
+            "() -> Dict[str, int]"
+        ],
+        "samples": 3
+    },
+    {
+        "path": "intellicrack/core/network/traffic_analyzer.py",
+        "line": 1274,
+        "func_name": "NetworkTrafficAnalyzer._calculate_port_distribution",
+        "type_comments": [
+            "() -> Dict[int, int]"
+        ],
+        "samples": 3
+    },
+    {
+        "path": "intellicrack/core/network/traffic_analyzer.py",
+        "line": 1289,
+        "func_name": "NetworkTrafficAnalyzer._calculate_license_traffic_percentage",
+        "type_comments": [
+            "() -> float",
+            "() -> None"
+        ],
+        "samples": 3
+    },
+    {
+        "path": "intellicrack/core/network/traffic_analyzer.py",
+        "line": 1303,
+        "func_name": "NetworkTrafficAnalyzer._identify_peak_traffic_time",
+        "type_comments": [
+            "() -> str",
+            "() -> None"
+        ],
+        "samples": 3
+    },
+    {
+        "path": "intellicrack/core/network/traffic_analyzer.py",
+        "line": 1326,
+        "func_name": "NetworkTrafficAnalyzer._analyze_connection_durations",
+        "type_comments": [
+            "() -> Dict[str, Union[float, int]]"
+        ],
+        "samples": 3
+    },
+    {
+        "path": "intellicrack/core/network/traffic_analyzer.py",
+        "line": 1383,
+        "func_name": "NetworkTrafficAnalyzer.generate_report",
+        "type_comments": [
+            "(str) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/core/network/traffic_interception_engine.py",
+        "line": 67,
+        "func_name": "InterceptedPacket.__post_init__",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 9
+    },
+    {
+        "path": "intellicrack/core/network/traffic_interception_engine.py",
+        "line": 92,
+        "func_name": "TrafficInterceptionEngine.__init__",
+        "type_comments": [
+            "(None) -> None"
+        ],
+        "samples": 14
+    },
+    {
+        "path": "intellicrack/plugins/custom_modules/license_server_emulator.py",
+        "line": 373,
+        "func_name": "CryptoManager.__init__",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 54
+    },
+    {
+        "path": "intellicrack/plugins/custom_modules/license_server_emulator.py",
+        "line": 516,
+        "func_name": "FlexLMEmulator.__init__",
+        "type_comments": [
+            "(intellicrack.plugins.custom_modules.license_server_emulator.CryptoManager) -> None"
+        ],
+        "samples": 54
+    },
+    {
+        "path": "intellicrack/plugins/custom_modules/license_server_emulator.py",
+        "line": 654,
+        "func_name": "FlexLMEmulator._generate_vendor_keys",
+        "type_comments": [
+            "() -> Dict[str, Union[bytes, int]]"
+        ],
+        "samples": 54
+    },
+    {
+        "path": "intellicrack/plugins/custom_modules/license_server_emulator.py",
+        "line": 939,
+        "func_name": "HASPEmulator.__init__",
+        "type_comments": [
+            "(intellicrack.plugins.custom_modules.license_server_emulator.CryptoManager) -> None"
+        ],
+        "samples": 54
+    },
+    {
+        "path": "intellicrack/plugins/custom_modules/license_server_emulator.py",
+        "line": 973,
+        "func_name": "HASPEmulator._derive_master_key",
+        "type_comments": [
+            "() -> bytes"
+        ],
+        "samples": 54
+    },
+    {
+        "path": "intellicrack/plugins/custom_modules/license_server_emulator.py",
+        "line": 987,
+        "func_name": "HASPEmulator._initialize_real_hasp_memory",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 54
+    },
+    {
+        "path": "intellicrack/plugins/custom_modules/license_server_emulator.py",
+        "line": 1335,
+        "func_name": "MicrosoftKMSEmulator.__init__",
+        "type_comments": [
+            "(intellicrack.plugins.custom_modules.license_server_emulator.CryptoManager) -> None"
+        ],
+        "samples": 54
+    },
+    {
+        "path": "intellicrack/plugins/custom_modules/license_server_emulator.py",
+        "line": 1394,
+        "func_name": "AdobeEmulator.__init__",
+        "type_comments": [
+            "(intellicrack.plugins.custom_modules.license_server_emulator.CryptoManager) -> None"
+        ],
+        "samples": 54
+    },
+    {
+        "path": "intellicrack/plugins/custom_modules/license_server_emulator.py",
+        "line": 1473,
+        "func_name": "DatabaseManager.__init__",
+        "type_comments": [
+            "(str) -> None"
+        ],
+        "samples": 54
+    },
+    {
+        "path": "intellicrack/plugins/custom_modules/license_server_emulator.py",
+        "line": 1486,
+        "func_name": "DatabaseManager._create_tables",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 54
+    },
+    {
+        "path": "intellicrack/plugins/custom_modules/license_server_emulator.py",
+        "line": 1494,
+        "func_name": "DatabaseManager._seed_default_licenses",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 54
+    },
+    {
+        "path": "intellicrack/plugins/custom_modules/license_server_emulator.py",
+        "line": 1621,
+        "func_name": "HardwareFingerprintGenerator.__init__",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 54
+    },
+    {
+        "path": "intellicrack/plugins/custom_modules/license_server_emulator.py",
+        "line": 2090,
+        "func_name": "ProtocolAnalyzer.__init__",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 108
+    },
+    {
+        "path": "intellicrack/plugins/custom_modules/license_server_emulator.py",
+        "line": 2096,
+        "func_name": "ProtocolAnalyzer._initialize_patterns",
+        "type_comments": [
+            "() -> Dict[str, Dict[str, Union[bytes, int, intellicrack.plugins.custom_modules.license_server_emulator.LicenseType, str]]]"
+        ],
+        "samples": 108
+    },
+    {
+        "path": "intellicrack/plugins/custom_modules/license_server_emulator.py",
+        "line": 2143,
+        "func_name": "ProtocolAnalyzer._initialize_signatures",
+        "type_comments": [
+            "() -> Dict[bytes, intellicrack.plugins.custom_modules.license_server_emulator.LicenseType]"
+        ],
+        "samples": 108
+    },
+    {
+        "path": "intellicrack/plugins/custom_modules/license_server_emulator.py",
+        "line": 2391,
+        "func_name": "BinaryKeyExtractor.__init__",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 54
+    },
+    {
+        "path": "intellicrack/plugins/custom_modules/license_server_emulator.py",
+        "line": 6526,
+        "func_name": "ProtocolStateMachine.__init__",
+        "type_comments": [
+            "(intellicrack.plugins.custom_modules.license_server_emulator.BinaryKeyExtractor) -> None"
+        ],
+        "samples": 54
+    },
+    {
+        "path": "intellicrack/plugins/custom_modules/license_server_emulator.py",
+        "line": 7062,
+        "func_name": "ProxyInterceptor.__init__",
+        "type_comments": [
+            "(Dict[str, Optional[Union[bool, int, str]]]) -> None"
+        ],
+        "samples": 54
+    },
+    {
+        "path": "intellicrack/plugins/custom_modules/license_server_emulator.py",
+        "line": 8699,
+        "func_name": "LicenseServerEmulator.__init__",
+        "type_comments": [
+            "(Dict[str, Union[List[str], bool, str]]) -> None",
+            "(Dict[str, bool]) -> None",
+            "(Dict[str, Union[bool, int]]) -> None",
+            "(Dict[str, Union[List[str], str]]) -> None",
+            "(Dict[str, str]) -> None",
+            "(Dict[str, List[str]]) -> None",
+            "(Dict[str, Union[bool, str]]) -> None",
+            "(Dict[str, Union[int, str]]) -> None"
+        ],
+        "samples": 54
+    },
+    {
+        "path": "intellicrack/plugins/custom_modules/license_server_emulator.py",
+        "line": 8744,
+        "func_name": "LicenseServerEmulator._setup_middleware",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 54
+    },
+    {
+        "path": "intellicrack/plugins/custom_modules/license_server_emulator.py",
+        "line": 8755,
+        "func_name": "LicenseServerEmulator._setup_routes",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 54
+    },
+    {
+        "path": "intellicrack/plugins/custom_modules/license_server_emulator.py",
+        "line": 9683,
+        "func_name": "run_network_license_emulator",
+        "type_comments": [
+            "(Dict[str, Union[List[str], bool, str]]) -> None",
+            "(Dict[str, Union[List[str], str]]) -> None"
+        ],
+        "samples": 4
+    },
+    {
+        "path": "intellicrack/utils/binary/elf_analyzer.py",
+        "line": 19,
+        "func_name": "ELFAnalyzer",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/utils/binary/network_api_analysis.py",
+        "line": 87,
+        "func_name": "get_scapy_layers",
+        "type_comments": [
+            "(module) -> Tuple[scapy.base_classes.Packet_metaclass, scapy.base_classes.Packet_metaclass]"
+        ],
+        "samples": 23
+    },
+    {
+        "path": "intellicrack/utils/core/plugin_paths.py",
+        "line": 36,
+        "func_name": "get_project_root",
+        "type_comments": [
+            "() -> pathlib.Path"
+        ],
+        "samples": 6
+    },
+    {
+        "path": "intellicrack/utils/core/plugin_paths.py",
+        "line": 176,
+        "func_name": "get_visualizations_dir",
+        "type_comments": [
+            "() -> pathlib.Path"
+        ],
+        "samples": 6
+    },
+    {
+        "path": "intellicrack/utils/logger.py",
+        "line": 260,
+        "func_name": "get_logger",
+        "type_comments": [
+            "(str) -> logging.Logger"
+        ],
+        "samples": 11
+    },
+    {
+        "path": "intellicrack/utils/protection/certificate_common.py",
+        "line": 82,
+        "func_name": "get_certificate_validity_dates",
+        "type_comments": [
+            "(int) -> Tuple[datetime.datetime, datetime.datetime]"
+        ],
+        "samples": 6
+    },
+    {
+        "path": "intellicrack/utils/protection/certificate_utils.py",
+        "line": 44,
+        "func_name": "generate_self_signed_cert",
+        "type_comments": [
+            "(str, str, str, str, str, int) -> Tuple[bytes, bytes]"
+        ],
+        "samples": 6
+    },
+    {
+        "path": "intellicrack/utils/reporting/html_templates.py",
+        "line": 22,
+        "func_name": "get_base_html_template",
+        "type_comments": [
+            "(str, str, str) -> str"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/utils/reporting/html_templates.py",
+        "line": 106,
+        "func_name": "get_traffic_html_template",
+        "type_comments": [
+            "() -> str"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/utils/reporting/html_templates.py",
+        "line": 146,
+        "func_name": "close_html",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/utils/resource_helper.py",
+        "line": 25,
+        "func_name": "get_resource_path",
+        "type_comments": [
+            "(str) -> str"
+        ],
+        "samples": 6
+    },
+    {
+        "path": "intellicrack/utils/service_utils.py",
+        "line": 29,
+        "func_name": "get_service_url",
+        "type_comments": [
+            "(str, None) -> None"
+        ],
+        "samples": 14
+    },
+    {
+        "path": "intellicrack/utils/system/windows_structures.py",
+        "line": 46,
+        "func_name": "WindowsContext",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/utils/system/windows_structures.py",
+        "line": 202,
+        "func_name": "WindowsProcessStructures",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack/utils/type_safety.py",
+        "line": 57,
+        "func_name": "validate_type",
+        "type_comments": [
+            "(List[str], type, str) -> List[str]"
+        ],
+        "samples": 5
+    },
+    {
+        "path": "tests/conftest.py",
+        "line": 84,
+        "func_name": "pytest_runtest_call",
+        "type_comments": [
+            "(_pytest.unittest.TestCaseFunction) -> Iterator",
+            "(_pytest.python.Function) -> Iterator"
+        ],
+        "samples": 297
+    },
+    {
+        "path": "tests/framework/real_world_testing_framework.py",
+        "line": 31,
+        "func_name": "RealWorldTestingFramework.__init__",
+        "type_comments": [
+            "(None) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/framework/real_world_testing_framework.py",
+        "line": 89,
+        "func_name": "RealWorldTestingFramework._initialize_test_binaries",
+        "type_comments": [
+            "() -> Dict[str, Dict[str, Union[List[str], int, method, pathlib.Path, str]]]"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_flexlm_parser.py",
+        "line": 41,
+        "func_name": "TestFlexLMProtocolParser.test_parser_initialization",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMProtocolParser) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_flexlm_parser.py",
+        "line": 51,
+        "func_name": "TestFlexLMProtocolParser.test_checkout_request_parsing",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMProtocolParser) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_flexlm_parser.py",
+        "line": 94,
+        "func_name": "TestFlexLMProtocolParser.test_checkout_response_generation",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMProtocolParser) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_flexlm_parser.py",
+        "line": 122,
+        "func_name": "TestFlexLMProtocolParser.test_checkout_unknown_feature",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMProtocolParser) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_flexlm_parser.py",
+        "line": 144,
+        "func_name": "TestFlexLMProtocolParser.test_checkin_request",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMProtocolParser) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_flexlm_parser.py",
+        "line": 182,
+        "func_name": "TestFlexLMProtocolParser.test_status_request",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMProtocolParser) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_flexlm_parser.py",
+        "line": 207,
+        "func_name": "TestFlexLMProtocolParser.test_heartbeat_request",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMProtocolParser) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_flexlm_parser.py",
+        "line": 244,
+        "func_name": "TestFlexLMProtocolParser.test_feature_info_request",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMProtocolParser) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_flexlm_parser.py",
+        "line": 268,
+        "func_name": "TestFlexLMProtocolParser.test_server_info_request",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMProtocolParser) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_flexlm_parser.py",
+        "line": 292,
+        "func_name": "TestFlexLMProtocolParser.test_hostid_request",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMProtocolParser) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_flexlm_parser.py",
+        "line": 315,
+        "func_name": "TestFlexLMProtocolParser.test_encryption_seed_request",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMProtocolParser) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_flexlm_parser.py",
+        "line": 338,
+        "func_name": "TestFlexLMProtocolParser.test_response_serialization",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMProtocolParser) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_flexlm_parser.py",
+        "line": 358,
+        "func_name": "TestFlexLMProtocolParser.test_round_trip_serialization",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMProtocolParser) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_flexlm_parser.py",
+        "line": 389,
+        "func_name": "TestFlexLMProtocolParser.test_invalid_magic_number",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMProtocolParser) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_flexlm_parser.py",
+        "line": 397,
+        "func_name": "TestFlexLMProtocolParser.test_short_packet",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMProtocolParser) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_flexlm_parser.py",
+        "line": 403,
+        "func_name": "TestFlexLMProtocolParser.test_malformed_string_fields",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMProtocolParser) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_flexlm_parser.py",
+        "line": 416,
+        "func_name": "TestFlexLMProtocolParser.test_additional_data_parsing",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMProtocolParser) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_flexlm_parser.py",
+        "line": 447,
+        "func_name": "TestFlexLMProtocolParser.test_concurrent_checkouts",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMProtocolParser) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_flexlm_parser.py",
+        "line": 474,
+        "func_name": "TestFlexLMProtocolParser.test_partial_feature_matching",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMProtocolParser) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_flexlm_parser.py",
+        "line": 494,
+        "func_name": "TestFlexLMProtocolParser.test_checkout_key_generation",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMProtocolParser) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_flexlm_parser.py",
+        "line": 519,
+        "func_name": "TestFlexLMProtocolParser.test_multiple_magic_numbers",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMProtocolParser) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_flexlm_parser.py",
+        "line": 536,
+        "func_name": "TestFlexLMProtocolParser.test_command_constants",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMProtocolParser) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_flexlm_parser.py",
+        "line": 545,
+        "func_name": "TestFlexLMProtocolParser.test_status_codes",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMProtocolParser) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_flexlm_parser.py",
+        "line": 552,
+        "func_name": "TestFlexLMProtocolParser.test_active_checkout_tracking",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMProtocolParser) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_flexlm_parser.py",
+        "line": 586,
+        "func_name": "TestFlexLMRealWorldScenarios.test_autodesk_autocad_workflow",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMProtocolParser) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_flexlm_parser.py",
+        "line": 658,
+        "func_name": "TestFlexLMRealWorldScenarios.test_matlab_cluster_usage",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMProtocolParser) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_flexlm_parser.py",
+        "line": 683,
+        "func_name": "TestFlexLMRealWorldScenarios.test_ansys_floating_license",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMProtocolParser) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_flexlm_parser.py",
+        "line": 729,
+        "func_name": "TestFlexLMNetworkCapture.test_capture_checkout_traffic",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMProtocolParser) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_flexlm_parser.py",
+        "line": 764,
+        "func_name": "TestFlexLMNetworkCapture.test_traffic_interception_and_replay",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMProtocolParser) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_flexlm_parser.py",
+        "line": 815,
+        "func_name": "TestFlexLMServerEmulation.test_server_handles_multiple_clients",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMProtocolParser) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_flexlm_parser.py",
+        "line": 840,
+        "func_name": "TestFlexLMServerEmulation.test_server_license_pool_management",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMProtocolParser) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_flexlm_parser.py",
+        "line": 881,
+        "func_name": "TestFlexLMServerEmulation.test_server_vendor_daemon_emulation",
+        "type_comments": [
+            "(intellicrack.core.network.protocols.flexlm_parser.FlexLMProtocolParser) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_hasp_parser.py",
+        "line": 20,
+        "func_name": "test_hasp_parser_basic",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_hasp_parser.py",
+        "line": 33,
+        "func_name": "test_hasp_request_response",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_hasp_parser.py",
+        "line": 77,
+        "func_name": "test_hasp_crypto",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_hasp_parser.py",
+        "line": 101,
+        "func_name": "test_hasp_feature_management",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_hasp_parser.py",
+        "line": 129,
+        "func_name": "test_hasp_memory_operations",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_hasp_parser.py",
+        "line": 180,
+        "func_name": "test_hasp_usb_emulator",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_hasp_parser.py",
+        "line": 201,
+        "func_name": "test_hasp_packet_analyzer",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/protocols/test_hasp_parser.py",
+        "line": 227,
+        "func_name": "test_hasp_server_emulator",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_dynamic_response_generator.py",
+        "line": 974,
+        "func_name": "TestProtocolHandlerSpecialization.test_flexlm_handler_advanced_features",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_dynamic_response_generator.py",
+        "line": 1000,
+        "func_name": "TestProtocolHandlerSpecialization.test_hasp_handler_security_features",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_dynamic_response_generator.py",
+        "line": 1019,
+        "func_name": "TestProtocolHandlerSpecialization.test_adobe_handler_cloud_integration",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_dynamic_response_generator.py",
+        "line": 1037,
+        "func_name": "TestProtocolHandlerSpecialization.test_kms_handler_volume_licensing",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_dynamic_response_generator.py",
+        "line": 1055,
+        "func_name": "TestProtocolHandlerSpecialization.test_autodesk_handler_subscription_management",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler.py",
+        "line": 48,
+        "func_name": "TestGenericProtocolHandlerNetworkProxyCapabilities.test_tcp_proxy_server_establishment",
+        "type_comments": [
+            "(intellicrack.core.network.generic_protocol_handler.GenericProtocolHandler) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler.py",
+        "line": 76,
+        "func_name": "TestGenericProtocolHandlerNetworkProxyCapabilities.test_udp_proxy_server_establishment",
+        "type_comments": [
+            "(intellicrack.core.network.generic_protocol_handler.GenericProtocolHandler) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler.py",
+        "line": 107,
+        "func_name": "TestGenericProtocolHandlerNetworkProxyCapabilities.test_concurrent_connection_handling",
+        "type_comments": [
+            "(intellicrack.core.network.generic_protocol_handler.GenericProtocolHandler) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler.py",
+        "line": 161,
+        "func_name": "TestGenericProtocolHandlerBinaryProtocolParsing.test_license_protocol_message_parsing",
+        "type_comments": [
+            "(intellicrack.core.network.generic_protocol_handler.GenericProtocolHandler) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler.py",
+        "line": 188,
+        "func_name": "TestGenericProtocolHandlerBinaryProtocolParsing.test_proprietary_protocol_structure_recognition",
+        "type_comments": [
+            "(intellicrack.core.network.generic_protocol_handler.GenericProtocolHandler) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler.py",
+        "line": 225,
+        "func_name": "TestGenericProtocolHandlerBinaryProtocolParsing.test_endianness_handling_in_protocols",
+        "type_comments": [
+            "(intellicrack.core.network.generic_protocol_handler.GenericProtocolHandler) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler.py",
+        "line": 263,
+        "func_name": "TestGenericProtocolHandlerLicenseManipulation.test_license_response_generation",
+        "type_comments": [
+            "(intellicrack.core.network.generic_protocol_handler.GenericProtocolHandler) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler.py",
+        "line": 283,
+        "func_name": "TestGenericProtocolHandlerLicenseManipulation.test_authentication_token_manipulation",
+        "type_comments": [
+            "(intellicrack.core.network.generic_protocol_handler.GenericProtocolHandler) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler.py",
+        "line": 310,
+        "func_name": "TestGenericProtocolHandlerLicenseManipulation.test_timestamp_based_license_bypass",
+        "type_comments": [
+            "(intellicrack.core.network.generic_protocol_handler.GenericProtocolHandler) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler.py",
+        "line": 353,
+        "func_name": "TestGenericProtocolHandlerConnectionManagement.test_connection_state_tracking",
+        "type_comments": [
+            "(intellicrack.core.network.generic_protocol_handler.GenericProtocolHandler) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler.py",
+        "line": 356,
+        "func_name": "TestSocket",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler.py",
+        "line": 357,
+        "func_name": "TestSocket.__init__",
+        "type_comments": [
+            "(Tuple[str, int]) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler.py",
+        "line": 359,
+        "func_name": "TestSocket.getpeername",
+        "type_comments": [
+            "() -> Tuple[str, int]"
+        ],
+        "samples": 4
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler.py",
+        "line": 382,
+        "func_name": "TestGenericProtocolHandlerConnectionManagement.test_resource_cleanup_on_termination",
+        "type_comments": [
+            "(intellicrack.core.network.generic_protocol_handler.GenericProtocolHandler) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler.py",
+        "line": 385,
+        "func_name": "TestSocket",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler.py",
+        "line": 386,
+        "func_name": "TestSocket.__init__",
+        "type_comments": [
+            "(Tuple[str, int]) -> None"
+        ],
+        "samples": 5
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler.py",
+        "line": 388,
+        "func_name": "TestSocket.getpeername",
+        "type_comments": [
+            "() -> Tuple[str, int]"
+        ],
+        "samples": 5
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler.py",
+        "line": 410,
+        "func_name": "TestGenericProtocolHandlerConnectionManagement.test_graceful_connection_failure_handling",
+        "type_comments": [
+            "(intellicrack.core.network.generic_protocol_handler.GenericProtocolHandler) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler.py",
+        "line": 413,
+        "func_name": "FailingTestSocket",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler.py",
+        "line": 414,
+        "func_name": "FailingTestSocket.getpeername",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler.py",
+        "line": 449,
+        "func_name": "TestGenericProtocolHandlerRealWorldProtocolSupport.test_flexlm_protocol_simulation",
+        "type_comments": [
+            "(intellicrack.core.network.generic_protocol_handler.GenericProtocolHandler) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler.py",
+        "line": 472,
+        "func_name": "TestGenericProtocolHandlerRealWorldProtocolSupport.test_hasp_sentinel_protocol_simulation",
+        "type_comments": [
+            "(intellicrack.core.network.generic_protocol_handler.GenericProtocolHandler) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler.py",
+        "line": 498,
+        "func_name": "TestGenericProtocolHandlerRealWorldProtocolSupport.test_custom_encrypted_protocol_handling",
+        "type_comments": [
+            "(intellicrack.core.network.generic_protocol_handler.GenericProtocolHandler) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler.py",
+        "line": 537,
+        "func_name": "TestGenericProtocolHandlerPerformanceAndReliability.test_high_volume_protocol_processing",
+        "type_comments": [
+            "(intellicrack.core.network.generic_protocol_handler.GenericProtocolHandler) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler.py",
+        "line": 567,
+        "func_name": "TestGenericProtocolHandlerPerformanceAndReliability.test_memory_efficiency_during_extended_operation",
+        "type_comments": [
+            "(intellicrack.core.network.generic_protocol_handler.GenericProtocolHandler) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler.py",
+        "line": 598,
+        "func_name": "TestGenericProtocolHandlerPerformanceAndReliability.test_concurrent_protocol_session_handling",
+        "type_comments": [
+            "(intellicrack.core.network.generic_protocol_handler.GenericProtocolHandler) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler.py",
+        "line": 603,
+        "func_name": "simulate_protocol_session",
+        "type_comments": [
+            "(int) -> bool"
+        ],
+        "samples": 5
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler.py",
+        "line": 645,
+        "func_name": "TestGenericProtocolHandlerSecurityResearchCapabilities.test_protocol_fuzzing_capability",
+        "type_comments": [
+            "(intellicrack.core.network.generic_protocol_handler.GenericProtocolHandler) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler.py",
+        "line": 686,
+        "func_name": "TestGenericProtocolHandlerSecurityResearchCapabilities.test_man_in_the_middle_attack_simulation",
+        "type_comments": [
+            "(intellicrack.core.network.generic_protocol_handler.GenericProtocolHandler) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler.py",
+        "line": 705,
+        "func_name": "TestGenericProtocolHandlerSecurityResearchCapabilities.test_replay_attack_support",
+        "type_comments": [
+            "(intellicrack.core.network.generic_protocol_handler.GenericProtocolHandler) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler.py",
+        "line": 725,
+        "func_name": "TestGenericProtocolHandlerSecurityResearchCapabilities.test_certificate_bypass_simulation",
+        "type_comments": [
+            "(intellicrack.core.network.generic_protocol_handler.GenericProtocolHandler) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler_real_data.py",
+        "line": 37,
+        "func_name": "TestGenericProtocolHandlerRealNetworkCaptures.test_flexlm_capture_analysis",
+        "type_comments": [
+            "(intellicrack.core.network.generic_protocol_handler.GenericProtocolHandler, pathlib.Path) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler_real_data.py",
+        "line": 65,
+        "func_name": "TestGenericProtocolHandlerRealNetworkCaptures.test_hasp_capture_analysis",
+        "type_comments": [
+            "(intellicrack.core.network.generic_protocol_handler.GenericProtocolHandler, pathlib.Path) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler_real_data.py",
+        "line": 90,
+        "func_name": "TestGenericProtocolHandlerRealNetworkCaptures.test_adobe_license_capture_analysis",
+        "type_comments": [
+            "(intellicrack.core.network.generic_protocol_handler.GenericProtocolHandler, pathlib.Path) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler_real_data.py",
+        "line": 115,
+        "func_name": "TestGenericProtocolHandlerRealNetworkCaptures.test_mixed_protocols_capture_analysis",
+        "type_comments": [
+            "(intellicrack.core.network.generic_protocol_handler.GenericProtocolHandler, pathlib.Path) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler_real_data.py",
+        "line": 158,
+        "func_name": "TestGenericProtocolHandlerRealNetworkCaptures.test_encrypted_protocol_detection",
+        "type_comments": [
+            "(intellicrack.core.network.generic_protocol_handler.GenericProtocolHandler, pathlib.Path) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler_real_data.py",
+        "line": 192,
+        "func_name": "TestGenericProtocolHandlerRealNetworkCaptures._extract_protocol_messages",
+        "type_comments": [
+            "(bytes) -> List[bytes]"
+        ],
+        "samples": 4
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler_real_data.py",
+        "line": 235,
+        "func_name": "TestGenericProtocolHandlerRealNetworkCaptures._looks_like_binary_protocol",
+        "type_comments": [
+            "(bytes) -> bool",
+            "(bytes) -> None"
+        ],
+        "samples": 13
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler_real_data.py",
+        "line": 250,
+        "func_name": "TestGenericProtocolHandlerRealNetworkCaptures._is_binary_protocol",
+        "type_comments": [
+            "(bytes) -> None"
+        ],
+        "samples": 5
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler_real_data.py",
+        "line": 263,
+        "func_name": "TestGenericProtocolHandlerRealNetworkCaptures._calculate_entropy",
+        "type_comments": [
+            "(bytes) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler_real_data.py",
+        "line": 304,
+        "func_name": "TestGenericProtocolHandlerRealBinaryAnalysis.test_license_protected_binary_communication_simulation",
+        "type_comments": [
+            "(intellicrack.core.network.generic_protocol_handler.GenericProtocolHandler, pathlib.Path) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler_real_data.py",
+        "line": 344,
+        "func_name": "TestGenericProtocolHandlerRealBinaryAnalysis.test_enterprise_license_server_simulation",
+        "type_comments": [
+            "(intellicrack.core.network.generic_protocol_handler.GenericProtocolHandler, pathlib.Path) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler_real_data.py",
+        "line": 369,
+        "func_name": "TestGenericProtocolHandlerRealBinaryAnalysis.test_hardware_fingerprint_protocol_analysis",
+        "type_comments": [
+            "(intellicrack.core.network.generic_protocol_handler.GenericProtocolHandler, pathlib.Path) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler_real_data.py",
+        "line": 400,
+        "func_name": "TestGenericProtocolHandlerRealBinaryAnalysis._generate_license_request_for_binary",
+        "type_comments": [
+            "(str) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler_real_data.py",
+        "line": 432,
+        "func_name": "TestGenericProtocolHandlerRealBinaryAnalysis._create_enterprise_license_request",
+        "type_comments": [
+            "() -> bytes"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler_real_data.py",
+        "line": 441,
+        "func_name": "TestGenericProtocolHandlerRealBinaryAnalysis._create_floating_license_request",
+        "type_comments": [
+            "() -> bytes"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler_real_data.py",
+        "line": 449,
+        "func_name": "TestGenericProtocolHandlerRealBinaryAnalysis._create_concurrent_user_request",
+        "type_comments": [
+            "() -> bytes"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler_real_data.py",
+        "line": 457,
+        "func_name": "TestGenericProtocolHandlerRealBinaryAnalysis._create_feature_checkout_request",
+        "type_comments": [
+            "() -> bytes"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler_real_data.py",
+        "line": 465,
+        "func_name": "TestGenericProtocolHandlerRealBinaryAnalysis._create_cpu_fingerprint_request",
+        "type_comments": [
+            "() -> bytes"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler_real_data.py",
+        "line": 473,
+        "func_name": "TestGenericProtocolHandlerRealBinaryAnalysis._create_motherboard_fingerprint_request",
+        "type_comments": [
+            "() -> bytes"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler_real_data.py",
+        "line": 481,
+        "func_name": "TestGenericProtocolHandlerRealBinaryAnalysis._create_network_adapter_fingerprint_request",
+        "type_comments": [
+            "() -> bytes"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler_real_data.py",
+        "line": 489,
+        "func_name": "TestGenericProtocolHandlerRealBinaryAnalysis._create_composite_fingerprint_request",
+        "type_comments": [
+            "() -> bytes"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler_real_data.py",
+        "line": 511,
+        "func_name": "TestGenericProtocolHandlerRealBinaryAnalysis._identify_fingerprint_type",
+        "type_comments": [
+            "(bytes) -> None"
+        ],
+        "samples": 4
+    },
+    {
+        "path": "tests/unit/core/network/test_generic_protocol_handler_real_data.py",
+        "line": 524,
+        "func_name": "TestGenericProtocolHandlerRealBinaryAnalysis._validate_fingerprint_response",
+        "type_comments": [
+            "(bytes) -> bool"
+        ],
+        "samples": 4
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_exploitation.py",
+        "line": 25,
+        "func_name": "TestFlexLMExploitationScenarios.test_flexlm_license_feature_enumeration",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_exploitation.py",
+        "line": 48,
+        "func_name": "TestFlexLMExploitationScenarios.test_flexlm_floating_license_exhaustion",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_exploitation.py",
+        "line": 66,
+        "func_name": "TestFlexLMExploitationScenarios.test_flexlm_license_hijacking_simulation",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_exploitation.py",
+        "line": 88,
+        "func_name": "TestFlexLMExploitationScenarios.test_flexlm_version_downgrade_attack",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_exploitation.py",
+        "line": 110,
+        "func_name": "TestFlexLMExploitationScenarios.test_flexlm_server_information_disclosure",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_exploitation.py",
+        "line": 140,
+        "func_name": "TestFlexLMExploitationScenarios.test_flexlm_denial_of_service_resilience",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_exploitation.py",
+        "line": 160,
+        "func_name": "TestFlexLMExploitationScenarios.test_flexlm_timing_attack_analysis",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_exploitation.py",
+        "line": 197,
+        "func_name": "TestHASPExploitationScenarios.test_hasp_memory_dumping_attack",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_exploitation.py",
+        "line": 235,
+        "func_name": "TestHASPExploitationScenarios.test_hasp_cryptographic_key_extraction",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_exploitation.py",
+        "line": 277,
+        "func_name": "TestHASPExploitationScenarios.test_hasp_session_hijacking_attack",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_exploitation.py",
+        "line": 310,
+        "func_name": "TestHASPExploitationScenarios.test_hasp_feature_unlocking_attack",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_exploitation.py",
+        "line": 334,
+        "func_name": "TestHASPExploitationScenarios.test_hasp_protection_bypass_techniques",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_exploitation.py",
+        "line": 366,
+        "func_name": "TestHASPExploitationScenarios.test_hasp_brute_force_resistance",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_exploitation.py",
+        "line": 385,
+        "func_name": "TestHASPExploitationScenarios.test_hasp_side_channel_analysis",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_exploitation.py",
+        "line": 430,
+        "func_name": "TestProtocolExploitationIntegration.test_multi_protocol_attack_coordination",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_exploitation.py",
+        "line": 457,
+        "func_name": "TestProtocolExploitationIntegration.test_exploit_payload_delivery_simulation",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_exploitation.py",
+        "line": 482,
+        "func_name": "TestProtocolExploitationIntegration.test_license_server_impersonation",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_exploitation.py",
+        "line": 520,
+        "func_name": "TestProtocolExploitationIntegration.test_network_protocol_fuzzing_simulation",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_exploitation.py",
+        "line": 569,
+        "func_name": "TestProtocolExploitationIntegration.test_advanced_cryptographic_attacks",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_exploitation.py",
+        "line": 604,
+        "func_name": "TestProtocolExploitationIntegration.test_real_world_exploit_simulation",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 37,
+        "func_name": "TestLicenseProtocolHandlerBase.test_base_handler_initialization",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 40,
+        "func_name": "ConcreteHandler",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 58,
+        "func_name": "TestLicenseProtocolHandlerBase.test_base_handler_custom_configuration",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 61,
+        "func_name": "ConcreteHandler",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 84,
+        "func_name": "TestLicenseProtocolHandlerBase.test_base_handler_environment_variables",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 95,
+        "func_name": "ConcreteHandler",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 127,
+        "func_name": "TestLicenseProtocolHandlerBase.test_clear_data_functionality",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 131,
+        "func_name": "ConcreteHandler.__init__",
+        "type_comments": [
+            "(None) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 164,
+        "func_name": "TestLicenseProtocolHandlerBase.test_status_information",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 167,
+        "func_name": "ConcreteHandler",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 186,
+        "func_name": "TestLicenseProtocolHandlerBase.test_logging_methods",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 189,
+        "func_name": "ConcreteHandler",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 216,
+        "func_name": "TestFlexLMProtocolHandler.test_flexlm_initialization",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 232,
+        "func_name": "TestFlexLMProtocolHandler.test_flexlm_custom_configuration",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 253,
+        "func_name": "TestFlexLMProtocolHandler.test_flexlm_hello_response",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 267,
+        "func_name": "TestFlexLMProtocolHandler.test_flexlm_getlic_response",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 281,
+        "func_name": "TestFlexLMProtocolHandler.test_flexlm_getlic_floating_license",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 295,
+        "func_name": "TestFlexLMProtocolHandler.test_flexlm_checkin_response",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 304,
+        "func_name": "TestFlexLMProtocolHandler.test_flexlm_heartbeat_response",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 313,
+        "func_name": "TestFlexLMProtocolHandler.test_flexlm_status_response",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 326,
+        "func_name": "TestFlexLMProtocolHandler.test_flexlm_unknown_command",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 335,
+        "func_name": "TestFlexLMProtocolHandler.test_flexlm_invalid_request",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 345,
+        "func_name": "TestFlexLMProtocolHandler.test_flexlm_request_capture",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 373,
+        "func_name": "TestHASPProtocolHandler.test_hasp_initialization",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 388,
+        "func_name": "TestHASPProtocolHandler.test_hasp_custom_configuration",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 407,
+        "func_name": "TestHASPProtocolHandler.test_hasp_login_response",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 426,
+        "func_name": "TestHASPProtocolHandler.test_hasp_logout_response",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 439,
+        "func_name": "TestHASPProtocolHandler.test_hasp_encrypt_response",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 459,
+        "func_name": "TestHASPProtocolHandler.test_hasp_decrypt_response",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 481,
+        "func_name": "TestHASPProtocolHandler.test_hasp_get_size_response",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 496,
+        "func_name": "TestHASPProtocolHandler.test_hasp_read_memory_response",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 517,
+        "func_name": "TestHASPProtocolHandler.test_hasp_read_feature_area",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 539,
+        "func_name": "TestHASPProtocolHandler.test_hasp_read_data_area",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 559,
+        "func_name": "TestHASPProtocolHandler.test_hasp_write_memory_response",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 573,
+        "func_name": "TestHASPProtocolHandler.test_hasp_get_rtc_response",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 591,
+        "func_name": "TestHASPProtocolHandler.test_hasp_get_info_response",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 609,
+        "func_name": "TestHASPProtocolHandler.test_hasp_unknown_command",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 622,
+        "func_name": "TestHASPProtocolHandler.test_hasp_malformed_request",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 633,
+        "func_name": "TestHASPProtocolHandler.test_hasp_request_capture",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 658,
+        "func_name": "TestLicenseProtocolIntegration.test_flexlm_concurrent_connections",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 662,
+        "func_name": "simulate_client_request",
+        "type_comments": [
+            "(bytes) -> bytes"
+        ],
+        "samples": 5
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 700,
+        "func_name": "TestLicenseProtocolIntegration.test_hasp_concurrent_connections",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 704,
+        "func_name": "simulate_client_request",
+        "type_comments": [
+            "(bytes) -> bytes"
+        ],
+        "samples": 5
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 746,
+        "func_name": "TestLicenseProtocolIntegration.test_protocol_handler_performance",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 777,
+        "func_name": "TestLicenseProtocolIntegration.test_protocol_handler_memory_usage",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 796,
+        "func_name": "TestLicenseProtocolIntegration.test_protocol_data_validation",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 821,
+        "func_name": "TestLicenseProtocolIntegration.test_protocol_error_recovery",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 860,
+        "func_name": "TestLicenseProtocolIntegration.test_thread_safety",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_license_protocol_handler.py",
+        "line": 866,
+        "func_name": "worker_thread",
+        "type_comments": [
+            "(int) -> None"
+        ],
+        "samples": 5
+    },
+    {
+        "path": "tests/unit/core/network/test_license_server_emulator.py",
+        "line": 45,
+        "func_name": "TestNetworkLicenseServerEmulatorInitialization.test_emulator_initialization_with_comprehensive_config",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "tests/unit/core/network/test_license_server_emulator.py",
+        "line": 72,
+        "func_name": "TestNetworkLicenseServerEmulatorInitialization.test_port_parsing_with_complex_ranges",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "tests/unit/core/network/test_license_server_emulator.py",
+        "line": 86,
+        "func_name": "TestNetworkLicenseServerEmulatorInitialization.test_protocol_fingerprint_loading",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "tests/unit/core/network/test_license_server_emulator.py",
+        "line": 106,
+        "func_name": "TestNetworkLicenseServerEmulatorInitialization.test_response_template_loading",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "tests/unit/core/network/test_license_server_emulator.py",
+        "line": 126,
+        "func_name": "TestNetworkLicenseServerEmulatorProtocolIdentification.test_flexlm_protocol_identification",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "tests/unit/core/network/test_license_server_emulator.py",
+        "line": 153,
+        "func_name": "TestNetworkLicenseServerEmulatorProtocolIdentification.test_hasp_protocol_identification",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "tests/unit/core/network/test_license_server_emulator.py",
+        "line": 179,
+        "func_name": "TestNetworkLicenseServerEmulatorProtocolIdentification.test_wibu_codemeter_protocol_identification",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "tests/unit/core/network/test_license_server_emulator.py",
+        "line": 206,
+        "func_name": "TestNetworkLicenseServerEmulatorProtocolIdentification.test_unknown_protocol_learning",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "tests/unit/core/network/test_license_server_emulator.py",
+        "line": 244,
+        "func_name": "TestNetworkLicenseServerEmulatorResponseGeneration.test_flexlm_license_checkout_response",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "tests/unit/core/network/test_license_server_emulator.py",
+        "line": 279,
+        "func_name": "TestNetworkLicenseServerEmulatorResponseGeneration.test_hasp_dongle_authentication_response",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "tests/unit/core/network/test_license_server_emulator.py",
+        "line": 321,
+        "func_name": "TestNetworkLicenseServerEmulatorResponseGeneration.test_dynamic_response_adaptation",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "tests/unit/core/network/test_license_server_emulator.py",
+        "line": 374,
+        "func_name": "TestNetworkLicenseServerEmulatorNetworkOperations.test_multi_port_tcp_server_startup",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "tests/unit/core/network/test_license_server_emulator.py",
+        "line": 407,
+        "func_name": "TestNetworkLicenseServerEmulatorNetworkOperations.test_dns_redirection_setup",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "tests/unit/core/network/test_license_server_emulator.py",
+        "line": 430,
+        "func_name": "TestNetworkLicenseServerEmulatorNetworkOperations.test_ssl_certificate_generation_and_interception",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "tests/unit/core/network/test_license_server_emulator.py",
+        "line": 448,
+        "func_name": "TestNetworkLicenseServerEmulatorNetworkOperations.test_concurrent_client_connection_handling",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "tests/unit/core/network/test_license_server_emulator.py",
+        "line": 497,
+        "func_name": "TestNetworkLicenseServerEmulatorTrafficAnalysis.test_traffic_recording_and_analysis",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "tests/unit/core/network/test_license_server_emulator.py",
+        "line": 545,
+        "func_name": "TestNetworkLicenseServerEmulatorTrafficAnalysis.test_protocol_pattern_learning",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "tests/unit/core/network/test_license_server_emulator.py",
+        "line": 592,
+        "func_name": "TestNetworkLicenseServerEmulatorTrafficAnalysis.test_traffic_statistics_and_metrics",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "tests/unit/core/network/test_license_server_emulator.py",
+        "line": 613,
+        "func_name": "TestNetworkLicenseServerEmulatorTrafficAnalysis.test_captured_protocol_analysis",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "tests/unit/core/network/test_license_server_emulator.py",
+        "line": 635,
+        "func_name": "TestNetworkLicenseServerEmulatorAdvancedFeatures.test_learning_data_export_import",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "tests/unit/core/network/test_license_server_emulator.py",
+        "line": 662,
+        "func_name": "TestNetworkLicenseServerEmulatorAdvancedFeatures.test_transparent_proxy_setup",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "tests/unit/core/network/test_license_server_emulator.py",
+        "line": 674,
+        "func_name": "TestNetworkLicenseServerEmulatorAdvancedFeatures.test_emulator_status_monitoring",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "tests/unit/core/network/test_license_server_emulator.py",
+        "line": 695,
+        "func_name": "TestRunNetworkLicenseEmulatorFunction.test_emulator_orchestration_with_comprehensive_config",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "tests/unit/core/network/test_license_server_emulator.py",
+        "line": 718,
+        "func_name": "TestRunNetworkLicenseEmulatorFunction.test_emulator_with_real_world_scenario_config",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "tests/unit/core/network/test_license_server_emulator.py",
+        "line": 743,
+        "func_name": "TestNetworkLicenseServerEmulatorSecurityResearchCapabilities.test_license_bypass_research_scenarios",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "tests/unit/core/network/test_license_server_emulator.py",
+        "line": 791,
+        "func_name": "TestNetworkLicenseServerEmulatorSecurityResearchCapabilities.test_multi_protocol_concurrent_emulation",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "tests/unit/core/network/test_license_server_emulator.py",
+        "line": 815,
+        "func_name": "TestNetworkLicenseServerEmulatorSecurityResearchCapabilities.test_real_world_license_server_emulation_effectiveness",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "tests/unit/core/network/test_license_server_emulator.py",
+        "line": 848,
+        "func_name": "test_comprehensive_coverage_validation",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_analysis_capabilities.py",
+        "line": 40,
+        "func_name": "TestAdvancedProtocolAnalysis.test_http_vulnerability_detection_engine",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_analysis_capabilities.py",
+        "line": 60,
+        "func_name": "TestAdvancedProtocolAnalysis._analyze_http_vulnerability",
+        "type_comments": [
+            "(str, str) -> bool"
+        ],
+        "samples": 5
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_analysis_capabilities.py",
+        "line": 91,
+        "func_name": "TestAdvancedProtocolAnalysis.test_ssl_tls_security_analysis_engine",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_analysis_capabilities.py",
+        "line": 120,
+        "func_name": "TestAdvancedProtocolAnalysis._perform_ssl_analysis",
+        "type_comments": [
+            "(str, Dict[str, Union[List[str], str]]) -> Dict[str, Union[Dict[str, Union[List[str], str]], List[str], bool, str]]"
+        ],
+        "samples": 4
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_analysis_capabilities.py",
+        "line": 140,
+        "func_name": "TestAdvancedProtocolAnalysis.test_ftp_protocol_security_assessment",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_analysis_capabilities.py",
+        "line": 167,
+        "func_name": "TestAdvancedProtocolAnalysis._analyze_ftp_security",
+        "type_comments": [
+            "(str) -> Dict[str, Union[List[str], bool, str]]"
+        ],
+        "samples": 4
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_analysis_capabilities.py",
+        "line": 195,
+        "func_name": "TestAdvancedProtocolAnalysis.test_smtp_email_security_analysis",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_analysis_capabilities.py",
+        "line": 231,
+        "func_name": "TestAdvancedProtocolAnalysis._perform_smtp_analysis",
+        "type_comments": [
+            "(List[str]) -> Dict[str, Union[List[str], bool, str]]"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_analysis_capabilities.py",
+        "line": 261,
+        "func_name": "TestAdvancedProtocolAnalysis.test_dns_security_analysis_engine",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_analysis_capabilities.py",
+        "line": 286,
+        "func_name": "TestAdvancedProtocolAnalysis._create_dns_query",
+        "type_comments": [
+            "(str, str) -> bytes"
+        ],
+        "samples": 3
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_analysis_capabilities.py",
+        "line": 312,
+        "func_name": "TestAdvancedProtocolAnalysis._analyze_dns_security",
+        "type_comments": [
+            "(bytes, str) -> Dict[str, Union[List[str], bool, str]]"
+        ],
+        "samples": 3
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_analysis_capabilities.py",
+        "line": 351,
+        "func_name": "TestProtocolParsingEngine.test_http_header_parsing_accuracy",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_analysis_capabilities.py",
+        "line": 390,
+        "func_name": "TestProtocolParsingEngine._parse_http_headers",
+        "type_comments": [
+            "(str) -> Dict[str, str]"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_analysis_capabilities.py",
+        "line": 427,
+        "func_name": "TestProtocolParsingEngine.test_binary_protocol_parsing_capabilities",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_analysis_capabilities.py",
+        "line": 446,
+        "func_name": "TestProtocolParsingEngine._create_tcp_packet",
+        "type_comments": [
+            "() -> bytes"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_analysis_capabilities.py",
+        "line": 465,
+        "func_name": "TestProtocolParsingEngine._create_udp_packet",
+        "type_comments": [
+            "() -> bytes"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_analysis_capabilities.py",
+        "line": 475,
+        "func_name": "TestProtocolParsingEngine._create_icmp_packet",
+        "type_comments": [
+            "() -> bytes"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_analysis_capabilities.py",
+        "line": 486,
+        "func_name": "TestProtocolParsingEngine._create_dns_response",
+        "type_comments": [
+            "() -> bytes"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_analysis_capabilities.py",
+        "line": 509,
+        "func_name": "TestProtocolParsingEngine._parse_binary_protocol",
+        "type_comments": [
+            "(bytes, str) -> Dict[str, Union[Dict[str, str], List[str], bool]]",
+            "(bytes, str) -> Dict[str, Union[Dict[str, int], List[str], bool]]",
+            "(bytes, str) -> Dict[str, Union[Dict[str, Union[int, str]], List[str], bool]]"
+        ],
+        "samples": 4
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_fingerprinter.py",
+        "line": 84,
+        "func_name": "TestProtocolFingerprinter.test_initialization_and_configuration",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_fingerprinter.py",
+        "line": 118,
+        "func_name": "TestProtocolFingerprinter.test_analyze_traffic_with_real_protocols",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_fingerprinter.py",
+        "line": 163,
+        "func_name": "TestProtocolFingerprinter.test_fingerprint_packet_comprehensive_analysis",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_fingerprinter.py",
+        "line": 209,
+        "func_name": "TestProtocolFingerprinter.test_parse_packet_structured_extraction",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_fingerprinter.py",
+        "line": 261,
+        "func_name": "TestProtocolFingerprinter.test_generate_response_protocol_compatibility",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_fingerprinter.py",
+        "line": 320,
+        "func_name": "TestProtocolFingerprinter.test_analyze_pcap_comprehensive_processing",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_fingerprinter.py",
+        "line": 369,
+        "func_name": "TestProtocolFingerprinter.test_analyze_binary_network_protocol_detection",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_fingerprinter.py",
+        "line": 417,
+        "func_name": "TestProtocolFingerprinter.test_performance_and_scalability",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_fingerprinter.py",
+        "line": 442,
+        "func_name": "TestProtocolFingerprinter.test_learning_and_adaptation_capabilities",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_fingerprinter.py",
+        "line": 474,
+        "func_name": "TestProtocolFingerprinter.test_error_handling_and_robustness",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_fingerprinter.py",
+        "line": 509,
+        "func_name": "TestProtocolFingerprinter.test_integration_with_security_research_workflows",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_fingerprinter.py",
+        "line": 534,
+        "func_name": "TestProtocolFingerprinter.test_comprehensive_coverage_validation",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_fingerprinter.py",
+        "line": 567,
+        "func_name": "TestProtocolFingerprinter.test_production_readiness_validation",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_manipulation_features.py",
+        "line": 26,
+        "func_name": "TestProtocolManipulation.test_http_request_modification_engine",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_manipulation_features.py",
+        "line": 77,
+        "func_name": "TestProtocolManipulation._manipulate_http_request",
+        "type_comments": [
+            "(str, List[Tuple[str, str]]) -> str"
+        ],
+        "samples": 3
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_manipulation_features.py",
+        "line": 108,
+        "func_name": "TestProtocolManipulation._verify_manipulation_success",
+        "type_comments": [
+            "(str, List[Tuple[str, str]], str) -> bool"
+        ],
+        "samples": 3
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_manipulation_features.py",
+        "line": 119,
+        "func_name": "TestProtocolManipulation.test_payload_generation_for_protocol_exploitation",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_manipulation_features.py",
+        "line": 233,
+        "func_name": "TestProtocolManipulation.test_protocol_packet_crafting_capabilities",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_manipulation_features.py",
+        "line": 268,
+        "func_name": "TestProtocolManipulation._craft_protocol_packets",
+        "type_comments": [
+            "(Dict[str, Union[List[str], bytes, str]]) -> List[Dict[str, Union[bytes, int, str]]]",
+            "(Dict[str, Union[List[str], int, str]]) -> List[Dict[str, Union[Dict[str, str], int, str]]]",
+            "(Dict[str, Union[List[str], int, str]]) -> List[Dict[str, Union[int, str]]]"
+        ],
+        "samples": 3
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_manipulation_features.py",
+        "line": 307,
+        "func_name": "TestProtocolManipulation._craft_tcp_syn_packet",
+        "type_comments": [
+            "(int, int, str) -> Dict[str, Union[int, str]]"
+        ],
+        "samples": 5
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_manipulation_features.py",
+        "line": 320,
+        "func_name": "TestProtocolManipulation._craft_udp_dns_query",
+        "type_comments": [
+            "(str, str, str) -> Dict[str, Union[Dict[str, str], int, str]]"
+        ],
+        "samples": 5
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_manipulation_features.py",
+        "line": 335,
+        "func_name": "TestProtocolManipulation._craft_icmp_packet",
+        "type_comments": [
+            "(int, bytes, int) -> Dict[str, Union[bytes, int, str]]"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_manipulation_features.py",
+        "line": 347,
+        "func_name": "TestProtocolManipulation._split_data_chunks",
+        "type_comments": [
+            "(bytes, int) -> List[bytes]"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_manipulation_features.py",
+        "line": 351,
+        "func_name": "TestProtocolManipulation._validate_crafted_packet",
+        "type_comments": [
+            "(Dict[str, Union[Dict[str, str], int, str]], Dict[str, Union[List[str], int, str]]) -> bool",
+            "(Dict[str, Union[int, str]], Dict[str, Union[List[str], int, str]]) -> bool"
+        ],
+        "samples": 5
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_manipulation_features.py",
+        "line": 373,
+        "func_name": "TestProtocolManipulation.test_protocol_encoding_and_obfuscation",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_manipulation_features.py",
+        "line": 415,
+        "func_name": "TestProtocolManipulation._apply_protocol_encoding",
+        "type_comments": [
+            "(str, str) -> str"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_manipulation_features.py",
+        "line": 427,
+        "func_name": "TestProtocolManipulation._decode_protocol_payload",
+        "type_comments": [
+            "(str, str) -> str"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_manipulation_features.py",
+        "line": 448,
+        "func_name": "TestAdvancedProtocolManipulation.test_protocol_chaining_for_complex_attacks",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_manipulation_features.py",
+        "line": 479,
+        "func_name": "TestAdvancedProtocolManipulation._execute_protocol_chain",
+        "type_comments": [
+            "(List[Dict[str, str]]) -> Dict[str, Union[List[Dict[str, Union[Dict[str, Union[List[Tuple[str, str]], List[str]]], bool, int, str]]], bool, float, str]]",
+            "(List[Dict[str, str]]) -> Dict[str, Union[List[Dict[str, Union[Dict[str, Union[List[str], bool, str]], bool, int, str]]], bool, float, str]]"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_manipulation_features.py",
+        "line": 511,
+        "func_name": "TestAdvancedProtocolManipulation._simulate_stage_data",
+        "type_comments": [
+            "(Dict[str, str]) -> Dict[str, List[Tuple[str, str]]]",
+            "(Dict[str, str]) -> Dict[str, Union[bool, str]]",
+            "(Dict[str, str]) -> Dict[str, List[str]]"
+        ],
+        "samples": 5
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_manipulation_features.py",
+        "line": 525,
+        "func_name": "TestAdvancedProtocolManipulation._prepare_next_stage_input",
+        "type_comments": [
+            "(Dict[str, str]) -> Dict[str, str]",
+            "(Dict[str, str]) -> Dict[str, List[str]]"
+        ],
+        "samples": 5
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_tool.py",
+        "line": 35,
+        "func_name": "RealApplicationSimulator.__init__",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 6
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_tool.py",
+        "line": 70,
+        "func_name": "RealSignalsManager.__init__",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 6
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_tool.py",
+        "line": 96,
+        "func_name": "RealProtocolAnalyzer.__init__",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 6
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_tool.py",
+        "line": 251,
+        "func_name": "RealVulnerabilityDatabase.__init__",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 6
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_tool.py",
+        "line": 290,
+        "func_name": "RealPayloadGenerator.__init__",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 6
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_tool.py",
+        "line": 357,
+        "func_name": "RealTrafficInterceptor.__init__",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 6
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_tool.py",
+        "line": 427,
+        "func_name": "RealSecurityAssessmentSimulator.__init__",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 6
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_tool.py",
+        "line": 544,
+        "func_name": "RealNetworkInterceptorSimulator.__init__",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 6
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_tool.py",
+        "line": 611,
+        "func_name": "TestProtocolToolSignals.test_signals_class_exists_and_inherits_properly",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_tool.py",
+        "line": 626,
+        "func_name": "TestProtocolToolSignals.test_signal_emission_functionality",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_tool.py",
+        "line": 687,
+        "func_name": "TestProtocolToolWindow.test_singleton_pattern_implementation",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_tool.py",
+        "line": 950,
+        "func_name": "TestProtocolToolFunctions.test_launch_protocol_tool_function",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_tool.py",
+        "line": 969,
+        "func_name": "TestProtocolToolFunctions.test_update_protocol_tool_description_function",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_tool.py",
+        "line": 984,
+        "func_name": "TestProtocolToolIntegration.test_real_world_http_vulnerability_analysis",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_tool.py",
+        "line": 1021,
+        "func_name": "TestProtocolToolIntegration.test_multi_protocol_security_assessment",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_tool.py",
+        "line": 1043,
+        "func_name": "TestProtocolToolIntegration.test_protocol_exploitation_workflow_integration",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_tool.py",
+        "line": 1089,
+        "func_name": "TestProtocolToolPerformance.test_concurrent_protocol_analysis_performance",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_protocol_tool.py",
+        "line": 1128,
+        "func_name": "TestProtocolToolPerformance.test_large_protocol_data_processing",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_ssl_interceptor.py",
+        "line": 35,
+        "func_name": "RealCryptographySimulator.__init__",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_ssl_interceptor.py",
+        "line": 42,
+        "func_name": "RealCryptographySimulator.generate_ca_certificate",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 7
+    },
+    {
+        "path": "tests/unit/core/network/test_ssl_interceptor.py",
+        "line": 131,
+        "func_name": "RealCryptographySimulator.set_unavailable",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_ssl_interceptor.py",
+        "line": 143,
+        "func_name": "RealProcessSimulator.__init__",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_ssl_interceptor.py",
+        "line": 192,
+        "func_name": "RealProcessSimulator.find_executable",
+        "type_comments": [
+            "(str) -> str",
+            "(str) -> None"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "tests/unit/core/network/test_ssl_interceptor.py",
+        "line": 225,
+        "func_name": "RealFileSystemSimulator.__init__",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_ssl_interceptor.py",
+        "line": 296,
+        "func_name": "RealSSLInterceptorSimulator.__init__",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_ssl_interceptor.py",
+        "line": 308,
+        "func_name": "RealSSLInterceptorMock",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 16
+    },
+    {
+        "path": "tests/unit/core/network/test_ssl_interceptor.py",
+        "line": 316,
+        "func_name": "RealSSLInterceptorMock.generate_ca_certificate",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 8
+    },
+    {
+        "path": "tests/unit/core/network/test_ssl_interceptor.py",
+        "line": 322,
+        "func_name": "RealSSLInterceptorMock.start",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 6
+    },
+    {
+        "path": "tests/unit/core/network/test_ssl_interceptor.py",
+        "line": 359,
+        "func_name": "RealSSLInterceptorMock.configure",
+        "type_comments": [
+            "(Dict[str, Union[List[str], bool, int]]) -> None",
+            "(Dict[str, str]) -> None",
+            "(Dict[str, int]) -> None"
+        ],
+        "samples": 5
+    },
+    {
+        "path": "tests/unit/core/network/test_ssl_interceptor.py",
+        "line": 376,
+        "func_name": "RealSSLInterceptorMock.get_config",
+        "type_comments": [
+            "() -> Dict[str, Union[List[str], int, str]]"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_ssl_interceptor.py",
+        "line": 391,
+        "func_name": "RealSSLInterceptorMock.add_target_host",
+        "type_comments": [
+            "(str) -> None"
+        ],
+        "samples": 11
+    },
+    {
+        "path": "tests/unit/core/network/test_ssl_interceptor.py",
+        "line": 401,
+        "func_name": "RealSSLInterceptorMock.get_target_hosts",
+        "type_comments": [
+            "() -> List[str]"
+        ],
+        "samples": 5
+    },
+    {
+        "path": "tests/unit/core/network/test_ssl_interceptor.py",
+        "line": 405,
+        "func_name": "RealSSLInterceptorMock.get_traffic_log",
+        "type_comments": [
+            "() -> List[Dict[str, Union[Dict[str, str], float, str]]]",
+            "() -> List"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "tests/unit/core/network/test_ssl_interceptor.py",
+        "line": 411,
+        "func_name": "RealSSLInterceptorSimulator.simulate_executable_not_found",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_ssl_interceptor.py",
+        "line": 415,
+        "func_name": "RealSSLInterceptorSimulator.simulate_cryptography_unavailable",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_ssl_interceptor.py",
+        "line": 419,
+        "func_name": "RealSSLInterceptorSimulator.simulate_process_error",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_ssl_interceptor.py",
+        "line": 426,
+        "func_name": "RealSSLInterceptorSimulator.create_mitm_script_content",
+        "type_comments": [
+            "(List[str]) -> str"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_ssl_interceptor.py",
+        "line": 515,
+        "func_name": "TestSSLTLSInterceptor.test_ssl_interceptor_initialization",
+        "type_comments": [
+            "(Dict[str, Union[List[str], int, str]]) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_ssl_interceptor.py",
+        "line": 527,
+        "func_name": "TestSSLTLSInterceptor.test_ca_certificate_generation_with_cryptography",
+        "type_comments": [
+            "(intellicrack.core.network.ssl_interceptor.SSLTLSInterceptor) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_ssl_interceptor.py",
+        "line": 567,
+        "func_name": "TestSSLTLSInterceptor.test_certificate_file_persistence",
+        "type_comments": [
+            "(intellicrack.core.network.ssl_interceptor.SSLTLSInterceptor, str) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_ssl_interceptor.py",
+        "line": 650,
+        "func_name": "TestSSLTLSInterceptor.test_license_response_modification_json",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_ssl_interceptor.py",
+        "line": 685,
+        "func_name": "TestSSLTLSInterceptor.test_license_response_modification_xml",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_ssl_interceptor.py",
+        "line": 818,
+        "func_name": "TestSSLTLSInterceptor.test_ssl_certificate_chain_validation",
+        "type_comments": [
+            "(intellicrack.core.network.ssl_interceptor.SSLTLSInterceptor) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_ssl_interceptor.py",
+        "line": 837,
+        "func_name": "TestSSLTLSInterceptor.test_real_ssl_connection_simulation",
+        "type_comments": [
+            "(intellicrack.core.network.ssl_interceptor.SSLTLSInterceptor) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_ssl_interceptor.py",
+        "line": 914,
+        "func_name": "TestSSLTLSInterceptor.test_response_template_integration",
+        "type_comments": [
+            "(intellicrack.core.network.ssl_interceptor.SSLTLSInterceptor) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_ssl_interceptor.py",
+        "line": 951,
+        "func_name": "TestSSLTLSInterceptor.test_ssl_handshake_modification_capability",
+        "type_comments": [
+            "(intellicrack.core.network.ssl_interceptor.SSLTLSInterceptor) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_ssl_interceptor.py",
+        "line": 1050,
+        "func_name": "TestSSLInterceptionScenarios.test_certificate_pinning_bypass_scenario",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_ssl_interceptor.py",
+        "line": 1069,
+        "func_name": "TestSSLInterceptionScenarios.test_license_server_mitm_attack",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_ssl_interceptor.py",
+        "line": 1124,
+        "func_name": "TestSSLInterceptionScenarios.test_multi_protocol_license_interception",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_analyzer.py",
+        "line": 120,
+        "func_name": "LicenseServerSimulator.start_flexlm_server",
+        "type_comments": [
+            "() -> Tuple[str, int]"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_analyzer.py",
+        "line": 155,
+        "func_name": "LicenseServerSimulator.start_hasp_server",
+        "type_comments": [
+            "() -> Tuple[str, int]"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_analyzer.py",
+        "line": 266,
+        "func_name": "TestNetworkTrafficAnalyzer.test_analyzer_initialization",
+        "type_comments": [
+            "(intellicrack.core.network.traffic_analyzer.NetworkTrafficAnalyzer) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_analyzer.py",
+        "line": 290,
+        "func_name": "TestNetworkTrafficAnalyzer.test_real_pcap_analysis",
+        "type_comments": [
+            "(intellicrack.core.network.traffic_analyzer.NetworkTrafficAnalyzer, List[pathlib.Path]) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_analyzer.py",
+        "line": 320,
+        "func_name": "TestNetworkTrafficAnalyzer.test_live_traffic_capture_socket_backend",
+        "type_comments": [
+            "(intellicrack.core.network.traffic_analyzer.NetworkTrafficAnalyzer) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_analyzer.py",
+        "line": 328,
+        "func_name": "test_capture",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_analyzer.py",
+        "line": 484,
+        "func_name": "TestNetworkTrafficAnalyzer.test_license_protocol_detection",
+        "type_comments": [
+            "(intellicrack.core.network.traffic_analyzer.NetworkTrafficAnalyzer) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_analyzer.py",
+        "line": 543,
+        "func_name": "TestNetworkTrafficAnalyzer.test_encrypted_traffic_analysis",
+        "type_comments": [
+            "(intellicrack.core.network.traffic_analyzer.NetworkTrafficAnalyzer, Tuple[str, int]) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_analyzer.py",
+        "line": 607,
+        "func_name": "TestNetworkTrafficAnalyzer.test_statistical_analysis_capabilities",
+        "type_comments": [
+            "(intellicrack.core.network.traffic_analyzer.NetworkTrafficAnalyzer) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_analyzer.py",
+        "line": 665,
+        "func_name": "TestNetworkTrafficAnalyzer.test_suspicious_traffic_detection",
+        "type_comments": [
+            "(intellicrack.core.network.traffic_analyzer.NetworkTrafficAnalyzer) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_analyzer.py",
+        "line": 760,
+        "func_name": "TestNetworkTrafficAnalyzer.test_license_server_identification",
+        "type_comments": [
+            "(intellicrack.core.network.traffic_analyzer.NetworkTrafficAnalyzer) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_analyzer.py",
+        "line": 840,
+        "func_name": "TestNetworkTrafficAnalyzer.test_visualization_generation",
+        "type_comments": [
+            "(intellicrack.core.network.traffic_analyzer.NetworkTrafficAnalyzer) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_analyzer.py",
+        "line": 892,
+        "func_name": "TestNetworkTrafficAnalyzer.test_html_report_generation",
+        "type_comments": [
+            "(intellicrack.core.network.traffic_analyzer.NetworkTrafficAnalyzer) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_analyzer.py",
+        "line": 936,
+        "func_name": "TestNetworkTrafficAnalyzer.test_performance_with_high_volume_traffic",
+        "type_comments": [
+            "(intellicrack.core.network.traffic_analyzer.NetworkTrafficAnalyzer) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_analyzer.py",
+        "line": 974,
+        "func_name": "TestNetworkTrafficAnalyzer.test_concurrent_analysis_thread_safety",
+        "type_comments": [
+            "(intellicrack.core.network.traffic_analyzer.NetworkTrafficAnalyzer) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_analyzer.py",
+        "line": 979,
+        "func_name": "analyze_traffic_batch",
+        "type_comments": [
+            "(int) -> None"
+        ],
+        "samples": 5
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_analyzer.py",
+        "line": 1016,
+        "func_name": "TestNetworkTrafficAnalyzer._create_test_connection_data",
+        "type_comments": [
+            "() -> Dict[str, Dict[str, Union[int, str]]]"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_analyzer.py",
+        "line": 1069,
+        "func_name": "TestNetworkTrafficAnalyzer._simulate_traffic_capture",
+        "type_comments": [
+            "(intellicrack.core.network.traffic_analyzer.NetworkTrafficAnalyzer, float) -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_analyzer.py",
+        "line": 1092,
+        "func_name": "TestTrafficAnalyzerIntegration.test_complete_license_validation_workflow",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_analyzer.py",
+        "line": 1145,
+        "func_name": "TestTrafficAnalyzerIntegration.test_multi_protocol_license_environment",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_analyzer_basic.py",
+        "line": 22,
+        "func_name": "test_basic_imports",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_analyzer_basic.py",
+        "line": 31,
+        "func_name": "test_basic_initialization",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_analyzer_basic.py",
+        "line": 81,
+        "func_name": "test_packet_processing",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_analyzer_basic.py",
+        "line": 111,
+        "func_name": "test_results_functionality",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_interception_engine.py",
+        "line": 49,
+        "func_name": "TestInterceptedPacket.test_intercepted_packet_creation_with_tcp_data",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_interception_engine.py",
+        "line": 75,
+        "func_name": "TestInterceptedPacket.test_intercepted_packet_creation_with_udp_data",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_interception_engine.py",
+        "line": 95,
+        "func_name": "TestInterceptedPacket.test_intercepted_packet_timestamp_precision",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_interception_engine.py",
+        "line": 114,
+        "func_name": "TestInterceptedPacket.test_intercepted_packet_ipv6_support",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_interception_engine.py",
+        "line": 132,
+        "func_name": "TestInterceptedPacket.test_intercepted_packet_large_payload",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_interception_engine.py",
+        "line": 165,
+        "func_name": "TestAnalyzedTraffic.test_analyzed_traffic_license_detection",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_interception_engine.py",
+        "line": 202,
+        "func_name": "TestAnalyzedTraffic.test_analyzed_traffic_protocol_fingerprinting",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_interception_engine.py",
+        "line": 236,
+        "func_name": "TestAnalyzedTraffic.test_analyzed_traffic_confidence_scoring",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_interception_engine.py",
+        "line": 268,
+        "func_name": "TestAnalyzedTraffic.test_analyzed_traffic_pattern_matching_accuracy",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_interception_engine.py",
+        "line": 324,
+        "func_name": "TestTrafficInterceptionEngine.setUp",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 9
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_interception_engine.py",
+        "line": 328,
+        "func_name": "TestTrafficInterceptionEngine.tearDown",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 9
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_interception_engine.py",
+        "line": 333,
+        "func_name": "TestTrafficInterceptionEngine.test_traffic_interception_engine_initialization",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_interception_engine.py",
+        "line": 355,
+        "func_name": "TestTrafficInterceptionEngine.test_start_stop_interception_lifecycle",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_interception_engine.py",
+        "line": 373,
+        "func_name": "TestTrafficInterceptionEngine.test_packet_capture_and_queuing_mechanism",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_interception_engine.py",
+        "line": 386,
+        "func_name": "TestTrafficInterceptionEngine.test_license_pattern_recognition",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_interception_engine.py",
+        "line": 403,
+        "func_name": "TestTrafficInterceptionEngine.test_dns_redirection_configuration",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_interception_engine.py",
+        "line": 418,
+        "func_name": "TestTrafficInterceptionEngine.test_transparent_proxy_setup",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_interception_engine.py",
+        "line": 435,
+        "func_name": "TestTrafficInterceptionEngine.test_analysis_callback_management",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_interception_engine.py",
+        "line": 451,
+        "func_name": "TestTrafficInterceptionEngine.test_statistics_and_monitoring",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_interception_engine.py",
+        "line": 469,
+        "func_name": "TestTrafficInterceptionEngine.test_active_connections_monitoring",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_interception_engine.py",
+        "line": 493,
+        "func_name": "TestTrafficInterceptionEngineIntegration.setUp",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 3
+    },
+    {
+        "path": "tests/unit/core/network/test_traffic_interception_engine.py",
+        "line": 622,
+        "func_name": "TestTrafficInterceptionEngineNetworkManipulation.setUp",
+        "type_comments": [
+            "() -> None"
+        ],
+        "samples": 3
+    }
+]

@@ -1,5 +1,4 @@
-"""
-Comprehensive tests for ProtocolFingerprinter module.
+"""Comprehensive tests for ProtocolFingerprinter module.
 
 This test suite validates the production-ready capabilities of the ProtocolFingerprinter
 for identifying and analyzing network license protocols in real security research scenarios.
@@ -8,20 +7,45 @@ CRITICAL: These tests use real network data and validate genuine functionality.
 NO placeholders, mocks, or simulated data are accepted.
 """
 
-import os
-import pytest
-import time
-import tempfile
-from pathlib import Path
-from typing import Dict, Any, List
+from __future__ import annotations
 
-from tests.base_test import IntellicrackTestBase
+import os
+import tempfile
+import time
+from pathlib import Path
+from typing import Any
+
+import pytest
+
 from intellicrack.core.network.protocol_fingerprinter import ProtocolFingerprinter
+from tests.base_test import IntellicrackTestBase
+
+
+# Confidence thresholds for protocol detection
+MIN_CONFIDENCE_CUSTOM = 0.8
+MIN_CONFIDENCE_FLEXLM = 0.7
+MIN_CONFIDENCE_HASP = 0.5
+MIN_CONFIDENCE_ADOBE = 0.5
+MIN_CONFIDENCE_GENERIC = 0.5
+
+# Entropy and analysis bounds
+MAX_ENTROPY_VALUE = 8
+
+# Response length thresholds
+MIN_FLEXLM_RESPONSE_LENGTH = 8
+MIN_HASP_RESPONSE_LENGTH = 4
+MIN_RESPONSE_LENGTH = 4
+
+# Performance thresholds
+MAX_PACKET_ANALYSIS_TIME_SECONDS = 0.1
+MAX_TRAFFIC_SAMPLES = 1000
+
+# Coverage thresholds
+MIN_PROTOCOL_COVERAGE = 5
 
 
 class TestProtocolFingerprinter(IntellicrackTestBase):
-    """
-    Comprehensive test suite for ProtocolFingerprinter.
+    """Comprehensive test suite for ProtocolFingerprinter.
 
     Tests validate production-ready protocol identification, parsing, and analysis
     capabilities required for effective security research.
@@ -58,7 +82,7 @@ class TestProtocolFingerprinter(IntellicrackTestBase):
             "hasp_heartbeat": b"\x00\x01\x02\x03\x00\x00\x00",
 
             # Adobe licensing protocol samples
-            "adobe_activation": b"LCSAP\x01\x01\x00\x20{\"license\":\"activation_token\"}",
+            "adobe_activation": b'LCSAP\x01\x01\x00\x20{"license":"activation_token"}',
             "adobe_heartbeat": b"LCSAP\x01\x00\x00\x08heartbeat",
             "adobe_license_check": b"LCSAP\x01\x02\x00\x15license_validation",
 
@@ -81,7 +105,7 @@ class TestProtocolFingerprinter(IntellicrackTestBase):
         assert hasattr(self.fingerprinter, 'signatures'), "Missing signatures attribute"
         assert hasattr(self.fingerprinter, 'config'), "Missing config attribute"
 
-    def test_initialization_and_configuration(self):
+    def test_initialization_and_configuration(self) -> None:
         """Test proper initialization with configuration options."""
         # Test default initialization
         fingerprinter = ProtocolFingerprinter()
@@ -97,7 +121,7 @@ class TestProtocolFingerprinter(IntellicrackTestBase):
         }
 
         fingerprinter_custom = ProtocolFingerprinter(config=custom_config)
-        assert fingerprinter_custom.config['min_confidence'] == 0.8, "Custom config not applied"
+        assert fingerprinter_custom.config['min_confidence'] == MIN_CONFIDENCE_CUSTOM, "Custom config not applied"
         assert fingerprinter_custom.config['learning_mode'] is False, "Learning mode config not applied"
 
         # Validate signature loading
@@ -115,7 +139,7 @@ class TestProtocolFingerprinter(IntellicrackTestBase):
             assert 'patterns' in signature, f"Missing patterns in {protocol_id} signature"
             assert isinstance(signature['ports'], list), f"Invalid ports type in {protocol_id}"
 
-    def test_analyze_traffic_with_real_protocols(self):
+    def test_analyze_traffic_with_real_protocols(self) -> None:
         """Test traffic analysis with real protocol samples."""
         # Test FlexLM protocol identification
         flexlm_result = self.fingerprinter.analyze_traffic(
@@ -126,7 +150,7 @@ class TestProtocolFingerprinter(IntellicrackTestBase):
         # Validate FlexLM detection
         assert flexlm_result is not None, "Failed to identify FlexLM protocol"
         assert flexlm_result['protocol_id'] == 'flexlm', "Incorrect protocol identification"
-        assert flexlm_result['confidence'] >= 0.7, "Insufficient confidence for FlexLM detection"
+        assert flexlm_result['confidence'] >= MIN_CONFIDENCE_FLEXLM, "Insufficient confidence for FlexLM detection"
         assert 'name' in flexlm_result, "Missing protocol name"
         assert 'description' in flexlm_result, "Missing protocol description"
 
@@ -138,7 +162,7 @@ class TestProtocolFingerprinter(IntellicrackTestBase):
 
         assert hasp_result is not None, "Failed to identify HASP protocol"
         assert hasp_result['protocol_id'] == 'hasp', "Incorrect HASP identification"
-        assert hasp_result['confidence'] >= 0.5, "Insufficient confidence for HASP detection"
+        assert hasp_result['confidence'] >= MIN_CONFIDENCE_HASP, "Insufficient confidence for HASP detection"
 
         # Test Adobe protocol identification
         adobe_result = self.fingerprinter.analyze_traffic(
@@ -148,7 +172,7 @@ class TestProtocolFingerprinter(IntellicrackTestBase):
 
         assert adobe_result is not None, "Failed to identify Adobe protocol"
         assert adobe_result['protocol_id'] == 'adobe', "Incorrect Adobe identification"
-        assert adobe_result['confidence'] >= 0.5, "Insufficient confidence for Adobe detection"
+        assert adobe_result['confidence'] >= MIN_CONFIDENCE_ADOBE, "Insufficient confidence for Adobe detection"
 
         # Test with unknown protocol (should return None or learn)
         unknown_data = b"UNKNOWN_PROTOCOL\x00\x00\x00\x00random_data_here"
@@ -160,7 +184,7 @@ class TestProtocolFingerprinter(IntellicrackTestBase):
             assert 'protocol_id' in unknown_result, "Invalid unknown protocol result"
             assert 'confidence' in unknown_result, "Missing confidence in unknown protocol result"
 
-    def test_fingerprint_packet_comprehensive_analysis(self):
+    def test_fingerprint_packet_comprehensive_analysis(self) -> None:
         """Test comprehensive packet fingerprinting capabilities."""
         # Test FlexLM packet fingerprinting
         flexlm_fingerprint = self.fingerprinter.fingerprint_packet(
@@ -183,7 +207,7 @@ class TestProtocolFingerprinter(IntellicrackTestBase):
         # Validate entropy calculation
         entropy = flexlm_fingerprint['packet_entropy']
         assert isinstance(entropy, (int, float)), "Invalid entropy type"
-        assert 0 <= entropy <= 8, "Entropy out of valid range"
+        assert 0 <= entropy <= MAX_ENTROPY_VALUE, "Entropy out of valid range"
 
         # Validate ASCII ratio
         ascii_ratio = flexlm_fingerprint['ascii_ratio']
@@ -206,7 +230,7 @@ class TestProtocolFingerprinter(IntellicrackTestBase):
         if hint_fingerprint and 'protocol_hints' in hint_fingerprint:
             assert 'License_Protocol' in hint_fingerprint['protocol_hints'], "Failed to detect license protocol hint"
 
-    def test_parse_packet_structured_extraction(self):
+    def test_parse_packet_structured_extraction(self) -> None:
         """Test structured packet parsing for identified protocols."""
         # Test FlexLM packet parsing
         flexlm_parsed = self.fingerprinter.parse_packet(
@@ -258,7 +282,7 @@ class TestProtocolFingerprinter(IntellicrackTestBase):
         malformed_result = self.fingerprinter.parse_packet('flexlm', b"short")
         assert malformed_result is None, "Should return None for malformed packet"
 
-    def test_generate_response_protocol_compatibility(self):
+    def test_generate_response_protocol_compatibility(self) -> None:
         """Test response generation for license protocol compatibility."""
         # Test FlexLM response generation
         flexlm_request = self.real_protocol_samples['flexlm_license_request']
@@ -273,7 +297,7 @@ class TestProtocolFingerprinter(IntellicrackTestBase):
         assert len(flexlm_response) > 0, "Empty response generated"
 
         # Validate response contains expected elements
-        assert b'RESPONSE' in flexlm_response or len(flexlm_response) >= 8, "Invalid FlexLM response format"
+        assert b'RESPONSE' in flexlm_response or len(flexlm_response) >= MIN_FLEXLM_RESPONSE_LENGTH, "Invalid FlexLM response format"
 
         # Test HASP response generation
         hasp_request = self.real_protocol_samples['hasp_license_check']
@@ -285,7 +309,7 @@ class TestProtocolFingerprinter(IntellicrackTestBase):
 
         assert hasp_response is not None, "HASP response generation failed"
         assert isinstance(hasp_response, bytes), "HASP response must be bytes"
-        assert len(hasp_response) >= 4, "HASP response too short"
+        assert len(hasp_response) >= MIN_HASP_RESPONSE_LENGTH, "HASP response too short"
 
         # Test Adobe response generation
         adobe_request = self.real_protocol_samples['adobe_activation']
@@ -317,7 +341,7 @@ class TestProtocolFingerprinter(IntellicrackTestBase):
 
         assert invalid_response is None, "Should return None for invalid protocol"
 
-    def test_analyze_pcap_comprehensive_processing(self):
+    def test_analyze_pcap_comprehensive_processing(self) -> None:
         """Test comprehensive PCAP file analysis with real network captures."""
         # Get available PCAP files
         pcap_files = list(self.network_captures_path.glob("*.pcap"))
@@ -366,7 +390,7 @@ class TestProtocolFingerprinter(IntellicrackTestBase):
         assert 'error' in nonexistent_results, "Should return error for non-existent file"
         assert nonexistent_results['error'] == "File not found", "Incorrect error message"
 
-    def test_analyze_binary_network_protocol_detection(self):
+    def test_analyze_binary_network_protocol_detection(self) -> None:
         """Test binary analysis for network protocol detection."""
         # Get available binary files
         binary_files = []
@@ -414,7 +438,7 @@ class TestProtocolFingerprinter(IntellicrackTestBase):
         nonexistent_binary_results = self.fingerprinter.analyze_binary("/nonexistent/binary.exe")
         assert 'error' in nonexistent_binary_results, "Should return error for non-existent binary"
 
-    def test_performance_and_scalability(self):
+    def test_performance_and_scalability(self) -> None:
         """Test performance with realistic data loads."""
         # Performance test for packet analysis
         large_packet = b"A" * 1024  # 1KB packet
@@ -425,10 +449,10 @@ class TestProtocolFingerprinter(IntellicrackTestBase):
         end_time = time.time()
 
         avg_time = (end_time - start_time) / 100
-        assert avg_time < 0.1, f"Packet analysis too slow: {avg_time:.3f}s per packet (should be <0.1s)"
+        assert avg_time < MAX_PACKET_ANALYSIS_TIME_SECONDS, f"Packet analysis too slow: {avg_time:.3f}s per packet"
 
         # Test memory efficiency with traffic samples
-        initial_sample_count = len(self.fingerprinter.traffic_samples)
+        _initial_sample_count = len(self.fingerprinter.traffic_samples)
 
         # Add many samples
         for i in range(1500):
@@ -437,9 +461,9 @@ class TestProtocolFingerprinter(IntellicrackTestBase):
 
         # Should limit sample storage
         final_sample_count = len(self.fingerprinter.traffic_samples)
-        assert final_sample_count <= 1000, "Traffic samples not properly limited for memory efficiency"
+        assert final_sample_count <= MAX_TRAFFIC_SAMPLES, "Traffic samples not properly limited for memory efficiency"
 
-    def test_learning_and_adaptation_capabilities(self):
+    def test_learning_and_adaptation_capabilities(self) -> None:
         """Test protocol learning and signature adaptation."""
         # Enable learning mode
         learning_fingerprinter = ProtocolFingerprinter(config={"learning_mode": True})
@@ -455,7 +479,7 @@ class TestProtocolFingerprinter(IntellicrackTestBase):
         # Check if learning occurred
         initial_signature_count = len(learning_fingerprinter.signatures)
 
-        if learned := learning_fingerprinter._learn_new_signature(
+        if learning_fingerprinter._learn_new_signature(
             unknown_pattern, port=9999
         ):
             final_signature_count = len(learning_fingerprinter.signatures)
@@ -471,28 +495,28 @@ class TestProtocolFingerprinter(IntellicrackTestBase):
                 assert 'patterns' in learned_sig, "Learned signature missing patterns"
                 assert 'response_templates' in learned_sig, "Learned signature missing response templates"
 
-    def test_error_handling_and_robustness(self):
+    def test_error_handling_and_robustness(self) -> None:
         """Test error handling with malformed and edge case data."""
         # Test with empty data
-        empty_result = self.fingerprinter.analyze_traffic(b"", port=27000)
+        _empty_result = self.fingerprinter.analyze_traffic(b"", port=27000)
         # Should handle gracefully (either None or valid result structure)
 
         # Test with very short data
-        short_result = self.fingerprinter.analyze_traffic(b"AB", port=1947)
+        _short_result = self.fingerprinter.analyze_traffic(b"AB", port=1947)
         # Should handle gracefully
 
         # Test with very large data
         large_data = b"X" * 10000
-        large_result = self.fingerprinter.analyze_traffic(large_data, port=443)
+        _large_result = self.fingerprinter.analyze_traffic(large_data, port=443)
         # Should handle without crashing
 
         # Test with binary data (non-ASCII)
         binary_data = bytes(range(256))
-        binary_result = self.fingerprinter.analyze_traffic(binary_data, port=2080)
+        _binary_result = self.fingerprinter.analyze_traffic(binary_data, port=2080)
         # Should handle binary data
 
         # Test with None port
-        none_port_result = self.fingerprinter.analyze_traffic(
+        _none_port_result = self.fingerprinter.analyze_traffic(
             self.real_protocol_samples['flexlm_heartbeat'],
             port=None
         )
@@ -506,7 +530,7 @@ class TestProtocolFingerprinter(IntellicrackTestBase):
         invalid_response = self.fingerprinter.generate_response("", b"test", "")
         assert invalid_response is None, "Should return None for empty protocol ID"
 
-    def test_integration_with_security_research_workflows(self):
+    def test_integration_with_security_research_workflows(self) -> None:
         """Test integration capabilities for security research scenarios."""
         # Simulate license server communication interception
         license_request = self.real_protocol_samples['flexlm_license_request']
@@ -526,12 +550,12 @@ class TestProtocolFingerprinter(IntellicrackTestBase):
         assert response is not None, "Failed to generate license response"
 
         # Step 4: Validate response can be parsed
-        parsed_response = self.fingerprinter.parse_packet(protocol_id, response)
+        _parsed_response = self.fingerprinter.parse_packet(protocol_id, response)
         # Response should be parseable (may be None if response format differs)
 
         # This workflow demonstrates the tool's capability for legitimate license protocol analysis
 
-    def test_comprehensive_coverage_validation(self):
+    def test_comprehensive_coverage_validation(self) -> None:
         """Validate test coverage of all major functionality."""
         # Ensure all major methods are tested
         tested_methods = [
@@ -557,14 +581,14 @@ class TestProtocolFingerprinter(IntellicrackTestBase):
                     sample = self.real_protocol_samples[sample_key]
 
                     # Should be able to parse
-                    parsed = self.fingerprinter.parse_packet(protocol, sample)
+                    _parsed = self.fingerprinter.parse_packet(protocol, sample)
                     # May be None if sample doesn't match expected format
 
                     # Should be able to generate response
                     response = self.fingerprinter.generate_response(protocol, sample, 'license_ok')
                     assert response is not None, f"Cannot generate response for {protocol}"
 
-    def test_production_readiness_validation(self):
+    def test_production_readiness_validation(self) -> None:
         """Validate production-ready characteristics."""
         # Test with realistic license protocol scenarios
         test_scenarios = [
@@ -595,7 +619,7 @@ class TestProtocolFingerprinter(IntellicrackTestBase):
                 assert result['protocol_id'] == scenario['expected_protocol'], \
                         f"Incorrect identification for {scenario['name']}"
 
-                assert result['confidence'] > 0.5, \
+                assert result['confidence'] > MIN_CONFIDENCE_GENERIC, \
                         f"Low confidence for {scenario['name']}: {result['confidence']}"
 
                 # Should be able to generate meaningful response
@@ -606,7 +630,7 @@ class TestProtocolFingerprinter(IntellicrackTestBase):
                 )
 
                 assert response is not None, f"Cannot generate response for {scenario['name']}"
-                assert len(response) > 4, f"Response too short for {scenario['name']}"
+                assert len(response) > MIN_RESPONSE_LENGTH, f"Response too short for {scenario['name']}"
 
                 # Response should be different from request (not just echoing)
                 assert response != scenario['data'], f"Response identical to request for {scenario['name']}"
@@ -618,7 +642,7 @@ class TestProtocolFingerprinter(IntellicrackTestBase):
         )
 
         # Ensure significant protocol coverage
-        assert len(self.fingerprinter.signatures) >= 5, "Insufficient protocol coverage for production use"
+        assert len(self.fingerprinter.signatures) >= MIN_PROTOCOL_COVERAGE, "Insufficient protocol coverage for production use"
 
 
 if __name__ == "__main__":

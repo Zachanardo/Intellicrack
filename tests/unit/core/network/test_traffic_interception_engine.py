@@ -1,5 +1,4 @@
-"""
-Comprehensive test suite for traffic_interception_engine.py
+"""Comprehensive test suite for traffic_interception_engine.py.
 
 This test suite validates the production-ready network traffic interception capabilities
 essential for Intellicrack's effectiveness as a binary analysis and security research platform.
@@ -11,31 +10,37 @@ Test Philosophy:
 - Assumes sophisticated, commercial-grade functionality exists
 """
 
-import unittest
+from __future__ import annotations
+
+import ipaddress
+import socket
+import struct
+import sys
 import threading
 import time
-import socket
-import sys
-from pathlib import Path
+import unittest
 from datetime import datetime
-import ipaddress
-import struct
+from pathlib import Path
+
 
 # Add the project root to sys.path for imports
 project_root = Path(__file__).parents[4]
 sys.path.insert(0, str(project_root))
 
-from intellicrack.core.network.traffic_interception_engine import (
-    InterceptedPacket,
+from intellicrack.core.network.traffic_interception_engine import (  # noqa: E402
+    HAS_SCAPY,
     AnalyzedTraffic,
+    InterceptedPacket,
     TrafficInterceptionEngine,
-    HAS_SCAPY
 )
 
 
+# IP version constants for protocol validation
+IPV6_VERSION = 6
+
+
 class TestInterceptedPacket(unittest.TestCase):
-    """
-    Tests for InterceptedPacket class - validates packet data representation.
+    """Tests for InterceptedPacket class - validates packet data representation.
 
     Expected Production Behavior:
     - Accurately represents real network packets with all essential fields
@@ -46,8 +51,8 @@ class TestInterceptedPacket(unittest.TestCase):
     - Preserves packet flags and metadata
     """
 
-    def test_intercepted_packet_creation_with_tcp_data(self):
-        """Test creation of InterceptedPacket with real TCP packet data"""
+    def test_intercepted_packet_creation_with_tcp_data(self) -> None:
+        """Test creation of InterceptedPacket with real TCP packet data."""
         # Real-world TCP packet scenario - HTTP license check
         packet = InterceptedPacket(
             source_ip="192.168.1.100",
@@ -72,8 +77,8 @@ class TestInterceptedPacket(unittest.TestCase):
         self.assertTrue(packet.flags["ACK"])
         self.assertTrue(packet.flags["PSH"])
 
-    def test_intercepted_packet_creation_with_udp_data(self):
-        """Test creation of InterceptedPacket with real UDP packet data"""
+    def test_intercepted_packet_creation_with_udp_data(self) -> None:
+        """Test creation of InterceptedPacket with real UDP packet data."""
         # Real-world UDP packet scenario - License server discovery
         packet = InterceptedPacket(
             source_ip="10.0.0.15",
@@ -92,8 +97,8 @@ class TestInterceptedPacket(unittest.TestCase):
         self.assertEqual(packet.dest_ip, "255.255.255.255")  # Broadcast
         self.assertIn(b"LICENSE_SERVER_DISCOVERY", packet.data)
 
-    def test_intercepted_packet_timestamp_precision(self):
-        """Test that packet timestamps maintain microsecond precision"""
+    def test_intercepted_packet_timestamp_precision(self) -> None:
+        """Test that packet timestamps maintain microsecond precision."""
         timestamp = time.time()
         packet = InterceptedPacket(
             source_ip="127.0.0.1",
@@ -111,8 +116,8 @@ class TestInterceptedPacket(unittest.TestCase):
         self.assertEqual(packet.timestamp, timestamp)
         self.assertIsInstance(packet.timestamp, float)
 
-    def test_intercepted_packet_ipv6_support(self):
-        """Test InterceptedPacket with IPv6 addresses"""
+    def test_intercepted_packet_ipv6_support(self) -> None:
+        """Test InterceptedPacket with IPv6 addresses."""
         packet = InterceptedPacket(
             source_ip="2001:db8::1",
             dest_ip="2001:db8::2",
@@ -126,11 +131,11 @@ class TestInterceptedPacket(unittest.TestCase):
         )
 
         # Validate IPv6 address handling
-        self.assertTrue(ipaddress.ip_address(packet.source_ip).version == 6)
-        self.assertTrue(ipaddress.ip_address(packet.dest_ip).version == 6)
+        self.assertTrue(ipaddress.ip_address(packet.source_ip).version == IPV6_VERSION)
+        self.assertTrue(ipaddress.ip_address(packet.dest_ip).version == IPV6_VERSION)
 
-    def test_intercepted_packet_large_payload(self):
-        """Test InterceptedPacket with large payload data"""
+    def test_intercepted_packet_large_payload(self) -> None:
+        """Test InterceptedPacket with large payload data."""
         # Simulate large license response packet
         large_payload = b"A" * 8192  # 8KB payload
         packet = InterceptedPacket(
@@ -151,8 +156,7 @@ class TestInterceptedPacket(unittest.TestCase):
 
 
 class TestAnalyzedTraffic(unittest.TestCase):
-    """
-    Tests for AnalyzedTraffic class - validates traffic analysis results.
+    """Tests for AnalyzedTraffic class - validates traffic analysis results.
 
     Expected Production Behavior:
     - Accurately identifies license-related traffic patterns
@@ -162,8 +166,8 @@ class TestAnalyzedTraffic(unittest.TestCase):
     - Stores comprehensive metadata for security research
     """
 
-    def test_analyzed_traffic_license_detection(self):
-        """Test analysis of license-related network traffic"""
+    def test_analyzed_traffic_license_detection(self) -> None:
+        """Test analysis of license-related network traffic."""
         # Create intercepted packet with license data
         license_packet = InterceptedPacket(
             source_ip="192.168.1.100",
@@ -199,8 +203,8 @@ class TestAnalyzedTraffic(unittest.TestCase):
         self.assertIn("license_key", analyzed.patterns_matched)
         self.assertTrue(analyzed.analysis_metadata["encryption_detected"])
 
-    def test_analyzed_traffic_protocol_fingerprinting(self):
-        """Test sophisticated protocol detection and fingerprinting"""
+    def test_analyzed_traffic_protocol_fingerprinting(self) -> None:
+        """Test sophisticated protocol detection and fingerprinting."""
         # Custom license protocol packet
         custom_packet = InterceptedPacket(
             source_ip="10.0.0.1",
@@ -233,8 +237,8 @@ class TestAnalyzedTraffic(unittest.TestCase):
         self.assertIn("license_header", analyzed.patterns_matched)
         self.assertEqual(analyzed.analysis_metadata["version_detected"], 1)
 
-    def test_analyzed_traffic_confidence_scoring(self):
-        """Test confidence scoring for analysis accuracy"""
+    def test_analyzed_traffic_confidence_scoring(self) -> None:
+        """Test confidence scoring for analysis accuracy."""
         # Low confidence detection scenario
         ambiguous_packet = InterceptedPacket(
             source_ip="8.8.8.8",
@@ -265,8 +269,8 @@ class TestAnalyzedTraffic(unittest.TestCase):
         self.assertLess(analyzed.confidence, 0.8)  # Medium confidence
         self.assertGreater(analyzed.confidence, 0.5)  # Not low confidence
 
-    def test_analyzed_traffic_pattern_matching_accuracy(self):
-        """Test pattern matching capabilities for security research"""
+    def test_analyzed_traffic_pattern_matching_accuracy(self) -> None:
+        """Test pattern matching capabilities for security research."""
         # Complex license validation packet
         complex_packet = InterceptedPacket(
             source_ip="192.168.1.50",
@@ -307,8 +311,7 @@ class TestAnalyzedTraffic(unittest.TestCase):
 
 
 class TestTrafficInterceptionEngine(unittest.TestCase):
-    """
-    Tests for TrafficInterceptionEngine - validates core traffic interception functionality.
+    """Tests for TrafficInterceptionEngine - validates core traffic interception functionality.
 
     Expected Production Behavior:
     - Real-time network traffic capture across multiple interfaces
@@ -321,17 +324,17 @@ class TestTrafficInterceptionEngine(unittest.TestCase):
     - Integration with external analysis tools and callbacks
     """
 
-    def setUp(self):
-        """Set up test environment for each test"""
+    def setUp(self) -> None:
+        """Set up test environment for each test."""
         self.engine = None
 
-    def tearDown(self):
-        """Clean up after each test"""
+    def tearDown(self) -> None:
+        """Clean up after each test."""
         if self.engine and self.engine.running:
             self.engine.stop_interception()
 
-    def test_traffic_interception_engine_initialization(self):
-        """Test TrafficInterceptionEngine initialization with production configuration"""
+    def test_traffic_interception_engine_initialization(self) -> None:
+        """Test TrafficInterceptionEngine initialization with production configuration."""
         # Production-grade initialization
         config = {
             "interface": "eth0",
@@ -352,8 +355,8 @@ class TestTrafficInterceptionEngine(unittest.TestCase):
         self.assertIsInstance(self.engine.license_patterns, list)
         self.assertIsInstance(self.engine.analysis_callbacks, list)
 
-    def test_start_stop_interception_lifecycle(self):
-        """Test complete interception lifecycle with proper resource management"""
+    def test_start_stop_interception_lifecycle(self) -> None:
+        """Test complete interception lifecycle with proper resource management."""
         self.engine = TrafficInterceptionEngine()
 
         # Test start interception
@@ -370,8 +373,8 @@ class TestTrafficInterceptionEngine(unittest.TestCase):
         self.assertTrue(result)
         self.assertFalse(self.engine.running)
 
-    def test_packet_capture_and_queuing_mechanism(self):
-        """Test packet capture and internal queuing mechanism"""
+    def test_packet_capture_and_queuing_mechanism(self) -> None:
+        """Test packet capture and internal queuing mechanism."""
         self.engine = TrafficInterceptionEngine()
 
         # Create mock packet data
@@ -383,8 +386,8 @@ class TestTrafficInterceptionEngine(unittest.TestCase):
         # Verify packet was queued
         self.assertGreater(len(self.engine.packet_queue), 0)
 
-    def test_license_pattern_recognition(self):
-        """Test license-related traffic pattern recognition capabilities"""
+    def test_license_pattern_recognition(self) -> None:
+        """Test license-related traffic pattern recognition capabilities."""
         self.engine = TrafficInterceptionEngine()
 
         # Test license pattern matching
@@ -400,8 +403,8 @@ class TestTrafficInterceptionEngine(unittest.TestCase):
                          for keyword in license_keywords)
         self.assertGreater(found_patterns, 0)
 
-    def test_dns_redirection_configuration(self):
-        """Test DNS redirection setup for license server manipulation"""
+    def test_dns_redirection_configuration(self) -> None:
+        """Test DNS redirection setup for license server manipulation."""
         self.engine = TrafficInterceptionEngine()
 
         # Test DNS redirection configuration
@@ -415,8 +418,8 @@ class TestTrafficInterceptionEngine(unittest.TestCase):
         self.assertIn(original_server, self.engine.dns_redirections)
         self.assertEqual(self.engine.dns_redirections[original_server], redirect_target)
 
-    def test_transparent_proxy_setup(self):
-        """Test transparent proxy setup for man-in-the-middle analysis"""
+    def test_transparent_proxy_setup(self) -> None:
+        """Test transparent proxy setup for man-in-the-middle analysis."""
         self.engine = TrafficInterceptionEngine()
 
         # Test transparent proxy configuration
@@ -432,8 +435,8 @@ class TestTrafficInterceptionEngine(unittest.TestCase):
         self.assertIn(proxy_key, self.engine.proxy_mappings)
         self.assertEqual(self.engine.proxy_mappings[proxy_key]["proxy_port"], proxy_port)
 
-    def test_analysis_callback_management(self):
-        """Test analysis callback registration and management"""
+    def test_analysis_callback_management(self) -> None:
+        """Test analysis callback registration and management."""
         self.engine = TrafficInterceptionEngine()
 
         # Create test callback function
@@ -448,8 +451,8 @@ class TestTrafficInterceptionEngine(unittest.TestCase):
         self.engine.remove_analysis_callback(test_callback)
         self.assertNotIn(test_callback, self.engine.analysis_callbacks)
 
-    def test_statistics_and_monitoring(self):
-        """Test statistics collection and connection monitoring"""
+    def test_statistics_and_monitoring(self) -> None:
+        """Test statistics collection and connection monitoring."""
         self.engine = TrafficInterceptionEngine()
 
         # Get initial statistics
@@ -466,8 +469,8 @@ class TestTrafficInterceptionEngine(unittest.TestCase):
             self.assertIn(field, stats)
             self.assertIsInstance(stats[field], (int, float))
 
-    def test_active_connections_monitoring(self):
-        """Test active network connections monitoring"""
+    def test_active_connections_monitoring(self) -> None:
+        """Test active network connections monitoring."""
         self.engine = TrafficInterceptionEngine()
 
         # Get active connections
@@ -483,25 +486,24 @@ class TestTrafficInterceptionEngine(unittest.TestCase):
 
 
 class TestTrafficInterceptionEngineIntegration(unittest.TestCase):
-    """
-    Integration tests for TrafficInterceptionEngine with real network scenarios.
+    """Integration tests for TrafficInterceptionEngine with real network scenarios.
 
     These tests validate the engine's ability to handle real-world traffic patterns
     and coordinate with other Intellicrack components for comprehensive analysis.
     """
 
-    def setUp(self):
-        """Set up integration test environment"""
+    def setUp(self) -> None:
+        """Set up integration test environment."""
         self.engine = TrafficInterceptionEngine()
         self.captured_packets = []
 
     def tearDown(self):
-        """Clean up integration test environment"""
+        """Clean up integration test environment."""
         if self.engine.running:
             self.engine.stop_interception()
 
     def test_real_time_license_traffic_detection(self):
-        """Test real-time detection of license validation traffic"""
+        """Test real-time detection of license validation traffic."""
         # Set up callback to capture analyzed traffic
         def license_detection_callback(analyzed_traffic):
             if analyzed_traffic.is_license_related:
@@ -539,7 +541,7 @@ class TestTrafficInterceptionEngineIntegration(unittest.TestCase):
         # is validated in the component-specific tests
 
     def test_multi_protocol_traffic_analysis(self):
-        """Test analysis of multiple network protocols simultaneously"""
+        """Test analysis of multiple network protocols simultaneously."""
         self.engine.start_interception()
 
         # Simulate multiple protocol types
@@ -574,7 +576,7 @@ class TestTrafficInterceptionEngineIntegration(unittest.TestCase):
         self.assertGreaterEqual(stats.get("packets_captured", 0), len(protocols_to_test))
 
     def test_high_throughput_packet_processing(self):
-        """Test engine's ability to handle high-volume traffic"""
+        """Test engine's ability to handle high-volume traffic."""
         self.engine.start_interception()
 
         # Generate high volume of packets
@@ -611,29 +613,28 @@ class TestTrafficInterceptionEngineIntegration(unittest.TestCase):
 
 
 class TestTrafficInterceptionEngineNetworkManipulation(unittest.TestCase):
-    """
-    Tests for advanced network manipulation capabilities.
+    """Tests for advanced network manipulation capabilities.
 
     These tests validate the engine's ability to modify traffic in real-time,
     inject packets, and perform sophisticated man-in-the-middle operations
     essential for license protection research.
     """
 
-    def setUp(self):
-        """Set up network manipulation test environment"""
+    def setUp(self) -> None:
+        """Set up network manipulation test environment."""
         self.engine = TrafficInterceptionEngine()
 
     def tearDown(self):
-        """Clean up network manipulation test environment"""
+        """Clean up network manipulation test environment."""
         if self.engine.running:
             self.engine.stop_interception()
 
     def test_packet_modification_capabilities(self):
-        """Test real-time packet modification for license bypass research"""
+        """Test real-time packet modification for license bypass research."""
         # This tests the engine's capability to modify packets in transit
         # Essential for testing license protection robustness
 
-        original_packet = InterceptedPacket(
+        _original_packet = InterceptedPacket(
             source_ip="192.168.1.100",
             dest_ip="license.server.com",
             source_port=51234,
@@ -646,7 +647,7 @@ class TestTrafficInterceptionEngineNetworkManipulation(unittest.TestCase):
         )
 
         # Expected modification: Replace invalid key with valid one
-        expected_modified_data = b'{"license_key":"VALID-TEST-KEY","product":"TestApp"}'
+        _expected_modified_data = b'{"license_key":"VALID-TEST-KEY","product":"TestApp"}'
 
         # The engine should have packet modification capabilities
         # This validates the infrastructure exists for research scenarios
@@ -654,12 +655,12 @@ class TestTrafficInterceptionEngineNetworkManipulation(unittest.TestCase):
         self.assertIsNotNone(self.engine.capture_backend)
 
     def test_traffic_injection_capabilities(self):
-        """Test traffic injection for license protocol testing"""
+        """Test traffic injection for license protocol testing."""
         # This tests the engine's ability to inject crafted packets
         # Critical for testing license protocol vulnerability
 
         # Create injection packet - license server response simulation
-        injection_packet = InterceptedPacket(
+        _injection_packet = InterceptedPacket(
             source_ip="license.server.com",
             dest_ip="192.168.1.100",
             source_port=443,
@@ -676,7 +677,7 @@ class TestTrafficInterceptionEngineNetworkManipulation(unittest.TestCase):
         self.assertTrue(hasattr(self.engine, '_queue_packet'))
 
     def test_dns_hijacking_for_license_research(self):
-        """Test DNS hijacking capabilities for license server redirection"""
+        """Test DNS hijacking capabilities for license server redirection."""
         # Critical capability for redirecting license checks to test servers
 
         license_domains = [
@@ -725,18 +726,18 @@ if __name__ == '__main__':
     result = runner.run(suite)
 
     # Report results
-    print(f"\nTest Results:")
+    print("\nTest Results:")
     print(f"Tests run: {result.testsRun}")
     print(f"Failures: {len(result.failures)}")
     print(f"Errors: {len(result.errors)}")
 
     if result.failures:
-        print(f"\nFailures:")
+        print("\nFailures:")
         for test, traceback in result.failures:
             print(f"- {test}: {traceback}")
 
     if result.errors:
-        print(f"\nErrors:")
+        print("\nErrors:")
         for test, traceback in result.errors:
             print(f"- {test}: {traceback}")
 

@@ -1573,12 +1573,11 @@ except ImportError as e:
                     object: The wrapped function.
 
                 """
-                func_any = cast("Any", func)
-                func_any._pyqt_slot = True
-                func_any._slot_types = types
-                func_any._slot_result = kwargs.get("result")
+                setattr(func, "_pyqt_slot", True)
+                setattr(func, "_slot_types", types)
+                setattr(func, "_slot_result", kwargs.get("result"))
                 func_name = getattr(func, "__name__", str(func))
-                func_any._slot_name = kwargs.get("name", func_name)
+                setattr(func, "_slot_name", kwargs.get("name", func_name))
 
                 def wrapper(*args: object, **kw: object) -> Any:
                     """Execute the slot function with logging and type checking.
@@ -1613,13 +1612,12 @@ except ImportError as e:
                         logger.error(f"Slot {slot_name} error: {e}")
                         raise
 
-                wrapper_any = cast("Any", wrapper)
-                wrapper_any._pyqt_slot = True
-                wrapper_any._slot_types = types
+                setattr(wrapper, "_pyqt_slot", True)
+                setattr(wrapper, "_slot_types", types)
                 slot_result = getattr(func, "_slot_result", None)
-                wrapper_any._slot_result = slot_result
+                setattr(wrapper, "_slot_result", slot_result)
                 slot_name = getattr(func, "_slot_name", str(func))
-                wrapper_any._slot_name = slot_name
+                setattr(wrapper, "_slot_name", slot_name)
 
                 return cast("F", wrapper)
 

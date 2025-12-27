@@ -127,7 +127,11 @@ class ARC4Cipher:
     """
 
     def __init__(self, key: bytes) -> None:
-        """Initialize ARC4 cipher with a key."""
+        """Initialize ARC4 cipher with a key.
+
+        Args:
+            key: The encryption key bytes for RC4 cipher initialization.
+        """
         self.key = key
         self.s = list(range(256))
         self.i = 0
@@ -135,7 +139,12 @@ class ARC4Cipher:
         self._init_state()
 
     def _init_state(self) -> None:
-        """KSA (Key-scheduling algorithm) to initialize the S-box."""
+        """Initialize the RC4 S-box using the key scheduling algorithm (KSA).
+
+        This method implements the KSA to initialize the 256-byte permutation state
+        array (S-box) based on the encryption key, preparing the cipher for encryption
+        or decryption operations.
+        """
         j = 0
         for i in range(256):
             j = (j + self.s[i] + self.key[i % len(self.key)]) % 256
@@ -144,7 +153,14 @@ class ARC4Cipher:
         self.j = 0
 
     def crypt(self, data: bytes) -> bytes:
-        """PRGA (Pseudo-random generation algorithm) to encrypt/decrypt data."""
+        """PRGA (Pseudo-random generation algorithm) to encrypt/decrypt data.
+
+        Args:
+            data: Bytes to encrypt or decrypt.
+
+        Returns:
+            Encrypted or decrypted bytes.
+        """
         output = bytearray()
         s = list(self.s)  # Use a copy for encryption/decryption
         i = self.i
@@ -159,11 +175,25 @@ class ARC4Cipher:
         return bytes(output)
 
     def encrypt(self, data: bytes) -> bytes:
-        """Encrypt data using ARC4."""
+        """Encrypt data using ARC4.
+
+        Args:
+            data: Data to encrypt.
+
+        Returns:
+            Encrypted bytes.
+        """
         return self.crypt(data)
 
     def decrypt(self, data: bytes) -> bytes:
-        """Decrypt data using ARC4."""
+        """Decrypt data using ARC4 stream cipher.
+
+        Args:
+            data: Bytes to decrypt using the initialized RC4 cipher state.
+
+        Returns:
+            Decrypted bytes produced by XORing input with the RC4 keystream.
+        """
         return self.crypt(data)
 
 
@@ -227,7 +257,14 @@ class HardwareFingerprint:
     hostname: str = ""
 
     def generate_hash(self) -> str:
-        """Generate unique hash from hardware components."""
+        """Generate unique SHA256 hash from hardware fingerprint components.
+
+        Creates a 16-character hash by combining CPU ID, motherboard ID, disk serial,
+        and MAC address components, then truncating the SHA256 digest.
+
+        Returns:
+            16-character hexadecimal SHA256 hash string derived from hardware identifiers.
+        """
         data = f"{self.cpu_id}{self.motherboard_id}{self.disk_serial}{self.mac_address}"
         return hashlib.sha256(data.encode()).hexdigest()[:16]
 
@@ -328,14 +365,31 @@ class CryptoManager:
     """Cryptographic operations for license generation and validation."""
 
     def __init__(self) -> None:
-        """Initialize crypto manager with RSA key pair and AES encryption key."""
+        """Initialize cryptographic manager for license operations.
+
+        Generates a 2048-bit RSA key pair for license signing and verification,
+        and derives an AES encryption key for encrypting license data. Initializes
+        logging for cryptographic operation tracking.
+        """
         self.logger = logging.getLogger(f"{__name__}.CryptoManager")
         self.private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
         self.public_key = self.private_key.public_key()
         self.aes_key = hashlib.sha256(b"intellicrack_license_key_2024").digest()
 
     def generate_license_key(self, product: str, license_type: str) -> str:
-        """Generate cryptographically secure license key."""
+        """Generate cryptographically secure license key.
+
+        Creates a unique license key by combining product identifier, license type,
+        current timestamp, and random UUID, then hashing with SHA256 and formatting
+        as a 16-character uppercase hex string with dashes.
+
+        Args:
+            product: Product identifier string for license binding.
+            license_type: License type classification (e.g., 'perpetual', 'trial', 'subscription').
+
+        Returns:
+            Formatted license key string in format HHHH-HHHH-HHHH-HHHH (uppercase hexadecimal digits).
+        """
         timestamp = int(time.time())
         random_data = uuid.uuid4().hex
         data = f"{product}:{license_type}:{timestamp}:{random_data}"
@@ -343,7 +397,18 @@ class CryptoManager:
         return "-".join([key_hash[i : i + 4].upper() for i in range(0, 16, 4)])
 
     def sign_license_data(self, data: dict[str, Any]) -> str:
-        """Sign license data with RSA private key."""
+        """Sign license data using RSA-PSS signature with SHA256.
+
+        Serializes the license data dictionary to JSON with sorted keys, then generates
+        an RSA-PSS signature using the private key. Returns the signature as a hexadecimal
+        string for transmission or storage.
+
+        Args:
+            data: License data dictionary containing key-value pairs to be signed.
+
+        Returns:
+            Hexadecimal-encoded RSA signature string, or empty string if signing fails.
+        """
         try:
             json_data = json.dumps(data, sort_keys=True).encode()
             signature = self.private_key.sign(
@@ -357,7 +422,18 @@ class CryptoManager:
             return ""
 
     def verify_license_signature(self, data: dict[str, Any], signature: str) -> bool:
-        """Verify license signature with RSA public key."""
+        """Verify RSA-PSS signature on license data using the public key.
+
+        Serializes the license data dictionary to JSON with sorted keys, then validates
+        the provided RSA-PSS signature against the data using the public key.
+
+        Args:
+            data: License data dictionary that was originally signed.
+            signature: Hexadecimal-encoded RSA signature string to validate.
+
+        Returns:
+            True if signature is valid and matches the license data, False otherwise.
+        """
         try:
             json_data = json.dumps(data, sort_keys=True).encode()
             signature_bytes = bytes.fromhex(signature)
@@ -372,7 +448,19 @@ class CryptoManager:
             return False
 
     def encrypt_license_data(self, data: str) -> str:
-        """Encrypt license data with AES."""
+        """Encrypt license data using AES-256-CBC with PKCS7 padding.
+
+        Generates a random 16-byte IV, encodes the data string to bytes, applies
+        PKCS7 padding, then encrypts using AES-256 in CBC mode. Returns IV concatenated
+        with encrypted data, both as hexadecimal.
+
+        Args:
+            data: License data string to encrypt.
+
+        Returns:
+            Hex-encoded string containing IV (first 32 hex chars) followed by encrypted data,
+            or empty string if encryption fails.
+        """
         try:
             iv = os.urandom(16)
             cipher = Cipher(algorithms.AES(self.aes_key), modes.CBC(iv))
@@ -387,7 +475,18 @@ class CryptoManager:
             return ""
 
     def decrypt_license_data(self, encrypted_data: str) -> str:
-        """Decrypt license data with AES."""
+        """Decrypt license data using AES-256-CBC with PKCS7 padding removal.
+
+        Parses the hexadecimal input to extract the IV (first 16 bytes) and encrypted
+        data portion, then decrypts using AES-256 in CBC mode. Removes PKCS7 padding
+        from the decrypted plaintext and returns as a string.
+
+        Args:
+            encrypted_data: Hex-encoded encrypted data string with IV prepended.
+
+        Returns:
+            Decrypted license data string, or empty string if decryption fails.
+        """
         try:
             data_bytes = bytes.fromhex(encrypted_data)
             iv = data_bytes[:16]
@@ -406,7 +505,11 @@ class FlexLMEmulator:
     """FlexLM license server emulation."""
 
     def __init__(self, crypto_manager: CryptoManager) -> None:
-        """Initialize FlexLM license server emulator with crypto manager."""
+        """Initialize FlexLM license server emulator with crypto manager.
+
+        Args:
+            crypto_manager: CryptoManager instance for cryptographic operations.
+        """
         self.logger = logging.getLogger(f"{__name__}.FlexLM")
         self.crypto = crypto_manager
         self.server_socket: socket.socket | None = None
@@ -433,7 +536,11 @@ class FlexLMEmulator:
         self.ERR_HOST_NOT_AUTHORIZED = 6
 
     def start_server(self, port: int = 27000) -> None:
-        """Start FlexLM TCP server and vendor daemon."""
+        """Start FlexLM TCP server and vendor daemon.
+
+        Args:
+            port: Port number for FlexLM server (default: 27000).
+        """
         try:
             self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -460,7 +567,12 @@ class FlexLMEmulator:
                     self.logger.exception("FlexLM connection error")
 
     def _handle_client(self, client_socket: socket.socket, address: tuple[str, int]) -> None:
-        """Handle FlexLM client requests."""
+        """Handle FlexLM client requests.
+
+        Args:
+            client_socket: Connected client socket.
+            address: Client address tuple (host, port).
+        """
         try:
             while True:
                 data = client_socket.recv(1024)
@@ -475,7 +587,14 @@ class FlexLMEmulator:
             client_socket.close()
 
     def _parse_flexlm_request(self, data: bytes) -> dict[str, object]:
-        """Parse FlexLM protocol request."""
+        """Parse FlexLM protocol request.
+
+        Args:
+            data: Raw FlexLM protocol data.
+
+        Returns:
+            Parsed FlexLM request dictionary.
+        """
         try:
             text = data.decode("ascii", errors="ignore")
             request: dict[str, object] = {
@@ -497,7 +616,15 @@ class FlexLMEmulator:
             return result
 
     def _process_flexlm_request(self, request: dict[str, Any], client_ip: str) -> bytes:
-        """Process FlexLM request and generate response."""
+        """Process FlexLM request and generate response.
+
+        Args:
+            request: Parsed FlexLM request dictionary.
+            client_ip: Client IP address.
+
+        Returns:
+            Response bytes for FlexLM protocol.
+        """
         try:
             if request["type"] == "checkout":
                 response_data = {
@@ -516,7 +643,14 @@ class FlexLMEmulator:
             return b"ERROR: Internal server error\n"
 
     def _generate_vendor_keys(self) -> dict[str, Any]:
-        """Generate vendor-specific encryption keys."""
+        """Generate vendor-specific encryption keys for FlexLM protocol.
+
+        Generates four random 32-bit seeds and a 16-byte encryption key using
+        secure random number generation for vendor-specific message encryption.
+
+        Returns:
+            Dictionary with keys: seed1, seed2, seed3, seed4 (int), and encryption_key (bytes).
+        """
         return {
             "seed1": secrets.randbits(32),
             "seed2": secrets.randbits(32),
@@ -526,11 +660,23 @@ class FlexLMEmulator:
         }
 
     def add_feature(self, feature: dict[str, Any]) -> None:
-        """Add a licensed feature."""
+        """Register a licensed feature in the emulator.
+
+        Stores a feature definition for use in license checkout requests. Features
+        are indexed by name and contain version, expiry, and user count information.
+
+        Args:
+            feature: Feature dictionary containing 'name' key and configuration parameters.
+        """
         self.features[feature["name"]] = feature
 
     def _run_vendor_daemon(self) -> None:
-        """Run vendor daemon on separate port."""
+        """Run the vendor daemon server loop on a separate TCP port.
+
+        Accepts incoming vendor-specific license requests on VENDOR_PORT (27001),
+        spawning a thread for each connected client to handle vendor requests
+        independently.
+        """
         try:
             self.vendor_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.vendor_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -547,7 +693,15 @@ class FlexLMEmulator:
             self.logger.exception("Vendor daemon error")
 
     def _handle_vendor_request(self, client_socket: socket.socket, _addr: tuple[str, int]) -> None:
-        """Handle vendor-specific requests."""
+        """Handle vendor-specific license requests from a connected client.
+
+        Receives encrypted vendor request data, processes it, encrypts the response,
+        and sends it back to the client.
+
+        Args:
+            client_socket: Network socket connected to the vendor client.
+            _addr: Client address tuple (host, port) for logging purposes.
+        """
         try:
             request_data = client_socket.recv(4096)
             response_data = self._process_vendor_request(request_data)
@@ -559,7 +713,17 @@ class FlexLMEmulator:
             client_socket.close()
 
     def _process_vendor_request(self, request_data: bytes) -> bytes:
-        """Process vendor-specific license requests."""
+        """Process vendor-specific license request and generate response.
+
+        Decrypts the vendor request data, validates it against vendor checksums,
+        and returns a response indicating license grant or denial status.
+
+        Args:
+            request_data: Encrypted request data bytes from vendor client.
+
+        Returns:
+            bytes: License response bytes (b"LICENSE_GRANTED", b"LICENSE_DENIED", or b"ERROR").
+        """
         try:
             decrypted_data = self._vendor_decrypt(request_data)
             if self._vendor_validate(decrypted_data):
@@ -570,7 +734,14 @@ class FlexLMEmulator:
             return b"ERROR"
 
     def _vendor_encrypt(self, data: bytes) -> bytes:
-        """Encrypt data using FLEXlm vendor-specific algorithm (RC4 variant with key scheduling)."""
+        """Encrypt data using FLEXlm vendor-specific algorithm (RC4 variant with key scheduling).
+
+        Args:
+            data: Binary data to encrypt using vendor algorithm.
+
+        Returns:
+            Encrypted bytes with vendor-specific encryption applied.
+        """
         try:
             key = self.vendor_keys["encryption_key"]
             state = list(range(256))
@@ -611,7 +782,14 @@ class FlexLMEmulator:
             return encryptor.update(padded_data) + encryptor.finalize()
 
     def _vendor_decrypt(self, data: bytes) -> bytes:
-        """Decrypt data using FLEXlm vendor-specific algorithm."""
+        """Decrypt data using FLEXlm vendor-specific algorithm.
+
+        Args:
+            data: Encrypted data to decrypt.
+
+        Returns:
+            Decrypted bytes.
+        """
         try:
             key = self.vendor_keys["encryption_key"]
             if data:
@@ -657,7 +835,14 @@ class FlexLMEmulator:
             return unpadder.update(padded_plaintext) + unpadder.finalize()
 
     def _vendor_validate(self, data: bytes) -> bool:
-        """Validate vendor-specific license request."""
+        """Validate vendor-specific license request.
+
+        Args:
+            data: Raw vendor request data.
+
+        Returns:
+            True if request is valid, False otherwise.
+        """
         try:
             if len(data) < 4:
                 return False
@@ -666,7 +851,14 @@ class FlexLMEmulator:
             return False
 
     def _create_feature_list(self) -> bytes:
-        """Create list of available features."""
+        """Create formatted list of available licensed features.
+
+        Iterates through registered features and formats each as a FlexLM feature
+        entry with version, count, and expiry information, then encodes to UTF-8 bytes.
+
+        Returns:
+            UTF-8 encoded feature list bytes with newline-separated entries.
+        """
         feature_list = []
         for name, feature in self.features.items():
             feature_entry = f"FEATURE {name} VERSION {feature.get('version', '1.0')} COUNT {feature.get('count', 'uncounted')} EXPIRY {feature.get('expiry', 'permanent')}"
@@ -674,7 +866,14 @@ class FlexLMEmulator:
         return "\n".join(feature_list).encode()
 
     def _create_status_response(self) -> bytes:
-        """Create server status response."""
+        """Create formatted server status response.
+
+        Generates a status response containing server version, vendor daemon status,
+        active license count, and available features count, formatted as key-value pairs.
+
+        Returns:
+            UTF-8 encoded status response bytes with newline-separated key-value pairs.
+        """
         status = {
             "server_version": "11.16.2",
             "vendor_daemon": "active",
@@ -686,14 +885,22 @@ class FlexLMEmulator:
         return "\n".join(status_text).encode()
 
     def start_vendor_daemon(self) -> None:
-        """Start the vendor daemon in a separate thread."""
+        """Start the vendor daemon in a separate background thread.
+
+        Spawns a daemon thread that runs the vendor daemon server loop to handle
+        vendor-specific license requests independently from the main FlexLM server.
+        """
         vendor_thread = threading.Thread(target=self._run_vendor_daemon)
         vendor_thread.daemon = True
         vendor_thread.start()
         self.logger.info("Vendor daemon thread started")
 
     def stop_server(self) -> None:
-        """Stop both main server and vendor daemon."""
+        """Stop both main server and vendor daemon.
+
+        Closes the main server socket and vendor daemon socket, setting the running
+        flag to False to signal all background threads to terminate.
+        """
         self.running = False
         if self.server_socket:
             self.server_socket.close()
@@ -706,7 +913,15 @@ class HASPEmulator:
     """HASP dongle emulation with real cryptographic operations."""
 
     def __init__(self, crypto_manager: CryptoManager) -> None:
-        """Initialize HASP dongle emulator with real crypto and secure memory."""
+        """Initialize HASP dongle emulator with cryptographic operations.
+
+        Sets up a 64KB emulated dongle memory space, initializes HASP status codes,
+        allocates feature memory structures, and derives the master encryption key
+        for session-based cryptography.
+
+        Args:
+            crypto_manager: CryptoManager instance for cryptographic operations.
+        """
         self.logger = logging.getLogger(f"{__name__}.HASP")
         self.crypto = crypto_manager
         self.HASP_STATUS_OK = 0
@@ -729,14 +944,26 @@ class HASPEmulator:
         self._initialize_real_hasp_memory()
 
     def _derive_master_key(self) -> bytes:
-        """Derive master encryption key from device ID."""
+        """Derive master encryption key from device ID using PBKDF2-HMAC-SHA256.
+
+        Uses PBKDF2 with 100,000 iterations and a fixed salt to derive a 32-byte
+        master key from the randomly generated device ID for session key derivation.
+
+        Returns:
+            32-byte master encryption key bytes derived from device ID.
+        """
         from intellicrack.handlers.cryptography_handler import PBKDF2HMAC, hashes
 
         kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=b"HASP_MASTER_SALT_V1", iterations=100000)
         return kdf.derive(self.device_id)
 
     def _initialize_real_hasp_memory(self) -> None:
-        """Initialize dongle memory with real HASP data structure."""
+        """Initialize emulated dongle memory with authentic HASP data structures.
+
+        Populates the 64KB dongle memory with HASP header, device identifiers, vendor
+        information, memory layout, and feature directory entries matching real HASP
+        dongle memory organization.
+        """
         self.dongle_memory[:4] = b"HASP"
         self.dongle_memory[4:8] = struct.pack("<I", 67305985)
         self.dongle_memory[8:24] = self.device_id
@@ -778,7 +1005,19 @@ class HASPEmulator:
         self.dongle_memory[end_marker_offset : end_marker_offset + 4] = b"\xff\xff\xff\xff"
 
     def hasp_login(self, feature_id: int, vendor_code: bytes | None = None) -> int:
-        """HASP login operation with real authentication."""
+        """Perform HASP login operation with vendor code validation.
+
+        Validates the requested feature exists and is not expired, verifies vendor
+        code checksum if provided, then generates a unique session handle with a
+        derived session key for encrypted communication.
+
+        Args:
+            feature_id: Integer feature identifier to request access to.
+            vendor_code: Optional bytes containing vendor authentication code for additional validation.
+
+        Returns:
+            Positive integer session handle on success, or negative HASP error code on failure.
+        """
         try:
             self.logger.info("HASP login for feature %s", feature_id)
             if vendor_code and len(vendor_code) >= 16:
@@ -821,7 +1060,17 @@ class HASPEmulator:
             return self.HASP_DEVICE_ERROR
 
     def _calculate_vendor_checksum(self, vendor_code: bytes) -> int:
-        """Calculate vendor code checksum."""
+        """Calculate vendor code checksum using rotation and XOR operations.
+
+        Processes the 16-byte vendor code as four 32-bit little-endian integers,
+        applying bitwise rotation and XOR operations to produce a 32-bit checksum.
+
+        Args:
+            vendor_code: 16-byte vendor-specific code for checksum calculation.
+
+        Returns:
+            32-bit checksum value as integer.
+        """
         checksum = 305419896
         for i in range(0, 16, 4):
             value = struct.unpack("<I", vendor_code[i : i + 4])[0]
@@ -829,7 +1078,17 @@ class HASPEmulator:
         return checksum & 4294967295
 
     def hasp_logout(self, handle: int) -> int:
-        """HASP logout operation."""
+        """Close an active HASP session and free associated resources.
+
+        Removes the session handle from active sessions and deletes the associated
+        session key material used for encrypted communication.
+
+        Args:
+            handle: Integer session handle from a preceding hasp_login call.
+
+        Returns:
+            HASP_STATUS_OK (0) on success, or HASP_INVALID_HANDLE if handle not found.
+        """
         self.logger.info("HASP logout for handle %s", handle)
         if handle not in self.active_sessions:
             return self.HASP_INVALID_HANDLE
@@ -839,7 +1098,20 @@ class HASPEmulator:
         return self.HASP_STATUS_OK
 
     def hasp_encrypt(self, handle: int, data: bytes) -> tuple[int, bytes]:
-        """HASP encrypt operation with real AES encryption."""
+        """Encrypt data using AES-GCM with session-derived key.
+
+        Encrypts the provided data using the session key associated with the handle,
+        generating a random nonce and including the feature ID as associated data
+        for authenticated encryption.
+
+        Args:
+            handle: Integer session handle from a preceding hasp_login call.
+            data: Binary data bytes to encrypt.
+
+        Returns:
+            Tuple of (status_code, encrypted_bytes) where status_code is HASP_STATUS_OK
+            on success, and encrypted_bytes contains nonce (12 bytes) + ciphertext.
+        """
         try:
             if handle not in self.active_sessions:
                 return (self.HASP_INVALID_HANDLE, b"")
@@ -859,7 +1131,19 @@ class HASPEmulator:
             return (self.HASP_DEVICE_ERROR, b"")
 
     def hasp_decrypt(self, handle: int, data: bytes) -> tuple[int, bytes]:
-        """HASP decrypt operation with real AES decryption."""
+        """Decrypt data using AES-GCM with session-derived key.
+
+        Decrypts the provided AES-GCM encrypted data using the session key associated
+        with the handle. Validates the nonce length and verifies authentication tags.
+
+        Args:
+            handle: Integer session handle from a preceding hasp_login call.
+            data: Encrypted data bytes containing nonce (first 12 bytes) + ciphertext.
+
+        Returns:
+            Tuple of (status_code, decrypted_bytes) where status_code is HASP_STATUS_OK
+            on success, or HASP_SIGNATURE_CHECK_FAILED if authentication fails.
+        """
         try:
             if handle not in self.active_sessions:
                 return (self.HASP_INVALID_HANDLE, b"")
@@ -885,7 +1169,20 @@ class HASPEmulator:
             return (self.HASP_DEVICE_ERROR, b"")
 
     def hasp_read(self, handle: int, offset: int, length: int) -> tuple[int, bytes]:
-        """HASP memory read operation with access control."""
+        """Read data from emulated HASP dongle memory with access control.
+
+        Reads from the feature-specific memory region or user memory area (if permitted)
+        within the dongle emulation, applying bounds checking and feature access restrictions.
+
+        Args:
+            handle: Integer session handle from a preceding hasp_login call.
+            offset: Memory offset to read from (negative values invalid).
+            length: Number of bytes to read (negative values invalid).
+
+        Returns:
+            Tuple of (status_code, data_bytes) where status_code is HASP_STATUS_OK on success,
+            and data_bytes contains the read memory contents (may be shorter than requested).
+        """
         try:
             if handle not in self.active_sessions:
                 return (self.HASP_INVALID_HANDLE, b"")
@@ -917,7 +1214,20 @@ class HASPEmulator:
             return (self.HASP_DEVICE_ERROR, b"")
 
     def hasp_write(self, handle: int, offset: int, data: bytes) -> int:
-        """HASP memory write operation with access control."""
+        """Write data to emulated HASP dongle memory with permission checks.
+
+        Writes to the feature-specific memory region or user memory area (if permitted)
+        within the dongle emulation, validating write permissions and bounds before
+        writing. First 16 bytes of feature memory are write-protected.
+
+        Args:
+            handle: Integer session handle from a preceding hasp_login call.
+            offset: Memory offset to write to (negative values invalid).
+            data: Binary data bytes to write.
+
+        Returns:
+            int: HASP_STATUS_OK on success, or error code if operation fails.
+        """
         try:
             if handle not in self.active_sessions:
                 return self.HASP_INVALID_HANDLE
@@ -954,7 +1264,20 @@ class HASPEmulator:
             return self.HASP_DEVICE_ERROR
 
     def hasp_get_info(self, handle: int, query_type: int) -> tuple[int, bytes]:
-        """Get HASP information."""
+        """Query HASP device information based on query type.
+
+        Returns device-specific information including device ID, memory size, feature list,
+        vendor information, and device timestamp based on the query type.
+
+        Args:
+            handle: Integer session handle (0 allowed for read-only queries).
+            query_type: Information query type: 1=device_id, 2=memory_size, 3=feature_list,
+                       4=vendor_info, 5=timestamp.
+
+        Returns:
+            Tuple of (status_code, info_bytes) where status_code is HASP_STATUS_OK on success,
+            and info_bytes contains the requested information as binary data.
+        """
         try:
             if handle not in self.active_sessions and handle != 0:
                 return (self.HASP_INVALID_HANDLE, b"")
@@ -977,10 +1300,17 @@ class HASPEmulator:
 
 
 class MicrosoftKMSEmulator:
-    """Microsoft KMS server emulation."""
+    """Microsoft KMS server emulation for Windows and Office activation."""
 
     def __init__(self, crypto_manager: CryptoManager) -> None:
-        """Initialize Microsoft KMS activation server emulator."""
+        """Initialize Microsoft KMS activation server emulator.
+
+        Sets up a KMS server emulator with support for Windows and Office products,
+        storing valid product keys for various Microsoft product editions.
+
+        Args:
+            crypto_manager: CryptoManager instance for cryptographic operations.
+        """
         self.logger = logging.getLogger(f"{__name__}.KMS")
         self.crypto = crypto_manager
         self.kms_keys = {
@@ -991,7 +1321,21 @@ class MicrosoftKMSEmulator:
         }
 
     def activate_product(self, product_key: str, product_name: str, _client_info: dict[str, Any]) -> dict[str, Any]:
-        """Activate Microsoft product."""
+        """Activate a Microsoft product using KMS activation protocol.
+
+        Generates a KMS activation response with unique activation ID, license status,
+        and next activation renewal date, providing 180-day grace period on initial activation.
+
+        Args:
+            product_key: Product license key string for the product.
+            product_name: Human-readable software product name to activate.
+            _client_info: Optional dictionary containing client information (unused).
+
+        Returns:
+            Dictionary containing activation response: success (bool), activation_id (str),
+            product_key, product_name, license_status, remaining_grace_time (int),
+            kms_server, kms_port, last_activation and next_activation (ISO timestamps).
+        """
         try:
             self.logger.info("KMS activation for product %s", product_name)
             return {
@@ -1012,10 +1356,18 @@ class MicrosoftKMSEmulator:
 
 
 class AdobeEmulator:
-    """Adobe license server emulation."""
+    """Adobe Creative Cloud license server emulation."""
 
     def __init__(self, crypto_manager: CryptoManager) -> None:
-        """Initialize Adobe Creative Cloud license emulator."""
+        """Initialize Adobe Creative Cloud license emulator.
+
+        Sets up Adobe product definitions with identifiers and versions for use
+        in generating Adobe NGL (Next Generation Licensing) tokens and validating
+        Adobe license activations.
+
+        Args:
+            crypto_manager: CryptoManager instance for cryptographic operations.
+        """
         self.logger = logging.getLogger(f"{__name__}.Adobe")
         self.crypto = crypto_manager
         self.adobe_products = {
@@ -1028,7 +1380,21 @@ class AdobeEmulator:
         }
 
     def validate_adobe_license(self, product_id: str, user_id: str, machine_id: str) -> dict[str, Any]:
-        """Validate Adobe Creative Cloud license."""
+        """Validate Adobe Creative Cloud license and return subscription status.
+
+        Performs license validation against the emulated Adobe license server, returning
+        subscription status, enabled features, and an NGL token for further API authentication.
+
+        Args:
+            product_id: Unique product identifier from Adobe (e.g., PHSP for Photoshop).
+            user_id: User identifier string for license validation.
+            machine_id: Unique machine identifier string for license binding.
+
+        Returns:
+            Dictionary containing: status, license_type, product_id, user_id, machine_id,
+            subscription_status, expiry_date (ISO format), features dict, server_time,
+            and ngl_token for API authentication.
+        """
         try:
             self.logger.info("Adobe validation for product %s, user %s", product_id, user_id)
             return {
@@ -1053,7 +1419,18 @@ class AdobeEmulator:
             return {"status": "error", "message": "Validation failed"}
 
     def _generate_ngl_token(self, product_id: str, user_id: str) -> str:
-        """Generate Adobe NGL (licensing) token."""
+        """Generate Adobe NGL (Next Generation Licensing) token for subscription validation.
+
+        Creates a JWT token containing product and user information with 30-day expiration,
+        signed with a session-specific secret derived from process ID and timestamp.
+
+        Args:
+            product_id: Unique product identifier from Adobe (e.g., PHSP for Photoshop).
+            user_id: User identifier string for token generation.
+
+        Returns:
+            JWT token string (HS256 signed) containing product, user, and expiration claims.
+        """
         token_data = {
             "pid": product_id,
             "uid": user_id,
@@ -1070,11 +1447,21 @@ class AdobeEmulator:
 
 
 class DatabaseManager:
-    """Database operations for license management."""
+    """Database operations for license management and tracking."""
 
-    def __init__(self, db_path: str = "license_server.db") -> None:
-        """Initialize database manager with SQLite engine and session factory."""
+    def __init__(self, db_path: str | None = None) -> None:
+        """Initialize database manager with SQLite engine and session factory.
+
+        Creates SQLAlchemy engine and session factory for license database operations,
+        initializes database schema with license, activation, and logging tables.
+
+        Args:
+            db_path: Path to SQLite database file. Defaults to LICENSE_SERVER_DB from intellicrack.data.
+        """
         self.logger = logging.getLogger(f"{__name__}.Database")
+        if db_path is None:
+            from intellicrack.data import LICENSE_SERVER_DB
+            db_path = str(LICENSE_SERVER_DB)
         self.db_path = db_path
         self.engine = create_engine(f"sqlite:///{db_path}", poolclass=StaticPool, connect_args={"check_same_thread": False})
         self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
@@ -1082,7 +1469,11 @@ class DatabaseManager:
         self._seed_default_licenses()
 
     def _create_tables(self) -> None:
-        """Create database tables."""
+        """Create database tables for license, activation, and logging data.
+
+        Uses SQLAlchemy ORM metadata to create LicenseEntry, LicenseActivation, and
+        LicenseLog tables in the SQLite database if they don't already exist.
+        """
         try:
             Base.metadata.create_all(bind=self.engine)
             self.logger.info("Database tables created successfully")
@@ -1090,7 +1481,11 @@ class DatabaseManager:
             self.logger.exception("Database table creation failed")
 
     def _seed_default_licenses(self) -> None:
-        """Seed database with default licenses."""
+        """Seed database with default test licenses if empty.
+
+        Populates the license database with sample FlexLM and HASP licenses for testing
+        if no licenses already exist. Uses 365-day expiration by default.
+        """
         try:
             db = self.SessionLocal()
             if db.query(LicenseEntry).count() > 0:
@@ -1140,7 +1535,17 @@ class DatabaseManager:
             self.logger.exception("License seeding failed")
 
     def get_db(self) -> Session:
-        """Get database session."""
+        """Get database session for license operations.
+
+        Args:
+            None
+
+        Returns:
+            SQLAlchemy database session instance.
+
+        Raises:
+            None
+        """
         db = self.SessionLocal()
         try:
             return db
@@ -1148,7 +1553,18 @@ class DatabaseManager:
             pass
 
     def validate_license(self, license_key: str, product_name: str) -> LicenseEntry | None:
-        """Validate license in database."""
+        """Validate license in database and return license entry if valid.
+
+        Args:
+            license_key: License key string to validate.
+            product_name: Software product name associated with license.
+
+        Returns:
+            LicenseEntry object if found and valid, None otherwise.
+
+        Raises:
+            None
+        """
         try:
             db = self.SessionLocal()
             license_entry = (
@@ -1167,7 +1583,15 @@ class DatabaseManager:
             return None
 
     def log_operation(self, license_key: str, operation: str, client_ip: str, *, success: bool, details: str = "") -> None:
-        """Log license operation."""
+        """Log license operation to database for audit purposes.
+
+        Args:
+            license_key: License key string for operation logging.
+            operation: Operation name or type being performed.
+            client_ip: Client IP address making the request.
+            success: Operation success status (keyword-only).
+            details: Operation details or metadata (keyword-only, optional).
+        """
         try:
             db = self.SessionLocal()
             log_entry = LicenseLog(
@@ -1201,6 +1625,8 @@ class HardwareFingerprintGenerator:
         Returns:
             subprocess.CompletedProcess or None if command unavailable
 
+        Raises:
+            None
         """
         if not cmd_parts:
             return None
@@ -1217,7 +1643,17 @@ class HardwareFingerprintGenerator:
             return None
 
     def _get_cpu_id_windows(self) -> str:
-        """Get CPU ID on Windows."""
+        """Get CPU ID on Windows.
+
+        Args:
+            None
+
+        Returns:
+            CPU ID string.
+
+        Raises:
+            None
+        """
         result = self._safe_subprocess_run(["wmic", "cpu", "get", "ProcessorId", "/format:value"])
         if result and result.stdout:
             for line in result.stdout.split("\n"):
@@ -1227,7 +1663,17 @@ class HardwareFingerprintGenerator:
         return hashlib.sha256(platform.processor().encode()).hexdigest()[:16]
 
     def _get_cpu_id_linux(self) -> str:
-        """Get CPU ID on Linux."""
+        """Get CPU ID on Linux.
+
+        Args:
+            None
+
+        Returns:
+            CPU ID string.
+
+        Raises:
+            None
+        """
         try:
             with open("/proc/cpuinfo", encoding="utf-8") as f:
                 for line in f:
@@ -1241,18 +1687,48 @@ class HardwareFingerprintGenerator:
         return hashlib.sha256(f"{platform.processor()}{platform.machine()}{platform.node()}".encode()).hexdigest()[:16]
 
     def _get_cpu_id_darwin(self) -> str:
-        """Get CPU ID on macOS."""
+        """Get CPU ID on macOS.
+
+        Args:
+            None
+
+        Returns:
+            CPU ID string.
+
+        Raises:
+            None
+        """
         result = self._safe_subprocess_run(["sysctl", "-n", "machdep.cpu.brand_string"])
         if result and result.stdout:
             return hashlib.sha256(result.stdout.strip().encode()).hexdigest()[:16]
         return hashlib.sha256(f"{platform.processor()}{platform.machine()}".encode()).hexdigest()[:16]
 
     def _get_cpu_id_default(self) -> str:
-        """Get CPU ID for other systems."""
+        """Get CPU ID for other systems.
+
+        Args:
+            None
+
+        Returns:
+            CPU ID string.
+
+        Raises:
+            None
+        """
         return hashlib.sha256(f"{platform.processor()}{platform.machine()}{platform.node()}".encode()).hexdigest()[:16]
 
     def _get_motherboard_id_windows(self) -> str:
-        """Get motherboard ID on Windows."""
+        """Get motherboard ID on Windows.
+
+        Args:
+            None
+
+        Returns:
+            Motherboard ID string.
+
+        Raises:
+            None
+        """
         result = self._safe_subprocess_run(["wmic", "baseboard", "get", "SerialNumber", "/format:value"])
         if result and result.stdout:
             for line in result.stdout.split("\n"):
@@ -1265,7 +1741,17 @@ class HardwareFingerprintGenerator:
         return hashlib.sha256(f"{platform.node()}{platform.platform()}".encode()).hexdigest()[:16]
 
     def _get_motherboard_id_linux(self) -> str:
-        """Get motherboard ID on Linux."""
+        """Get motherboard ID on Linux.
+
+        Args:
+            None
+
+        Returns:
+            Motherboard ID string.
+
+        Raises:
+            None
+        """
         try:
             with open("/sys/class/dmi/id/board_serial", encoding="utf-8") as f:
                 return f.read().strip()
@@ -1284,7 +1770,17 @@ class HardwareFingerprintGenerator:
         return hashlib.sha256(f"{platform.node()}{platform.platform()}".encode()).hexdigest()[:16]
 
     def _get_motherboard_id_darwin(self) -> str:
-        """Get motherboard ID on macOS."""
+        """Get motherboard ID on macOS.
+
+        Args:
+            None
+
+        Returns:
+            Motherboard ID string.
+
+        Raises:
+            None
+        """
         result = self._safe_subprocess_run(["system_profiler", "SPHardwareDataType"])
         if result and result.stdout:
             for line in result.stdout.split("\n"):
@@ -1295,11 +1791,31 @@ class HardwareFingerprintGenerator:
         return hashlib.sha256(f"{platform.node()}{platform.version()}".encode()).hexdigest()[:16]
 
     def _get_motherboard_id_default(self) -> str:
-        """Get motherboard ID for other systems."""
+        """Get motherboard ID for other systems.
+
+        Args:
+            None
+
+        Returns:
+            Motherboard ID string.
+
+        Raises:
+            None
+        """
         return hashlib.sha256(f"{platform.node()}{platform.platform()}".encode()).hexdigest()[:16]
 
     def _get_disk_serial_windows(self) -> str:
-        """Get disk serial on Windows."""
+        """Get disk serial number on Windows system.
+
+        Args:
+            None
+
+        Returns:
+            Disk serial number string or hash if unavailable.
+
+        Raises:
+            None
+        """
         result = self._safe_subprocess_run([
             "wmic",
             "logicaldisk",
@@ -1317,7 +1833,17 @@ class HardwareFingerprintGenerator:
         return hashlib.sha256(f"{platform.node()}{platform.system()}disk".encode()).hexdigest()[:16]
 
     def _get_disk_serial_linux(self) -> str:
-        """Get disk serial on Linux."""
+        """Get disk serial number on Linux system.
+
+        Args:
+            None
+
+        Returns:
+            Disk serial number string or hash if unavailable.
+
+        Raises:
+            None
+        """
         result = self._safe_subprocess_run(["lsblk", "-no", "SERIAL", "/dev/sda"])
         if result and result.stdout:
             if serial := result.stdout.strip():
@@ -1337,7 +1863,17 @@ class HardwareFingerprintGenerator:
         return hashlib.sha256(f"{platform.node()}{platform.system()}disk".encode()).hexdigest()[:16]
 
     def _get_disk_serial_darwin(self) -> str:
-        """Get disk serial on macOS."""
+        """Get disk serial number on macOS system.
+
+        Args:
+            None
+
+        Returns:
+            Disk serial number string or hash if unavailable.
+
+        Raises:
+            None
+        """
         try:
             if diskutil_path := shutil.which("diskutil"):
                 result = subprocess.run(
@@ -1362,7 +1898,17 @@ class HardwareFingerprintGenerator:
         return hashlib.sha256(f"{platform.node()}{platform.system()}disk".encode()).hexdigest()[:16]
 
     def _get_disk_serial_default(self) -> str:
-        """Get disk serial for other systems."""
+        """Get disk serial number for other systems.
+
+        Args:
+            None
+
+        Returns:
+            Disk serial number string or hash if unavailable.
+
+        Raises:
+            None
+        """
         try:
             if hasattr(os, "statvfs"):
                 stat_info = os.statvfs("/")
@@ -1372,7 +1918,17 @@ class HardwareFingerprintGenerator:
         return hashlib.sha256(f"{platform.node()}{platform.system()}disk".encode()).hexdigest()[:16]
 
     def _get_mac_address(self) -> str:
-        """Get MAC address cross-platform."""
+        """Get MAC address cross-platform.
+
+        Args:
+            None
+
+        Returns:
+            MAC address string in standard format.
+
+        Raises:
+            None
+        """
         try:
             mac_num = uuid.getnode()
             if not (mac_num >> 40) % 2:
@@ -1398,7 +1954,17 @@ class HardwareFingerprintGenerator:
         return ":".join(f"{b:02X}" for b in mac_bytes)
 
     def _get_ram_size(self) -> int:
-        """Get RAM size in GB cross-platform."""
+        """Get total RAM size in GB cross-platform.
+
+        Args:
+            None
+
+        Returns:
+            Total RAM size in gigabytes.
+
+        Raises:
+            None
+        """
         try:
             from intellicrack.handlers.psutil_handler import psutil
 
@@ -1428,7 +1994,17 @@ class HardwareFingerprintGenerator:
         return 8
 
     def generate_fingerprint(self) -> HardwareFingerprint:
-        """Generate hardware fingerprint from system with reduced complexity."""
+        """Generate hardware fingerprint from system with reduced complexity.
+
+        Args:
+            None
+
+        Returns:
+            HardwareFingerprint object containing system identifiers.
+
+        Raises:
+            None
+        """
         try:
             fingerprint = HardwareFingerprint()
             cpu_handlers = {
@@ -1469,7 +2045,17 @@ class HardwareFingerprintGenerator:
             return self._generate_fallback_fingerprint()
 
     def _generate_fallback_fingerprint(self) -> HardwareFingerprint:
-        """Generate fallback fingerprint when normal generation fails."""
+        """Generate fallback fingerprint when normal generation fails.
+
+        Args:
+            None
+
+        Returns:
+            HardwareFingerprint object with randomly generated system identifiers.
+
+        Raises:
+            None
+        """
         hex_chars = "0123456789ABCDEF"
         cpu_id = "".join(secrets.choice(hex_chars) for _ in range(16))
         board_id = "".join(secrets.choice(hex_chars) for _ in range(12))
@@ -1501,7 +2087,17 @@ class ProtocolAnalyzer:
         self.logger = logging.getLogger(f"{__name__}.ProtocolAnalyzer")
 
     def _initialize_patterns(self) -> dict[str, dict[str, Any]]:
-        """Initialize enhanced protocol detection patterns."""
+        """Initialize enhanced protocol detection patterns.
+
+        Args:
+            None
+
+        Returns:
+            Dictionary containing protocol patterns with port, signature, and type info.
+
+        Raises:
+            None
+        """
         return {
             "flexlm": {"port": 27000, "signature": b"FLEXLM", "type": LicenseType.FLEXLM},
             "hasp": {"port": 1947, "signature": b"HASP", "type": LicenseType.HASP},
@@ -1538,7 +2134,17 @@ class ProtocolAnalyzer:
         }
 
     def _initialize_signatures(self) -> dict[bytes, LicenseType]:
-        """Initialize binary protocol signatures."""
+        """Initialize binary protocol signatures.
+
+        Args:
+            None
+
+        Returns:
+            Dictionary mapping binary signatures to LicenseType enum values.
+
+        Raises:
+            None
+        """
         return {
             b"\x00\x00\x00\x01\x00\x00\x00\x01": LicenseType.FLEXLM,
             b"lmgrd": LicenseType.FLEXLM,
@@ -1555,7 +2161,19 @@ class ProtocolAnalyzer:
         }
 
     def analyze_traffic(self, data: bytes, _source_addr: str, dest_port: int = 0) -> dict[str, Any]:
-        """Analyze captured traffic to identify license protocol and extract data."""
+        """Analyze captured traffic to identify license protocol and extract data.
+
+        Args:
+            data: Binary data to analyze.
+            _source_addr: Source address tuple.
+            dest_port: Destination port number.
+
+        Returns:
+            Dictionary with analysis results.
+
+        Raises:
+            None
+        """
         analysis_result = {
             "protocol": LicenseType.CUSTOM,
             "method": "UNKNOWN",
@@ -1604,7 +2222,17 @@ class ProtocolAnalyzer:
         return analysis_result
 
     def _parse_http_request(self, data: bytes) -> dict[str, Any] | None:
-        """Parse HTTP/HTTPS request and identify license endpoints."""
+        """Parse HTTP/HTTPS request and identify license endpoints.
+
+        Args:
+            data: Binary data to analyze.
+
+        Returns:
+            Dictionary with parsed request info or None if invalid.
+
+        Raises:
+            None
+        """
         try:
             header_end = data.find(b"\r\n\r\n")
             if header_end == -1:
@@ -1659,7 +2287,17 @@ class ProtocolAnalyzer:
             return None
 
     def _parse_flexlm_data(self, data: bytes) -> dict[str, Any]:
-        """Parse FLEXlm protocol data."""
+        """Parse FLEXlm protocol binary data.
+
+        Args:
+            data: Binary protocol data to parse.
+
+        Returns:
+            Dictionary containing parsed FLEXlm protocol information.
+
+        Raises:
+            None
+        """
         parsed = {}
         with contextlib.suppress(ValueError, IndexError):
             if len(data) > 8:
@@ -1691,7 +2329,17 @@ class ProtocolAnalyzer:
         return parsed
 
     def _parse_hasp_data(self, data: bytes) -> dict[str, Any]:
-        """Parse HASP/Sentinel protocol data."""
+        """Parse HASP/Sentinel protocol XML data.
+
+        Args:
+            data: Binary protocol data containing XML.
+
+        Returns:
+            Dictionary containing parsed HASP protocol information.
+
+        Raises:
+            None
+        """
         parsed = {}
         with contextlib.suppress(ValueError, IndexError):
             if b"<haspprotocol>" in data:
@@ -1707,7 +2355,17 @@ class ProtocolAnalyzer:
         return parsed
 
     def _detect_protobuf(self, data: bytes) -> bool:
-        """Detect if data is likely protobuf format."""
+        """Detect if binary data is likely protobuf format.
+
+        Args:
+            data: Binary data to check.
+
+        Returns:
+            True if data appears to be protobuf format, False otherwise.
+
+        Raises:
+            None
+        """
         if len(data) < 4:
             return False
         has_varint = any(b & 128 for b in data[:10])
@@ -1730,7 +2388,14 @@ class BinaryKeyExtractor:
         self._pattern_cache: dict[str, Any] = {}
 
     def _extract_adobe_private_key_from_memory(self, binary_path: str) -> bytes | None:
-        """Extract Adobe private key using sophisticated memory analysis and cryptographic patterns."""
+        """Extract Adobe private key using sophisticated memory analysis and cryptographic patterns.
+
+        Args:
+            binary_path: Path to binary file.
+
+        Returns:
+            Extracted key bytes or None if extraction fails.
+        """
         if not os.path.exists(binary_path):
             return None
         adobe_process = None
@@ -1771,7 +2436,17 @@ class BinaryKeyExtractor:
         return self._extract_key_via_differential_analysis(adobe_process.pid)
 
     def _extract_key_from_adobe_process(self) -> bytes | None:
-        """Extract Adobe signing key using sophisticated runtime analysis and memory forensics."""
+        """Extract Adobe signing key using sophisticated runtime analysis and memory forensics.
+
+        Args:
+            None
+
+        Returns:
+            Extracted RSA private key bytes from Adobe process, or None if extraction fails.
+
+        Raises:
+            None
+        """
         adobe_process_map: dict[str, dict[str, int | float | str]] = {
             "Photoshop.exe": {"key_size": 2048, "algo": "RSA", "entropy_threshold": 7.8},
             "Illustrator.exe": {"key_size": 2048, "algo": "RSA", "entropy_threshold": 7.9},
@@ -1809,7 +2484,15 @@ class BinaryKeyExtractor:
         return None
 
     def _extract_key_with_advanced_patterns(self, pid: int, key_type: str) -> bytes | None:
-        """Extract keys using advanced pattern matching and cryptographic signatures."""
+        """Extract keys using advanced pattern matching and cryptographic signatures.
+
+        Args:
+            pid: Process ID to extract keys from.
+            key_type: Type of cryptographic key (RSA, EC, etc.).
+
+        Returns:
+            Extracted key bytes or None if extraction fails.
+        """
         try:
             if platform.system() != "Windows":
                 return self._extract_key_linux_advanced(pid, key_type)
@@ -1897,7 +2580,15 @@ class BinaryKeyExtractor:
         return None
 
     def _extract_key_via_api_hooks(self, pid: int, api_names: list[str]) -> bytes | None:
-        """Extract keys by hooking cryptographic APIs."""
+        """Extract keys by hooking cryptographic APIs.
+
+        Args:
+            pid: Process ID to attach to for key extraction.
+            api_names: List of API function names to hook.
+
+        Returns:
+            Extracted key bytes or None if extraction fails.
+        """
         if not frida:
             return self._extract_key_via_detours(pid, api_names)
         try:
@@ -1926,7 +2617,14 @@ class BinaryKeyExtractor:
         return None
 
     def _extract_key_via_differential_analysis(self, pid: int) -> bytes | None:
-        """Extract keys using memory differential analysis."""
+        """Extract keys using differential memory analysis.
+
+        Args:
+            pid: Process ID to analyze.
+
+        Returns:
+            Extracted key bytes or None if extraction fails.
+        """
         try:
             snapshot1 = self._capture_memory_snapshot(pid)
             if not snapshot1:
@@ -1948,7 +2646,16 @@ class BinaryKeyExtractor:
         return None
 
     def _extract_key_via_entropy_analysis(self, pid: int, entropy_threshold: float, key_size: int) -> bytes | None:
-        """Extract keys by analyzing memory entropy patterns."""
+        """Extract keys by analyzing memory entropy patterns.
+
+        Args:
+            pid: Process ID to analyze.
+            entropy_threshold: Threshold for entropy detection.
+            key_size: Expected size of key in bytes.
+
+        Returns:
+            Extracted key bytes or None if extraction fails.
+        """
         try:
             if platform.system() != "Windows":
                 return None
@@ -1990,7 +2697,16 @@ class BinaryKeyExtractor:
         return None
 
     def _extract_key_via_crypto_structure_detection(self, pid: int, algo: str, key_size: int) -> bytes | None:
-        """Detect and extract keys by identifying cryptographic data structures."""
+        """Detect and extract keys by identifying cryptographic data structures.
+
+        Args:
+            pid: Process ID to analyze.
+            algo: Algorithm type (RSA, EC, etc.).
+            key_size: Expected size of key in bytes.
+
+        Returns:
+            Extracted key bytes or None if extraction fails.
+        """
         try:
             if platform.system() != "Windows":
                 return None
@@ -2045,7 +2761,14 @@ class BinaryKeyExtractor:
         return None
 
     def _extract_key_via_memory_snapshots(self, pid: int) -> bytes | None:
-        """Extract keys by analyzing memory snapshots over time."""
+        """Extract keys by analyzing memory snapshots over time.
+
+        Args:
+            pid: Process ID to analyze.
+
+        Returns:
+            Extracted key bytes or None if extraction fails.
+        """
         try:
             snapshots = []
             import time
@@ -2066,7 +2789,14 @@ class BinaryKeyExtractor:
         return None
 
     def _extract_key_via_hook_injection(self, pid: int) -> bytes | None:
-        """Extract keys using dynamic hook injection."""
+        """Extract keys using dynamic hook injection.
+
+        Args:
+            pid: Process ID to inject hooks into.
+
+        Returns:
+            Extracted key bytes or None if extraction fails.
+        """
         if not frida:
             return None
         try:
@@ -2095,11 +2825,19 @@ class BinaryKeyExtractor:
         return None
 
     def _can_inject_hooks(self) -> bool:
-        """Check if we can inject hooks into processes."""
+        """Check if hook injection is possible.
+
+        Returns:
+            True if Frida or Detours is available, False otherwise.
+        """
         return frida is not None or self._has_detours_support()
 
     def _has_detours_support(self) -> bool:
-        """Check if Detours or similar hooking library is available."""
+        """Check if Detours or similar hooking library is available.
+
+        Returns:
+            True if Detours library can be loaded, False otherwise.
+        """
         try:
             import ctypes
 
@@ -2109,7 +2847,14 @@ class BinaryKeyExtractor:
             return False
 
     def _enumerate_memory_regions(self, process_handle: int) -> list[tuple[int, int]]:
-        """Enumerate readable memory regions of a process."""
+        """Enumerate readable memory regions of a process.
+
+        Args:
+            process_handle: Handle to the process.
+
+        Returns:
+            List of tuples containing (base_address, region_size).
+        """
         import ctypes
         from ctypes import wintypes
 
@@ -2137,7 +2882,14 @@ class BinaryKeyExtractor:
         return regions
 
     def _calculate_entropy(self, data: bytes) -> float:
-        """Calculate Shannon entropy of data."""
+        """Calculate Shannon entropy of data.
+
+        Args:
+            data: Input bytes to calculate entropy for.
+
+        Returns:
+            Calculated entropy as float value between 0 and 8.
+        """
         import math
 
         if not data:
@@ -2154,7 +2906,15 @@ class BinaryKeyExtractor:
         return entropy
 
     def _is_potential_key(self, data: bytes, key_size_bits: int) -> bool:
-        """Check if data could be a cryptographic key."""
+        """Check if data could be a cryptographic key.
+
+        Args:
+            data: Bytes to evaluate as potential key.
+            key_size_bits: Expected key size in bits.
+
+        Returns:
+            True if data looks like a cryptographic key, False otherwise.
+        """
         expected_bytes = key_size_bits // 8
         if len(data) < expected_bytes * 0.8 or len(data) > expected_bytes * 1.5:
             return False
@@ -2393,11 +3153,9 @@ class BinaryKeyExtractor:
 
         Args:
             data: Binary data to scan for cryptographic key material.
-            key_type: Type of key to detect (RSA, ECC, etc).
 
         Returns:
             DER-encoded private key bytes if potential key detected, None otherwise.
-
         """
         with contextlib.suppress(OSError, ValueError, TypeError):
             window_sizes = [256, 512, 1024, 2048, 4096]
@@ -2474,7 +3232,14 @@ class BinaryKeyExtractor:
         return self._try_parse_as_key(key_bytes)
 
     def _capture_memory_snapshot(self, pid: int) -> dict[int, bytes] | None:
-        """Capture a snapshot of process memory."""
+        """Capture a snapshot of process memory.
+
+        Args:
+            pid: Process ID to capture memory from.
+
+        Returns:
+            Dictionary mapping memory addresses to byte data, or None on failure.
+        """
         try:
             if platform.system() != "Windows":
                 return None
@@ -2508,7 +3273,11 @@ class BinaryKeyExtractor:
             return None
 
     def _trigger_crypto_operation(self, pid: int) -> None:
-        """Trigger a cryptographic operation in the target process."""
+        """Trigger a cryptographic operation in the target process.
+
+        Args:
+            pid: Process ID to target for crypto operation.
+        """
         with contextlib.suppress(OSError, ctypes.ArgumentError):
             if platform.system() == "Windows":
                 user32 = ctypes.windll.user32
@@ -2526,7 +3295,15 @@ class BinaryKeyExtractor:
                 user32.EnumWindows(wndenumproc(enum_windows_callback), pid)
 
     def _analyze_memory_differences(self, snapshot1: dict[int, bytes], snapshot2: dict[int, bytes]) -> list[dict[str, Any]]:
-        """Analyze differences between memory snapshots."""
+        """Analyze memory differences between two memory snapshots.
+
+        Args:
+            snapshot1: First memory snapshot mapping addresses to bytes.
+            snapshot2: Second memory snapshot mapping addresses to bytes.
+
+        Returns:
+            List of dictionaries containing memory difference information.
+        """
         differences = []
         for address, data2 in snapshot2.items():
             if address in snapshot1:
@@ -2542,7 +3319,14 @@ class BinaryKeyExtractor:
         return differences
 
     def _contains_crypto_material(self, data: bytes) -> bool:
-        """Check if data contains cryptographic material."""
+        """Check if data contains cryptographic material.
+
+        Args:
+            data: Binary data to check for cryptographic content.
+
+        Returns:
+            True if data appears to be cryptographic material, False otherwise.
+        """
         if not data or len(data) < 128:
             return False
         entropy = self._calculate_entropy(data)
@@ -2618,7 +3402,17 @@ class BinaryKeyExtractor:
         return None
 
     def _factor_modulus(self, n: int) -> tuple[int, int] | None:
-        """Factor RSA modulus using sophisticated algorithms."""
+        """Factor RSA modulus using sophisticated algorithms.
+        
+                Args:
+                    n: Parameter value or data
+        
+                Returns:
+                    tuple[int, int] | None.
+        
+                Raises:
+                    None
+                """
         if factors := self._fermat_factorization(n):
             return factors
         if factors := self._pollard_rho(n):
@@ -2633,7 +3427,17 @@ class BinaryKeyExtractor:
         return factors if (factors := self._optimized_trial_division(n)) else None
 
     def _fermat_factorization(self, n: int) -> tuple[int, int] | None:
-        """Fermat's factorization method for numbers with close factors."""
+        """Fermat's factorization method for numbers with close factors.
+        
+                Args:
+                    n: Parameter value or data
+        
+                Returns:
+                    tuple[int, int] | None.
+        
+                Raises:
+                    None
+                """
         import math
 
         if n % 2 == 0:
@@ -2652,7 +3456,17 @@ class BinaryKeyExtractor:
         return None
 
     def _pollard_rho(self, n: int) -> tuple[int, int] | None:
-        """Pollard's rho algorithm for integer factorization."""
+        """Pollard's rho algorithm for integer factorization.
+        
+                Args:
+                    n: Parameter value or data
+        
+                Returns:
+                    tuple[int, int] | None.
+        
+                Raises:
+                    None
+                """
         import math
 
         if n <= 1:
@@ -2675,7 +3489,17 @@ class BinaryKeyExtractor:
         return None
 
     def _pollard_p_minus_1(self, n: int) -> tuple[int, int] | None:
-        """Pollard's p-1 factorization algorithm."""
+        """Pollard's p-1 factorization algorithm.
+        
+                Args:
+                    n: Parameter value or data
+        
+                Returns:
+                    tuple[int, int] | None.
+        
+                Raises:
+                    None
+                """
         import math
 
         bound = min(10000, n.bit_length() * 100)
@@ -2699,7 +3523,17 @@ class BinaryKeyExtractor:
         return None
 
     def _quadratic_sieve_simple(self, n: int) -> tuple[int, int] | None:
-        """Self-Initializing Quadratic Sieve (SIQS) with multiple polynomial optimization."""
+        """Self-Initializing Quadratic Sieve (SIQS) with multiple polynomial optimization.
+        
+                Args:
+                    n: Parameter value or data
+        
+                Returns:
+                    tuple[int, int] | None.
+        
+                Raises:
+                    None
+                """
         import math
 
         factor_base_size = min(100, n.bit_length() * 2)
@@ -2717,7 +3551,17 @@ class BinaryKeyExtractor:
         return None
 
     def _ecm_factorization(self, n: int) -> tuple[int, int] | None:
-        """Elliptic Curve Method factorization."""
+        """Elliptic Curve Method factorization.
+        
+                Args:
+                    n: Parameter value or data
+        
+                Returns:
+                    tuple[int, int] | None.
+        
+                Raises:
+                    None
+                """
         for _ in range(20):
             import secrets
 
@@ -2730,7 +3574,17 @@ class BinaryKeyExtractor:
         return None
 
     def _optimized_trial_division(self, n: int) -> tuple[int, int] | None:
-        """Optimized trial division with wheel factorization."""
+        """Optimized trial division with wheel factorization.
+        
+                Args:
+                    n: Parameter value or data
+        
+                Returns:
+                    tuple[int, int] | None.
+        
+                Raises:
+                    None
+                """
         import math
 
         small_primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47]
@@ -2751,7 +3605,17 @@ class BinaryKeyExtractor:
         return None
 
     def _primes_up_to(self, limit: int) -> list[int]:
-        """Generate primes up to limit using sieve of Eratosthenes."""
+        """Generate primes up to limit using sieve of Eratosthenes.
+        
+                Args:
+                    limit: Parameter value or data
+        
+                Returns:
+                    list[int].
+        
+                Raises:
+                    None
+                """
         if limit < 2:
             return []
         sieve = [True] * (limit + 1)
@@ -2763,11 +3627,33 @@ class BinaryKeyExtractor:
         return [i for i in range(2, limit + 1) if sieve[i]]
 
     def _primes_between(self, start: int, end: int) -> list[int]:
-        """Generate primes between start and end."""
+        """Generate primes between start and end.
+        
+                Args:
+                    start: Parameter value or data
+                    end: Parameter value or data
+        
+                Returns:
+                    list[int].
+        
+                Raises:
+                    None
+                """
         return [n for n in range(start | 1, end + 1, 2) if self._is_prime_miller_rabin(n)]
 
     def _is_prime_miller_rabin(self, n: int, k: int = 5) -> bool:
-        """Miller-Rabin primality test."""
+        """Miller-Rabin primality test.
+        
+                Args:
+                    n: Parameter value or data
+                    k: Parameter value or data
+        
+                Returns:
+                    bool.
+        
+                Raises:
+                    None
+                """
         if n < 2:
             return False
         if n in {2, 3}:
@@ -2794,7 +3680,18 @@ class BinaryKeyExtractor:
         return True
 
     def _is_smooth(self, n: int, factor_base: list[int]) -> bool:
-        """Check if n is smooth over the factor base."""
+        """Check if n is smooth over the factor base.
+        
+                Args:
+                    n: Parameter value or data
+                    factor_base: Parameter value or data
+        
+                Returns:
+                    bool.
+        
+                Raises:
+                    None
+                """
         if n < 0:
             n = -n
         for p in factor_base:
@@ -2803,7 +3700,18 @@ class BinaryKeyExtractor:
         return n == 1
 
     def _combine_smooth_numbers(self, smooth_numbers: list[tuple[int, int]], n: int) -> tuple[int, int] | None:
-        """Combine smooth numbers to find a factorization using Gaussian elimination."""
+        """Combine smooth numbers to find a factorization using Gaussian elimination.
+        
+                Args:
+                    smooth_numbers: Parameter value or data
+                    n: Parameter value or data
+        
+                Returns:
+                    tuple[int, int] | None.
+        
+                Raises:
+                    None
+                """
         import math
 
         for i in range(len(smooth_numbers)):
@@ -2820,7 +3728,20 @@ class BinaryKeyExtractor:
         return None
 
     def _ecm_stage1(self, n: int, a: int, x: int, y: int) -> int | None:
-        """ECM Stage 1 - multiply point by smooth number."""
+        """ECM Stage 1 - multiply point by smooth number.
+
+        Args:
+            n: Number to factor.
+            a: Elliptic curve parameter.
+            x: X coordinate of curve point.
+            y: Y coordinate of curve point.
+
+        Returns:
+            Factor found or None if no factor discovered.
+
+        Raises:
+            None
+        """
         import math
 
         bound1 = min(1000, n.bit_length() * 10)
@@ -2838,7 +3759,18 @@ class BinaryKeyExtractor:
         return g if 1 < g < n else None
 
     def _ec_multiply(self, x: int, y: int, k: int, a: int, n: int) -> tuple[int, int]:
-        """Elliptic curve point multiplication using Montgomery ladder."""
+        """Elliptic curve point multiplication using Montgomery ladder.
+
+        Args:
+            x: X coordinate of point.
+            y: Y coordinate of point.
+            k: Scalar multiplier.
+            a: Elliptic curve parameter.
+            n: Modulus.
+
+        Returns:
+            Tuple of multiplied point coordinates (x, y).
+        """
         if k == 0:
             return (0, 0)
         if k == 1:
@@ -2864,11 +3796,13 @@ class BinaryKeyExtractor:
 
         Args:
             data: Binary data containing PKCS#1-encoded RSA private key.
-            key_size: Expected size of the key in bytes.
+            _key_size: Expected size of the key in bytes.
 
         Returns:
             Extracted RSA private key object if valid, None otherwise.
 
+        Raises:
+            None
         """
         return self._is_valid_der_rsa(data)
 
@@ -2877,11 +3811,13 @@ class BinaryKeyExtractor:
 
         Args:
             data: Binary data containing PKCS#8-encoded private key.
-            key_size: Expected size of the key in bytes.
+            _key_size: Expected size of the key in bytes.
 
         Returns:
             Extracted private key object if valid, None otherwise.
 
+        Raises:
+            None
         """
         return self._is_valid_pkcs8(data)
 
@@ -2890,11 +3826,13 @@ class BinaryKeyExtractor:
 
         Args:
             data: Binary data containing Microsoft CryptoAPI RSA key blob.
-            key_size: Expected size of the key in bytes.
+            _key_size: Expected size of the key in bytes.
 
         Returns:
             Extracted RSA private key object if valid, None otherwise.
 
+        Raises:
+            None
         """
         return self._extract_capi_key(data)
 
@@ -2903,11 +3841,13 @@ class BinaryKeyExtractor:
 
         Args:
             data: Binary data containing OpenSSL RSA key structure.
-            key_size: Expected size of the key in bytes.
+            _key_size: Expected size of the key in bytes.
 
         Returns:
             Extracted RSA private key object if valid, None otherwise.
 
+        Raises:
+            None
         """
         with contextlib.suppress(ValueError, TypeError, IndexError):
             if b"\x00\x00\x00\x00\x01\x00\x01" in data:
@@ -2924,7 +3864,6 @@ class BinaryKeyExtractor:
 
         Returns:
             Reconstructed RSA private key object if successful, None otherwise.
-
         """
         try:
             modulus_start = exp_offset - 8
@@ -3011,11 +3950,9 @@ class BinaryKeyExtractor:
 
         Args:
             data: Binary data containing elliptic curve private key.
-            key_size: Expected size of the key in bytes.
 
         Returns:
             Extracted elliptic curve private key object if valid, None otherwise.
-
         """
         try:
             from cryptography.hazmat.backends import default_backend
@@ -3026,7 +3963,14 @@ class BinaryKeyExtractor:
             return None
 
     def _capture_detailed_memory_snapshot(self, pid: int) -> dict[str, Any] | None:
-        """Capture detailed memory snapshot with metadata."""
+        """Capture detailed memory snapshot with metadata.
+
+        Args:
+            pid: Process identifier.
+
+        Returns:
+            Dictionary with extracted data | None.
+        """
         if snapshot := self._capture_memory_snapshot(pid):
             import time
 
@@ -3034,7 +3978,17 @@ class BinaryKeyExtractor:
         return None
 
     def _find_persistent_crypto_regions(self, snapshots: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Find memory regions with persistent cryptographic material."""
+        """Find memory regions with persistent cryptographic material.
+        
+                Args:
+                    snapshots: Parameter value or data
+        
+                Returns:
+                    list[dict[str, Any]].
+        
+                Raises:
+                    None
+                """
         if len(snapshots) < 2:
             return []
         persistent_regions = []
@@ -3048,16 +4002,47 @@ class BinaryKeyExtractor:
         return persistent_regions
 
     def _extract_key_from_persistent_region(self, region: dict[str, Any]) -> bytes | None:
-        """Extract key from persistent memory region."""
+        """Extract key from persistent memory region.
+        
+                Args:
+                    region: Parameter value or data
+        
+                Returns:
+                    bytes | None.
+        
+                Raises:
+                    None
+                """
         data = region.get("data")
         return self._try_parse_as_key(data) if isinstance(data, bytes) else None
 
     def _parse_der_key(self, key_bytes: bytes) -> Any:
-        """Parse DER-encoded key."""
+        """Parse DER-encoded key.
+        
+                Args:
+                    key_bytes: Parameter value or data
+        
+                Returns:
+                    Any.
+        
+                Raises:
+                    None
+                """
         return self._is_valid_der_rsa(key_bytes)
 
     def _decrypt_adobe_container(self, encrypted_data: bytes, version: int) -> bytes | None:
-        """Decrypt Adobe-specific key container."""
+        """Decrypt Adobe-specific key container.
+        
+                Args:
+                    encrypted_data: Parameter value or data
+                    version: Parameter value or data
+        
+                Returns:
+                    bytes | None.
+        
+                Raises:
+                    None
+                """
         with contextlib.suppress(ValueError, TypeError):
             if version == 1:
                 xor_key = b"Adobe Systems Incorporated"
@@ -3078,11 +4063,30 @@ class BinaryKeyExtractor:
         return None
 
     def _extract_key_via_detours(self, _pid: int, _api_names: list[str]) -> bytes | None:
-        """Extract keys using Detours library for API hooking."""
+        """Extract keys using Detours library for API hooking.
+        
+                Args:
+                    _pid: Parameter value or data
+                    _api_names: Parameter value or data
+        
+                Returns:
+                    bytes | None.
+        
+                Raises:
+                    None
+                """
         return None
 
     def _extract_key_linux_advanced(self, pid: int, key_type: str) -> bytes | None:
-        """Advanced key extraction for Linux systems."""
+        """Advanced key extraction for Linux systems.
+
+        Args:
+            pid: Process identifier.
+            key_type: Type of cryptographic key (RSA, EC, etc.).
+
+        Returns:
+            Extracted key bytes | None.
+        """
         result = self._extract_key_ptrace(pid, key_type)
         return result if isinstance(result, bytes) else None
 
@@ -3133,7 +4137,15 @@ class BinaryKeyExtractor:
         return None
 
     def _extract_key_ctypes(self, pid: int, key_type: str) -> bytes | None:
-        """Extract key using ctypes when pywin32 not available."""
+        """Extract cryptographic keys from process memory using ctypes.
+
+        Args:
+            pid: Process identifier.
+            key_type: Type of cryptographic key (RSA, EC, etc.).
+
+        Returns:
+            Extracted key bytes | None.
+        """
         if platform.system() != "Windows":
             return None
         kernel32 = ctypes.windll.kernel32
@@ -3183,7 +4195,15 @@ class BinaryKeyExtractor:
         return None
 
     def _extract_key_ptrace(self, pid: int, key_type: str) -> bytes | None:
-        """Extract key from process memory on Linux/Mac using ptrace."""
+        """Extract key from process memory on Linux/Mac using ptrace.
+
+        Args:
+            pid: Process identifier.
+            key_type: Type of cryptographic key (RSA, EC, etc.).
+
+        Returns:
+            Extracted key bytes | None.
+        """
         try:
             with open(f"/proc/{pid}/maps", encoding="utf-8") as f:
                 maps = f.readlines()
@@ -3212,7 +4232,17 @@ class BinaryKeyExtractor:
         return None
 
     def extract_flexlm_keys(self, binary_path: str) -> dict[str, Any]:
-        """Extract FLEXlm vendor keys and daemon info from protected binary."""
+        """Extract FLEXlm vendor keys and daemon info from protected binary.
+        
+                Args:
+                    binary_path: Parameter value or data
+        
+                Returns:
+                    dict[str, Any].
+        
+                Raises:
+                    None
+                """
         import capstone
         import pefile
 
@@ -3295,7 +4325,17 @@ class BinaryKeyExtractor:
         return keys
 
     def extract_hasp_keys(self, binary_path: str) -> dict[str, Any]:
-        """Extract HASP/Sentinel feature IDs and keys from protected binary."""
+        """Extract HASP/Sentinel feature IDs and keys from protected binary.
+        
+                Args:
+                    binary_path: Parameter value or data
+        
+                Returns:
+                    dict[str, Any].
+        
+                Raises:
+                    None
+                """
         import pefile
 
         keys: dict[str, Any] = {
@@ -3373,7 +4413,17 @@ class BinaryKeyExtractor:
         return keys
 
     def extract_adobe_keys(self, binary_path: str) -> dict[str, Any]:
-        """Extract Adobe licensing keys and endpoints from Creative Cloud binaries."""
+        """Extract Adobe licensing keys and endpoints from Creative Cloud binaries.
+        
+                Args:
+                    binary_path: Parameter value or data
+        
+                Returns:
+                    dict[str, Any].
+        
+                Raises:
+                    ExtractionError: If Adobe key extraction fails.
+                """
         import pefile
 
         keys: dict[str, Any] = {
@@ -3461,7 +4511,17 @@ class BinaryKeyExtractor:
         return keys
 
     def extract_validation_algorithm(self, binary_path: str) -> dict[str, Any]:
-        """Analyze binary to understand license validation algorithm."""
+        """Analyze binary to understand license validation algorithm.
+        
+                Args:
+                    binary_path: Parameter value or data
+        
+                Returns:
+                    dict[str, Any].
+        
+                Raises:
+                    None
+                """
         import capstone
         import pefile
 
@@ -3488,14 +4548,38 @@ class BinaryKeyExtractor:
         return algorithm
 
     def _create_disassembler(self, capstone_module: Any, pe_handle: Any) -> Any:
-        """Create a configured Capstone disassembler for the PE architecture."""
+        """Create a configured Capstone disassembler for the PE architecture.
+        
+                Args:
+                    capstone_module: Parameter value or data
+                    pe_handle: Parameter value or data
+        
+                Returns:
+                    Any.
+        
+                Raises:
+                    None
+                """
         mode = capstone_module.CS_MODE_64 if pe_handle.FILE_HEADER.Machine == 34404 else capstone_module.CS_MODE_32
         disassembler = capstone_module.Cs(capstone_module.CS_ARCH_X86, mode)
         disassembler.detail = True
         return disassembler
 
     def _identify_validation_functions(self, pe_handle: Any, code_section: Any, code_bytes: bytes, _capstone_module: Any) -> list[int]:
-        """Identify candidate validation functions by scanning for known strings."""
+        """Identify candidate validation functions by scanning for known strings.
+        
+                Args:
+                    pe_handle: Parameter value or data
+                    code_section: Parameter value or data
+                    code_bytes: Parameter value or data
+                    _capstone_module: Parameter value or data
+        
+                Returns:
+                    list[int].
+        
+                Raises:
+                    None
+                """
         license_patterns = [
             "IsLicenseValid",
             "CheckLicense",
@@ -3529,7 +4613,19 @@ class BinaryKeyExtractor:
         return sorted(candidates)
 
     def _match_lea_instructions(self, code_section: Any, code_bytes: bytes, string_rva: int) -> set[int]:
-        """Match LEA instructions that likely reference validation strings."""
+        """Match LEA instructions that likely reference validation strings.
+        
+                Args:
+                    code_section: Parameter value or data
+                    code_bytes: Parameter value or data
+                    string_rva: Parameter value or data
+        
+                Returns:
+                    set[int].
+        
+                Raises:
+                    None
+                """
         matches = set()
         lea_opcode = b"H\x8d\x05"
         for index in range(len(code_bytes) - len(lea_opcode) - 4):
@@ -3542,7 +4638,19 @@ class BinaryKeyExtractor:
         return matches
 
     def _match_call_instructions(self, code_section: Any, code_bytes: bytes, string_rva: int) -> set[int]:
-        """Match CALL instructions in 32-bit binaries that reference validation strings."""
+        """Match CALL instructions in 32-bit binaries that reference validation strings.
+        
+                Args:
+                    code_section: Parameter value or data
+                    code_bytes: Parameter value or data
+                    string_rva: Parameter value or data
+        
+                Returns:
+                    set[int].
+        
+                Raises:
+                    None
+                """
         matches = set()
         for index in range(len(code_bytes) - 5):
             if code_bytes[index] != 0xE8:
@@ -3562,7 +4670,16 @@ class BinaryKeyExtractor:
         capstone_module: Any,
         algorithm: dict[str, Any],
     ) -> None:
-        """Disassemble a function candidate and capture operations/constants."""
+        """Disassemble a function candidate and capture operations/constants.
+
+        Args:
+            disassembler: Disassembler instance for analyzing binary code.
+            code_section: Code section containing executable instructions.
+            code_bytes: Raw binary code bytes to disassemble.
+            offset: Offset within code_bytes to start disassembly.
+            capstone_module: Capstone disassembly module for instruction analysis.
+            algorithm: Dictionary to store discovered algorithm details.
+        """
         max_length = min(len(code_bytes) - offset, 4096)
         for instruction in disassembler.disasm(code_bytes[offset : offset + max_length], code_section.VirtualAddress + offset):
             mnemonic = instruction.mnemonic
@@ -3587,7 +4704,17 @@ class BinaryKeyExtractor:
                 break
 
     def _classify_algorithm(self, algorithm: dict[str, Any]) -> str:
-        """Classify algorithm based on observed instructions."""
+        """Classify algorithm based on observed instructions.
+
+        Args:
+            algorithm: Dictionary containing algorithm properties and operations.
+
+        Returns:
+            Algorithm classification string (e.g., "CRC", "CHECKSUM", "HASH").
+
+        Raises:
+            None
+        """
         algo_type = str(algorithm["type"])
         if algo_type not in {"unknown", "checksum"}:
             return algo_type
@@ -3600,7 +4727,17 @@ class BinaryKeyExtractor:
         return "HASH" if "MUL" in operations else algo_type
 
     def _collect_validation_strings(self, pe_handle: Any) -> list[str]:
-        """Collect validation-related strings for reporting."""
+        """Collect validation-related strings for reporting.
+
+        Args:
+            pe_handle: PE file handle from pefile library.
+
+        Returns:
+            List of validation-related strings extracted from PE sections.
+
+        Raises:
+            None
+        """
         results: list[str] = []
         patterns = [b"LICENSE", b"VALID", b"INVALID", b"EXPIRED"]
         for section in pe_handle.sections:
@@ -3627,7 +4764,14 @@ class RuntimeKeyExtractor:
         self.extracted_keys: dict[int, dict[str, Any]] = {}
 
     def attach_and_extract(self, process_id: int) -> dict[str, Any]:
-        """Attach to process and extract license keys."""
+        """Attach to process and extract license keys.
+
+        Args:
+            process_id: Process ID to attach to for key extraction.
+
+        Returns:
+            Dictionary containing extracted keys and related data.
+        """
         extracted: dict[str, Any] = {"keys": [], "endpoints": [], "validation_functions": [], "memory_patterns": []}
         if platform.system() == "Windows":
             extracted |= self._attach_windows_process(process_id)
@@ -3637,7 +4781,14 @@ class RuntimeKeyExtractor:
         return extracted
 
     def _attach_windows_process(self, pid: int) -> dict[str, Any]:
-        """Attach to Windows process for key extraction."""
+        """Attach to Windows process for key extraction.
+
+        Args:
+            pid: Process identifier.
+
+        Returns:
+            Dictionary with extracted data.
+        """
         if not win32api or not win32con or not win32process:
             return self._attach_windows_ctypes(pid)
         try:
@@ -3669,7 +4820,14 @@ class RuntimeKeyExtractor:
             return {}
 
     def _attach_windows_ctypes(self, pid: int) -> dict[str, Any]:
-        """Attach using ctypes when pywin32 not available."""
+        """Attach using ctypes when pywin32 not available.
+
+        Args:
+            pid: Process identifier.
+
+        Returns:
+            Dictionary with extracted data.
+        """
         kernel32 = ctypes.windll.kernel32
         extracted_data: dict[str, list[Any]] = {"keys": [], "endpoints": []}
         process_all_access = 2035711
@@ -3711,7 +4869,14 @@ class RuntimeKeyExtractor:
         return extracted_data
 
     def _attach_unix_process(self, pid: int) -> dict[str, Any]:
-        """Attach to Unix/Linux process for key extraction."""
+        """Attach to Unix/Linux process for key extraction.
+
+        Args:
+            pid: Process identifier.
+
+        Returns:
+            Dictionary with extracted data.
+        """
         extracted_data: dict[str, Any] = {"keys": [], "endpoints": []}
         try:
             import signal
@@ -3745,7 +4910,17 @@ class RuntimeKeyExtractor:
         return extracted_data
 
     def _extract_keys_from_memory(self, data: bytes) -> list[dict[str, Any]]:
-        """Extract license keys from memory data with obfuscation-aware scanning."""
+        """Extract license keys from memory data with obfuscation-aware scanning.
+
+        Args:
+            data: Binary memory data to scan for license keys and identifiers.
+
+        Returns:
+            List of dictionaries containing extracted key information with type and value.
+
+        Raises:
+            None
+        """
         keys = []
         if self._is_obfuscated(data):
             data = self._deobfuscate_memory(data)
@@ -3784,7 +4959,17 @@ class RuntimeKeyExtractor:
         return keys
 
     def _extract_endpoints_from_memory(self, data: bytes) -> list[str]:
-        """Extract license server endpoints from memory."""
+        """Extract license server endpoints from memory.
+
+        Args:
+            data: Binary memory data to scan for license server URLs and domains.
+
+        Returns:
+            List of discovered endpoint URLs and domain names.
+
+        Raises:
+            None
+        """
         endpoints = []
         import re
 
@@ -3800,7 +4985,17 @@ class RuntimeKeyExtractor:
         return endpoints
 
     def _validate_product_key(self, key: str) -> bool:
-        """Validate product key format."""
+        """Validate product key format.
+
+        Args:
+            key: Product key string to validate against expected format.
+
+        Returns:
+            True if key matches expected format, False otherwise.
+
+        Raises:
+            None
+        """
         if len(key) != 29:
             return False
         parts = key.split("-")
@@ -3815,7 +5010,17 @@ class RuntimeKeyExtractor:
         return True
 
     def scan_memory_for_keys(self, process_handle: int) -> dict[str, Any]:
-        """Scan process memory regions for license keys with obfuscation handling."""
+        """Scan process memory regions for license keys with obfuscation handling.
+        
+                Args:
+                    process_handle: Parameter value or data
+        
+                Returns:
+                    dict[str, Any].
+        
+                Raises:
+                    None
+                """
         keys: dict[str, list[Any]] = {
             "product_keys": [],
             "guids": [],
@@ -3834,7 +5039,18 @@ class RuntimeKeyExtractor:
         return self._scan_unix_memory(process_handle, keys)
 
     def _scan_windows_memory(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
-        """Scan Windows process memory."""
+        """Scan Windows process memory.
+        
+                Args:
+                    process_handle: Parameter value or data
+                    keys: Parameter value or data
+        
+                Returns:
+                    dict[str, Any].
+        
+                Raises:
+                    None
+                """
         if not win32api or not win32process or not win32con:
             return keys
         try:
@@ -3882,7 +5098,18 @@ class RuntimeKeyExtractor:
         return keys
 
     def _scan_unix_memory(self, pid: int, keys: dict[str, Any]) -> dict[str, Any]:
-        """Scan Unix process memory."""
+        """Scan Unix process memory.
+        
+                Args:
+                    pid: Parameter value or data
+                    keys: Parameter value or data
+        
+                Returns:
+                    dict[str, Any].
+        
+                Raises:
+                    None
+                """
         try:
             with open(f"/proc/{pid}/mem", "rb") as mem, open(f"/proc/{pid}/maps", encoding="utf-8") as maps:
                 for line in maps:
@@ -3916,13 +5143,30 @@ class RuntimeKeyExtractor:
         return keys
 
     def hook_api_calls(self, process_id: int) -> dict[str, Any]:
-        """Install hooks for API calls to intercept license validation."""
+        """Install hooks for API calls to intercept license validation.
+        
+                Args:
+                    process_id: Parameter value or data
+        
+                Returns:
+                    dict[str, Any].
+        
+                Raises:
+                    None
+                """
         if platform.system() == "Windows":
             return self._hook_windows_apis(process_id)
         return self._hook_unix_apis(process_id)
 
     def _hook_windows_apis(self, pid: int) -> dict[str, Any]:
-        """Install hooks for Windows APIs for license interception using inline hooking and IAT patching."""
+        """Install hooks for Windows APIs for license interception using inline hooking and IAT patching.
+
+        Args:
+            pid: Process identifier.
+
+        Returns:
+            Dictionary with extracted data.
+        """
         hooked_data: dict[str, list[Any]] = {
             "registry_keys": [],
             "crypto_operations": [],
@@ -3938,7 +5182,17 @@ class RuntimeKeyExtractor:
         return hooked_data
 
     def _detect_memory_protection(self, process_handle: int) -> str | None:
-        """Detect memory protection scheme (VMProtect, Themida, etc.)."""
+        """Detect memory protection scheme (VMProtect, Themida, etc.).
+        
+                Args:
+                    process_handle: Parameter value or data
+        
+                Returns:
+                    str | None.
+        
+                Raises:
+                    None
+                """
         if platform.system() == "Windows":
             import ctypes
 
@@ -3990,7 +5244,19 @@ class RuntimeKeyExtractor:
         return None
 
     def _handle_protected_memory(self, process_handle: int, protection: str, keys: dict[str, Any]) -> dict[str, Any]:
-        """Handle specific memory protection schemes."""
+        """Handle specific memory protection schemes.
+        
+                Args:
+                    process_handle: Parameter value or data
+                    protection: Parameter value or data
+                    keys: Parameter value or data
+        
+                Returns:
+                    dict[str, Any].
+        
+                Raises:
+                    None
+                """
         if protection == "vmprotect":
             return self._handle_vmprotect(process_handle, keys)
         if protection == "themida":
@@ -4004,7 +5270,18 @@ class RuntimeKeyExtractor:
         return keys
 
     def _handle_vmprotect(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
-        """Handle VMProtect protected memory with VM unpacking."""
+        """Handle VMProtect protected memory with VM unpacking.
+        
+                Args:
+                    process_handle: Parameter value or data
+                    keys: Parameter value or data
+        
+                Returns:
+                    dict[str, Any].
+        
+                Raises:
+                    None
+                """
         try:
             import ctypes
 
@@ -4058,7 +5335,18 @@ class RuntimeKeyExtractor:
         return keys
 
     def _handle_themida(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
-        """Handle Themida/WinLicense protected memory with anti-debugging bypass."""
+        """Handle Themida/WinLicense protected memory with anti-debugging bypass.
+        
+                Args:
+                    process_handle: Parameter value or data
+                    keys: Parameter value or data
+        
+                Returns:
+                    dict[str, Any].
+        
+                Raises:
+                    None
+                """
         try:
             import ctypes
 
@@ -4097,7 +5385,18 @@ class RuntimeKeyExtractor:
         return keys
 
     def _handle_obsidium(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
-        """Handle Obsidium protected memory."""
+        """Handle Obsidium protected memory.
+        
+                Args:
+                    process_handle: Parameter value or data
+                    keys: Parameter value or data
+        
+                Returns:
+                    dict[str, Any].
+        
+                Raises:
+                    None
+                """
         try:
             import ctypes
             import zlib
@@ -4135,7 +5434,15 @@ class RuntimeKeyExtractor:
         return keys
 
     def _handle_asprotect(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
-        """Handle ASProtect protected memory."""
+        """Handle ASProtect protected memory.
+
+        Args:
+            process_handle: Process handle for memory access.
+            keys: Dictionary containing extracted key data.
+
+        Returns:
+            Dictionary with updated keys.
+        """
         try:
             import ctypes
 
@@ -4164,7 +5471,15 @@ class RuntimeKeyExtractor:
         return keys
 
     def _handle_enigma(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
-        """Handle Enigma Protector protected memory."""
+        """Handle Enigma Protector protected memory.
+
+        Args:
+            process_handle: Process handle for memory access.
+            keys: Dictionary containing extracted key data.
+
+        Returns:
+            Dictionary with updated keys.
+        """
         try:
             import ctypes
 
@@ -4194,7 +5509,14 @@ class RuntimeKeyExtractor:
         return keys
 
     def _is_obfuscated(self, data: bytes) -> bool:
-        """Check if memory data appears obfuscated."""
+        """Check if memory data appears obfuscated.
+
+        Args:
+            data: Binary data to analyze.
+
+        Returns:
+            True if data appears obfuscated, False otherwise.
+        """
         if len(data) < 100:
             return False
         entropy = self._calculate_entropy(data[:1000])
@@ -4208,7 +5530,14 @@ class RuntimeKeyExtractor:
         return b"\x00" in data[::2] and b"\x00" not in data[1::2]
 
     def _deobfuscate_memory(self, data: bytes) -> bytes:
-        """Deobfuscate memory data using multiple techniques."""
+        """Deobfuscate memory data using multiple techniques.
+
+        Args:
+            data: Binary data to process.
+
+        Returns:
+            Processed bytes data.
+        """
         results = []
         for xor_key in [0, 85, 170, 255, 19, 55, 66, 105, 136, 204]:
             deobfuscated = bytes(b ^ xor_key for b in data)
@@ -4226,7 +5555,14 @@ class RuntimeKeyExtractor:
         return results[0] if results else data
 
     def _extract_xor_encoded_keys(self, data: bytes) -> list[dict[str, str]]:
-        """Extract XOR-encoded license keys."""
+        """Extract XOR-encoded license keys.
+
+        Args:
+            data: Binary data containing XOR-encoded keys.
+
+        Returns:
+            List of dictionaries containing extracted key information.
+        """
         keys: list[dict[str, str]] = []
         xor_keys = [0, 19, 55, 66, 85, 105, 136, 170, 204, 255]
         for xor_key in xor_keys:
@@ -4242,7 +5578,17 @@ class RuntimeKeyExtractor:
         return keys
 
     def _extract_themida_constants(self, data: bytes) -> list[dict[str, str]]:
-        """Extract Themida encrypted constants."""
+        """Extract Themida encrypted constants.
+        
+                Args:
+                    data: Parameter value or data
+        
+                Returns:
+                    list[dict[str, str]].
+        
+                Raises:
+                    None
+                """
         keys: list[dict[str, str]] = []
         marker = b"MZ\x90\x00"
         offset = 0
@@ -4260,7 +5606,17 @@ class RuntimeKeyExtractor:
         return keys
 
     def _extract_vmprotect_strings(self, data: bytes) -> list[dict[str, str]]:
-        """Extract VMProtect virtualized string references."""
+        """Extract VMProtect virtualized string references.
+        
+                Args:
+                    data: Parameter value or data
+        
+                Returns:
+                    list[dict[str, str]].
+        
+                Raises:
+                    None
+                """
         keys: list[dict[str, str]] = []
         offset = 0
         while offset < len(data) - 8:
@@ -4285,7 +5641,14 @@ class RuntimeKeyExtractor:
         return keys
 
     def _is_protected_region(self, mem_info: Any) -> bool:
-        """Check if memory region is protected."""
+        """Check if memory region is protected.
+
+        Args:
+            mem_info: Memory region information object.
+
+        Returns:
+            True if region is protected, False otherwise.
+        """
         if hasattr(mem_info, "Protect"):
             page_execute_readwrite = 64
             page_execute_writecopy = 128
@@ -4297,7 +5660,16 @@ class RuntimeKeyExtractor:
         return False
 
     def _unpack_protected_memory(self, process_handle: int, mem_info: Any, data: bytes) -> bytes:
-        """Unpack protected memory region."""
+        """Unpack protected memory region.
+
+        Args:
+            process_handle: Handle to the process being analyzed.
+            mem_info: Memory region information object.
+            data: Binary data to process.
+
+        Returns:
+            Processed bytes data.
+        """
         if data[:2] == b"UPX":
             return self._unpack_upx(data)
         if data[:4] == b"`\xe8\x00\x00":
@@ -4307,7 +5679,14 @@ class RuntimeKeyExtractor:
         return data
 
     def _unpack_upx(self, data: bytes) -> bytes:
-        """Unpack UPX compressed data."""
+        """Unpack UPX compressed data.
+
+        Args:
+            data: Binary data to process.
+
+        Returns:
+            Unpacked bytes data.
+        """
         try:
             import subprocess
             import tempfile
@@ -4323,7 +5702,14 @@ class RuntimeKeyExtractor:
             return data
 
     def _unpack_generic(self, data: bytes) -> bytes:
-        """Unpack binaries using generic unpacker for common packers."""
+        """Unpack binaries using generic unpacker for common packers.
+
+        Args:
+            data: Binary data to process.
+
+        Returns:
+            Unpacked bytes data.
+        """
         oep_patterns = [b"a\x8bD$", b"a\xff\xe0", b"a\xffd$"]
         for pattern in oep_patterns:
             offset = data.find(pattern)
@@ -4335,13 +5721,11 @@ class RuntimeKeyExtractor:
         """Decrypt encrypted memory region.
 
         Args:
-            process_handle: Handle to the process being analyzed.
             mem_info: Memory region information object.
             data: Encrypted memory region data.
 
         Returns:
             Decrypted memory region data.
-
         """
         decrypted = data
         possible_keys = [b"DefaultKey", mem_info.BaseAddress.to_bytes(4, "little"), b"\x137Bi"]
@@ -4358,12 +5742,26 @@ class RuntimeKeyExtractor:
         return decrypted
 
     def _is_encrypted_region(self, data: bytes) -> bool:
-        """Check if region appears encrypted."""
+        """Check if region appears encrypted.
+
+        Args:
+            data: Binary data to analyze.
+
+        Returns:
+            True if data appears encrypted, False otherwise.
+        """
         entropy = self._calculate_entropy(data[:1000] if len(data) > 1000 else data)
         return entropy > 7.5
 
     def _calculate_entropy(self, data: bytes) -> float:
-        """Calculate Shannon entropy of data."""
+        """Calculate Shannon entropy of data.
+
+        Args:
+            data: Binary data to analyze.
+
+        Returns:
+            Entropy value as float.
+        """
         import math
 
         if not data:
@@ -4380,14 +5778,28 @@ class RuntimeKeyExtractor:
         return entropy
 
     def _looks_like_key_constant(self, constant: int) -> bool:
-        """Check if constant could be a license key component."""
+        """Check if constant could be a license key component.
+
+        Args:
+            constant: Integer constant to analyze.
+
+        Returns:
+            True if constant looks like key component, False otherwise.
+        """
         if constant < 4096 or constant > 2147483647:
             return False
         hex_str = hex(constant)
         return len(set(hex_str[2:])) >= 3
 
     def _looks_like_license_string(self, s: str) -> bool:
-        """Check if string looks license-related."""
+        """Check if string looks license-related.
+
+        Args:
+            s: String to analyze.
+
+        Returns:
+            True if string looks license-related, False otherwise.
+        """
         if len(s) < 5 or len(s) > 100:
             return False
         license_keywords = [
@@ -4405,7 +5817,17 @@ class RuntimeKeyExtractor:
         return any(keyword in s_lower for keyword in license_keywords)
 
     def _looks_like_license_data(self, data: bytes) -> bool:
-        """Check if data looks like license information."""
+        """Check if data looks like license information.
+        
+                Args:
+                    data: Parameter value or data
+        
+                Returns:
+                    bool.
+        
+                Raises:
+                    None
+                """
         try:
             text = data.decode("utf-8", errors="ignore")
             return self._looks_like_license_string(text)
@@ -4413,18 +5835,48 @@ class RuntimeKeyExtractor:
             return False
 
     def _contains_license_patterns(self, data: bytes) -> bool:
-        """Check if data contains license-related patterns."""
+        """Check if data contains license-related patterns.
+        
+                Args:
+                    data: Parameter value or data
+        
+                Returns:
+                    bool.
+        
+                Raises:
+                    None
+                """
         patterns = [b"LICENSE", b"ACTIVATION", b"PRODUCT_KEY", b"SERIAL", b"REGISTRATION"]
         return any(pattern in data for pattern in patterns)
 
     def _looks_like_code(self, data: bytes) -> bool:
-        """Check if data looks like executable code."""
+        """Check if data looks like executable code.
+        
+                Args:
+                    data: Parameter value or data
+        
+                Returns:
+                    bool.
+        
+                Raises:
+                    None
+                """
         common_opcodes = [85, 137, 139, 72, 232, 233, 255]
         opcode_count = sum(b in common_opcodes for b in data[:50])
         return opcode_count > 10
 
     def _reconstruct_vmprotect_iat(self, process_handle: Any) -> list[dict[str, Any]]:
-        """Reconstruct VMProtect's virtualized Import Address Table."""
+        """Reconstruct VMProtect's virtualized Import Address Table.
+        
+                Args:
+                    process_handle: Parameter value or data
+        
+                Returns:
+                    list[dict[str, Any]].
+        
+                Raises:
+                    None
+                """
         keys: list[dict[str, Any]] = []
         try:
             import ctypes
@@ -4472,7 +5924,17 @@ class RuntimeKeyExtractor:
         return keys
 
     def _extract_vm_strings(self, data: bytes) -> list[str]:
-        """Extract strings from VM handler code."""
+        """Extract strings from VM handler code.
+        
+                Args:
+                    data: Parameter value or data
+        
+                Returns:
+                    list[str].
+        
+                Raises:
+                    None
+                """
         strings: list[str] = []
         current_string = b""
         for i in range(len(data)):
@@ -4490,7 +5952,14 @@ class RuntimeKeyExtractor:
         return strings
 
     def _decrypt_themida_section(self, data: bytes) -> bytes:
-        """Decrypt Themida encrypted section."""
+        """Decrypt Themida encrypted section.
+
+        Args:
+            data: Binary data to process.
+
+        Returns:
+            Processed bytes data.
+        """
         key_seed = sum(data[:4]) & 255
         decrypted = bytearray(len(data))
         key = key_seed
@@ -4500,7 +5969,17 @@ class RuntimeKeyExtractor:
         return bytes(decrypted)
 
     def _decrypt_themida_block(self, block: bytes) -> bytes:
-        """Decrypt a Themida encrypted block."""
+        """Decrypt a Themida encrypted block.
+        
+                Args:
+                    block: Parameter value or data
+        
+                Returns:
+                    bytes.
+        
+                Raises:
+                    None
+                """
         key = block[:4]
         data = block[4:]
         decrypted = bytearray()
@@ -4509,7 +5988,17 @@ class RuntimeKeyExtractor:
         return bytes(decrypted)
 
     def _extract_themida_wrapped_apis(self, process_handle: Any) -> list[dict[str, Any]]:
-        """Extract Themida wrapped API information."""
+        """Extract Themida wrapped API information.
+        
+                Args:
+                    process_handle: Parameter value or data
+        
+                Returns:
+                    list[dict[str, Any]].
+        
+                Raises:
+                    None
+                """
         wrapped_apis: list[dict[str, Any]] = []
         try:
             import ctypes
@@ -4544,7 +6033,17 @@ class RuntimeKeyExtractor:
         return wrapped_apis
 
     def _looks_like_api_name(self, data: bytes) -> bool:
-        """Check if data looks like an API name."""
+        """Check if data looks like an API name.
+        
+                Args:
+                    data: Parameter value or data
+        
+                Returns:
+                    bool.
+        
+                Raises:
+                    None
+                """
         try:
             text = data[:50].split(b"\x00")[0].decode("ascii")
             api_prefixes = [
@@ -4565,7 +6064,19 @@ class RuntimeKeyExtractor:
             return False
 
     def _hook_inline_apis(self, process_handle: Any, kernel32: Any, hooked_data: dict[str, Any]) -> dict[str, Any]:
-        """Install hooks for critical APIs using inline hooking technique."""
+        """Install hooks for critical APIs using inline hooking technique.
+        
+                Args:
+                    process_handle: Parameter value or data
+                    kernel32: Parameter value or data
+                    hooked_data: Parameter value or data
+        
+                Returns:
+                    dict[str, Any].
+        
+                Raises:
+                    None
+                """
         try:
             apis_to_hook = {
                 "advapi32.dll": ["RegQueryValueExW", "RegOpenKeyExW", "RegGetValueW"],
@@ -4683,7 +6194,18 @@ class RuntimeKeyExtractor:
         return hooked_data
 
     def _generate_hook_handler(self, api_name: str, original_addr: int) -> bytes:
-        """Generate x64 assembly hook handler code for API interception."""
+        """Generate x64 assembly hook handler code for API interception.
+        
+                Args:
+                    api_name: Parameter value or data
+                    original_addr: Parameter value or data
+        
+                Returns:
+                    bytes.
+        
+                Raises:
+                    None
+                """
         handler_code = bytearray()
         handler_code.extend([
             80,
@@ -4751,7 +6273,14 @@ class RuntimeKeyExtractor:
         return bytes(handler_code)
 
     def _hook_unix_apis(self, pid: int) -> dict[str, Any]:
-        """Intercept Unix system calls for license monitoring."""
+        """Intercept Unix system calls for license monitoring.
+
+        Args:
+            pid: Process identifier.
+
+        Returns:
+            Dictionary with extracted data.
+        """
         hooked_data: dict[str, list[Any]] = {"system_calls": [], "file_operations": [], "network_calls": []}
         try:
             import subprocess
@@ -4771,7 +6300,14 @@ class RuntimeKeyExtractor:
         return hooked_data
 
     def _enumerate_memory_regions(self, process_handle: int) -> list[tuple[int, int]]:
-        """Enumerate readable memory regions of a process."""
+        """Enumerate readable memory regions of a process.
+
+        Args:
+            process_handle: Handle to the process.
+
+        Returns:
+            List of tuples containing (base_address, region_size).
+        """
         import ctypes
         from ctypes import wintypes
 
@@ -4814,7 +6350,14 @@ class FridaKeyExtractor:
             self.available = True
 
     def inject_extraction_script(self, process_name: str) -> dict[str, Any]:
-        """Inject JavaScript extraction script into target process."""
+        """Inject JavaScript extraction script into target process.
+
+        Args:
+            process_name: Name of the target process.
+
+        Returns:
+            Dictionary containing extracted keys, endpoints, and functions.
+        """
         if not self.available or frida is None:
             return {"error": "Frida not available"}
         try:
@@ -4844,7 +6387,11 @@ class FridaKeyExtractor:
             return {"error": "Frida injection failed"}
 
     def _generate_extraction_script(self) -> str:
-        """Generate Frida JavaScript for key extraction."""
+        """Generate Frida script for license key extraction.
+
+        Returns:
+            JavaScript script string for Frida injection.
+        """
         return "\n        // Hook common license validation functions\n        var licenseModules = Process.enumerateModules().filter(function(m) {\n            return m.name.toLowerCase().includes('license') ||\n                   m.name.toLowerCase().includes('activation') ||\n                   m.name.toLowerCase().includes('auth');\n        });\n\n        // Hook GetProcAddress to catch dynamic function loading\n        var GetProcAddress = Module.findExportByName('kernel32.dll', 'GetProcAddress');\n        if (GetProcAddress) {\n            Interceptor.attach(GetProcAddress, {\n                onEnter: function(args) {\n                    var moduleName = args[0];\n                    var procName = args[1].readCString();\n\n                    if (procName && (\n                        procName.includes('License') ||\n                        procName.includes('Activation') ||\n                        procName.includes('Validate'))) {\n                        send({function: procName});\n                    }\n                },\n                onLeave: function(retval) {\n                    // Function pointer returned\n                }\n            });\n        }\n\n        // Hook registry access for license keys\n        var RegQueryValueEx = Module.findExportByName('advapi32.dll', 'RegQueryValueExW');\n        if (RegQueryValueEx) {\n            Interceptor.attach(RegQueryValueEx, {\n                onEnter: function(args) {\n                    this.valueName = args[1].readUtf16String();\n                    this.dataPtr = args[2];\n                },\n                onLeave: function(retval) {\n                    if (retval == 0 && this.valueName) {\n                        if (this.valueName.includes('License') ||\n                            this.valueName.includes('ProductKey')) {\n                            try {\n                                var data = this.dataPtr.readUtf16String();\n                                send({key: {type: 'registry', name: this.valueName, value: data}});\n                            } catch(e) {}\n                        }\n                    }\n                }\n            });\n        }\n\n        // Hook network functions for endpoints\n        var getaddrinfo = Module.findExportByName(null, 'getaddrinfo');\n        if (getaddrinfo) {\n            Interceptor.attach(getaddrinfo, {\n                onEnter: function(args) {\n                    var hostname = args[0].readCString();\n                    if (hostname && (\n                        hostname.includes('license') ||\n                        hostname.includes('activation') ||\n                        hostname.includes('auth'))) {\n                        send({endpoint: hostname});\n                    }\n                }\n            });\n        }\n\n        // Hook SSL_write to capture license data\n        var SSL_write = Module.findExportByName(null, 'SSL_write');\n        if (SSL_write) {\n            Interceptor.attach(SSL_write, {\n                onEnter: function(args) {\n                    var buf = args[1];\n                    var len = args[2].toInt32();\n                    var data = buf.readByteArray(len);\n\n                    // Check for license patterns in SSL data\n                    var str = String.fromCharCode.apply(null, new Uint8Array(data));\n                    if (str.includes('license') || str.includes('activation')) {\n                        // Extract product keys from data\n                        var keyPattern = /[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}/g;\n                        var matches = str.match(keyPattern);\n                        if (matches) {\n                            matches.forEach(function(key) {\n                                send({key: {type: 'product_key', value: key}});\n                            });\n                        }\n                    }\n                }\n            });\n        }\n\n        // Scan memory for keys\n        Process.enumerateRanges('r--').forEach(function(range) {\n            try {\n                var data = Memory.readByteArray(range.base, Math.min(range.size, 1024 * 1024));\n                var str = String.fromCharCode.apply(null, new Uint8Array(data));\n\n                // Look for product keys\n                var keyPattern = /[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}/g;\n                var matches = str.match(keyPattern);\n                if (matches) {\n                    matches.forEach(function(key) {\n                        send({key: {type: 'memory_key', value: key}});\n                    });\n                }\n\n                // Look for GUIDs\n                var guidPattern = /[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/g;\n                var guids = str.match(guidPattern);\n                if (guids) {\n                    guids.forEach(function(guid) {\n                        send({key: {type: 'guid', value: guid}});\n                    });\n                }\n            } catch(e) {}\n        });\n        "
 
     def extract_flexlm_runtime(self, process: int) -> dict[str, Any]:
@@ -4856,6 +6403,8 @@ class FridaKeyExtractor:
         Returns:
             Dictionary containing extracted vendor keys, features, and encryption seeds.
 
+        Raises:
+            None
         """
         if not self.available or frida is None:
             return {}
@@ -4887,14 +6436,16 @@ class FridaKeyExtractor:
             return {}
 
     def extract_hasp_runtime(self, process: int) -> dict[str, Any]:
-        """Extract HASP/Sentinel keys using Frida.
+        """Extract HASP dongle keys using Frida.
 
         Args:
             process: Process ID to target for HASP key extraction.
 
         Returns:
-            Dictionary containing extracted feature IDs, vendor codes, and handles.
+            Dictionary containing extracted HASP keys and memory data.
 
+        Raises:
+            None
         """
         if not self.available or frida is None:
             return {}
@@ -4926,7 +6477,18 @@ class FridaKeyExtractor:
             return {}
 
     def monitor_license_validation(self, process_name: str, duration: int = 10) -> dict[str, Any]:
-        """Monitor a process for license validation activity."""
+        """Monitor license validation operations in a process.
+
+        Args:
+            process_name: Name of the process to monitor for license validation.
+            duration: Duration in seconds to monitor (default: 10).
+
+        Returns:
+            Dictionary containing captured validation data and events.
+
+        Raises:
+            None
+        """
         if not self.available or frida is None:
             return {}
         script_code = "\n        var validationData = {\n            functions: [],\n            parameters: [],\n            returns: []\n        };\n\n        // Generic license function patterns\n        var patterns = ['License', 'Valid', 'Check', 'Verify', 'Auth', 'Activate'];\n\n        Process.enumerateModules().forEach(function(module) {\n            module.enumerateExports().forEach(function(exp) {\n                patterns.forEach(function(pattern) {\n                    if (exp.name.includes(pattern)) {\n                        Interceptor.attach(exp.address, {\n                            onEnter: function(args) {\n                                var data = {\n                                    function: exp.name,\n                                    args: []\n                                };\n\n                                // Capture first 4 arguments\n                                for (var i = 0; i < 4; i++) {\n                                    try {\n                                        // Try as string\n                                        var str = args[i].readCString();\n                                        if (str && str.length < 256) {\n                                            data.args.push({type: 'string', value: str});\n                                        }\n                                    } catch(e) {\n                                        try {\n                                            // Try as number\n                                            var num = args[i].toInt32();\n                                            data.args.push({type: 'int', value: num});\n                                        } catch(e2) {}\n                                    }\n                                }\n\n                                send({validation: data});\n                            },\n                            onLeave: function(retval) {\n                                // Capture return value\n                                try {\n                                    var ret = retval.toInt32();\n                                    send({return: {function: exp.name, value: ret}});\n                                } catch(e) {}\n                            }\n                        });\n                    }\n                });\n            });\n        });\n        "
@@ -4949,7 +6511,7 @@ class FridaKeyExtractor:
             return {}
 
     def detach_all(self) -> None:
-        """Detach all Frida sessions."""
+        """Detach all Frida sessions and clear session tracking."""
         for session in self.sessions.values():
             try:
                 session.detach()
@@ -4966,8 +6528,7 @@ class ProtocolStateMachine:
         """Initialize the ProtocolStateMachine with a key extractor dependency.
 
         Args:
-            key_extractor: BinaryKeyExtractor instance for extracting signing keys.
-
+            key_extractor: BinaryKeyExtractor instance for key extraction.
         """
         self.key_extractor = key_extractor
         self.logger = logging.getLogger(f"{__name__}.ProtocolStateMachine")
@@ -4977,7 +6538,18 @@ class ProtocolStateMachine:
         self.hasp_memory_size: int = 4096
 
     def flexlm_handshake(self, binary_path: str, request_data: bytes) -> bytes:
-        """Implement complete FLEXlm protocol handshake."""
+        """Implement complete FLEXlm protocol handshake.
+
+        Args:
+            binary_path: Path to binary file for key extraction.
+            request_data: FLEXlm protocol request data to process.
+
+        Returns:
+            FLEXlm protocol response bytes for handshake completion.
+
+        Raises:
+            None
+        """
         keys = self.key_extractor.extract_flexlm_keys(binary_path)
         if b"HELLO" in request_data or len(request_data) < 20:
             return self._flexlm_hello_response(keys)
@@ -4990,7 +6562,17 @@ class ProtocolStateMachine:
         return self._flexlm_generic_response(keys, request_data)
 
     def _flexlm_hello_response(self, keys: dict[str, Any]) -> bytes:
-        """Generate FLEXlm hello response."""
+        """Generate FLEXlm hello response.
+
+        Args:
+            keys: Dictionary containing extracted FLEXlm keys and daemon information.
+
+        Returns:
+            Binary FLEXlm hello response packet with daemon signature.
+
+        Raises:
+            None
+        """
         response = bytearray()
         response.extend(struct.pack(">I", 184549376))
         response.extend(struct.pack(">I", 4294967295))
@@ -5005,7 +6587,17 @@ class ProtocolStateMachine:
         return bytes(response)
 
     def _flexlm_vendor_response(self, keys: dict[str, Any]) -> bytes:
-        """Generate vendor code response."""
+        """Generate vendor code response.
+        
+                Args:
+                    keys: Parameter value or data
+        
+                Returns:
+                    bytes.
+        
+                Raises:
+                    None
+                """
         response = bytearray()
         response.extend(b"VENDOR_OK\x00")
         vendor_code = bytes.fromhex(keys.get("vendor_code", "00" * 16))
@@ -5023,7 +6615,15 @@ class ProtocolStateMachine:
         return bytes(response)
 
     def _flexlm_checkout_response(self, keys: dict[str, Any], request: bytes) -> bytes:
-        """Generate license checkout response."""
+        """Generate license checkout response.
+
+        Args:
+            keys: Dictionary containing vendor keys and algorithms.
+            request: Request data bytes.
+
+        Returns:
+            Checkout response bytes.
+        """
         feature = b"default"
         version = b"1.0"
         feature_start = request.find(b"FEATURE=")
@@ -5071,7 +6671,14 @@ class ProtocolStateMachine:
         return bytes(response)
 
     def _flexlm_heartbeat_response(self, _keys: dict[str, Any]) -> bytes:
-        """Generate heartbeat response."""
+        """Generate heartbeat response.
+
+        Args:
+            _keys: License keys dictionary (unused).
+
+        Returns:
+            Heartbeat response bytes.
+        """
         response = bytearray()
         response.extend(b"HEARTBEAT_ACK\x00")
         response.extend(struct.pack(">I", int(time.time())))
@@ -5080,7 +6687,15 @@ class ProtocolStateMachine:
         return bytes(response)
 
     def _flexlm_generic_response(self, keys: dict[str, Any], request: bytes) -> bytes:
-        """Generate generic FLEXlm response."""
+        """Generate generic FLEXlm response.
+
+        Args:
+            keys: Dictionary containing vendor keys.
+            request: Request data bytes.
+
+        Returns:
+            Generic response bytes.
+        """
         response = bytearray()
         response.extend(struct.pack(">I", 0))
         if b"INFO" in request:
@@ -5098,7 +6713,16 @@ class ProtocolStateMachine:
         return bytes(response)
 
     def hasp_state_machine(self, binary_path: str, request_data: bytes, session_id: str | None = None) -> bytes:
-        """Implement complete HASP/Sentinel protocol state machine."""
+        """Implement complete HASP/Sentinel protocol state machine.
+
+        Args:
+            binary_path: Path to the target binary.
+            request_data: Request data bytes.
+            session_id: Optional session identifier.
+
+        Returns:
+            Protocol response bytes.
+        """
         keys = self.key_extractor.extract_hasp_keys(binary_path)
         try:
             if request_data.startswith(b"<?xml"):
@@ -5126,7 +6750,15 @@ class ProtocolStateMachine:
         return self._hasp_generic_response(keys, command, session_id)
 
     def _hasp_login_response(self, keys: dict[str, Any], session_id: str | None = None) -> bytes:
-        """Generate HASP login response."""
+        """Generate HASP login response.
+
+        Args:
+            keys: Dictionary containing HASP keys and feature IDs.
+            session_id: Optional session identifier.
+
+        Returns:
+            XML-formatted login response bytes.
+        """
         if not session_id:
             session_data = str(keys).encode() + os.urandom(16)
             session_id = hashlib.sha256(session_data).hexdigest()[:32]
@@ -5163,7 +6795,16 @@ class ProtocolStateMachine:
         return f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_str}'.encode()
 
     def _hasp_encrypt_response(self, keys: dict[str, Any], request_data: bytes, session_id: str | None) -> bytes:
-        """Handle HASP encryption request."""
+        """Handle HASP encryption request.
+
+        Args:
+            keys: Dictionary containing HASP encryption keys.
+            request_data: Data to encrypt.
+            session_id: Session identifier.
+
+        Returns:
+            Encrypted response bytes.
+        """
         from cryptography.hazmat.backends import default_backend
         from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
@@ -5188,7 +6829,15 @@ class ProtocolStateMachine:
         return f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_str}'.encode()
 
     def _hasp_binary_response(self, keys: dict[str, Any], request_data: bytes) -> bytes:
-        """Handle binary HASP protocol."""
+        """Handle binary HASP protocol.
+
+        Args:
+            keys: Dictionary containing HASP keys and feature IDs.
+            request_data: Binary protocol request data.
+
+        Returns:
+            Binary protocol response bytes.
+        """
         response = bytearray()
         if len(request_data) >= 4:
             command = struct.unpack(">I", request_data[:4])[0]
@@ -5239,7 +6888,16 @@ class ProtocolStateMachine:
         return bytes(response)
 
     def _hasp_generic_response(self, _keys: dict[str, Any], command: str, session_id: str | None) -> bytes:
-        """Generate generic HASP response."""
+        """Generate generic HASP response.
+
+        Args:
+            _keys: Dictionary containing keys (unused).
+            command: Command string.
+            session_id: Session identifier.
+
+        Returns:
+            XML-formatted response bytes.
+        """
         root = ET.Element("haspprotocol")
         status = ET.SubElement(root, "status")
         status.text = "0"
@@ -5252,7 +6910,14 @@ class ProtocolStateMachine:
         return f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_str}'.encode()
 
     def _hasp_logout_response(self, session_id: str | None) -> bytes:
-        """Handle HASP logout."""
+        """Handle HASP logout.
+
+        Args:
+            session_id: Session identifier to logout.
+
+        Returns:
+            XML-formatted logout response bytes.
+        """
         if session_id and session_id in self.current_state:
             del self.current_state[session_id]
         root = ET.Element("haspprotocol")
@@ -5264,7 +6929,16 @@ class ProtocolStateMachine:
         return f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_str}'.encode()
 
     def _hasp_decrypt_response(self, keys: dict[str, Any], request_data: bytes, session_id: str | None) -> bytes:
-        """Handle HASP decryption request."""
+        """Handle HASP decryption request.
+
+        Args:
+            keys: Dictionary containing decryption keys.
+            request_data: Encrypted request data.
+            session_id: Session identifier.
+
+        Returns:
+            Decrypted response bytes.
+        """
         from cryptography.hazmat.backends import default_backend
         from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
@@ -5292,7 +6966,16 @@ class ProtocolStateMachine:
         return f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_str}'.encode()
 
     def _hasp_read_response(self, keys: dict[str, Any], request_data: bytes, _session_id: str | None) -> bytes:
-        """Handle HASP memory read."""
+        """Handle HASP memory read.
+
+        Args:
+            keys: Dictionary containing memory keys.
+            request_data: Read request data.
+            _session_id: Session identifier (unused).
+
+        Returns:
+            Memory read response bytes.
+        """
         root = DefusedElementTree.fromstring(request_data)
         offset_elem = root.find("offset")
         size_elem = root.find("size")
@@ -5313,7 +6996,19 @@ class ProtocolStateMachine:
         return f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_str}'.encode()
 
     def _hasp_write_response(self, _keys: dict[str, Any], request_data: bytes, session_id: str | None) -> bytes:
-        """Handle HASP memory write with full protocol compliance."""
+        """Handle HASP memory write with full protocol compliance.
+        
+                Args:
+                    _keys: Parameter value or data
+                    request_data: Parameter value or data
+                    session_id: Parameter value or data
+        
+                Returns:
+                    bytes.
+        
+                Raises:
+                    None
+                """
         write_offset = 0
         write_data = b""
         try:
@@ -5366,7 +7061,11 @@ class ProxyInterceptor:
     """Advanced proxy interceptor for license validation traffic with modification capabilities."""
 
     def __init__(self, config: dict[str, Any] | None = None) -> None:
-        """Initialize proxy interceptor with binary analysis capabilities."""
+        """Initialize proxy interceptor with binary analysis capabilities.
+
+        Args:
+            config: Configuration dictionary with proxy settings.
+        """
         self.logger = logging.getLogger(f"{__name__}.ProxyInterceptor")
         self.config: dict[str, Any] = config or {}
         self.listen_port = self.config.get("proxy_port", 8888)
@@ -5421,6 +7120,8 @@ class ProxyInterceptor:
             Tuple of (should_modify, response_data) indicating whether request
             should be modified and the bypass response to provide.
 
+        Raises:
+            None
         """
         self.stats["requests_intercepted"] += 1
         target_url = request.headers.get("X-Target-URL", request.path if hasattr(request, "path") else "")
@@ -5444,6 +7145,8 @@ class ProxyInterceptor:
         Returns:
             True if request appears to be a license validation request, False otherwise.
 
+        Raises:
+            None
         """
         import re
 
@@ -5483,6 +7186,8 @@ class ProxyInterceptor:
         Returns:
             Dictionary containing appropriate bypass response for the detected protocol.
 
+        Raises:
+            None
         """
         protocol = analysis.get("protocol", LicenseType.CUSTOM)
         analysis.get("method", "UNKNOWN")
@@ -5502,7 +7207,17 @@ class ProxyInterceptor:
         return self._generate_text_response(analysis)
 
     def _generate_json_response(self, analysis: dict[str, Any]) -> dict[str, Any]:
-        """Generate JSON license validation response based on protocol analysis."""
+        """Generate JSON license validation response based on protocol analysis.
+
+        Args:
+            analysis: Protocol analysis results dictionary.
+
+        Returns:
+            JSON response dictionary with HTTP status and body.
+
+        Raises:
+            None
+        """
         import hashlib
         from datetime import datetime, timedelta
 
@@ -5540,7 +7255,18 @@ class ProxyInterceptor:
         return {"content_type": "application/json", "status_code": 200, "body": response_data}
 
     def _analyze_product_features(self, product_id: str, version: str) -> dict[str, Any]:
-        """Analyze product and return appropriate feature flags."""
+        """Analyze product and return appropriate feature flags.
+
+        Args:
+            product_id: Product identifier string.
+            version: Product version string.
+
+        Returns:
+            Dictionary containing feature flags and permissions.
+
+        Raises:
+            None
+        """
         try:
             major_version = int(version.split(".", maxsplit=1)[0]) if "." in version else int(version)
         except (ValueError, TypeError, AttributeError):
@@ -5577,7 +7303,17 @@ class ProxyInterceptor:
         return features
 
     def _determine_license_type(self, parsed_data: dict[str, Any]) -> str:
-        """Determine license type from request data."""
+        """Determine license type from request data.
+
+        Args:
+            parsed_data: Parsed request data dictionary.
+
+        Returns:
+            License type string.
+
+        Raises:
+            None
+        """
         if "license_type" in parsed_data:
             return str(parsed_data["license_type"])
         request_str = str(parsed_data).lower()
@@ -5594,7 +7330,18 @@ class ProxyInterceptor:
         return "perpetual"
 
     def _sign_response(self, response_data: dict[str, Any], license_hash: bytes) -> str:
-        """Generate cryptographic signature for response."""
+        """Generate cryptographic signature for response.
+
+        Args:
+            response_data: Response data dictionary to sign.
+            license_hash: License hash bytes for signing key derivation.
+
+        Returns:
+            Hexadecimal signature string.
+
+        Raises:
+            None
+        """
         import hmac
 
         signing_key = hashlib.sha256(license_hash + b"INTELLICRACK_SIGNING").digest()
@@ -5602,7 +7349,17 @@ class ProxyInterceptor:
         return hmac.new(signing_key, response_str.encode(), hashlib.sha256).hexdigest()
 
     def _generate_xml_response(self, analysis: dict[str, Any]) -> dict[str, Any]:
-        """Generate XML license validation response based on protocol analysis."""
+        """Generate XML license validation response based on protocol analysis.
+
+        Args:
+            analysis: Protocol analysis results dictionary.
+
+        Returns:
+            XML response dictionary with content type and body.
+
+        Raises:
+            None
+        """
         from datetime import datetime, timedelta
 
         parsed_data = analysis.get("parsed_data", {})
@@ -5680,7 +7437,17 @@ class ProxyInterceptor:
         return {"content_type": "application/xml", "status_code": 200, "body": xml_response}
 
     def _detect_xml_schema(self, parsed_data: dict[str, Any]) -> str:
-        """Detect XML schema from parsed data."""
+        """Detect XML schema from parsed data.
+        
+                Args:
+                    parsed_data: Parameter value or data
+        
+                Returns:
+                    str.
+        
+                Raises:
+                    None
+                """
         if "root_element" in parsed_data:
             return str(parsed_data["root_element"])
         data_str = str(parsed_data).lower()
@@ -5695,7 +7462,17 @@ class ProxyInterceptor:
         return "AuthenticationResponse" if "auth" in data_str else "Response"
 
     def _analyze_xml_request_type(self, parsed_data: dict[str, Any]) -> str:
-        """Analyze XML request to determine type."""
+        """Analyze XML request to determine type.
+        
+                Args:
+                    parsed_data: Parameter value or data
+        
+                Returns:
+                    str.
+        
+                Raises:
+                    None
+                """
         data_str = str(parsed_data).lower()
         if any(x in data_str for x in ["validate", "verify", "check"]):
             return "validation"
@@ -5708,7 +7485,17 @@ class ProxyInterceptor:
         return "generic"
 
     def _determine_license_type_from_xml(self, parsed_data: dict[str, Any]) -> str:
-        """Determine license type from XML data."""
+        """Determine license type from XML data.
+        
+                Args:
+                    parsed_data: Parameter value or data
+        
+                Returns:
+                    str.
+        
+                Raises:
+                    None
+                """
         if "license_type" in parsed_data:
             return str(parsed_data["license_type"]).title()
         data_str = str(parsed_data).lower()
@@ -5723,7 +7510,17 @@ class ProxyInterceptor:
         return "NodeLocked" if "node" in data_str else "Standard"
 
     def _extract_xml_features(self, parsed_data: dict[str, Any]) -> list[str]:
-        """Extract feature list from XML parsed data."""
+        """Extract feature list from XML parsed data.
+        
+                Args:
+                    parsed_data: Parameter value or data
+        
+                Returns:
+                    list[str].
+        
+                Raises:
+                    None
+                """
         features: list[str] = []
         if "features" in parsed_data:
             feat_data = parsed_data["features"]
@@ -5751,14 +7548,34 @@ class ProxyInterceptor:
         return features
 
     def _requires_signature(self, parsed_data: dict[str, Any]) -> bool:
-        """Check if XML response requires digital signature."""
+        """Check if XML response requires digital signature.
+        
+                Args:
+                    parsed_data: Parameter value or data
+        
+                Returns:
+                    bool.
+        
+                Raises:
+                    None
+                """
         if "require_signature" in parsed_data:
             return bool(parsed_data["require_signature"])
         data_str = str(parsed_data).lower()
         return any(x in data_str for x in ["signature", "signed", "secure", "activation", "certificate", "auth"])
 
     def _generate_text_response(self, analysis: dict[str, Any]) -> dict[str, Any]:
-        """Generate plain text license validation response based on protocol analysis."""
+        """Generate plain text license validation response based on protocol analysis.
+        
+                Args:
+                    analysis: Parameter value or data
+        
+                Returns:
+                    dict[str, Any].
+        
+                Raises:
+                    None
+                """
         import hmac
         from datetime import datetime, timedelta
 
@@ -5846,7 +7663,17 @@ class ProxyInterceptor:
         return {"content_type": "text/plain", "status_code": 200, "body": response_text}
 
     def _generate_flexlm_response(self, analysis: dict[str, Any]) -> dict[str, Any]:
-        """Generate FLEXlm protocol response using binary analysis."""
+        """Generate FLEXlm protocol response using binary analysis.
+        
+                Args:
+                    analysis: Parameter value or data
+        
+                Returns:
+                    dict[str, Any].
+        
+                Raises:
+                    None
+                """
         binary_path = self._get_target_binary(analysis)
         request_data = analysis.get("body", b"")
         response_data = self.state_machine.flexlm_handshake(binary_path, request_data)
@@ -5857,7 +7684,17 @@ class ProxyInterceptor:
         }
 
     def _get_target_binary(self, analysis: dict[str, Any]) -> str:
-        """Determine target binary from analysis or configuration."""
+        """Determine target binary from analysis or configuration.
+        
+                Args:
+                    analysis: Parameter value or data
+        
+                Returns:
+                    str.
+        
+                Raises:
+                    None
+                """
         parsed_data = analysis.get("parsed_data", {})
         binary_path: str = str(parsed_data.get("binary_path", ""))
         if not binary_path:
@@ -5870,7 +7707,17 @@ class ProxyInterceptor:
         return binary_path
 
     def _find_binary_by_process(self, process_name: str) -> str:
-        """Find binary path from process name."""
+        """Find binary path from process name.
+        
+                Args:
+                    process_name: Parameter value or data
+        
+                Returns:
+                    str.
+        
+                Raises:
+                    None
+                """
         import psutil
 
         try:
@@ -5899,7 +7746,17 @@ class ProxyInterceptor:
         return ""
 
     def _find_protected_binary(self) -> str:
-        """Find any protected binary in common locations."""
+        """Find any protected binary in common locations.
+        
+                Args:
+                    None
+        
+                Returns:
+                    str.
+        
+                Raises:
+                    None
+                """
         search_paths = ["C:\\Program Files", "C:\\Program Files (x86)", "/usr/local/bin", "/opt"]
         protection_indicators = [
             "lmgrd",
@@ -5929,7 +7786,17 @@ class ProxyInterceptor:
         return os.path.join(str(Path.cwd()), "target.exe")
 
     def _generate_hasp_response(self, analysis: dict[str, Any]) -> dict[str, Any]:
-        """Generate HASP/Sentinel protocol response using binary analysis."""
+        """Generate HASP/Sentinel protocol response using binary analysis.
+        
+                Args:
+                    analysis: Parameter value or data
+        
+                Returns:
+                    dict[str, Any].
+        
+                Raises:
+                    None
+                """
         binary_path = self._get_target_binary(analysis)
         request_data = analysis.get("body", b"")
         session_id = analysis.get("parsed_data", {}).get("session_id")
@@ -5947,7 +7814,17 @@ class ProxyInterceptor:
         return {"content_type": "text/xml", "status_code": 200, "body": response_data}
 
     def _generate_kms_response(self, _analysis: dict[str, Any]) -> dict[str, Any]:
-        """Generate Microsoft KMS protocol response."""
+        """Generate Microsoft KMS protocol response.
+        
+                Args:
+                    _analysis: Parameter value or data
+        
+                Returns:
+                    dict[str, Any].
+        
+                Raises:
+                    None
+                """
         import base64
         from datetime import datetime, timedelta
 
@@ -5967,7 +7844,17 @@ class ProxyInterceptor:
         }
 
     def _generate_kms_product_key(self) -> str:
-        """Generate a valid Microsoft KMS product key format."""
+        """Generate a valid Microsoft KMS product key format.
+        
+                Args:
+                    None
+        
+                Returns:
+                    str.
+        
+                Raises:
+                    None
+                """
         charset = "BCDFGHJKMNPQRTVWXY2346789"
         key_segments = []
         for _ in range(5):
@@ -5980,7 +7867,17 @@ class ProxyInterceptor:
         return "-".join(key_segments)
 
     def _generate_adobe_response(self, analysis: dict[str, Any]) -> dict[str, Any]:
-        """Generate Adobe licensing protocol response using binary analysis."""
+        """Generate Adobe licensing protocol response using binary analysis.
+        
+                Args:
+                    analysis: Parameter value or data
+        
+                Returns:
+                    dict[str, Any].
+        
+                Raises:
+                    None
+                """
         from datetime import datetime, timedelta
 
         import jwt
@@ -6092,7 +7989,17 @@ class ProxyInterceptor:
         return {"content_type": "application/json", "status_code": 200, "body": response}
 
     def _extract_kms_data(self, binary_path: str) -> dict[str, Any]:
-        """Extract KMS-specific data from Windows binary."""
+        """Extract KMS-specific data from Windows binary.
+
+                Args:
+                    binary_path: Parameter value or data
+
+                Returns:
+                    dict[str, Any].
+
+                Raises:
+                    ExtractionError: If pefile module not available for KMS extraction.
+                """
         if not pefile:
             raise ExtractionError("pefile module not available for KMS extraction")
         kms_data: dict[str, Any] = {
@@ -6179,7 +8086,17 @@ class ProxyInterceptor:
         return kms_data
 
     def _find_kms_binary(self) -> str | None:
-        """Find KMS-related binary on the system."""
+        """Find KMS-related binary on the system.
+        
+                Args:
+                    None
+        
+                Returns:
+                    str | None.
+        
+                Raises:
+                    None
+                """
         search_paths = [
             "C:\\Windows\\System32\\slmgr.vbs",
             "C:\\Windows\\System32\\SppExtComObj.dll",
@@ -6199,7 +8116,17 @@ class ProxyInterceptor:
         return None
 
     def _extract_kms_from_registry(self) -> dict[str, Any]:
-        """Extract KMS data from Windows registry."""
+        """Extract KMS data from Windows registry.
+        
+                Args:
+                    None
+        
+                Returns:
+                    dict[str, Any].
+        
+                Raises:
+                    None
+                """
         if platform.system() != "Windows" or not winreg:
             return {}
         kms_data = {}
@@ -6228,7 +8155,17 @@ class ProxyInterceptor:
         return kms_data
 
     def _find_kms_host_from_service(self) -> str | None:
-        """Find KMS host from running service configuration."""
+        """Find KMS host from running service configuration.
+        
+                Args:
+                    None
+        
+                Returns:
+                    str | None.
+        
+                Raises:
+                    None
+                """
         if platform.system() != "Windows":
             return None
         try:
@@ -6244,7 +8181,17 @@ class ProxyInterceptor:
         return None
 
     def _find_kms_port_from_service(self) -> int | None:
-        """Find KMS port from service configuration."""
+        """Find KMS port from service configuration.
+        
+                Args:
+                    None
+        
+                Returns:
+                    int | None.
+        
+                Raises:
+                    None
+                """
         if platform.system() != "Windows":
             return None
         try:
@@ -6262,7 +8209,17 @@ class ProxyInterceptor:
         return None
 
     def _extract_min_clients_requirement(self) -> int | None:
-        """Extract minimum clients requirement from KMS configuration."""
+        """Extract minimum clients requirement from KMS configuration.
+        
+                Args:
+                    None
+        
+                Returns:
+                    int | None.
+        
+                Raises:
+                    None
+                """
         if platform.system() != "Windows":
             return None
         try:
@@ -6284,7 +8241,17 @@ class ProxyInterceptor:
         return None
 
     def _detect_kms_protocol_version(self) -> int | None:
-        """Detect KMS protocol version from system."""
+        """Detect KMS protocol version from system.
+        
+                Args:
+                    None
+        
+                Returns:
+                    int | None.
+        
+                Raises:
+                    None
+                """
         import platform
 
         if platform.system() != "Windows":
@@ -6303,7 +8270,19 @@ class ProxyInterceptor:
         return None
 
     def _generate_kms_confirmation_id(self, client_machine_id: str, application_id: str, kms_data: dict[str, Any]) -> str:
-        """Generate KMS confirmation ID using proper algorithm."""
+        """Generate KMS confirmation ID using proper algorithm.
+        
+                Args:
+                    client_machine_id: Parameter value or data
+                    application_id: Parameter value or data
+                    kms_data: Parameter value or data
+        
+                Returns:
+                    str.
+        
+                Raises:
+                    None
+                """
         if client_machine_id:
             seed = client_machine_id + application_id
         else:
@@ -6317,14 +8296,35 @@ class ProxyInterceptor:
         return "-".join(confirmation_blocks)
 
     def _generate_kms_product_key_from_binary(self, kms_data: dict[str, Any], sku_id: str) -> str:
-        """Generate KMS product key from binary analysis data."""
+        """Generate KMS product key from binary analysis data.
+        
+                Args:
+                    kms_data: Parameter value or data
+                    sku_id: Parameter value or data
+        
+                Returns:
+                    str.
+        
+                Raises:
+                    None
+                """
         if kms_data.get("gvlk_keys"):
             return str(kms_data["gvlk_keys"][0])
         seed = (sku_id + str(kms_data)).encode()
         return self._generate_kms_product_key_from_data(seed)
 
     def _generate_kms_product_key_from_data(self, data: bytes) -> str:
-        """Generate valid KMS product key format from data."""
+        """Generate valid KMS product key format from data.
+        
+                Args:
+                    data: Parameter value or data
+        
+                Returns:
+                    str.
+        
+                Raises:
+                    None
+                """
         charset = "BCDFGHJKMNPQRTVWXY2346789"
         key_hash = hashlib.sha256(data).digest()
         segments = []
@@ -6341,7 +8341,17 @@ class ProxyInterceptor:
         return "-".join(segments)
 
     def _validate_product_key(self, key: str) -> bool:
-        """Validate Microsoft product key format."""
+        """Validate Microsoft product key format.
+        
+                Args:
+                    key: Parameter value or data
+        
+                Returns:
+                    bool.
+        
+                Raises:
+                    None
+                """
         if len(key) != 29:
             return False
         parts = key.split("-")
@@ -6356,7 +8366,17 @@ class ProxyInterceptor:
         return True
 
     def set_target_binary(self, binary_path: str) -> bool:
-        """Set the target binary for analysis."""
+        """Set the target binary for analysis.
+        
+                Args:
+                    binary_path: Parameter value or data
+        
+                Returns:
+                    bool.
+        
+                Raises:
+                    None
+                """
         if os.path.exists(binary_path):
             self.target_binary = binary_path
             self.logger.info("Target binary set to: %s", binary_path)
@@ -6374,7 +8394,17 @@ class ProxyInterceptor:
         return False
 
     def analyze_binary_for_protection(self, binary_path: str) -> dict[str, Any]:
-        """Analyze binary to determine protection type and extract keys."""
+        """Analyze binary to determine protection type and extract keys.
+        
+                Args:
+                    binary_path: Parameter value or data
+        
+                Returns:
+                    dict[str, Any].
+        
+                Raises:
+                    None
+                """
         if not os.path.exists(binary_path):
             return {"error": "Binary not found"}
         recommendations: list[str] = []
@@ -6415,7 +8445,17 @@ class ProxyInterceptor:
         return analysis
 
     def _get_adobe_entitlements(self, subscription_type: str) -> dict[str, Any]:
-        """Get Adobe entitlements based on subscription type."""
+        """Get Adobe entitlements based on subscription type.
+        
+                Args:
+                    subscription_type: Parameter value or data
+        
+                Returns:
+                    dict[str, Any].
+        
+                Raises:
+                    None
+                """
         storage: dict[str, int] = {"quota": 20 * 1024 * 1024 * 1024, "used": 0}
         services: list[str] = ["creative_cloud"]
         base_entitlements: dict[str, Any] = {
@@ -6441,7 +8481,17 @@ class ProxyInterceptor:
         return base_entitlements
 
     def _get_remaining_activations(self, subscription_type: str) -> int:
-        """Get remaining device activations based on subscription."""
+        """Get remaining device activations based on subscription.
+        
+                Args:
+                    subscription_type: Parameter value or data
+        
+                Returns:
+                    int.
+        
+                Raises:
+                    None
+                """
         limits = {
             "trial": 1,
             "individual": 1,
@@ -6457,7 +8507,17 @@ class ProxyInterceptor:
         return limits.get(subscription_type, 1)
 
     def _determine_adobe_subscription(self, product_code: str) -> str:
-        """Determine Adobe subscription type from product code."""
+        """Determine Adobe subscription type from product code.
+        
+                Args:
+                    product_code: Parameter value or data
+        
+                Returns:
+                    str.
+        
+                Raises:
+                    None
+                """
         if not product_code:
             return "creative_cloud_all"
         code_lower = product_code.lower()
@@ -6478,7 +8538,17 @@ class ProxyInterceptor:
         return "creative_cloud_all"
 
     def _get_adobe_products(self, product_code: str) -> list[str]:
-        """Get list of Adobe products based on product code."""
+        """Get list of Adobe products based on product code.
+        
+                Args:
+                    product_code: Parameter value or data
+        
+                Returns:
+                    list[str].
+        
+                Raises:
+                    None
+                """
         if not product_code:
             return ["all"]
         code_lower = product_code.lower()
@@ -6538,7 +8608,17 @@ class ProxyInterceptor:
         return products or ["creative_cloud"]
 
     def _get_device_limit(self, subscription_type: str) -> int:
-        """Get device activation limit based on subscription type."""
+        """Get device activation limit based on subscription type.
+        
+                Args:
+                    subscription_type: Parameter value or data
+        
+                Returns:
+                    int.
+        
+                Raises:
+                    None
+                """
         limits = {
             "trial": 2,
             "individual": 2,
@@ -6554,7 +8634,18 @@ class ProxyInterceptor:
         return limits.get(subscription_type, 2)
 
     async def modify_response(self, response_data: bytes, content_type: str | None = None) -> bytes:
-        """Modify response data to ensure license validation succeeds."""
+        """Modify response data to ensure license validation succeeds.
+        
+                Args:
+                    response_data: Parameter value or data
+                    content_type: Parameter value or data
+        
+                Returns:
+                    bytes.
+        
+                Raises:
+                    None
+                """
         try:
             if content_type and "json" in content_type:
                 data = json.loads(response_data)
@@ -6597,7 +8688,17 @@ class ProxyInterceptor:
             return response_data
 
     def get_statistics(self) -> dict[str, Any]:
-        """Get interception statistics."""
+        """Get interception statistics.
+
+        Args:
+            None
+
+        Returns:
+            Dictionary containing proxy statistics and active status.
+
+        Raises:
+            None
+        """
         return {
             "proxy_stats": self.stats.copy(),
             "active": True,
@@ -6611,7 +8712,11 @@ class LicenseServerEmulator:
     """Run license server emulator class."""
 
     def __init__(self, config: dict[str, Any] | None = None) -> None:
-        """Initialize comprehensive license server emulator with all protection systems."""
+        """Initialize comprehensive license server emulator with all protection systems.
+
+        Args:
+            config: Optional configuration dictionary for server settings.
+        """
         self.logger = logging.getLogger(f"{__name__}.Server")
         self.config: dict[str, Any] = {
             "host": "127.0.0.1",
@@ -6667,6 +8772,17 @@ class LicenseServerEmulator:
 
         @self.app.get("/")
         async def root() -> dict[str, str]:  # noqa: RUF029 - FastAPI async route handlers don't require await
+            """Get API root endpoint information.
+
+            Args:
+                None
+
+            Returns:
+                Dictionary with API status message and version info.
+
+            Raises:
+                None
+            """
             return {"message": "Intellicrack License Server Emulator v2.0.0", "status": "running"}
 
         @self.app.get("/health")
@@ -6717,7 +8833,14 @@ class LicenseServerEmulator:
         @self.app.post("/api/v1/proxy/intercept")
         @self.app.get("/api/v1/proxy/intercept")
         async def handle_proxy_intercept(request: Request) -> dict[str, Any] | Response:
-            """Handle proxied license validation requests."""
+            """Handle proxy interception of license validation requests.
+
+            Args:
+                request: HTTP request to process.
+
+            Returns:
+                Modified response dictionary or Response object.
+            """
             body = await request.body()
             client_addr = request.client.host if request.client else "127.0.0.1"
             port: int = request.url.port if request.url and request.url.port is not None else 0
@@ -6741,12 +8864,32 @@ class LicenseServerEmulator:
 
         @self.app.get("/api/v1/proxy/stats")
         async def get_proxy_stats() -> dict[str, Any]:  # noqa: RUF029 - FastAPI async route handlers don't require await
-            """Get proxy interception statistics."""
+            """Get proxy interception statistics.
+
+            Args:
+                None
+
+            Returns:
+                Dictionary containing proxy statistics.
+
+            Raises:
+                None
+            """
             return self.proxy_interceptor.get_statistics()
 
         @self.app.post("/api/v1/analyze/traffic")
         async def analyze_traffic(request: Request) -> dict[str, Any]:
-            """Analyze captured traffic to identify license protocol."""
+            """Analyze captured traffic to identify license protocol.
+
+            Args:
+                request: HTTP request containing traffic data to analyze.
+
+            Returns:
+                Dictionary with protocol analysis results and recommendations.
+
+            Raises:
+                None
+            """
             body = await request.body()
             client_addr = request.client.host if request.client else "127.0.0.1"
             port: int = request.url.port if request.url and request.url.port is not None else 0
@@ -6760,7 +8903,17 @@ class LicenseServerEmulator:
             }
 
     def _get_bypass_recommendations(self, analysis: dict[str, Any]) -> list[str]:
-        """Get bypass recommendations based on protocol analysis."""
+        """Get bypass recommendations based on protocol analysis.
+
+        Args:
+            analysis: Protocol analysis results dictionary.
+
+        Returns:
+            List of bypass strategy recommendations.
+
+        Raises:
+            None
+        """
         recommendations: list[str] = []
         protocol = analysis.get("protocol", LicenseType.CUSTOM)
         if protocol == LicenseType.FLEXLM:
@@ -6796,7 +8949,18 @@ class LicenseServerEmulator:
         return recommendations
 
     async def _handle_license_validation(self, request: LicenseRequest, client_request: Request) -> LicenseResponse:
-        """Handle license validation request."""
+        """Handle license validation request.
+
+        Args:
+            request: License validation request with key and product info.
+            client_request: HTTP client request for IP logging.
+
+        Returns:
+            LicenseResponse with validation status and details.
+
+        Raises:
+            HTTPException: If license validation fails with internal server error.
+        """
         try:
             client_ip: str = client_request.client.host if client_request.client else "127.0.0.1"
             self.db_manager.log_operation(
@@ -6834,7 +8998,18 @@ class LicenseServerEmulator:
             raise HTTPException(status_code=500, detail="Internal server error") from None
 
     async def _handle_license_activation(self, request: ActivationRequest, client_request: Request) -> ActivationResponse:
-        """Handle license activation request."""
+        """Handle license activation request.
+
+        Args:
+            request: Activation request with license key and hardware info.
+            client_request: HTTP client request for IP logging.
+
+        Returns:
+            ActivationResponse with activation status and certificate.
+
+        Raises:
+            HTTPException: If license activation fails with internal server error.
+        """
         try:
             client_ip: str = client_request.client.host if client_request.client else "127.0.0.1"
             activation_id = uuid.uuid4().hex
@@ -6862,7 +9037,17 @@ class LicenseServerEmulator:
             raise HTTPException(status_code=500, detail="Internal server error") from None
 
     async def _handle_license_status(self, license_key: str) -> dict[str, Any]:
-        """Handle license status request."""
+        """Handle license status request.
+
+        Args:
+            license_key: License key string to check status for.
+
+        Returns:
+            Dictionary with license status, product info, and expiry details.
+
+        Raises:
+            HTTPException: If license status check fails with internal server error.
+        """
         try:
             if license_entry := self.db_manager.validate_license(license_key, ""):
                 return {
@@ -6888,7 +9073,18 @@ class LicenseServerEmulator:
             raise HTTPException(status_code=500, detail="Internal server error") from None
 
     async def _handle_flexlm_request(self, request: dict[str, Any], _client_request: Request) -> dict[str, Any]:
-        """Handle FlexLM license request."""
+        """Handle FlexLM license request.
+
+        Args:
+            request: FLEXlm request dictionary with feature and version.
+            _client_request: HTTP client request (not used).
+
+        Returns:
+            FLEXlm response dictionary with status and feature info.
+
+        Raises:
+            HTTPException: If FLEXlm request processing fails.
+        """
         try:
             feature = request.get("feature", "unknown")
             version = request.get("version", "1.0")
@@ -6907,7 +9103,17 @@ class LicenseServerEmulator:
             raise HTTPException(status_code=500, detail="Internal server error") from None
 
     async def _handle_hasp_request(self, request: dict[str, Any]) -> dict[str, Any]:
-        """Handle HASP dongle request."""
+        """Handle HASP dongle request.
+
+        Args:
+            request: HASP request dictionary with operation and feature_id.
+
+        Returns:
+            HASP response dictionary with status and operation results.
+
+        Raises:
+            HTTPException: If HASP request processing fails.
+        """
         try:
             operation = request.get("operation", "login")
             feature_id = request.get("feature_id", 1)
@@ -6928,7 +9134,18 @@ class LicenseServerEmulator:
             raise HTTPException(status_code=500, detail="Internal server error") from None
 
     async def _handle_kms_request(self, request: dict[str, Any], _client_request: Request) -> dict[str, Any]:
-        """Handle Microsoft KMS activation request."""
+        """Handle Microsoft KMS activation request.
+
+        Args:
+            request: KMS request dictionary with activation details.
+            _client_request: HTTP client request (not used).
+
+        Returns:
+            KMS response dictionary with activation status.
+
+        Raises:
+            HTTPException: If KMS request processing fails.
+        """
         try:
             product_key = request.get("product_key", "")
             product_name = request.get("product_name", "Windows")
@@ -6941,7 +9158,18 @@ class LicenseServerEmulator:
             raise HTTPException(status_code=500, detail="Internal server error") from None
 
     async def _handle_adobe_request(self, request: dict[str, Any], _client_request: Request) -> dict[str, Any]:
-        """Handle Adobe license validation request."""
+        """Handle Adobe license validation request.
+
+        Args:
+            request: Adobe request dictionary with product and user info.
+            _client_request: HTTP client request (not used).
+
+        Returns:
+            Adobe response dictionary with validation status.
+
+        Raises:
+            HTTPException: If Adobe request processing fails.
+        """
         try:
             product_id = request.get("product_id", "PHSP")
             user_id = request.get("user_id", os.environ.get("DEFAULT_USER_EMAIL", "user@internal.local"))
@@ -7000,7 +9228,17 @@ class LicenseServerEmulator:
             self.logger.exception("Failed to start DNS server")
 
     def _dns_server_loop(self) -> None:
-        """Run DNS server loop."""
+        """Run DNS server loop.
+
+        Args:
+            None
+
+        Returns:
+            None
+
+        Raises:
+            None
+        """
         if self.dns_socket is None:
             return
         while self.dns_running:
@@ -7015,7 +9253,18 @@ class LicenseServerEmulator:
                     self.logger.exception("DNS server error")
 
     def _handle_dns_query(self, data: bytes, addr: tuple[str, int]) -> None:
-        """Handle individual DNS query."""
+        """Handle individual DNS query.
+
+        Args:
+            data: DNS query data bytes.
+            addr: Client address tuple (IP, port).
+
+        Returns:
+            None
+
+        Raises:
+            None
+        """
         if self.dns_socket is None:
             return
         try:
@@ -7066,7 +9315,20 @@ class LicenseServerEmulator:
             self.logger.debug("Error handling DNS query: %s", e, exc_info=True)
 
     def _create_dns_response(self, transaction_id: int, _query_name: bytes, ip_address: str, question_section: bytes) -> bytes:
-        """Create a DNS A record response."""
+        """Create a DNS A record response.
+        
+                Args:
+                    transaction_id: Parameter value or data
+                    _query_name: Parameter value or data
+                    ip_address: Parameter value or data
+                    question_section: Parameter value or data
+        
+                Returns:
+                    bytes.
+        
+                Raises:
+                    None
+                """
         header = struct.pack(">HHHHHH", transaction_id, 33152, 1, 1, 0, 0)
         ip_parts = [int(part) for part in ip_address.split(".")]
         answer = (
@@ -7079,7 +9341,18 @@ class LicenseServerEmulator:
         return header + question_section + answer
 
     def _create_dns_error_response(self, transaction_id: int, question_section: bytes) -> bytes:
-        """Create a DNS NXDOMAIN error response."""
+        """Create a DNS NXDOMAIN error response.
+
+        Args:
+            transaction_id: DNS transaction ID.
+            question_section: DNS question section bytes.
+
+        Returns:
+            DNS error response packet bytes.
+
+        Raises:
+            None
+        """
         header = struct.pack(">HHHHHH", transaction_id, 33155, 1, 0, 0, 0)
         return header + question_section
 
@@ -7107,7 +9380,12 @@ class LicenseServerEmulator:
             self.logger.exception("Failed to start SSL interceptor")
 
     def _generate_self_signed_cert(self, cert_file: str, key_file: str) -> None:
-        """Generate a self-signed certificate for SSL interception."""
+        """Generate a self-signed certificate for SSL interception.
+
+        Args:
+            cert_file: Path to save the certificate file.
+            key_file: Path to save the private key file.
+        """
         try:
             import datetime
 
@@ -7160,7 +9438,11 @@ class LicenseServerEmulator:
             self.logger.exception("Error generating certificate")
 
     def _run_ssl_server(self, port: int) -> None:
-        """Run SSL server on specified port."""
+        """Run SSL server on specified port.
+
+        Args:
+            port: Port number to run SSL server on.
+        """
         try:
             ssl_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             ssl_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -7174,7 +9456,18 @@ class LicenseServerEmulator:
             self.logger.exception("SSL server error on port %s", port)
 
     def _handle_ssl_connection(self, client_socket: socket.socket, _addr: tuple[str, int]) -> None:
-        """Handle individual SSL connection."""
+        """Handle individual SSL connection.
+
+        Args:
+            client_socket: Client socket connection object.
+            _addr: Client address tuple (IP, port).
+
+        Returns:
+            None
+
+        Raises:
+            None
+        """
         if self.ssl_context is None:
             return
         try:
@@ -7190,7 +9483,11 @@ class LicenseServerEmulator:
             self.logger.debug("SSL connection error: %s", e, exc_info=True)
 
     def start_servers(self) -> None:
-        """Start all license servers."""
+        """Start all license servers.
+
+        Raises:
+            Exception: If server startup fails.
+        """
         try:
             self._start_dns_server()
             self._start_ssl_interceptor()
@@ -7223,21 +9520,28 @@ class LicenseServerEmulator:
         """Create a license server instance for testing.
 
         Args:
-            host: Host address to bind to
-            port: Port to bind to (0 for auto-assign)
+            host: Host address to bind to (default: 127.0.0.1).
+            port: Port to bind to (0 for auto-assign).
 
         Returns:
-            LicenseServerInstance object with start_async(), stop(), get_port() methods
+            LicenseServerInstance object with start_async(), stop(), get_port() methods.
 
+        Raises:
+            None
         """
         return LicenseServerInstance(self, host, port)
 
     def create_license_client(self) -> "LicenseClientInstance":
         """Create a license client instance for testing.
 
-        Returns:
-            LicenseClientInstance object with connect(), disconnect(), is_connected() methods
+        Args:
+            None
 
+        Returns:
+            LicenseClientInstance object with connect(), disconnect(), is_connected() methods.
+
+        Raises:
+            None
         """
         return LicenseClientInstance()
 
@@ -7249,10 +9553,9 @@ class LicenseServerInstance:
         """Initialize the LicenseServerInstance with emulator and connection details.
 
         Args:
-            emulator: LicenseServerEmulator instance to manage.
-            host: Host address for the server.
-            port: Port number for the server.
-
+            emulator: License server emulator instance.
+            host: Host address to bind to.
+            port: Port number to bind to.
         """
         self.emulator = emulator
         self.host = host
@@ -7295,7 +9598,12 @@ class LicenseServerInstance:
                 self.server_socket.close()
 
     def _handle_client(self, client_socket: socket.socket, addr: tuple[str, int]) -> None:
-        """Handle client connections."""
+        """Handle client connections.
+
+        Args:
+            client_socket: Connected client socket.
+            addr: Client address tuple (host, port).
+        """
         try:
             if data := client_socket.recv(4096):
                 logger.debug("Received %s bytes from client %s: %s", len(data), addr, data[:50].hex())
@@ -7307,7 +9615,14 @@ class LicenseServerInstance:
             client_socket.close()
 
     def get_port(self) -> int:
-        """Get the server port."""
+        """Get the server port.
+
+        Returns:
+            Server port number.
+
+        Raises:
+            None
+        """
         return self.port
 
     def stop(self) -> None:
@@ -7318,7 +9633,17 @@ class LicenseServerInstance:
 
     @property
     def is_running(self) -> bool:
-        """Check if server is running."""
+        """Check if server is running.
+
+        Args:
+            None
+
+        Returns:
+            True if server is running, False otherwise.
+
+        Raises:
+            None
+        """
         return self.running
 
 
@@ -7332,7 +9657,19 @@ class LicenseClientInstance:
         self.remote_addr: tuple[str, int] | None = None
 
     def connect(self, host: str, port: int, timeout: float = 5.0) -> bool:
-        """Connect to license server."""
+        """Connect to license server.
+
+        Args:
+            host: Server hostname or IP address.
+            port: Server port number.
+            timeout: Connection timeout in seconds (default: 5.0).
+
+        Returns:
+            True if connection successful, False otherwise.
+
+        Raises:
+            None
+        """
         try:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.socket.settimeout(timeout)
@@ -7344,7 +9681,17 @@ class LicenseClientInstance:
             return False
 
     def is_connected(self) -> bool:
-        """Check if connected."""
+        """Check if connected.
+
+        Args:
+            None
+
+        Returns:
+            True if connected to server, False otherwise.
+
+        Raises:
+            None
+        """
         return self.connected
 
     def disconnect(self) -> None:
@@ -7359,7 +9706,11 @@ class LicenseClientInstance:
 
 
 def run_network_license_emulator(config: dict[str, Any] | None = None) -> None:
-    """Compatibility function for running the network license emulator."""
+    """Compatibility function for running the network license emulator.
+
+    Args:
+        config: Optional configuration dictionary for server settings.
+    """
     if config is None:
         config = {
             "host": "127.0.0.1",

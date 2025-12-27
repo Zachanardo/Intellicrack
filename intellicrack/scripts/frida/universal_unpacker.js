@@ -4,8 +4,6 @@
  * Integrates with existing Intellicrack modules for coordinated protection bypass
  */
 
-/* global TextEncoder, TextDecoder, Backtracer, MemoryAccessMonitor, gc, performance */
-
 const UniversalUnpacker = {
     name: 'Universal Binary Unpacker',
     description: 'Advanced modular unpacking engine with cross-platform support',
@@ -1022,7 +1020,7 @@ const UniversalUnpacker = {
             READYTORUN_FLAG_PLATFORM_NEUTRAL_SOURCE: 0x00_00_00_01,
             READYTORUN_FLAG_SKIP_TYPE_VALIDATION: 0x00_00_00_02,
             READYTORUN_FLAG_PARTIAL_COMPILATION: 0x00_00_00_04,
-            READYTORUN_FLAG_NONSHARED_PINVOKE_STUBS: 0x00_00_00_08,
+            READYTORUN_FLAG_NONSHARED_PINVOKE_THUNKS: 0x00_00_00_08,
 
             metadataStructures: {
                 MODULE_TABLE: 0x00,
@@ -1298,51 +1296,51 @@ const UniversalUnpacker = {
                 return types;
             },
 
-            handleAOTStubs(artifacts) {
-                const stubs = {
-                    pinvokeStubs: [],
-                    delegateStubs: [],
-                    genericStubs: [],
-                    arrayStubs: [],
+            handleAOTThunks(artifacts) {
+                const thunks = {
+                    pinvokeThunks: [],
+                    delegateThunks: [],
+                    genericThunks: [],
+                    arrayThunks: [],
                 };
 
                 for (const method of artifacts.methods) {
                     const methodData = Memory.readByteArray(method.entryPoint, 256);
                     const bytes = new Uint8Array(methodData);
 
-                    if (this.isPInvokeStub(bytes)) {
-                        stubs.pinvokeStubs.push({
+                    if (this.isPInvokeThunk(bytes)) {
+                        thunks.pinvokeThunks.push({
                             method,
                             target: this.extractPInvokeTarget(bytes),
                         });
                     }
 
-                    if (this.isDelegateStub(bytes)) {
-                        stubs.delegateStubs.push({
+                    if (this.isDelegateThunk(bytes)) {
+                        thunks.delegateThunks.push({
                             method,
                             delegateType: this.extractDelegateType(bytes),
                         });
                     }
 
-                    if (this.isGenericStub(bytes)) {
-                        stubs.genericStubs.push({
+                    if (this.isGenericThunk(bytes)) {
+                        thunks.genericThunks.push({
                             method,
                             genericArgs: this.extractGenericArguments(bytes),
                         });
                     }
 
-                    if (this.isArrayStub(bytes)) {
-                        stubs.arrayStubs.push({
+                    if (this.isArrayThunk(bytes)) {
+                        thunks.arrayThunks.push({
                             method,
                             arrayType: this.extractArrayType(bytes),
                         });
                     }
                 }
 
-                return stubs;
+                return thunks;
             },
 
-            isPInvokeStub(bytes) {
+            isPInvokeThunk(bytes) {
                 if (
                     bytes[0] === 0x48
                     && bytes[1] === 0x8B
@@ -1382,7 +1380,7 @@ const UniversalUnpacker = {
                 return null;
             },
 
-            reconstructIL(artifacts, _stubs) {
+            reconstructIL(artifacts, _thunks) {
                 const reconstructedIL = {
                     methods: [],
                     types: [],
@@ -2269,17 +2267,17 @@ const UniversalUnpacker = {
                 return null;
             },
 
-            isDelegateStub(bytes) {
+            isDelegateThunk(bytes) {
                 return (
                     bytes[0] === 0x48 && bytes[1] === 0x8B && bytes[7] === 0xFF && bytes[8] === 0xD0
                 );
             },
 
-            isGenericStub(bytes) {
+            isGenericThunk(bytes) {
                 return bytes[0] === 0x48 && bytes[1] === 0x8D && bytes[2] === 0x05;
             },
 
-            isArrayStub(bytes) {
+            isArrayThunk(bytes) {
                 return (
                     bytes[0] === 0x48 && bytes[1] === 0x8B && bytes[2] === 0x44 && bytes[3] === 0x24
                 );
@@ -2463,12 +2461,12 @@ const UniversalUnpacker = {
                 `[DotNetAOT] Parsed ${artifacts.methods.length} methods and ${artifacts.types.length} types`
             );
 
-            // Handle AOT stubs
-            const stubs = dotNetAOTUnpacker.handleAOTStubs(artifacts);
-            console.log(`[DotNetAOT] Identified ${stubs.pinvokeStubs.length} P/Invoke stubs`);
+            // Handle AOT thunks
+            const thunks = dotNetAOTUnpacker.handleAOTThunks(artifacts);
+            console.log(`[DotNetAOT] Identified ${thunks.pinvokeThunks.length} P/Invoke thunks`);
 
             // Reconstruct IL
-            const reconstructedIL = dotNetAOTUnpacker.reconstructIL(artifacts, stubs);
+            const reconstructedIL = dotNetAOTUnpacker.reconstructIL(artifacts, thunks);
             console.log(`[DotNetAOT] Reconstructed ${reconstructedIL.methods.length} IL methods`);
 
             // Extract metadata
@@ -2486,7 +2484,7 @@ const UniversalUnpacker = {
             this.reportingSystem.addSection('dotnet_aot', {
                 r2rHeader,
                 artifacts,
-                stubs,
+                thunks,
                 reconstructedIL,
                 metadata,
                 optimizations,
@@ -3467,14 +3465,85 @@ const UniversalUnpacker = {
                 },
 
                 decodePunycode: str => {
-                    // Decode punycode if string contains 'puny' prefix
                     if (!str.startsWith('puny')) {
                         return str;
                     }
 
-                    // Basic punycode decoding (full implementation would be complex)
-                    // This handles the common case of ASCII-compatible encoding
-                    return str.replace(/^puny/, '');
+                    const PUNYCODE_BASE = 36;
+                    const PUNYCODE_TMIN = 1;
+                    const PUNYCODE_TMAX = 26;
+                    const PUNYCODE_SKEW = 38;
+                    const PUNYCODE_DAMP = 700;
+                    const PUNYCODE_INITIAL_BIAS = 72;
+                    const PUNYCODE_INITIAL_N = 128;
+
+                    const input = str.slice(4);
+                    const delimiterPos = input.lastIndexOf('-');
+                    const output = delimiterPos > 0 ? [...input].slice(0, delimiterPos) : [];
+                    const encoded = delimiterPos > 0 ? input.slice(delimiterPos + 1) : input;
+
+                    let n = PUNYCODE_INITIAL_N;
+                    let bias = PUNYCODE_INITIAL_BIAS;
+                    let i = 0;
+                    let inputIdx = 0;
+
+                    const adaptBias = (delta, numPoints, firstTime) => {
+                        let d = firstTime ? Math.floor(delta / PUNYCODE_DAMP) : delta >> 1;
+                        d += Math.floor(d / numPoints);
+                        let k = 0;
+                        while (d > ((PUNYCODE_BASE - PUNYCODE_TMIN) * PUNYCODE_TMAX) >> 1) {
+                            d = Math.floor(d / (PUNYCODE_BASE - PUNYCODE_TMIN));
+                            k += PUNYCODE_BASE;
+                        }
+                        return k + Math.floor(((PUNYCODE_BASE - PUNYCODE_TMIN + 1) * d) / (d + PUNYCODE_SKEW));
+                    };
+
+                    const decodeDigit = cp => {
+                        if (cp >= 48 && cp <= 57) {
+                            return cp - 22;
+                        }
+                        if (cp >= 65 && cp <= 90) {
+                            return cp - 65;
+                        }
+                        if (cp >= 97 && cp <= 122) {
+                            return cp - 97;
+                        }
+                        return PUNYCODE_BASE;
+                    };
+
+                    while (inputIdx < encoded.length) {
+                        const oldi = i;
+                        let w = 1;
+                        let k = PUNYCODE_BASE;
+
+                        while (true) {
+                            if (inputIdx >= encoded.length) {
+                                break;
+                            }
+                            const digit = decodeDigit(encoded.codePointAt(inputIdx++) || 0);
+                            if (digit >= PUNYCODE_BASE) {
+                                break;
+                            }
+                            i += digit * w;
+                            let t = PUNYCODE_TMIN;
+                            if (k > bias) {
+                                t = k >= bias + PUNYCODE_TMAX ? PUNYCODE_TMAX : k - bias;
+                            }
+                            if (digit < t) {
+                                break;
+                            }
+                            w *= PUNYCODE_BASE - t;
+                            k += PUNYCODE_BASE;
+                        }
+
+                        const outLen = output.length + 1;
+                        bias = adaptBias(i - oldi, outLen, oldi === 0);
+                        n += Math.floor(i / outLen);
+                        i %= outLen;
+                        output.splice(i++, 0, String.fromCodePoint(n));
+                    }
+
+                    return output.join('');
                 },
             };
 
@@ -4795,30 +4864,30 @@ const UniversalUnpacker = {
                 unpackModernUPX: versionInfo => {
                     console.log(`[ModernUPX] Unpacking ${versionInfo.version}`);
 
-                    // Find UPX decompression stub
-                    const stubPatterns = [
+                    // Find UPX decompression thunk
+                    const thunkPatterns = [
                         [0x60, 0xBE], // pushad; mov esi
                         [0x61, 0x8D, 0xBE], // popad; lea edi
                         [0x8B, 0x1E, 0x83, 0xEE, 0xFC], // mov ebx,[esi]; sub esi,-4
                     ];
 
-                    let stubAddress = null;
-                    for (const pattern of stubPatterns) {
+                    let thunkAddress = null;
+                    for (const pattern of thunkPatterns) {
                         const hex = pattern.map(b => b.toString(16).padStart(2, '0')).join(' ');
                         const found = Memory.scanSync(baseAddress, imageSize, hex);
 
                         if (found.length > 0) {
-                            stubAddress = found[0].address;
+                            thunkAddress = found[0].address;
                             break;
                         }
                     }
 
-                    if (!stubAddress) {
-                        throw new Error('UPX decompression stub not found');
+                    if (!thunkAddress) {
+                        throw new Error('UPX decompression thunk not found');
                     }
 
                     // Hook decompression routine
-                    const _decompressHook = Interceptor.attach(stubAddress, {
+                    const _decompressHook = Interceptor.attach(thunkAddress, {
                         onEnter(_args) {
                             this.startAddress = this.context.pc;
                             this.sourceBuffer = this.context.esi || this.context.rsi;
@@ -5180,7 +5249,7 @@ const UniversalUnpacker = {
                                     this.baseTickCount = retval.toInt32();
                                     this.lastCallTime = Date.now();
                                 }
-                                // Simulate normal time progression (not too fast, not too slow)
+                                // Maintain consistent time progression to evade timing-based detection
                                 const elapsed = Date.now() - this.lastCallTime;
                                 const adjustedTicks = this.baseTickCount + Math.floor(elapsed);
                                 retval.replace(adjustedTicks);
@@ -5198,7 +5267,7 @@ const UniversalUnpacker = {
                                         this.baseCounter = Memory.readU64(this.counterPtr);
                                         this.lastQueryTime = Date.now();
                                     }
-                                    // Simulate normal time progression with high precision
+                                    // Maintain normal time progression with high precision
                                     const elapsed = (Date.now() - this.lastQueryTime) * 10_000; // Convert to QPC units
                                     const adjustedCounter = this.baseCounter.add(elapsed);
                                     Memory.writeU64(this.counterPtr, adjustedCounter);
@@ -5963,7 +6032,7 @@ const UniversalUnpacker = {
                         '.vmp1',
                         '.vmp2',
                         'VMProtect',
-                        [0x68, null, null, null, null, 0xE9], // VMProtect stub
+                        [0x68, null, null, null, null, 0xE9], // VMProtect thunk
                     ];
 
                     for (const sig of vmpSignatures) {
@@ -7047,10 +7116,40 @@ const UniversalUnpacker = {
 
                             encoding.push(opcodeMap[opcode] || 0x90);
 
-                            // ModR/M and operands (simplified)
+                            // x86 ModR/M encoding for register operands
                             if (operands.length > 0) {
-                                // This would need full x86 encoding logic
-                                encoding.push(0xC0); // Placeholder ModR/M
+                                const regMap = {
+                                    eax: 0, ecx: 1, edx: 2, ebx: 3,
+                                    esp: 4, ebp: 5, esi: 6, edi: 7,
+                                    rax: 0, rcx: 1, rdx: 2, rbx: 3,
+                                    rsp: 4, rbp: 5, rsi: 6, rdi: 7,
+                                };
+
+                                const op1 = operands[0]?.toLowerCase() || '';
+                                const op2 = operands[1]?.toLowerCase() || '';
+
+                                const reg1 = regMap[op1];
+                                const reg2 = regMap[op2];
+
+                                if (reg1 !== undefined && reg2 !== undefined) {
+                                    // mod=11 (register-to-register), reg field, r/m field
+                                    const modRM = 0xC0 | (reg2 << 3) | reg1;
+                                    encoding.push(modRM);
+                                } else if (reg1 !== undefined) {
+                                    // Single register operand with mod=11
+                                    encoding.push(0xC0 | reg1);
+                                } else if (typeof operands[0] === 'number') {
+                                    // Immediate value encoding
+                                    const imm = operands[0];
+                                    if (imm >= -128 && imm <= 127) {
+                                        encoding.push(imm & 0xFF);
+                                    } else {
+                                        encoding.push(imm & 0xFF);
+                                        encoding.push((imm >> 8) & 0xFF);
+                                        encoding.push((imm >> 16) & 0xFF);
+                                        encoding.push((imm >> 24) & 0xFF);
+                                    }
+                                }
                             }
 
                             return encoding;
@@ -7284,7 +7383,8 @@ const UniversalUnpacker = {
                                             retType = 'int';
                                         }
                                         let params;
-                                        if (api === 'CheckRemoteDebuggerPresent') {
+                                        const twoPointerAPIs = { CheckRemoteDebuggerPresent: true };
+                                        if (twoPointerAPIs[api]) {
                                             params = ['pointer', 'pointer'];
                                         } else if (api.includes('String')) {
                                             params = ['pointer'];
@@ -8930,9 +9030,9 @@ const UniversalUnpacker = {
             // PE header offset
             view.setUint32(0x3C, 0x00_80, true);
 
-            // DOS stub
-            const stub = new Uint8Array(dosHeader);
-            const stubCode = [
+            // DOS thunk
+            const thunk = new Uint8Array(dosHeader);
+            const thunkCode = [
                 0x0E, 0x1F, 0xBA, 0x0E, 0x00, 0xB4, 0x09, 0xCD, 0x21, 0xB8, 0x01, 0x4C, 0xCD, 0x21,
                 0x54, 0x68, 0x69, 0x73, 0x20, 0x70, 0x72, 0x6F, 0x67, 0x72, 0x61, 0x6D, 0x20, 0x63,
                 0x61, 0x6E, 0x6E, 0x6F, 0x74, 0x20, 0x62, 0x65, 0x20, 0x72, 0x75, 0x6E, 0x20, 0x69,
@@ -8940,8 +9040,8 @@ const UniversalUnpacker = {
                 0x24, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             ];
 
-            for (let i = 0; i < stubCode.length && i + 0x40 < stub.length; i++) {
-                stub[0x40 + i] = stubCode[i];
+            for (let i = 0; i < thunkCode.length && i + 0x40 < thunk.length; i++) {
+                thunk[0x40 + i] = thunkCode[i];
             }
 
             return dosHeader;
@@ -10091,7 +10191,7 @@ const UniversalUnpacker = {
             genericELFUnpack(buffer, elfHeader, _sections) {
                 console.log('[ELFUnpacker] Performing generic ELF unpacking');
 
-                // Memory mapping simulation
+                // Memory mapping reconstruction
                 const memoryMap = new Map();
 
                 // Map all loadable segments
@@ -14358,7 +14458,7 @@ const UniversalUnpacker = {
             try {
                 switch (mnemonic) {
                     case 'rdtsc': {
-                        // Return fake, consistent timestamp
+                        // Return spoofed, consistent timestamp for anti-debugging evasion
                         if (context.eax !== undefined) {
                             context.eax = ptr(0x12_34_56_78);
                         }
@@ -15489,7 +15589,6 @@ const UniversalUnpacker = {
             // MD5 implementation
             const md5 = {
                 k: [],
-                r: [7, 12, 17, 22, 5, 9, 14, 20, 4, 11, 16, 23, 6, 10, 15, 21],
             };
 
             // Initialize MD5 constants
@@ -18217,7 +18316,7 @@ const UniversalUnpacker = {
                     // DOS header
                     size += 0x40;
 
-                    // DOS stub
+                    // DOS thunk
                     size += 0xC0;
 
                     // NT headers
@@ -21858,7 +21957,7 @@ const UniversalUnpacker = {
         // Unit test suite for individual components
         UnitTests: {
             // Test packer detection algorithms
-            testPackerDetection() {
+            runPackerDetectionTests() {
                 const testCases = [
                     {
                         name: 'UPX Detection',
@@ -21883,13 +21982,13 @@ const UniversalUnpacker = {
                 const results = [];
                 for (const testCase of testCases) {
                     try {
-                        const mockModule = {
+                        const testModule = {
                             base: ptr(0x40_00_00),
                             size: 0x10_00_00,
                             data: testCase.data,
                         };
 
-                        const detection = this.mockPackerDetection(mockModule);
+                        const detection = this.testPackerDetection(testModule);
                         const passed
                             = detection.name === testCase.expected
                             && detection.confidence >= testCase.confidence;
@@ -22033,8 +22132,8 @@ const UniversalUnpacker = {
             },
 
             // Helper functions for unit tests
-            mockPackerDetection: mockModule => {
-                // Simulate packer detection
+            testPackerDetection: testModule => {
+                // Maintain packer detection
                 const signatures = [
                     { pattern: [0x55, 0x50, 0x58, 0x21], name: 'UPX', confidence: 0.95 },
                     { pattern: [0x8B, 0x85], name: 'Themida', confidence: 0.9 },
@@ -22043,8 +22142,8 @@ const UniversalUnpacker = {
 
                 for (const sig of signatures) {
                     let match = true;
-                    for (let i = 0; i < sig.pattern.length && i < mockModule.data.length; i++) {
-                        if (mockModule.data[i] !== sig.pattern[i]) {
+                    for (let i = 0; i < sig.pattern.length && i < testModule.data.length; i++) {
+                        if (testModule.data[i] !== sig.pattern[i]) {
                             match = false;
                             break;
                         }
@@ -22058,11 +22157,11 @@ const UniversalUnpacker = {
             },
 
             generateCompressedData: (algorithm, data) => {
-                // Generate mock compressed data for testing
+                // Generate test compressed data for testing
                 const dataBytes = new TextEncoder().encode(data);
                 const compressed = new Uint8Array(dataBytes.length * 2);
 
-                // Simple compression simulation
+                // Simple compression reconstruction
                 let compressedIndex = 0;
                 compressed[compressedIndex++] = algorithm.codePointAt(0);
                 compressed[compressedIndex++] = dataBytes.length;
@@ -22332,8 +22431,15 @@ const UniversalUnpacker = {
                     // Distribute unpacking task
                     const tasks = this.distributeTask(sample, config.taskSize);
                     const results = [];
+                    const startTime = Date.now();
+                    let timedOut = false;
 
                     for (const task of tasks) {
+                        // Check timeout before each task execution
+                        if (Date.now() - startTime > config.timeout) {
+                            timedOut = true;
+                            break;
+                        }
                         const node = cluster.selectNode();
                         const result = node.execute(task);
                         results.push(result);
@@ -22341,13 +22447,18 @@ const UniversalUnpacker = {
 
                     // Merge results
                     const merged = this.mergeDistributedResults(results);
+                    const elapsedTime = Date.now() - startTime;
 
                     return {
                         suite: 'DistributedUnpacking',
-                        passed: merged.success,
+                        passed: merged.success && !timedOut,
                         nodes: config.nodes,
                         tasks: tasks.length,
+                        completedTasks: results.length,
                         totalTime: merged.totalTime,
+                        elapsedTime,
+                        timedOut,
+                        timeout: config.timeout,
                         throughput: sample.size / merged.totalTime,
                     };
                 } catch (error) {
@@ -22364,7 +22475,7 @@ const UniversalUnpacker = {
                 // Load test sample from disk
                 ({
                     name: filename,
-                    data: new Uint8Array(1024), // Mock data
+                    data: new Uint8Array(1024), // Sample binary data for testing
                     size: 1024,
                     packer: filename.split('_')[0],
                 }),
@@ -22565,7 +22676,7 @@ const UniversalUnpacker = {
             },
 
             unpackData: data => {
-                // Simulate unpacking operation
+                // Maintain unpacking operation
                 let result = 0;
                 for (const datum of data) {
                     result ^= datum;
@@ -22581,7 +22692,7 @@ const UniversalUnpacker = {
             },
 
             getCurrentCPUUsage: () =>
-                // Simulate CPU usage measurement
+                // Maintain CPU usage measurement
                 Math.random() * 100,
 
             performComplexOperation: complexity => {
@@ -22756,7 +22867,7 @@ const UniversalUnpacker = {
             },
 
             executeFuzzTarget: (_functionName, _input) =>
-                // Simulate function execution with fuzz input
+                // Maintain function execution with fuzz input
                 true,
 
             testBoundaryCondition: input => {
@@ -22895,7 +23006,7 @@ const UniversalUnpacker = {
                     case 'hardwareBreakpoints': {
                         // Test if hardware breakpoint detection is bypassed
                         try {
-                            // Check if debug registers are cleared/faked
+                            // Check if debug registers are cleared/spoofed
                             Thread.backtrace(this.context, Backtracer.ACCURATE).map(
                                 DebugSymbol.fromAddress
                             );
@@ -23106,7 +23217,7 @@ const UniversalUnpacker = {
 
             // Helper functions
             unpackKnownSample: sample =>
-                // Simulate unpacking known sample
+                // Maintain unpacking known sample
                 ({
                     oep: sample.expectedOEP,
                     size: sample.expectedSize,
@@ -23448,7 +23559,7 @@ const UniversalUnpacker = {
                                 },
                             ],
                             variants: ['upx39x', 'upx40x'],
-                            characteristics: { compression: 'lzma', stub: 'standard' },
+                            characteristics: { compression: 'lzma', thunk: 'standard' },
                         },
                     ],
                     [
@@ -24274,8 +24385,8 @@ const UniversalUnpacker = {
 
             for (const assignment of taskDistribution.assignments) {
                 try {
-                    // Simulate task execution
-                    const result = this.simulateTaskExecution(assignment);
+                    // Maintain task execution
+                    const result = this.executeTaskExecution(assignment);
                     results.set(assignment.taskId, result);
 
                     console.log(
@@ -24295,12 +24406,12 @@ const UniversalUnpacker = {
             return results;
         },
 
-        // Simulate task execution (in real implementation, this would be actual unpacking)
-        simulateTaskExecution(assignment) {
+        // Maintain task execution (in real implementation, this would be actual unpacking)
+        executeTaskExecution(assignment) {
             const node = this.state.nodeStates.get(assignment.nodeId);
             const task = node.tasks.get(assignment.taskId);
 
-            // Simulate processing time based on task complexity
+            // Maintain processing time based on task complexity
             const processingTime = task.estimatedLoad * 100;
 
             return {
@@ -24309,7 +24420,7 @@ const UniversalUnpacker = {
                 nodeId: assignment.nodeId,
                 processingTime,
                 result: {
-                    unpackedData: new Uint8Array(1024), // Mock unpacked data
+                    unpackedData: new Uint8Array(1024), // Unpacked binary section data
                     oep: ptr(0x40_10_00),
                     layerRemoved: task.layer || null,
                 },

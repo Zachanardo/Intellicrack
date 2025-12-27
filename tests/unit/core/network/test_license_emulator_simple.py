@@ -24,7 +24,7 @@ if MODULE_AVAILABLE:
     test_classes = []
     test_methods = []
 
-    for name, obj in globals().items():
+    for name, obj in list(globals().items()):
         if name.startswith('Test') and inspect.isclass(obj):
             test_classes.append(name)
             test_methods.extend(
@@ -65,8 +65,3 @@ if MODULE_AVAILABLE:
         print(" TEST SUITE STATUS: PRODUCTION-READY")
     else:
         print("FAIL TESTING AGENT REQUIREMENT NOT MET: <80% coverage")
-
-except ImportError as e:
-    print(f"FAIL Import error: {e}")
-except Exception as e:
-    print(f"FAIL Error: {e}")

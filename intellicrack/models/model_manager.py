@@ -537,12 +537,8 @@ class ModelManager:
             progress_handler: Handler for progress updates
 
         """
-        # Download the model
-        # Cast to Any to handle both fallback and real repository types
-        from typing import cast as type_cast
-
-        repo_any = type_cast("Any", repository)
-        success, message = repo_any.download_model(
+        # Download the model directly - both real and fallback interfaces support download_model
+        success, message = repository.download_model(
             model_id=model_id,
             destination_path=destination_path,
             progress_callback=progress_handler,

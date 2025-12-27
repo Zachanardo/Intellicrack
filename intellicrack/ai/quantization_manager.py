@@ -1,5 +1,14 @@
 """Model Quantization Manager for Intellicrack.
 
+Provides unified quantization management for large language models using multiple
+backends including bitsandbytes (8-bit, 4-bit), GPTQ, and dynamic quantization.
+Supports multi-GPU sharding for efficient inference on resource-constrained systems.
+
+This module handles model quantization, LoRA adapter loading, memory optimization,
+and GPU resource management. It integrates with the unified GPU autoloader system
+for automatic device selection and optimization across different GPU types (NVIDIA,
+Intel XPU, etc.).
+
 Copyright (C) 2025 Zachary Flint
 
 This file is part of Intellicrack.
@@ -20,12 +29,128 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import gc
 from pathlib import Path
-from typing import Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Protocol, TypeVar, cast
 
 from intellicrack.utils.type_safety import get_typed_item, validate_type
 
 from ..utils.logger import get_logger
-from .model_sharding import get_sharding_manager
+from .model_sharding import ModelShardingManager, get_sharding_manager
+
+
+if TYPE_CHECKING:
+    pass
+
+
+class ShardingManagerProtocol(Protocol):
+    """Protocol for sharding manager with all expected methods.
+
+    Defines the interface for multi-GPU model sharding operations, including
+    device mapping, checkpoint loading, and memory cleanup functionality.
+    """
+
+    def get_sharding_info(self) -> dict[str, object]:
+        """Get information about current sharding configuration."""
+        ...
+
+    def shard_model(
+        self,
+        model: Any,
+        device_map: dict[str, object] | None = None,
+        max_memory: dict[int, str] | None = None,
+        offload_folder: str | None = None,
+        offload_state_dict: bool = False,
+    ) -> Any:
+        """Shard a model across multiple devices.
+
+        Args:
+            model: Model to shard
+            device_map: Device mapping configuration
+            max_memory: Maximum memory per device
+            offload_folder: Folder for offloading
+            offload_state_dict: Whether to offload state dict
+
+        """
+        ...
+
+    def load_sharded_checkpoint(
+        self,
+        model: Any,
+        checkpoint: str | Path,
+        device_map: dict[str, object] | None = None,
+        max_memory: dict[int, str] | None = None,
+        no_split_module_classes: list[str] | None = None,
+        dtype: Any = None,
+    ) -> Any:
+        """Load a checkpoint and shard it across devices.
+
+        Args:
+            model: Model to load checkpoint into
+            checkpoint: Path to checkpoint
+            device_map: Device mapping configuration
+            max_memory: Maximum memory per device
+            no_split_module_classes: Module classes to not split
+            dtype: Data type for loading
+
+        """
+        ...
+
+    def create_device_map(
+        self,
+        model_config_or_path: str | Path | dict[str, Any],
+        max_memory: dict[int, str] | None = None,
+        no_split_module_classes: list[str] | None = None,
+        dtype: Any = None,
+    ) -> dict[str, object]:
+        """Create a device map for model sharding.
+
+        Args:
+            model_config_or_path: Model config, path, or dict
+            max_memory: Maximum memory per device
+            no_split_module_classes: Module classes to not split
+            dtype: Data type for device mapping
+
+        """
+        ...
+
+    def cleanup_memory(self) -> None:
+        """Clean up GPU memory across all devices.
+
+        Synchronizes and clears GPU memory for all available devices.
+
+        """
+        ...
+
+
+class TorchModelProtocol(Protocol):
+    """Protocol for torch models with quantization methods.
+
+    Defines the interface for PyTorch models supporting quantization
+    operations including half precision conversion and module iteration.
+    """
+
+    def half(self) -> "TorchModelProtocol":
+        """Convert model to half precision (float16)."""
+        ...
+
+    def named_modules(self) -> Any:
+        """Get named modules iterator."""
+        ...
+
+
+class QuantizeConfigProtocol(Protocol):
+    """Protocol for quantization configurations.
+
+    Defines the interface for quantization config objects with standard
+    parameters for GPTQ and bitsandbytes quantization methods.
+    """
+
+    bits: int
+    group_size: int
+    desc_act: bool
+    damp_percent: float
+    static_groups: bool
+    sym: bool
+    true_sequential: bool
 
 
 ModelType = TypeVar("ModelType")
@@ -110,13 +235,32 @@ except ImportError as e:
 
 
 class QuantizationManager:
-    """Manages model quantization for efficient inference."""
+    """Manages model quantization for efficient inference.
+
+    Provides a unified interface for loading and quantizing large language models
+    using multiple backends including bitsandbytes, GPTQ, and torch quantization.
+    Supports automatic device selection, multi-GPU sharding, LoRA adapters, and
+    memory optimization for resource-constrained environments.
+
+    Attributes:
+        loaded_models: Dictionary of loaded models by identifier
+        quantization_configs: Dictionary of quantization configurations
+        sharding_manager: Multi-GPU sharding manager instance or None
+        available_backends: Dictionary mapping backend names to availability status
+
+    """
 
     def __init__(self) -> None:
-        """Initialize the quantization manager."""
+        """Initialize the quantization manager.
+
+        Detects available quantization backends and GPU hardware. Automatically
+        enables multi-GPU sharding if multiple GPUs are detected. Initializes
+        storage for loaded models and quantization configurations.
+
+        """
         self.loaded_models: dict[str, Any] = {}
         self.quantization_configs: dict[str, dict[str, object]] = {}
-        self.sharding_manager: Any = None
+        self.sharding_manager: ShardingManagerProtocol | None = None
 
         # Check available backends
         self.available_backends: dict[str, bool] = {
@@ -135,10 +279,10 @@ class QuantizationManager:
                 info_dict = validate_type(gpu_info["info"], dict)
                 device_count = info_dict.get("device_count", 1)
                 if isinstance(device_count, int) and device_count > 1:
-                    self.sharding_manager = get_sharding_manager()
+                    self.sharding_manager = cast(ShardingManagerProtocol, get_sharding_manager())
                     logger.info("Multi-GPU sharding enabled with %d devices", device_count)
         elif HAS_TORCH and torch is not None and torch.cuda.device_count() > 1:
-            self.sharding_manager = get_sharding_manager()
+            self.sharding_manager = cast(ShardingManagerProtocol, get_sharding_manager())
             logger.info("Multi-GPU sharding enabled with %d devices", torch.cuda.device_count())
 
     def load_quantized_model(
@@ -190,7 +334,15 @@ class QuantizationManager:
             return None
 
     def _get_best_device(self) -> str:
-        """Get the best available device for model loading."""
+        """Determine the best available device for model loading.
+
+        Selects the optimal device (CUDA, MPS, or CPU) based on hardware
+        availability and unified GPU system detection.
+
+        Returns:
+            Device identifier string ("cuda", "mps", or "cpu")
+
+        """
         if GPU_AUTOLOADER_AVAILABLE:
             device_result = get_device()
             return device_result if isinstance(device_result, str) else "cpu"
@@ -202,7 +354,18 @@ class QuantizationManager:
         return "cpu"
 
     def _detect_quantization_type(self, model_path: Path) -> str:
-        """Detect quantization type from model files."""
+        """Detect quantization type from model files and configuration.
+
+        Inspects model directory structure and config.json to identify the
+        quantization method used (GPTQ, 8-bit, 4-bit, or none).
+
+        Args:
+            model_path: Path to model directory or file
+
+        Returns:
+            Quantization type identifier ("gptq", "8bit", "4bit", or "none")
+
+        """
         # Check for GPTQ files
         if model_path.is_dir():
             files = list(model_path.glob("*.safetensors")) + list(model_path.glob("*.bin"))
@@ -219,15 +382,30 @@ class QuantizationManager:
                 config = json.load(f)
                 if "quantization_config" in config:
                     quant_config = config["quantization_config"]
-                    if "bits" in quant_config:
-                        return f"{quant_config['bits']}bit"
+                    # Check quant_method first as it's more specific than bits
                     if quant_config.get("quant_method") == "gptq":
                         return "gptq"
+                    if "bits" in quant_config:
+                        return f"{quant_config['bits']}bit"
 
         return "none"
 
     def _load_8bit_model(self, model_path: Path, device: str, **kwargs: object) -> Any:
-        """Load model with 8-bit quantization using bitsandbytes."""
+        """Load model with 8-bit quantization using bitsandbytes.
+
+        Loads a pretrained model and applies 8-bit quantization for reduced
+        memory usage. Supports multi-GPU sharding if available.
+
+        Args:
+            model_path: Path to model directory or file
+            device: Target device for loading ("cuda", "cpu", "mps")
+            **kwargs: Additional options including enable_sharding, max_memory,
+                      no_split_module_classes, trust_remote_code
+
+        Returns:
+            Loaded 8-bit quantized model or None on failure
+
+        """
         if not HAS_BITSANDBYTES or not HAS_TRANSFORMERS or BitsAndBytesConfig is None or AutoModelForCausalLM is None or torch is None:
             logger.exception("bitsandbytes, transformers, and PyTorch required for 8-bit quantization")
             return None
@@ -248,11 +426,18 @@ class QuantizationManager:
             # Check if multi-GPU sharding should be used
             device_map: str | dict[str, Any] = "auto"
             if self.sharding_manager and kwargs.get("enable_sharding", True):
+                # Extract kwargs with type checking
+                max_mem_param = kwargs.get("max_memory")
+                max_memory: dict[int, str] | None = max_mem_param if isinstance(max_mem_param, dict) else None
+
+                no_split_param = kwargs.get("no_split_module_classes")
+                no_split_classes: list[str] | None = no_split_param if isinstance(no_split_param, list) else None
+
                 device_map = validate_type(
                     self.sharding_manager.create_device_map(
                         model_path,
-                        max_memory=kwargs.get("max_memory"),
-                        no_split_module_classes=kwargs.get("no_split_module_classes"),
+                        max_memory=max_memory,
+                        no_split_module_classes=no_split_classes,
                     ),
                     dict,
                 )
@@ -274,7 +459,22 @@ class QuantizationManager:
             return None
 
     def _load_4bit_model(self, model_path: Path, device: str, **kwargs: object) -> Any:
-        """Load model with 4-bit quantization using bitsandbytes."""
+        """Load model with 4-bit quantization using bitsandbytes.
+
+        Loads a pretrained model and applies 4-bit quantization for optimal
+        memory efficiency. Supports optional training preparation via PEFT.
+
+        Args:
+            model_path: Path to model directory or file
+            device: Target device for loading ("cuda", "cpu", "mps")
+            **kwargs: Additional options including enable_sharding, max_memory,
+                      no_split_module_classes, trust_remote_code,
+                      prepare_for_training
+
+        Returns:
+            Loaded 4-bit quantized model or None on failure
+
+        """
         if not HAS_BITSANDBYTES or not HAS_TRANSFORMERS or BitsAndBytesConfig is None or AutoModelForCausalLM is None or torch is None:
             logger.exception("bitsandbytes, transformers, and PyTorch required for 4-bit quantization")
             return None
@@ -295,11 +495,18 @@ class QuantizationManager:
             # Check if multi-GPU sharding should be used
             device_map: str | dict[str, Any] = "auto"
             if self.sharding_manager and kwargs.get("enable_sharding", True):
+                # Extract kwargs with type checking
+                max_mem_param_4bit = kwargs.get("max_memory")
+                max_memory_4bit: dict[int, str] | None = max_mem_param_4bit if isinstance(max_mem_param_4bit, dict) else None
+
+                no_split_param_4bit = kwargs.get("no_split_module_classes")
+                no_split_classes_4bit: list[str] | None = no_split_param_4bit if isinstance(no_split_param_4bit, list) else None
+
                 device_map = validate_type(
                     self.sharding_manager.create_device_map(
                         model_path,
-                        max_memory=kwargs.get("max_memory"),
-                        no_split_module_classes=kwargs.get("no_split_module_classes"),
+                        max_memory=max_memory_4bit,
+                        no_split_module_classes=no_split_classes_4bit,
                     ),
                     dict,
                 )
@@ -325,7 +532,21 @@ class QuantizationManager:
             return None
 
     def _load_gptq_model(self, model_path: Path, device: str, **kwargs: object) -> Any:
-        """Load GPTQ quantized model."""
+        """Load a GPTQ quantized model.
+
+        Loads a model quantized with GPTQ (Group Quantization for Large Language Models).
+        Supports fused attention and MLP optimizations for improved inference speed.
+
+        Args:
+            model_path: Path to GPTQ model directory
+            device: Target device for loading ("cuda", "cpu", "mps")
+            **kwargs: Additional options including fused_attention, fused_mlp,
+                      trust_remote_code
+
+        Returns:
+            Loaded GPTQ quantized model or None on failure
+
+        """
         if not HAS_AUTO_GPTQ or AutoGPTQForCausalLM is None:
             logger.exception("auto-gptq required for GPTQ models")
             return None
@@ -357,7 +578,21 @@ class QuantizationManager:
             return None
 
     def _load_standard_model(self, model_path: Path, device: str, **kwargs: object) -> Any:
-        """Load model without quantization."""
+        """Load a standard unquantized model.
+
+        Loads a pretrained causal language model without quantization, with
+        optional multi-GPU sharding and GPU optimizations via unified system.
+
+        Args:
+            model_path: Path to model directory or file
+            device: Target device for loading ("cuda", "cpu", "mps")
+            **kwargs: Additional options including torch_dtype, enable_sharding,
+                      max_memory, trust_remote_code
+
+        Returns:
+            Loaded standard model or None on failure
+
+        """
         if not HAS_TRANSFORMERS or AutoModelForCausalLM is None or torch is None:
             logger.exception("transformers and PyTorch required for model loading")
             return None
@@ -371,19 +606,13 @@ class QuantizationManager:
 
             # Check if multi-GPU sharding should be used
             device_map: str | dict[str, Any] | None
+            use_sharding = False
             if device == "cpu":
                 device_map = None
             elif self.sharding_manager and kwargs.get("enable_sharding", True):
-                # Use sharding manager for multi-GPU
-                trust_remote = kwargs.get("trust_remote_code", True)
-                sharded_result = cast("Any", self.sharding_manager).load_sharded_model(
-                    model_path,
-                    model_class=AutoModelForCausalLM,
-                    torch_dtype=torch_dtype,
-                    trust_remote_code=trust_remote if isinstance(trust_remote, bool) else True,
-                    **kwargs,
-                )
-                return cast("Any", sharded_result)
+                # Will use sharding manager after loading
+                use_sharding = True
+                device_map = "auto"
             else:
                 device_map = "auto"
 
@@ -398,9 +627,19 @@ class QuantizationManager:
 
             if device == "cpu":
                 model = model.to(device)  # type: ignore[arg-type]
+            elif use_sharding and self.sharding_manager:
+                # Apply multi-GPU sharding
+                max_mem_param = kwargs.get("max_memory")
+                max_memory_shard: dict[int, str] | None = max_mem_param if isinstance(max_mem_param, dict) else None
+
+                model = self.sharding_manager.shard_model(
+                    model,
+                    max_memory=max_memory_shard,
+                )
+                logger.info("Applied multi-GPU sharding to model")
             elif GPU_AUTOLOADER_AVAILABLE:
                 # Move model to appropriate device using unified GPU system
-                device_result = to_device(cast("Any", model))
+                device_result = to_device(model)
                 if device_result is not None:
                     model = device_result
 
@@ -411,7 +650,7 @@ class QuantizationManager:
                     logger.info("Applied GPU optimizations to standard model")
 
             logger.info("Successfully loaded standard model")
-            return cast("Any", model)
+            return model
 
         except Exception as e:
             logger.exception("Failed to load standard model: %s", e)
@@ -457,7 +696,7 @@ class QuantizationManager:
                 model = model.merge_and_unload()
 
             logger.info("Successfully loaded LoRA adapter from %s", adapter_path_obj)
-            return cast("Any", model)
+            return model
 
         except Exception as e:
             logger.exception("Failed to load LoRA adapter: %s", e)
@@ -498,7 +737,7 @@ class QuantizationManager:
                     logger.warning("torch.ao.quantization not available, skipping quantization")
             elif quant_type == "fp16":
                 # Convert to FP16
-                model = cast("Any", model).half()
+                model = cast(TorchModelProtocol, model).half()
 
             logger.info("Applied %s dynamic quantization", quant_type)
             return model
@@ -621,7 +860,7 @@ class QuantizationManager:
 
         """
         if self.sharding_manager:
-            result = cast("Any", self.sharding_manager).get_device_info()
+            result = self.sharding_manager.get_sharding_info()
             return validate_type(result, dict)
 
         if GPU_AUTOLOADER_AVAILABLE:
@@ -654,7 +893,15 @@ class QuantizationManager:
         }
 
     def get_supported_quantization_types(self) -> list[str]:
-        """Get list of supported quantization types."""
+        """Get list of supported quantization types.
+
+        Returns available quantization methods based on installed dependencies.
+        Always includes "none" for unquantized loading.
+
+        Returns:
+            List of supported quantization type identifiers
+
+        """
         supported_types = []
 
         if HAS_BITSANDBYTES:
@@ -689,7 +936,7 @@ class QuantizationManager:
 
         try:
             # Prepare model for quantization
-            for name, module in cast("Any", model).named_modules():
+            for name, module in cast(TorchModelProtocol, model).named_modules():
                 # Prepare model for quantization
                 if quantization_bits == 8:
                     if isinstance(module, torch.nn.Linear):
@@ -889,15 +1136,15 @@ class QuantizationManager:
                 )
             else:
                 # Convert BaseQuantizeConfig to GPTQConfig parameters
-                config_any = cast("Any", config)
+                config_typed = cast(QuantizeConfigProtocol, config)
                 gptq_config = GPTQConfig(
-                    bits=config_any.bits,
-                    group_size=config_any.group_size,
-                    damp_percent=config_any.damp_percent,
-                    desc_act=config_any.desc_act,
-                    static_groups=config_any.static_groups,
-                    sym=config_any.sym,
-                    true_sequential=config_any.true_sequential,
+                    bits=config_typed.bits,
+                    group_size=config_typed.group_size,
+                    damp_percent=config_typed.damp_percent,
+                    desc_act=config_typed.desc_act,
+                    static_groups=config_typed.static_groups,
+                    sym=config_typed.sym,
+                    true_sequential=config_typed.true_sequential,
                 )
 
             # Load model with GPTQ config
@@ -918,7 +1165,22 @@ class QuantizationManager:
             return None
 
     def create_quantization_config(self, quantization_type: str) -> dict[str, object]:
-        """Create quantization configuration for the specified type."""
+        """Create quantization configuration for the specified type.
+
+        Generates a configuration dictionary appropriate for the requested
+        quantization method. Returns availability status if dependencies are missing.
+
+        Args:
+            quantization_type: Type of quantization ("8bit", "4bit", "gptq",
+                               "dynamic", "static", or "none")
+
+        Returns:
+            Configuration dictionary for the specified quantization type
+
+        Raises:
+            ValueError: If quantization_type is not a supported value
+
+        """
         if quantization_type == "8bit":
             if HAS_BITSANDBYTES and HAS_TRANSFORMERS:
                 return {
@@ -997,7 +1259,12 @@ class QuantizationManager:
         raise ValueError(f"Unsupported quantization type: {quantization_type}")
 
     def cleanup_memory(self) -> None:
-        """Clean up GPU memory after model operations."""
+        """Clean up GPU memory after model operations.
+
+        Clears GPU memory caches and synchronizes devices across all backends.
+        Ensures proper resource cleanup for NVIDIA CUDA and Intel XPU devices.
+
+        """
         if GPU_AUTOLOADER_AVAILABLE:
             gpu_autoloader.synchronize()
             # Let the unified system handle memory cleanup
@@ -1014,7 +1281,7 @@ class QuantizationManager:
             torch.cuda.empty_cache()
 
         if self.sharding_manager:
-            cast("Any", self.sharding_manager).cleanup_memory()
+            self.sharding_manager.cleanup_memory()
 
 
 # Global instance
@@ -1022,7 +1289,15 @@ _QUANTIZATION_MANAGER: QuantizationManager | None = None
 
 
 def get_quantization_manager() -> QuantizationManager:
-    """Get the global quantization manager."""
+    """Get the global quantization manager singleton instance.
+
+    Returns the same QuantizationManager instance across all calls, ensuring
+    unified state for model quantization operations and GPU resource management.
+
+    Returns:
+        The global QuantizationManager instance
+
+    """
     global _QUANTIZATION_MANAGER
     if _QUANTIZATION_MANAGER is None:
         _QUANTIZATION_MANAGER = QuantizationManager()

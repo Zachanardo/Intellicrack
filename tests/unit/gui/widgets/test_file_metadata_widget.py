@@ -9,11 +9,29 @@ import pytest
 import tempfile
 import os
 import time
-from PyQt6.QtWidgets import QApplication, QWidget, QLabel, QTextEdit
-from PyQt6.QtCore import Qt, QFileInfo
-from intellicrack.ui.dialogs.common_imports import QGroupBox, QPushButton, QTest, QThread
+from unittest.mock import patch
 
-from intellicrack.ui.widgets.file_metadata_widget import FileMetadataWidget
+try:
+    from PyQt6.QtWidgets import QApplication, QWidget, QLabel, QTextEdit
+    from PyQt6.QtCore import Qt, QFileInfo
+    from intellicrack.ui.dialogs.common_imports import QGroupBox, QPushButton, QTest, QThread
+    from intellicrack.ui.widgets.file_metadata_widget import FileMetadataWidget
+    GUI_AVAILABLE = True
+except ImportError:
+    QApplication = None
+    QWidget = None
+    QLabel = None
+    QTextEdit = None
+    Qt = None
+    QFileInfo = None
+    QGroupBox = None
+    QPushButton = None
+    QTest = None
+    QThread = None
+    FileMetadataWidget = None
+    GUI_AVAILABLE = False
+
+pytestmark = pytest.mark.skipif(not GUI_AVAILABLE, reason="GUI modules not available")
 
 
 class TestFileMetadataWidget:
@@ -378,7 +396,6 @@ class TestFileMetadataWidget:
             large_file_path = temp_file.name
 
         try:
-            import time
             start_time = time.time()
 
             # Load large file metadata

@@ -131,6 +131,9 @@ const ObfuscationDetector = {
 
                 let entropy = 0;
                 for (const byte in freq) {
+                    if (!Object.hasOwn(freq, byte)) {
+                        continue;
+                    }
                     const p = freq[byte] / bytes.length;
                     entropy -= p * Math.log2(p);
                 }
@@ -680,6 +683,10 @@ const ObfuscationDetector = {
                     }
                     break;
                 }
+
+                default: {
+                    break;
+                }
             }
         });
 
@@ -780,6 +787,10 @@ const ObfuscationDetector = {
                         patched++;
                         break;
                     }
+
+                    default: {
+                        break;
+                    }
                 }
             } catch (error) {
                 send({
@@ -876,6 +887,10 @@ const ObfuscationDetector = {
                         decrypted += this.hookStringDecryptor(address);
                         break;
                     }
+
+                    default: {
+                        break;
+                    }
                 }
             } catch (error) {
                 send({
@@ -965,10 +980,7 @@ const ObfuscationDetector = {
                     },
                 });
             }
-        }
-
-        // Linux
-        else if (Process.platform === 'linux') {
+        } else if (Process.platform === 'linux') {
             const dlopen = Module.findExportByName(null, 'dlopen');
             if (dlopen) {
                 Interceptor.attach(dlopen, {
@@ -1673,7 +1685,6 @@ const ObfuscationDetector = {
                         }
                     } catch (error) {
                         iat.failed++;
-                        // Use e for comprehensive IAT reconstruction error analysis
                         const errorAnalysis = {
                             error_type: error.name || 'UnknownError',
                             error_message: error.message || 'No message',
@@ -1688,6 +1699,15 @@ const ObfuscationDetector = {
                             ),
                             recovery_method: 'continue_scan',
                         };
+                        iat.errors = iat.errors || [];
+                        iat.errors.push({
+                            type: errorAnalysis.error_type,
+                            msg: errorAnalysis.error_message,
+                            addr: errorAnalysis.address_context,
+                            impact: errorAnalysis.reconstruction_impact,
+                            obfuscation: errorAnalysis.potential_obfuscation,
+                            strategy: errorAnalysis.bypass_strategy,
+                        });
                         importValidation.actual_imports_found
                             += errorAnalysis.recovery_method === 'continue_scan' ? 0 : -1;
                     }
@@ -1910,15 +1930,16 @@ const ObfuscationDetector = {
                     } else if (caveStart !== -1) {
                         const caveSize = i - caveStart;
                         if (caveSize >= minCaveSize) {
+                            let caveType = 'int3';
+                            if (data[caveStart] === 0x00) {
+                                caveType = 'null';
+                            } else if (data[caveStart] === 0x90) {
+                                caveType = 'nop';
+                            }
                             caves.push({
                                 address: range.base.add(caveStart),
                                 size: caveSize,
-                                type:
-                                    data[caveStart] === 0x00
-                                        ? 'null'
-                                        : (data[caveStart] === 0x90
-                                            ? 'nop'
-                                            : 'int3'),
+                                type: caveType,
                             });
                         }
                         caveStart = -1;
@@ -1970,7 +1991,7 @@ const ObfuscationDetector = {
         };
 
         try {
-            const { base } = module;
+            const { base, name: moduleName } = module;
             const dosHeader = base.readU16();
             if (dosHeader !== 0x5A_4D) {
                 return indicators;
@@ -2036,7 +2057,7 @@ const ObfuscationDetector = {
                             target: 'obfuscation_detector',
                             action: 'tls_callbacks_detected',
                             count: callbacks.length,
-                            module: module.name,
+                            module: moduleName,
                         });
                     }
                 }
@@ -2281,7 +2302,7 @@ const ObfuscationDetector = {
         });
 
         try {
-            const { base } = module;
+            const { base, name: moduleName } = module;
             const fileSize = this.getFileSize(module);
             const peSize = this.calculatePESize(base);
 
@@ -2306,7 +2327,7 @@ const ObfuscationDetector = {
                         type: 'warning',
                         target: 'obfuscation_detector',
                         action: 'hidden_executable_in_overlay',
-                        module: module.name,
+                        module: moduleName,
                         size: overlay.size,
                     });
                 }
@@ -2317,7 +2338,7 @@ const ObfuscationDetector = {
                         type: 'warning',
                         target: 'obfuscation_detector',
                         action: 'encrypted_overlay_detected',
-                        module: module.name,
+                        module: moduleName,
                         entropy: overlay.entropy,
                     });
                 }
@@ -2450,7 +2471,6 @@ const ObfuscationDetector = {
             if (apiAddr) {
                 Interceptor.attach(apiAddr, {
                     onEnter(args) {
-                        // Use args for comprehensive time API call analysis
                         const timeAPIAnalysis = {
                             api_name: api.name,
                             api_module: api.module,
@@ -2460,29 +2480,34 @@ const ObfuscationDetector = {
                             sandbox_evasion_attempt: false,
                         };
 
-                        // Analyze each argument for timing manipulation patterns
                         for (const [i, arg] of args.entries()) {
+                            const argValue = arg.toInt32();
+                            const isSuspicious = argValue > 0xFF_FF_00_00;
                             timeAPIAnalysis.arguments_analysis.push({
                                 index: i,
-                                value: arg.toInt32(),
+                                value: argValue,
                                 pointer_valid: !arg.isNull(),
-                                manipulation_indicator:
-                                    arg.toInt32() > 0xFF_FF_00_00
-                                        ? 'suspicious_high_value'
-                                        : 'normal',
+                                manipulation_indicator: isSuspicious ? 'suspicious_high_value' : 'normal',
                             });
+                            if (isSuspicious) {
+                                timeAPIAnalysis.timing_manipulation_indicators[`arg${i}`] = argValue;
+                            }
                         }
 
                         const caller = this.returnAddress;
-                        if (
-                            caller.compare(address) >= 0
-                            && caller.compare(address.add(0x1_00_00)) < 0
-                        ) {
+                        const inTargetRange = caller.compare(address) >= 0
+                            && caller.compare(address.add(0x1_00_00)) < 0;
+                        if (inTargetRange) {
                             timeBased.detected = true;
+                            timeAPIAnalysis.sandbox_evasion_attempt = true;
                             timeBased.timestamps.push({
-                                api: api.name,
+                                api: timeAPIAnalysis.api_name,
+                                module: timeAPIAnalysis.api_module,
+                                argCount: timeAPIAnalysis.argument_count,
                                 caller,
                                 time: Date.now(),
+                                evasion: timeAPIAnalysis.sandbox_evasion_attempt,
+                                indicators: timeAPIAnalysis.timing_manipulation_indicators,
                             });
                         }
                     },
@@ -2855,13 +2880,14 @@ const ObfuscationDetector = {
             'ContinueDebugEvent',
         ];
 
+        const createProcessAPI = { CreateProcessW: true };
         debugAPIs.forEach(api => {
             const addr = Module.findExportByName('kernel32.dll', api);
             if (addr) {
                 Interceptor.attach(addr, {
                     onEnter(args) {
                         nanomite.debuggerPresent = true;
-                        if (api === 'CreateProcessW') {
+                        if (createProcessAPI[api]) {
                             this.processName = args[1].readUtf16String();
                         }
                     },
@@ -2877,12 +2903,13 @@ const ObfuscationDetector = {
 
         // Monitor for runtime patching
         const writeAPIs = ['WriteProcessMemory', 'VirtualProtect'];
+        const writeMemoryAPI = { WriteProcessMemory: true };
         writeAPIs.forEach(api => {
             const addr = Module.findExportByName('kernel32.dll', api);
             if (addr) {
                 Interceptor.attach(addr, {
                     onEnter(args) {
-                        if (api === 'WriteProcessMemory') {
+                        if (writeMemoryAPI[api]) {
                             this.targetAddr = args[1];
                             this.size = args[3].toInt32();
                         } else {
@@ -3085,6 +3112,9 @@ const ObfuscationDetector = {
 
         let entropy = 0;
         for (const byte in freq) {
+            if (!Object.hasOwn(freq, byte)) {
+                continue;
+            }
             const p = freq[byte] / data.length;
             entropy -= p * Math.log2(p);
         }
@@ -3136,7 +3166,9 @@ const ObfuscationDetector = {
                     return ptr(operand.value);
                 }
             }
-        } catch {}
+        } catch {
+            return null;
+        }
         return null;
     },
 
@@ -3182,7 +3214,9 @@ const ObfuscationDetector = {
                     characteristics: base.add(sectionHeader + 36).readU32(),
                 });
             }
-        } catch {}
+        } catch {
+            return sections;
+        }
 
         return sections;
     },

@@ -1,6 +1,23 @@
 """Model Sharding and Distribution Manager.
 
-This module provides functionality for distributing large models across multiple GPUs.
+This module provides functionality for distributing large models across multiple GPUs
+(NVIDIA CUDA and Intel XPU) using the Accelerate library and PyTorch. Supports advanced
+distribution strategies including memory-aware device mapping, checkpoint loading with
+distribution, and performance profiling of sharded models.
+
+Key features:
+- Automatic GPU device detection and capacity assessment
+- Memory-aware device mapping using Accelerate's infer_auto_device_map
+- Distributed checkpoint loading with streaming support
+- Model profiling with per-iteration memory and timing metrics
+- Pipeline parallelism stage grouping
+- Device balance scoring for distribution quality evaluation
+
+Classes:
+    ModelShardingManager: Main class for managing model sharding operations
+
+Functions:
+    get_sharding_manager: Get or create global manager singleton instance
 
 Copyright (C) 2025 Zachary Flint
 
@@ -94,10 +111,34 @@ except ImportError as e:
 
 
 class ModelShardingManager:
-    """Manages model sharding across multiple GPUs."""
+    """Manages model sharding across multiple GPUs.
+
+    Main class for distributing large PyTorch models across multiple GPU devices
+    (NVIDIA CUDA, Intel XPU) to overcome memory limitations and improve inference/training
+    performance. Provides comprehensive GPU detection, memory management, device mapping,
+    checkpoint loading, and performance profiling capabilities.
+
+    Attributes:
+        device_count: Number of available GPU devices detected.
+        gpu_type: Type of GPU detected ('nvidia_cuda', 'intel_xpu', or 'cpu').
+        unified_device: Device object from gpu_autoloader if available.
+        device_properties: Dictionary mapping device IDs to hardware property dictionaries.
+        shard_configs: Configuration dictionary for sharding parameters.
+
+    Usage:
+        manager = ModelShardingManager()
+        device_map = manager.create_device_map(model_config)
+        sharded_model = manager.shard_model(model, device_map=device_map)
+        memory_info = manager.monitor_memory_usage()
+    """
 
     def __init__(self) -> None:
-        """Initialize the model sharding manager."""
+        """Initialize the model sharding manager.
+
+        Sets up GPU device tracking, memory properties, and sharding configuration.
+        Automatically detects available GPU devices (NVIDIA CUDA or Intel XPU) and
+        initializes their properties for use in model distribution operations.
+        """
         self._initialize_gpu_info()
         self.device_properties: dict[int, dict[str, Any]] = {}
         self.shard_configs: dict[str, Any] = {}
@@ -109,7 +150,12 @@ class ModelShardingManager:
             logger.info("No GPUs detected, sharding disabled")
 
     def _initialize_gpu_info(self) -> None:
-        """Initialize GPU device information."""
+        """Initialize GPU device information.
+
+        Queries available GPU devices and their types using either the gpu_autoloader
+        utility or direct PyTorch CUDA interfaces. Sets device_count and gpu_type
+        attributes based on detected hardware capabilities.
+        """
         if GPU_AUTOLOADER_AVAILABLE:
             gpu_info = get_gpu_info()
             info_dict = gpu_info.get("info")
@@ -130,7 +176,12 @@ class ModelShardingManager:
             self.unified_device = None
 
     def _initialize_device_properties(self) -> None:
-        """Initialize properties for all available devices."""
+        """Initialize properties for all available devices.
+
+        Iterates through all detected GPU devices and populates device_properties
+        dictionary with hardware-specific information (memory, processor count, etc.)
+        based on device type (NVIDIA CUDA or Intel XPU).
+        """
         for i in range(self.device_count):
             if self.gpu_type == "nvidia_cuda":
                 self._initialize_nvidia_device_properties(i)
@@ -138,7 +189,14 @@ class ModelShardingManager:
                 self._initialize_intel_xpu_device_properties(i)
 
     def _initialize_nvidia_device_properties(self, device_id: int) -> None:
-        """Initialize NVIDIA CUDA device properties."""
+        """Initialize NVIDIA CUDA device properties.
+
+        Queries NVIDIA CUDA device properties and stores device name, total memory,
+        compute capability (major/minor versions), and multiprocessor count.
+
+        Args:
+            device_id: Index of the CUDA device to initialize properties for.
+        """
         if torch is not None and hasattr(torch, "cuda"):
             props = torch.cuda.get_device_properties(device_id)
             self.device_properties[device_id] = {
@@ -150,7 +208,14 @@ class ModelShardingManager:
             }
 
     def _initialize_intel_xpu_device_properties(self, device_id: int) -> None:
-        """Initialize Intel XPU device properties."""
+        """Initialize Intel XPU device properties.
+
+        Queries Intel XPU device properties and stores device name, total memory,
+        and device type. Gracefully handles missing XPU API functions.
+
+        Args:
+            device_id: Index of the XPU device to initialize properties for.
+        """
         self.device_properties[device_id] = {
             "name": torch.xpu.get_device_name(device_id) if hasattr(torch.xpu, "get_device_name") else f"Intel XPU {device_id}",
             "total_memory": 0,
@@ -165,7 +230,15 @@ class ModelShardingManager:
                 pass
 
     def get_sharding_info(self) -> dict[str, object]:
-        """Get information about current sharding configuration."""
+        """Get information about current sharding configuration.
+
+        Returns a comprehensive dictionary containing device count, available devices,
+        memory information, and current device state.
+
+        Returns:
+            Dictionary with keys 'available', 'device_count', 'devices', 'current_device',
+            and 'accelerate_available' describing the current sharding configuration.
+        """
         info = {
             "available": self.device_count > 1,
             "device_count": self.device_count,
@@ -180,7 +253,14 @@ class ModelShardingManager:
         return info
 
     def _add_memory_info_to_devices(self, info: dict[str, object]) -> None:
-        """Add memory information to device info."""
+        """Add memory information to device info.
+
+        Updates the info dictionary with current memory usage for each device,
+        including allocated, reserved, and free memory.
+
+        Args:
+            info: Dictionary to update with memory information for each device.
+        """
         for i in range(self.device_count):
             if self.gpu_type == "nvidia_cuda":
                 self._add_nvidia_memory_info(info, i)
@@ -188,7 +268,15 @@ class ModelShardingManager:
                 self._add_intel_xpu_memory_info(info, i)
 
     def _add_nvidia_memory_info(self, info: dict[str, object], device_id: int) -> None:
-        """Add NVIDIA CUDA memory information to device info."""
+        """Add NVIDIA CUDA memory information to device info.
+
+        Updates device info dictionary with allocated, reserved, and free memory
+        measurements from CUDA device.
+
+        Args:
+            info: Dictionary containing device information to update.
+            device_id: Index of the CUDA device to query memory for.
+        """
         if torch is not None and hasattr(torch, "cuda"):
             torch.cuda.set_device(device_id)
             devices = info["devices"]
@@ -202,7 +290,14 @@ class ModelShardingManager:
                         device_info["free_memory"] = total_mem - torch.cuda.memory_allocated(device_id)
 
     def _add_intel_xpu_memory_info(self, info: dict[str, object], device_id: int) -> None:
-        """Add Intel XPU memory information to device info."""
+        """Add Intel XPU memory information to device info.
+
+        Updates device info dictionary with allocated and reserved memory for Intel XPU.
+
+        Args:
+            info: Dictionary containing device information to update.
+            device_id: Index of the XPU device to query memory for.
+        """
         if torch is None or not hasattr(torch, "xpu"):
             return
         if hasattr(torch.xpu, "set_device"):
@@ -217,7 +312,14 @@ class ModelShardingManager:
                     device_info["reserved_memory"] = torch.xpu.memory_reserved(device_id)
 
     def _get_current_device(self) -> int:
-        """Get current device index."""
+        """Get current device index.
+
+        Queries the currently active GPU device, supporting both NVIDIA CUDA,
+        Intel XPU, and unified GPU autoloader configurations.
+
+        Returns:
+            Integer index of the current device (defaults to 0 for CPU or single device).
+        """
         if GPU_AUTOLOADER_AVAILABLE and self.unified_device:
             device_str = str(self.unified_device)
             return int(device_str.split(":")[1]) if ":" in device_str else 0
@@ -236,15 +338,23 @@ class ModelShardingManager:
     ) -> dict[str, object]:
         """Create a device map for model sharding.
 
+        Generates an optimal device allocation map using the Accelerate library's
+        infer_auto_device_map functionality, considering memory constraints and
+        module properties. Falls back to simple device mapping if Accelerate is
+        unavailable or single device is detected.
+
         Args:
-            model_config_or_path: Model configuration or path
-            max_memory: Maximum memory per device
-            no_split_module_classes: Module classes that shouldn't be split
-            dtype: Model dtype
+            model_config_or_path: Model configuration dictionary or path to pretrained model.
+            max_memory: Dictionary mapping device IDs to maximum memory strings (e.g., "10GB").
+                If None, uses balanced allocation based on device properties.
+            no_split_module_classes: List of module class names that should not be split
+                across devices. Important for layers with specific locality requirements.
+            dtype: PyTorch data type for model parameters (e.g., torch.float16, torch.float32).
+                Affects memory calculations for device mapping.
 
         Returns:
-            Device map for model distribution
-
+            Dictionary mapping module names or prefixes to device indices, representing
+            optimal distribution of model layers across available devices.
         """
         if not HAS_ACCELERATE:
             logger.warning("Accelerate not available, using simple device map")
@@ -289,7 +399,15 @@ class ModelShardingManager:
             return self._create_simple_device_map()
 
     def _create_simple_device_map(self) -> dict[str, object]:
-        """Create a simple device map for basic sharding."""
+        """Create a simple device map for basic sharding.
+
+        Generates a fallback device map when advanced sharding capabilities are
+        unavailable. Distributes embedding and layer components across devices,
+        placing final layers on the last device.
+
+        Returns:
+            Dictionary mapping component names to device indices for basic distribution.
+        """
         if self.device_count == 0:
             return {"": "cpu"}
         if self.device_count == 1:
@@ -303,7 +421,15 @@ class ModelShardingManager:
         }
 
     def _get_balanced_memory(self) -> dict[int, str]:
-        """Get balanced memory allocation across devices."""
+        """Get balanced memory allocation across devices.
+
+        Calculates balanced memory budgets for each device based on available total
+        memory, allocating 90% of total capacity for model layers with 10% reserved
+        for overhead.
+
+        Returns:
+            Dictionary mapping device IDs to memory allocation strings (e.g., {"0": "20GB"}).
+        """
         if self.device_count == 0:
             return {}
 
@@ -332,16 +458,21 @@ class ModelShardingManager:
     ) -> TorchModel:
         """Shard a model across multiple devices.
 
+        Distributes model layers across available GPU devices for efficient memory usage
+        and parallel computation. Applies GPU optimizations before and after sharding,
+        with fallback to single-device or CPU modes for limited hardware.
+
         Args:
-            model: Model to shard
-            device_map: Custom device map
-            max_memory: Maximum memory per device
-            offload_folder: Folder for offloading
-            offload_state_dict: Whether to offload state dict
+            model: PyTorch model to distribute across devices.
+            device_map: Dictionary mapping module names to device indices. If None,
+                creates a simple device map automatically.
+            max_memory: Maximum memory per device in string format (e.g., "10GB").
+                If None, uses balanced allocation based on device properties.
+            offload_folder: Path to folder for CPU offloading when device memory is exceeded.
+            offload_state_dict: Whether to offload model state dict to disk during loading.
 
         Returns:
-            Sharded model
-
+            Model with layers distributed according to device_map, with GPU optimizations applied.
         """
         if not HAS_ACCELERATE:
             return self._shard_model_without_accelerate(model)
@@ -357,7 +488,17 @@ class ModelShardingManager:
         return self._dispatch_model_across_devices(model, device_map, max_memory, offload_folder, offload_state_dict)
 
     def _shard_model_without_accelerate(self, model: TorchModel) -> TorchModel:
-        """Shard model without accelerate library."""
+        """Shard model without accelerate library.
+
+        Applies GPU optimizations to model when Accelerate is unavailable,
+        using gpu_autoloader utilities for device placement.
+
+        Args:
+            model: Model to optimize and place on device.
+
+        Returns:
+            Optimized model with GPU acceleration applied.
+        """
         logger.warning("Accelerate not available, model not sharded")
         if GPU_AUTOLOADER_AVAILABLE:
             if optimize_for_gpu is not None:
@@ -370,7 +511,17 @@ class ModelShardingManager:
         return model
 
     def _shard_model_single_device(self, model: TorchModel) -> TorchModel:
-        """Shard model for single device."""
+        """Shard model for single device.
+
+        Optimizes model placement on a single GPU device without sharding.
+        Applies GPU-specific optimizations for maximum performance on one device.
+
+        Args:
+            model: Model to place on single device.
+
+        Returns:
+            Model optimized and placed on the single available device.
+        """
         logger.info("Single GPU - no sharding needed")
         if GPU_AUTOLOADER_AVAILABLE:
             if optimize_for_gpu is not None:
@@ -385,7 +536,17 @@ class ModelShardingManager:
         return model
 
     def _apply_pre_sharding_optimizations(self, model: TorchModel) -> TorchModel:
-        """Apply optimizations before sharding."""
+        """Apply optimizations before sharding.
+
+        Applies GPU-specific optimizations to model structure and parameters
+        prior to distribution across devices.
+
+        Args:
+            model: Model to optimize.
+
+        Returns:
+            Optimized model ready for sharding.
+        """
         if GPU_AUTOLOADER_AVAILABLE and optimize_for_gpu is not None:
             try:
                 optimized = optimize_for_gpu(model)
@@ -404,7 +565,24 @@ class ModelShardingManager:
         offload_folder: str | None,
         offload_state_dict: bool,
     ) -> TorchModel:
-        """Dispatch model across multiple devices."""
+        """Dispatch model across multiple devices.
+
+        Distributes model layers to devices using the Accelerate library's dispatch_model
+        function. Applies post-sharding optimizations and handles failures with fallback.
+
+        Args:
+            model: Model to distribute across devices.
+            device_map: Device mapping for layer distribution.
+            max_memory: Memory constraints per device.
+            offload_folder: CPU offloading folder path.
+            offload_state_dict: Whether to offload state dict.
+
+        Returns:
+            Model distributed across devices with optimizations applied.
+
+        Raises:
+            Logs exceptions and returns fallback result instead of raising.
+        """
         try:
             if dispatch_model is None:
                 logger.exception("dispatch_model not available")
@@ -424,7 +602,17 @@ class ModelShardingManager:
             return to_device(model) if GPU_AUTOLOADER_AVAILABLE else model
 
     def _apply_post_sharding_optimizations(self, model: TorchModel) -> TorchModel:
-        """Apply optimizations after sharding."""
+        """Apply optimizations after sharding.
+
+        Applies GPU autoloader optimizations to sharded model for improved performance
+        across distributed devices.
+
+        Args:
+            model: Sharded model to optimize.
+
+        Returns:
+            Sharded model with post-distribution optimizations applied.
+        """
         if GPU_AUTOLOADER_AVAILABLE and gpu_autoloader is not None:
             try:
                 optimized = gpu_autoloader(model)  # type: ignore[operator]
@@ -444,7 +632,23 @@ class ModelShardingManager:
         no_split_module_classes: list[str] | None = None,
         dtype: TorchDtype | None = None,
     ) -> TorchModel:
-        """Load a checkpoint and shard it across devices."""
+        """Load a checkpoint and shard it across devices.
+
+        Loads model weights from checkpoint file and distributes them across available
+        devices according to device_map. Handles single-device and multi-device scenarios
+        with appropriate fallbacks.
+
+        Args:
+            model: Model architecture to load checkpoint into.
+            checkpoint: Path to checkpoint file containing model weights.
+            device_map: Device mapping for layer distribution. If None, creates simple map.
+            max_memory: Memory constraints per device in string format.
+            no_split_module_classes: Module classes to keep on single device.
+            dtype: Data type for model parameters during loading.
+
+        Returns:
+            Model with checkpoint weights loaded and distributed across devices.
+        """
         if not HAS_ACCELERATE:
             return self._load_checkpoint_without_accelerate(model, checkpoint)
 
@@ -464,7 +668,18 @@ class ModelShardingManager:
         )
 
     def _load_checkpoint_without_accelerate(self, model: TorchModel, checkpoint: str | Path) -> TorchModel:
-        """Load checkpoint without accelerate."""
+        """Load checkpoint without accelerate.
+
+        Loads checkpoint weights into model using standard PyTorch methods and applies
+        GPU optimizations when available.
+
+        Args:
+            model: Model architecture to load weights into.
+            checkpoint: Path to checkpoint file.
+
+        Returns:
+            Model with checkpoint weights loaded and GPU optimizations applied.
+        """
         logger.warning("Accelerate not available, loading normally")
         if HAS_TORCH and torch is not None:
             model.load_state_dict(torch.load(str(checkpoint)))
@@ -472,7 +687,17 @@ class ModelShardingManager:
         return model
 
     def _load_checkpoint_single_device(self, model: TorchModel, checkpoint: str | Path) -> TorchModel:
-        """Load checkpoint for a single device."""
+        """Load checkpoint for a single device.
+
+        Loads checkpoint into model on single GPU device with GPU optimizations.
+
+        Args:
+            model: Model to load checkpoint into.
+            checkpoint: Path to checkpoint file.
+
+        Returns:
+            Model with checkpoint loaded on single GPU device.
+        """
         logger.info("Single GPU - loading normally")
         if HAS_TORCH and torch is not None:
             model.load_state_dict(torch.load(str(checkpoint)))
@@ -488,7 +713,25 @@ class ModelShardingManager:
         no_split_module_classes: list[str] | None,
         dtype: TorchDtype | None,
     ) -> TorchModel:
-        """Load and dispatch checkpoint across devices."""
+        """Load and dispatch checkpoint across devices.
+
+        Uses Accelerate's load_checkpoint_and_dispatch to efficiently load model weights
+        and distribute them across multiple devices in a streaming fashion.
+
+        Args:
+            model: Model architecture to load checkpoint into.
+            checkpoint: Path to checkpoint file.
+            device_map: Device mapping for layer distribution.
+            max_memory: Memory constraints per device.
+            no_split_module_classes: Module classes to keep on single device.
+            dtype: Data type for model parameters.
+
+        Returns:
+            Model with checkpoint loaded and distributed across devices.
+
+        Raises:
+            Logs exceptions and returns fallback result instead of raising.
+        """
         try:
             if load_checkpoint_and_dispatch is None:
                 logger.exception("load_checkpoint_and_dispatch not available")
@@ -509,7 +752,17 @@ class ModelShardingManager:
             return self._fallback_checkpoint_load(model, checkpoint)
 
     def _apply_gpu_optimizations(self, model: TorchModel) -> TorchModel:
-        """Apply GPU optimizations to the model."""
+        """Apply GPU optimizations to the model.
+
+        Applies GPU-specific optimizations and device placement using available
+        optimization utilities.
+
+        Args:
+            model: Model to optimize.
+
+        Returns:
+            Model with GPU optimizations applied.
+        """
         if GPU_AUTOLOADER_AVAILABLE and optimize_for_gpu is not None:
             try:
                 optimized = optimize_for_gpu(model)
@@ -524,7 +777,16 @@ class ModelShardingManager:
         return model
 
     def _apply_autoloader_optimizations(self, model: TorchModel) -> TorchModel:
-        """Apply autoloader optimizations after sharding."""
+        """Apply autoloader optimizations after sharding.
+
+        Applies autoloader-specific optimizations to distributed model.
+
+        Args:
+            model: Distributed model to optimize.
+
+        Returns:
+            Model with autoloader optimizations applied.
+        """
         if GPU_AUTOLOADER_AVAILABLE and gpu_autoloader is not None:
             try:
                 optimized = gpu_autoloader(model)  # type: ignore[operator]
@@ -536,7 +798,18 @@ class ModelShardingManager:
         return model
 
     def _fallback_checkpoint_load(self, model: TorchModel, checkpoint: str | Path) -> TorchModel:
-        """Fallback checkpoint loading in case of failure."""
+        """Fallback checkpoint loading in case of failure.
+
+        Simple checkpoint loading fallback when distributed loading fails.
+        Uses standard PyTorch loading and applies GPU optimizations.
+
+        Args:
+            model: Model to load checkpoint into.
+            checkpoint: Path to checkpoint file.
+
+        Returns:
+            Model with checkpoint loaded.
+        """
         if HAS_TORCH and torch is not None:
             model.load_state_dict(torch.load(str(checkpoint)))
             return self._apply_gpu_optimizations(model)
@@ -549,13 +822,18 @@ class ModelShardingManager:
     ) -> dict[str, object]:
         """Estimate memory requirements for a model.
 
+        Calculates total model memory footprint based on parameter count and data type.
+        Estimates per-device memory allocation and whether model fits in available memory.
+        Uses provided num_parameters or derives from hidden_size and num_hidden_layers.
+
         Args:
-            model_config: Model configuration
-            dtype: Model dtype
+            model_config: Dictionary with model configuration. Expected keys are
+                'num_parameters', 'hidden_size', 'num_hidden_layers', 'vocab_size'.
+            dtype: PyTorch data type for parameters. Defaults to float16 if available.
 
         Returns:
-            Memory estimation details
-
+            Dictionary containing 'param_count', 'model_memory_bytes', 'total_memory_bytes',
+            'memory_per_device', 'device_distribution', and 'fits_in_memory' flag.
         """
         if dtype is None and HAS_TORCH and torch is not None:
             dtype = torch.float16
@@ -627,14 +905,17 @@ class ModelShardingManager:
     ) -> dict[str, object]:
         """Optimize a device map for better performance.
 
+        Redistributes model layers across devices with balanced load distribution.
+        Splits layers evenly among devices and places final layers on last device.
+        Returns original map if single device or layer_wise optimization disabled.
+
         Args:
-            device_map: Initial device map
-            model_config: Model configuration
-            layer_wise: Whether to optimize layer-wise
+            device_map: Initial device map to optimize (may be returned unchanged).
+            model_config: Model configuration containing 'num_hidden_layers' parameter.
+            layer_wise: If True, redistribute layers for balanced load. If False, returns original map.
 
         Returns:
-            Optimized device map
-
+            Optimized device map with balanced layer distribution or original map if unchanged.
         """
         if not layer_wise or self.device_count <= 1:
             return device_map
@@ -678,7 +959,15 @@ class ModelShardingManager:
         return optimized_map
 
     def monitor_memory_usage(self) -> dict[int, dict[str, object]]:
-        """Monitor memory usage across all devices."""
+        """Monitor memory usage across all devices.
+
+        Queries current memory utilization for all available GPU devices,
+        returning allocated, reserved, and free memory per device.
+
+        Returns:
+            Dictionary mapping device IDs to memory information dictionaries with keys
+            like 'allocated_gb', 'reserved_gb', 'free_gb', 'total_gb', 'usage_percent'.
+        """
         memory_info: dict[int, dict[str, object]] = {}
 
         if not HAS_TORCH or self.device_count == 0:
@@ -693,7 +982,18 @@ class ModelShardingManager:
         return memory_info
 
     def _get_nvidia_memory_usage(self, device_id: int) -> dict[str, object]:
-        """Get NVIDIA CUDA memory usage for a device."""
+        """Get NVIDIA CUDA memory usage for a device.
+
+        Queries current memory statistics from NVIDIA CUDA device including allocated,
+        reserved, free, and total memory. Computes usage percentage.
+
+        Args:
+            device_id: Index of the CUDA device to query.
+
+        Returns:
+            Dictionary with 'allocated_gb', 'reserved_gb', 'free_gb', 'total_gb',
+            and 'usage_percent' keys. Empty dict if CUDA unavailable.
+        """
         if torch is None or not hasattr(torch, "cuda"):
             return {}
 
@@ -712,7 +1012,18 @@ class ModelShardingManager:
         }
 
     def _get_intel_xpu_memory_usage(self, device_id: int) -> dict[str, object]:
-        """Get Intel XPU memory usage for a device."""
+        """Get Intel XPU memory usage for a device.
+
+        Queries Intel XPU device memory statistics including allocated, reserved,
+        free, and total memory. Gracefully handles missing XPU API functions.
+
+        Args:
+            device_id: Index of the XPU device to query.
+
+        Returns:
+            Dictionary with device memory information. Includes available metrics
+            from XPU API with 'device_type' and 'device_id' always present.
+        """
         memory_info: dict[str, object] = {"device_type": "xpu", "device_id": device_id}
 
         if torch is not None and hasattr(torch, "xpu"):
@@ -737,7 +1048,11 @@ class ModelShardingManager:
         return memory_info
 
     def cleanup_memory(self) -> None:
-        """Clean up GPU memory across all devices."""
+        """Clean up GPU memory across all devices.
+
+        Clears GPU cache and runs garbage collection to free unused memory
+        on all available CUDA or XPU devices.
+        """
         if not HAS_TORCH or self.device_count == 0 or torch is None:
             return
 
@@ -757,12 +1072,15 @@ class ModelShardingManager:
     def get_device_balance_score(self, device_map: dict[str, Any]) -> float:
         """Calculate balance score for a device map.
 
+        Evaluates distribution uniformity across devices using standard deviation.
+        Returns 1.0 for perfectly balanced maps and lower scores for imbalanced ones.
+
         Args:
-            device_map: Device mapping
+            device_map: Dictionary mapping module names to integer device indices.
 
         Returns:
-            Balance score (0-1, higher is better)
-
+            Float score between 0 and 1, where 1.0 is perfectly balanced (all devices
+            have equal module count) and 0.0 means all modules on one device.
         """
         if self.device_count <= 1:
             return 1.0
@@ -791,12 +1109,17 @@ class ModelShardingManager:
     ) -> list[list[int]]:
         """Create process groups for pipeline parallelism.
 
+        Groups consecutive devices into pipeline stages for pipeline parallelism training.
+        Each stage processes different model layers sequentially. Distributes devices
+        evenly across requested stages.
+
         Args:
-            num_stages: Number of pipeline stages
+            num_stages: Number of pipeline stages to create. If None, uses device_count.
+                Will be clamped to device_count if larger.
 
         Returns:
-            List of device groups
-
+            List of device groups where each inner list contains consecutive device IDs
+            forming a single pipeline stage.
         """
         if num_stages is None:
             num_stages = self.device_count
@@ -837,15 +1160,20 @@ class ModelShardingManager:
     ) -> dict[str, object]:
         """Profile model performance with given distribution.
 
+        Measures forward pass latency and memory consumption for distributed model.
+        Includes warmup iterations, per-iteration metrics, and overall statistics.
+        Computes device balance score for the given distribution.
+
         Args:
-            model: Distributed model
-            sample_input: Sample input for profiling
-            device_map: Device distribution map
-            num_iterations: Number of profiling iterations
+            model: Distributed model to profile.
+            sample_input: Representative input tensor for profiling iterations.
+            device_map: Device distribution map being profiled.
+            num_iterations: Number of forward passes to measure (default 10).
 
         Returns:
-            Profiling results
-
+            Dictionary containing 'forward_time_ms' (average/min/max/all), 'memory_usage_bytes'
+            (start/end/peak/increase), 'memory_profile' (per-iteration and averages),
+            'balance_score', 'num_devices', and 'device_map'.
         """
         if not HAS_TORCH:
             logger.exception("PyTorch required for profiling")
@@ -881,7 +1209,16 @@ class ModelShardingManager:
         )
 
     def _prepare_inputs_for_profiling(self, sample_input: Any) -> Any:
-        """Prepare inputs for profiling by moving to appropriate device."""
+        """Prepare inputs for profiling by moving to appropriate device.
+
+        Moves input tensor to GPU device using available autoloader or native PyTorch.
+
+        Args:
+            sample_input: Input data to move to GPU device.
+
+        Returns:
+            Input data on GPU device, or original if device movement unavailable.
+        """
         if GPU_AUTOLOADER_AVAILABLE:
             result = to_device(sample_input)
             return result if result is not None else sample_input
@@ -892,21 +1229,47 @@ class ModelShardingManager:
         return sample_input
 
     def _warmup_model(self, model: TorchModel, inputs: Any) -> None:
-        """Warmup model with a few iterations."""
+        """Warmup model with a few iterations.
+
+        Runs 3 forward passes without gradient tracking to stabilize timing measurements
+        before actual profiling. Helps JIT compilation and cache warm-up.
+
+        Args:
+            model: Model to warmup.
+            inputs: Input data for warmup iterations.
+        """
         if torch is not None:
             for _ in range(3):
                 with torch.no_grad():
                     _ = model(inputs)
 
     def _get_initial_memory(self) -> int:
-        """Get initial memory usage before profiling."""
+        """Get initial memory usage before profiling.
+
+        Synchronizes CUDA devices and measures total allocated memory across all GPUs.
+
+        Returns:
+            Total memory allocated across all CUDA devices in bytes, or 0 if not available.
+        """
         if torch is not None and hasattr(torch, "cuda") and self.gpu_type == "nvidia_cuda":
             torch.cuda.synchronize()
             return sum(torch.cuda.memory_allocated(i) for i in range(self.device_count))
         return 0
 
     def _profile_single_iteration(self, model: TorchModel, inputs: Any, iteration: int) -> dict[str, object]:
-        """Profile a single forward pass iteration."""
+        """Profile a single forward pass iteration.
+
+        Measures memory before/after forward pass and forward execution time.
+
+        Args:
+            model: Model to profile.
+            inputs: Input data for forward pass.
+            iteration: Current iteration number for reporting.
+
+        Returns:
+            Dictionary with 'forward_time' (milliseconds) and 'memory_info' containing
+            iteration metadata and memory deltas.
+        """
         iter_start_memory = self._measure_memory_before_forward()
         forward_time = self._measure_forward_pass(model, inputs)
         iter_end_memory, per_device_memory = self._measure_memory_after_forward()
@@ -923,13 +1286,29 @@ class ModelShardingManager:
         }
 
     def _measure_memory_before_forward(self) -> int:
-        """Measure memory usage before forward pass."""
+        """Measure memory usage before forward pass.
+
+        Sums allocated memory across all CUDA devices.
+
+        Returns:
+            Total allocated memory in bytes across all devices, or 0 if unavailable.
+        """
         if torch is not None and hasattr(torch, "cuda") and self.gpu_type == "nvidia_cuda":
             return sum(torch.cuda.memory_allocated(j) for j in range(self.device_count))
         return 0
 
     def _measure_forward_pass(self, model: TorchModel, inputs: Any) -> float:
-        """Measure forward pass execution time."""
+        """Measure forward pass execution time.
+
+        Synchronizes devices, runs forward pass without gradients, and returns elapsed time.
+
+        Args:
+            model: Model to run forward pass on.
+            inputs: Input data for forward pass.
+
+        Returns:
+            Forward pass execution time in milliseconds.
+        """
         if not HAS_TORCH or torch is None:
             return 0.0
 
@@ -943,7 +1322,11 @@ class ModelShardingManager:
         return (time.time() - start_time) * 1000
 
     def _synchronize_devices(self) -> None:
-        """Synchronize all devices before timing measurements."""
+        """Synchronize all devices before timing measurements.
+
+        Waits for all GPU operations to complete for accurate timing measurements.
+        Supports both NVIDIA CUDA and Intel XPU devices.
+        """
         if torch is not None:
             if self.gpu_type == "nvidia_cuda" and hasattr(torch, "cuda"):
                 torch.cuda.synchronize()
@@ -951,7 +1334,14 @@ class ModelShardingManager:
                 torch.xpu.synchronize()
 
     def _measure_memory_after_forward(self) -> tuple[int, list[int]]:
-        """Measure memory usage after forward pass."""
+        """Measure memory usage after forward pass.
+
+        Measures total and per-device memory allocation after forward pass.
+
+        Returns:
+            Tuple of (total_memory_bytes, per_device_memory_list) where per_device_memory_list
+            contains allocated memory for each CUDA device.
+        """
         if torch is not None and hasattr(torch, "cuda") and self.gpu_type == "nvidia_cuda":
             total_memory = sum(torch.cuda.memory_allocated(j) for j in range(self.device_count))
             per_device = [torch.cuda.memory_allocated(j) for j in range(self.device_count)]
@@ -959,7 +1349,16 @@ class ModelShardingManager:
         return 0, []
 
     def _get_final_memory(self, start_memory: int) -> tuple[int, int]:
-        """Get final and peak memory usage after profiling."""
+        """Get final and peak memory usage after profiling.
+
+        Measures final allocated and peak memory across all CUDA devices after profiling completes.
+
+        Args:
+            start_memory: Initial memory baseline for comparison (not used in calculation).
+
+        Returns:
+            Tuple of (end_memory_bytes, peak_memory_bytes) across all devices.
+        """
         if torch is not None and hasattr(torch, "cuda") and self.gpu_type == "nvidia_cuda":
             end_memory = sum(torch.cuda.memory_allocated(i) for i in range(self.device_count))
             peak_memory = sum(torch.cuda.max_memory_allocated(i) for i in range(self.device_count))
@@ -975,7 +1374,23 @@ class ModelShardingManager:
         end_memory: int,
         peak_memory: int,
     ) -> dict[str, object]:
-        """Compile all profiling results into a comprehensive report."""
+        """Compile all profiling results into a comprehensive report.
+
+        Aggregates forward timing statistics, memory measurements, and device balance
+        score into a single comprehensive profiling report dictionary.
+
+        Args:
+            device_map: Device mapping used in profiling.
+            forward_times: List of forward pass times in milliseconds.
+            memory_usage: List of per-iteration memory info dictionaries.
+            start_memory: Initial memory before profiling in bytes.
+            end_memory: Final memory after profiling in bytes.
+            peak_memory: Peak memory used during profiling in bytes.
+
+        Returns:
+            Dictionary containing 'device_map', 'num_devices', 'forward_time_ms',
+            'memory_usage_bytes', 'memory_profile', and 'balance_score'.
+        """
         avg_time = sum(forward_times) / len(forward_times)
         min_time = min(forward_times)
         max_time = max(forward_times)
@@ -1022,7 +1437,14 @@ _sharding_manager = None
 
 
 def get_sharding_manager() -> ModelShardingManager:
-    """Get or create the global sharding manager instance."""
+    """Get or create the global sharding manager instance.
+
+    Returns singleton instance of ModelShardingManager for managing model sharding
+    operations across the application. Creates instance on first call.
+
+    Returns:
+        Global ModelShardingManager singleton instance.
+    """
     global _sharding_manager
     if _sharding_manager is None:
         _sharding_manager = ModelShardingManager()

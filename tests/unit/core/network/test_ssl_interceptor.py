@@ -32,7 +32,7 @@ from intellicrack.core.network.ssl_interceptor import SSLTLSInterceptor
 class RealCryptographySimulator:
     """Real cryptography simulator for production testing without mocks."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize cryptography simulator with real capabilities."""
         self.available = True
         self.certificates = {}
@@ -128,7 +128,7 @@ class RealCryptographySimulator:
         except Exception:
             return False
 
-    def set_unavailable(self):
+    def set_unavailable(self) -> None:
         """Simulate cryptography library being unavailable."""
         self.available = False
 
@@ -140,7 +140,7 @@ class RealCryptographySimulator:
 class RealProcessSimulator:
     """Real process simulator for production testing without mocks."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize process simulator with real capabilities."""
         self.processes = {}
         self.process_counter = 10000
@@ -222,7 +222,7 @@ class RealProcessSimulator:
 class RealFileSystemSimulator:
     """Real file system simulator for production testing."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize file system simulator."""
         self.files = {}
         self.temp_files = {}
@@ -293,7 +293,7 @@ class RealFileSystemSimulator:
 class RealSSLInterceptorSimulator:
     """Real SSL interceptor simulator for production testing."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize SSL interceptor simulator."""
         self.crypto_sim = RealCryptographySimulator()
         self.process_sim = RealProcessSimulator()
@@ -408,15 +408,15 @@ class RealSSLInterceptorSimulator:
 
         return RealSSLInterceptorMock(config, self)
 
-    def simulate_executable_not_found(self):
+    def simulate_executable_not_found(self) -> None:
         """Simulate executable not being found."""
         self.process_sim.find_executable = lambda name: None
 
-    def simulate_cryptography_unavailable(self):
+    def simulate_cryptography_unavailable(self) -> None:
         """Simulate cryptography library being unavailable."""
         self.crypto_sim.set_unavailable()
 
-    def simulate_process_error(self):
+    def simulate_process_error(self) -> None:
         """Simulate process startup error."""
         original_simulate = self.process_sim.simulate_process
         def error_simulate(*args, **kwargs):
@@ -512,7 +512,7 @@ class TestSSLTLSInterceptor:
         """Create SSL interceptor simulator for testing."""
         return RealSSLInterceptorSimulator()
 
-    def test_ssl_interceptor_initialization(self, interceptor_config):
+    def test_ssl_interceptor_initialization(self, interceptor_config: Dict[str, Any]) -> None:
         """Test SSL interceptor initializes with correct configuration."""
         interceptor = SSLTLSInterceptor(interceptor_config)
 
@@ -524,7 +524,7 @@ class TestSSLTLSInterceptor:
         assert isinstance(interceptor.traffic_log, list)
         assert isinstance(interceptor.response_templates, dict)
 
-    def test_ca_certificate_generation_with_cryptography(self, ssl_interceptor):
+    def test_ca_certificate_generation_with_cryptography(self, ssl_interceptor: SSLTLSInterceptor) -> None:
         """Test CA certificate generation using real cryptography library."""
         # Generate CA certificate
         cert_pem, key_pem = ssl_interceptor.generate_ca_certificate()
@@ -564,7 +564,7 @@ class TestSSLTLSInterceptor:
         assert cert_pem is None
         assert key_pem is None
 
-    def test_certificate_file_persistence(self, ssl_interceptor, temp_cert_dir):
+    def test_certificate_file_persistence(self, ssl_interceptor: SSLTLSInterceptor, temp_cert_dir: str) -> None:
         """Test CA certificates are properly saved to filesystem."""
         # Generate and save certificates
         cert_pem, key_pem = ssl_interceptor.generate_ca_certificate()
@@ -647,7 +647,7 @@ class TestSSLTLSInterceptor:
         assert "'status': 'SUCCESS'" in script_content
         assert "'isValid': True" in script_content
 
-    def test_license_response_modification_json(self):
+    def test_license_response_modification_json(self) -> None:
         """Test JSON license response modification logic."""
         # Simulate the response modification logic from the generated script
         original_response = {
@@ -682,7 +682,7 @@ class TestSSLTLSInterceptor:
         assert modified_response["expired"] is False
         assert modified_response["expiry"] == "2099-12-31"
 
-    def test_license_response_modification_xml(self):
+    def test_license_response_modification_xml(self) -> None:
         """Test XML license response modification logic."""
         # Simulate XML response modification
         original_xml = """<?xml version="1.0"?>
@@ -815,7 +815,7 @@ class TestSSLTLSInterceptor:
         assert "traffic_captured" in config["status"]
         assert "response_templates_loaded" in config["status"]
 
-    def test_ssl_certificate_chain_validation(self, ssl_interceptor):
+    def test_ssl_certificate_chain_validation(self, ssl_interceptor: SSLTLSInterceptor) -> None:
         """Test SSL certificate chain creation for specific domains."""
         # Generate root CA
         root_cert, root_key = ssl_interceptor.generate_ca_certificate()
@@ -834,7 +834,7 @@ class TestSSLTLSInterceptor:
         assert key_usage.key_cert_sign is True
         assert key_usage.crl_sign is True
 
-    def test_real_ssl_connection_simulation(self, ssl_interceptor):
+    def test_real_ssl_connection_simulation(self, ssl_interceptor: SSLTLSInterceptor) -> None:
         """Test SSL connection handling with real socket operations."""
         # Create a simple SSL server for testing
         def create_test_ssl_server():
@@ -911,7 +911,7 @@ class TestSSLTLSInterceptor:
         assert result is True
         assert simulated_interceptor.proxy_process is not None
 
-    def test_response_template_integration(self, ssl_interceptor):
+    def test_response_template_integration(self, ssl_interceptor: SSLTLSInterceptor) -> None:
         """Test response template loading and usage."""
         # Validate response templates were loaded
         assert isinstance(ssl_interceptor.response_templates, dict)
@@ -948,7 +948,7 @@ class TestSSLTLSInterceptor:
         for request in concurrent_requests:
             assert request["host"] in target_hosts
 
-    def test_ssl_handshake_modification_capability(self, ssl_interceptor):
+    def test_ssl_handshake_modification_capability(self, ssl_interceptor: SSLTLSInterceptor) -> None:
         """Test SSL handshake modification for certificate pinning bypass."""
         # Generate CA certificate
         cert_pem, key_pem = ssl_interceptor.generate_ca_certificate()
@@ -1047,7 +1047,7 @@ class TestSSLTLSInterceptor:
 class TestSSLInterceptionScenarios:
     """Advanced SSL interception scenario testing."""
 
-    def test_certificate_pinning_bypass_scenario(self):
+    def test_certificate_pinning_bypass_scenario(self) -> None:
         """Test certificate pinning bypass through CA certificate spoofing."""
         interceptor = SSLTLSInterceptor()
 
@@ -1066,7 +1066,7 @@ class TestSSLInterceptionScenarios:
         basic_constraints = cert.extensions.get_extension_for_oid(x509.ExtensionOID.BASIC_CONSTRAINTS)
         assert basic_constraints.value.ca is True
 
-    def test_license_server_mitm_attack(self):
+    def test_license_server_mitm_attack(self) -> None:
         """Test complete MITM attack scenario against license servers."""
         config = {
             "listen_ip": "127.0.0.1",
@@ -1121,7 +1121,7 @@ class TestSSLInterceptionScenarios:
         assert modified["status"] == "SUCCESS"
         assert modified["license_type"] == "PERMANENT"
 
-    def test_multi_protocol_license_interception(self):
+    def test_multi_protocol_license_interception(self) -> None:
         """Test interception across multiple license verification protocols."""
         interceptor = SSLTLSInterceptor()
 

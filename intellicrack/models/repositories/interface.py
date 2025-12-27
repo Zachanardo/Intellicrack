@@ -150,12 +150,18 @@ class ModelRepositoryInterface(ABC):
         """
 
     @abstractmethod
-    def download_model(self, model_id: str, destination_path: str) -> tuple[bool, str]:
+    def download_model(
+        self,
+        model_id: str,
+        destination_path: str,
+        progress_callback: "DownloadProgressCallback | None" = None,
+    ) -> tuple[bool, str]:
         """Download a model from the repository to the specified path.
 
         Args:
             model_id: The ID of the model to download
             destination_path: The path where the model should be saved
+            progress_callback: Optional callback for download progress updates
 
         Returns:
             A tuple of (success, message) where success is a boolean indicating if the

@@ -759,7 +759,7 @@ class MachineLearningCorrelator:
 
     def predict(self, item1: CorrelationItem, item2: CorrelationItem) -> tuple[bool, float]:
         """Predict if items are correlated."""
-        if not self.classifier:
+        if not self.classifier or not hasattr(self.classifier, "estimators_"):
             logger.warning("Model not trained")
             return False, 0.0
 
@@ -948,7 +948,12 @@ class IntelligentCorrelator:
 
         # Apply all methods
         fuzzy_results = self._correlate_fuzzy(items)
-        ml_results = self._correlate_ml(items) if self.ml_correlator.classifier else []
+        ml_results = (
+            self._correlate_ml(items)
+            if self.ml_correlator.classifier is not None
+            and hasattr(self.ml_correlator.classifier, "estimators_")
+            else []
+        )
         pattern_results = self._correlate_pattern(items)
 
         # Merge results

@@ -1,251 +1,99 @@
 # Testing Coverage: Group 3
 
-## Scope
-
-Core infrastructure, processing, networking, orchestration, logging, resources, plugins, models, scripts, remaining utilities
-
-## Summary Statistics (Updated 2025-12-26)
-
-- Total source files analyzed: 342
-- Files with tests: 320 (93.6%)
-- Files without tests: 22 (6.4%)
-
-### Coverage by Category
-
-- core/execution: 100.0% (1/1)
-- core/license: 100.0% (1/1)
-- core/logging: 100.0% (1/1)
-- core/network: 100.0% (14/14)
-- core/orchestration: 100.0% (3/3)
-- core/resources: 100.0% (1/1)
-- root: 100.0% (2/2)
-- utils/core: 100.0% (13/13)
-- utils/exploitation: 100.0% (4/4)
-- utils/patching: 100.0% (3/3)
-- utils/protection: 100.0% (3/3)
-- utils/system: 100.0% (14/14)
-- utils/tools: 100.0% (5/5)
-- core_root: 95.2% (218/229)
-- core/processing: 90.9% (10/11)
-- models: 90.9% (10/11)
-- plugins: 81.2% (13/16)
-- scripts: 50.0% (2/4)
-- utils/runtime: 50.0% (2/4)
-- core/integration: 0.0% (0/2)
-
----
-
 ## Missing Tests
 
-### core/integration/\* (0% coverage - CRITICAL)
-
-- [ ] `intellicrack/core/integration/intelligent_correlation.py` - No test coverage exists - Complex ML-based result correlation with sklearn clustering, Levenshtein matching, anomaly detection, fuzzy function matching, confidence scoring
-- [ ] `intellicrack/core/integration/real_tool_communication.py` - No test coverage exists - Tool integration wrapper for cross-platform communication
-
-### core/processing/\*
-
-- [ ] `intellicrack/core/processing/distributed_manager.py` - No test coverage exists - Distributed task scheduling, cluster management, fault tolerance, result aggregation, worker health checks
-
-### core/\* (root-level analysis subdirectory)
-
-- [ ] `intellicrack/core/analysis/frida_script_manager.py` - No test coverage exists - Frida script compilation, execution, lifecycle management
-- [ ] `intellicrack/core/analysis/radare2_esil_emulator.py` - No test coverage exists - ESIL emulation engine for binary simulation
-- [ ] `intellicrack/core/analysis/radare2_performance_metrics.py` - No test coverage exists - Performance profiling and metrics collection
-- [ ] `intellicrack/core/protection_detection/asprotect_detector.py` - No test coverage exists - ASProtect software protection detection
-- [ ] `intellicrack/core/shared/bypass_config.py` - No test coverage exists - Bypass configuration management
-- [ ] `intellicrack/core/shared/result_types.py` - No test coverage exists - Result type definitions and schemas
-- [ ] `intellicrack/core/shared/result_utils.py` - No test coverage exists - Result processing utilities
-- [ ] `intellicrack/core/vulnerability_research/common_enums.py` - No test coverage exists - Common enumeration types
-
-### models/\*
-
-- [ ] `intellicrack/models/repositories/interface.py` - No test coverage exists - Abstract interface for model repositories
-- [ ] `intellicrack/models/model_manager.py` - No test coverage - Model loading, inference, caching
-- [ ] `intellicrack/models/protection_knowledge_base.py` - No test coverage
-
-### plugins/\*
-
-- [ ] `intellicrack/plugins/custom_modules/performance_optimizer.py` - No test coverage exists - Plugin performance optimization system
-- [ ] `intellicrack/plugins/plugin_config.py` - No test coverage exists - Plugin configuration and exports
-- [ ] `intellicrack/plugins/remote_executor.py` - No test coverage exists - Remote plugin execution framework
-- [ ] `intellicrack/plugins/custom_modules/cloud_license_interceptor.py` - No test coverage
-- [ ] `intellicrack/plugins/custom_modules/intellicrack_core_engine.py` - No test coverage
-- [ ] `intellicrack/plugins/custom_modules/license_server_emulator.py` - No test coverage
-- [ ] `intellicrack/plugins/custom_modules/network_analysis_plugin.py` - No test coverage
-- [ ] `intellicrack/plugins/custom_modules/ui_enhancement_module.py` - No test coverage
-- [ ] `intellicrack/plugins/custom_modules/vm_protection_unwrapper.py` - No test coverage
-
-### scripts/\*
-
-- [ ] `intellicrack/scripts/ghidra/anti_analysis_detector.py` - No test coverage exists - Ghidra Python script for anti-analysis detection
-- [ ] `intellicrack/scripts/run_analysis_cli.py` - No test coverage exists - CLI script runner for analysis workflows
-
-### utils/runtime/\*
-
-- [ ] `intellicrack/utils/runtime/distributed_processing.py` - No test coverage exists - Distributed processing utilities
-- [ ] `intellicrack/utils/runtime/performance_optimizer.py` - No test coverage exists - Runtime performance optimization utilities
-- [ ] `intellicrack/utils/runtime/additional_runners.py` - No test coverage
-- [ ] `intellicrack/utils/runtime/runner_functions.py` - No test coverage
-
-### utils/system/\*
-
-- [ ] `intellicrack/utils/system/driver_utils.py` - No test coverage
-- [ ] `intellicrack/utils/system/file_resolution.py` - No test coverage
-- [ ] `intellicrack/utils/system/os_detection.py` - No test coverage
-- [ ] `intellicrack/utils/system/os_detection_mixin.py` - No test coverage
-- [ ] `intellicrack/utils/system/process_common.py` - No test coverage
-- [ ] `intellicrack/utils/system/process_helpers.py` - No test coverage
-- [ ] `intellicrack/utils/system/process_utils.py` - No test coverage
-- [ ] `intellicrack/utils/system/program_discovery.py` - No test coverage
-- [ ] `intellicrack/utils/system/snapshot_common.py` - No test coverage
-- [ ] `intellicrack/utils/system/snapshot_utils.py` - No test coverage
-- [ ] `intellicrack/utils/system/subprocess_utils.py` - No test coverage
-- [ ] `intellicrack/utils/system/windows_common.py` - No test coverage
-- [ ] `intellicrack/utils/system/windows_structures.py` - No test coverage
-
-### utils/tools/\*
-
-- [ ] `intellicrack/utils/tools/ghidra_script_manager.py` - No test coverage
-- [ ] `intellicrack/utils/tools/ghidra_utils.py` - No test coverage
-- [ ] `intellicrack/utils/tools/pcapy_compat.py` - No test coverage
-- [ ] `intellicrack/utils/tools/radare2_utils.py` - No test coverage
-- [ ] `intellicrack/utils/tools/tool_wrappers.py` - No test coverage
-
-### utils/protection/\*
-
-- [ ] `intellicrack/utils/protection/certificate_common.py` - No test coverage
-- [ ] `intellicrack/utils/protection/certificate_utils.py` - No test coverage
-- [ ] `intellicrack/utils/protection/protection_helpers.py` - No test coverage
-
-### Other Utils
-
-- [ ] `intellicrack/utils/api_client.py` - No test coverage
-- [ ] `intellicrack/utils/dependency_fallbacks.py` - No test coverage
-- [ ] `intellicrack/utils/deprecation_warnings.py` - No test coverage
-- [ ] `intellicrack/utils/env_file_manager.py` - No test coverage
-- [ ] `intellicrack/utils/gpu_autoloader.py` - No test coverage
-- [ ] `intellicrack/utils/secrets_manager.py` - No test coverage
-- [ ] `intellicrack/utils/security_mitigations.py` - No test coverage
-- [ ] `intellicrack/utils/torch_gil_safety.py` - No test coverage
-- [ ] `intellicrack/utils/type_safety.py` - No test coverage
-- [ ] `intellicrack/utils/exploitation/logger.py` - No test coverage
-
-### Network Protocols
-
-- [ ] `intellicrack/core/network/protocols/codemeter_parser.py` - No test coverage
-- [ ] `intellicrack/core/network/protocols/flexlm_parser.py` - Incomplete test coverage
-- [ ] `intellicrack/core/network/protocols/hasp_parser.py` - Incomplete test coverage
-
-### Root Level Modules
-
-- [ ] `intellicrack/__main__.py` - No test coverage - Entry point
-- [ ] `intellicrack/main.py` - No test coverage - Main launcher (289 lines)
-- [ ] `intellicrack/config.py` - No test coverage - Configuration loading
-
----
+- [x] `intellicrack/core/network_capture.py` - Comprehensive test created
+- [ ] `intellicrack/core/security_utils.py` - Only superficial coverage
+- [ ] `intellicrack/core/tool_discovery.py` - Minimal coverage
+- [ ] `intellicrack/core/config.py` - No root-level config tests
+- [x] `intellicrack/core/network/base_network_analyzer.py` - Comprehensive test created
+- [ ] `intellicrack/scripts/run_analysis_cli.py` - No dedicated test
+- [ ] `intellicrack/scripts/frida/*` - Only AI-generated scripts tested, not comprehensive
+- [ ] `intellicrack/scripts/ghidra/*` - No real tests found
+- [ ] `intellicrack/scripts/radare2/*` - Limited production tests
+- [ ] `intellicrack/data/signature_templates.py` - No test for signature templates
+- [ ] `intellicrack/utils/__init__.py` - Import-only test, not functional
+- [ ] `intellicrack/utils/config.py` - No test found
+- [ ] `intellicrack/utils/constants.py` - Minimal enum-only testing
+- [ ] `intellicrack/utils/deprecation_warnings.py` - Only production test, no real validation
+- [ ] `intellicrack/utils/font_manager.py` - Only production test
+- [ ] `intellicrack/utils/severity_levels.py` - Minimal enum testing
+- [ ] `intellicrack/utils/subprocess_security.py` - Only production test
+- [ ] `intellicrack/utils/url_validation.py` - Minimal coverage
+- [ ] `intellicrack/plugins/__init__.py` - No test
+- [ ] `intellicrack/plugins/plugin_config.py` - Only superficial production test
+- [ ] `intellicrack/plugins/remote_executor.py` - No dedicated test
+- [ ] `intellicrack/models/__init__.py` - No test
+- [ ] `intellicrack/models/protection_knowledge_base.py` - No test found
 
 ## Inadequate Tests
 
-### Tests Exist But May Have Coverage Gaps
+- [x] `intellicrack/core/processing/streaming_analysis_manager.py::StreamingAnalysisManager` - Comprehensive test with real binary processing created
+- [ ] `intellicrack/core/processing/memory_loader.py::MemoryLoader` - Validates fixture loading but NOT actual memory mapping edge cases
+- [ ] `intellicrack/core/processing/qemu_emulator.py::QEMUEmulator` - Many tests use mocks/stubs rather than actual emulation
+- [ ] `intellicrack/core/network/dynamic_response_generator.py::DynamicResponseGenerator` - Relies on mocked protocol responses, doesn't validate actual protocol negotiation
+- [ ] `intellicrack/core/network/protocol_fingerprinter.py::ProtocolFingerprinter` - Protocol identification mostly mocked, NOT real traffic analysis
+- [ ] `intellicrack/core/network/traffic_analyzer.py::TrafficAnalyzer` - Mocks network traffic instead of real pcap analysis
+- [ ] `intellicrack/core/network/traffic_interception_engine.py::TrafficInterceptionEngine` - Uses mocked ZMQ instead of real interception testing
+- [ ] `intellicrack/core/orchestration/tool_communication_bridge.py::ToolCommunicationBridge` - Validates serialization but NOT real async IPC under load/failure
+- [ ] `intellicrack/core/orchestration/intelligent_correlation_engine.py::IntelligentCorrelationEngine` - Basic tests don't validate real tool output correlation
+- [x] `intellicrack/core/logging/audit_logger.py::AuditLogger` - Comprehensive test with real file I/O, encryption, and rotation created
+- [x] `intellicrack/core/network/base_network_analyzer.py::BaseNetworkAnalyzer` - FIXED: Removed all mocks, now uses real scapy packets for validation
+- [x] `intellicrack/core/network_capture.py` - FIXED: Removed all patches, now tests real PCAP parsing with dpkt fixtures
+- [ ] `intellicrack/core/resources/resource_manager.py::ResourceManager` - Validates basic cleanup but NOT actual process/VM cleanup or stress scenarios
+- [ ] `intellicrack/core/__init__.py::_initialize_gpu` - Tests don't validate actual GPU initialization failure modes
+- [ ] `intellicrack/main.py::main` - Validates entry point but NOT actual UI launch on different platforms
+- [ ] `intellicrack/utils/api_client.py::APIClient` - Mocks HTTP responses, NOT actual API communication
+- [ ] `intellicrack/utils/gpu_autoloader.py::GPUAutoloader` - Mocks GPU detection, NOT real GPU device enumeration
+- [ ] `intellicrack/utils/gpu_benchmark.py::GPUBenchmark` - Mocks computations, NOT real benchmarks
+- [ ] `intellicrack/utils/protection_utils.py` - Validates parsing but NOT real protection bypass logic
+- [ ] `intellicrack/utils/logger.py::Logger` - Validates formatting but NOT actual file writes with concurrent access
+- [ ] `intellicrack/utils/binary/network_api_analysis.py::NetworkAPIAnalyzer` - Mocks PE parsing instead of real network API extraction
+- [ ] `intellicrack/utils/binary/pe_analysis_common.py` - Uses mock PE headers, NOT real PE file parsing
+- [ ] `intellicrack/utils/core/import_checks.py::ImportValidator` - Validates function existence but NOT dynamic import error handling
+- [ ] `intellicrack/utils/core/path_discovery.py::PathDiscovery` - Mocks filesystem, NOT real path resolution
+- [ ] `intellicrack/utils/tools/ghidra_script_manager.py` - Mocks Ghidra subprocess calls
+- [ ] `intellicrack/utils/tools/radare2_utils.py` - Mocks r2 output parsing
+- [ ] `intellicrack/plugins/plugin_system.py::PluginSystem` - Validates registration but NOT plugin lifecycle or sandbox isolation
+- [ ] `intellicrack/models/model_manager.py::ModelManager` - Mocks model loading, NOT actual model file I/O or format conversion
 
-#### core/analysis/\* (Sparse coverage for new/advanced features)
+## Edge Case Gaps
 
-- [ ] `intellicrack/core/analysis/frida_script_manager.py::FridaScriptManager::compile()` - No test validates real script compilation
-- [ ] `intellicrack/core/analysis/radare2_esil_emulator.py::ESILEmulator` - No test validates ESIL instruction emulation, register state tracking, memory operations
-- [ ] `intellicrack/core/analysis/radare2_performance_metrics.py::PerformanceMetrics` - No test validates benchmarking, profiling data accuracy
-
-#### core/orchestration/\* (Edge cases may lack validation)
-
-- [ ] `intellicrack/core/orchestration/tool_communication_bridge.py` - Missing tests for ZMQ socket failures, message corruption, timeout handling
-- [ ] `intellicrack/core/integration/intelligent_correlation.py` - Missing tests for conflicting correlations, circular references, malformed data
-
-#### plugins/\* (Custom modules incomplete)
-
-- [ ] `intellicrack/plugins/custom_modules/performance_optimizer.py` - No validation of optimization algorithms against real binaries
-- [ ] `intellicrack/plugins/remote_executor.py` - No validation of network failure scenarios, authentication, result serialization
-
-#### utils/runtime/\* (Distributed processing lacks validation)
-
-- [ ] `intellicrack/utils/runtime/distributed_processing.py::DistributedProcessor` - No test validates cluster operations, worker failure recovery, task redistribution
-- [ ] `intellicrack/utils/runtime/performance_optimizer.py` - No benchmark tests, optimization measurement validation
-
-#### Network Modules with Limited Real Protocol Testing
-
-- [ ] `intellicrack/core/network/traffic_analyzer.py` - Tests focus on initialization, not real packet capture, protocol parsing, encryption handling
-- [ ] `intellicrack/core/network/cloud_license_hooker.py` - Tests only cover initialization, not real network interception
-
-#### Processing Modules with Superficial Tests
-
-- [ ] `intellicrack/core/processing/streaming_analysis_manager.py` - Missing large file handling (GB+), overlap correctness, memory efficiency
-
-#### Plugin System Inadequacies
-
-- [ ] `intellicrack/plugins/plugin_system.py` - Missing full lifecycle testing, dependency resolution, resource limits, concurrent execution
-
----
+- [ ] `intellicrack/core/processing/distributed_manager.py` - No tests for task timeout, retry with network partitions
+- [ ] `intellicrack/core/processing/qemu_emulator.py` - No tests for segfault detection and recovery
+- [ ] `intellicrack/core/processing/gpu_accelerator.py` - No tests for out-of-memory conditions and CPU fallback
+- [ ] `intellicrack/core/processing/streaming_analysis_manager.py` - No tests for malformed/truncated binary data
+- [ ] `intellicrack/core/processing/memory_optimizer.py` - No tests for competing memory allocation requests
+- [ ] `intellicrack/core/network/protocol_fingerprinter.py` - No tests for obfuscated or polymorphic protocols
+- [ ] `intellicrack/core/network/ssl_interceptor.py` - No tests for certificate pinning and anti-tampering
+- [ ] `intellicrack/core/network/license_protocol_handler.py` - No tests for corrupted license data
+- [ ] `intellicrack/core/network/traffic_analyzer.py` - No tests for malformed packets or incomplete captures
+- [ ] `intellicrack/core/network/cloud_license_hooker.py` - No tests for network timeouts and retry exhaustion
+- [ ] `intellicrack/core/orchestration/tool_communication_bridge.py` - No tests for ZMQ connection failures and reconnection
+- [ ] `intellicrack/core/orchestration/intelligent_correlation_engine.py` - No tests for conflicting analysis results
+- [ ] `intellicrack/core/orchestration/result_serialization_protocol.py` - No tests for circular references or deep nesting
+- [ ] `intellicrack/core/logging/audit_logger.py` - No tests for disk full, concurrent writes, encrypted file corruption
+- [ ] `intellicrack/core/resources/resource_manager.py` - No tests for hanging processes, file descriptor leaks
+- [ ] `intellicrack/utils/api_client.py` - No tests for SSL certificate validation failures
+- [ ] `intellicrack/utils/gpu_autoloader.py` - No tests for competing GPU frameworks (CUDA, ROCm)
+- [ ] `intellicrack/utils/logger.py` - No tests for recursive logging or circular dependencies
+- [ ] `intellicrack/utils/core/path_discovery.py` - No tests for Windows junction loops or symbolic link cycles
+- [ ] `intellicrack/plugins/plugin_system.py` - No tests for circular dependencies between plugins
 
 ## Recommendations
 
-### Priority 1 - Critical Missing Tests (Complex ML/Distributed Systems)
-
-- [ ] Create comprehensive test for `core/integration/intelligent_correlation.py` - Test scope: Fuzzy matching accuracy, clustering algorithm correctness (DBSCAN, KMeans), anomaly detection sensitivity, Levenshtein distance thresholds - Validation: Test against real Ghidra/Radare2/IDA output variations; validate confidence scoring; test conflicting correlations
-- [ ] Create comprehensive test for `core/processing/distributed_manager.py` - Test scope: Task queueing, priority scheduling, worker health checks, failure recovery, result aggregation - Validation: Test multi-process scenarios; validate task redistribution on worker failure; test timeout handling
-
-### Priority 2 - Frida/Radare2 Analysis Modules
-
-- [ ] Create test for `core/analysis/frida_script_manager.py` - Test real Frida script compilation and execution with actual process attachment
-- [ ] Create test for `core/analysis/radare2_esil_emulator.py` - Test ESIL instruction emulation with real binaries, register tracking, memory ops
-
-### Priority 3 - Plugin System Modules
-
-- [ ] Create test for `plugins/custom_modules/performance_optimizer.py` - Benchmark real optimization improvements on actual binaries
-- [ ] Create test for `plugins/remote_executor.py` - Test remote execution across network boundaries with failure scenarios
-- [ ] Create test for `plugins/plugin_config.py` - Validate plugin configuration loading and validation
-- [ ] Create tests for all custom_modules (7 modules) - cloud_license_interceptor, license_server_emulator, etc.
-
-### Priority 4 - Scripts
-
-- [ ] Create test for `scripts/ghidra/anti_analysis_detector.py` - Test detection against real protected binaries
-- [ ] Create test for `scripts/run_analysis_cli.py` - End-to-end CLI testing with real binary inputs
-
-### Priority 5 - Distributed Runtime Utilities
-
-- [ ] Create test for `utils/runtime/distributed_processing.py` - Test parallel task execution, worker coordination
-- [ ] Create test for `utils/runtime/performance_optimizer.py` - Validate optimization algorithms with benchmarks
-
-### Priority 6 - System Utilities (13 modules)
-
-- [ ] Create tests for all utils/system modules - driver_utils, file_resolution, os_detection, process_utils, windows_structures, etc.
-
-### Priority 7 - Tool Utilities (5 modules)
-
-- [ ] Create tests for utils/tools - ghidra_script_manager, ghidra_utils, pcapy_compat, radare2_utils, tool_wrappers
-
-### Priority 8 - Protection Utilities (3 modules)
-
-- [ ] Create tests for utils/protection - certificate_common, certificate_utils, protection_helpers
-
-### Priority 9 - Other Utils (10+ modules)
-
-- [ ] Create tests for remaining utils - api_client, dependency_fallbacks, env_file_manager, secrets_manager, etc.
-
----
-
-## Testing Methodology Notes
-
-### Existing Tests Validation
-
-Tests that exist for Group 3 files demonstrate:
-
-- Production-grade binary analysis (real PE generation in execution tests)
-- Genuine protocol parsing (actual network protocol implementations)
-- Real graph-based algorithms (networkx in correlation tests)
-- **No excessive mocking**: GPU accelerator tests have 0 mock instances
-
-### What Genuine Tests Must Validate
-
-1. **Real functionality**: Not simulated/stubbed behavior
-2. **Edge cases**: Malformed input, timeout, failure scenarios
-3. **Integration**: Cross-tool communication, result aggregation
-4. **Performance**: Actual optimization measurements, benchmarking
-5. **Robustness**: Concurrent access, resource limits, error recovery
+- [x] Create `tests/core/processing/test_streaming_analysis_manager_real.py` - Comprehensive test with real binary stream parsing created
+- [ ] Create `tests/core/network/test_protocol_interception_real.py` - Validate actual network packet capture and modification
+- [ ] Create `tests/core/orchestration/test_tool_correlation_real.py` - Use real Ghidra/Frida/Radare2 outputs
+- [x] Create `tests/core/logging/test_audit_logger_disk_io.py` - Comprehensive test with actual file I/O, rotation, and encryption created
+- [ ] Create `tests/core/resources/test_resource_cleanup_real.py` - Test actual process/VM lifecycle
+- [ ] Create `tests/intellicrack/test_module_initialization.py` - Validate actual GPU detection and initialization
+- [ ] Create `tests/utils/test_actual_file_operations.py` - Test all file I/O utilities
+- [ ] Create `tests/plugins/test_plugin_sandbox.py` - Validate actual plugin isolation and dependency resolution
+- [ ] Create `tests/scripts/test_frida_script_execution.py` - Test with real Frida server
+- [ ] Create `tests/scripts/test_ghidra_script_execution.py` - Test with real Ghidra instance
+- [x] Create `tests/core/test_network_capture_comprehensive.py` - FIXED: Removed mocks/patches, uses real PCAP parsing with dpkt
+- [ ] Create `tests/core/processing/test_qemu_real_emulation.py` - Test with actual QEMU instances
+- [ ] Create `tests/models/test_protection_knowledge_base.py` - Validate knowledge base queries and updates
+- [x] Create `tests/core/network/test_hasp_parser_comprehensive.py` - Comprehensive HASP protocol test created
+- [x] Create `tests/core/network/test_base_network_analyzer_comprehensive.py` - FIXED: Removed mocks, uses real scapy packets

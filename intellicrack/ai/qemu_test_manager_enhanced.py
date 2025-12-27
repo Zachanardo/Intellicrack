@@ -70,16 +70,13 @@ class EnhancedQEMUTestManager:
                 both QEMU and Frida processes.
 
         Returns:
-            Dictionary containing execution results with the following keys:
+            dict[str, Any]: Dictionary containing execution results with the
+                following keys:
                 - success: Boolean indicating if both processes succeeded.
                 - qemu_returncode: Exit code from QEMU process.
                 - frida_returncode: Exit code from Frida/Python process.
                 - detailed_data: Captured API calls and memory changes.
                 - execution_summary: Summary of API calls and memory modifications.
-
-        Raises:
-            OSError: If temporary file operations fail.
-            FileNotFoundError: If binary_path does not exist.
 
         """
         # Extract binary information for targeted analysis
@@ -299,7 +296,24 @@ Process.enumerateModules().forEach(module => {{{{
                 Path(script_path).unlink()
 
     def analyze_binary_for_vm(self, binary_path: str) -> dict[str, Any]:
-        """Analyze binary to determine VM requirements."""
+        """Analyze binary to determine VM requirements.
+
+        Examines a binary file to extract platform, architecture, dependencies,
+        entry points, and section information needed to configure the VM
+        environment appropriately for binary execution and analysis.
+
+        Args:
+            binary_path: Full path to the binary file to analyze.
+
+        Returns:
+            dict[str, Any]: Dictionary with binary analysis results containing:
+                - platform: Target platform (windows, linux, unknown).
+                - architecture: Architecture type (x86, x64, unknown).
+                - dependencies: List of library/DLL dependencies.
+                - entry_point: Hexadecimal address of entry point.
+                - sections: List of binary sections with names, addresses, and sizes.
+
+        """
         import magic
 
         from intellicrack.handlers.pefile_handler import pefile
@@ -350,7 +364,25 @@ Process.enumerateModules().forEach(module => {{{{
         return result
 
     def monitor_process_in_vm(self, process_id: int) -> dict[str, Any]:
-        """Monitor real process behavior in VM."""
+        """Monitor real process behavior in VM.
+
+        Captures live metrics and resource usage for a running process in the
+        QEMU VM, including CPU usage, memory consumption, open files, network
+        connections, and thread count via SSH access to the guest system.
+
+        Args:
+            process_id: Process ID of the target process to monitor in the VM.
+
+        Returns:
+            dict[str, Any]: Dictionary with process metrics containing:
+                - cpu_percent: CPU usage percentage.
+                - memory_percent: Memory usage percentage.
+                - open_files: Number of open file descriptors.
+                - connections: Number of network connections.
+                - threads: Number of threads in the process.
+                Returns empty dict if monitoring fails.
+
+        """
         # Use guest agent or SSH to monitor
         monitor_script = f"""
 #!/bin/bash

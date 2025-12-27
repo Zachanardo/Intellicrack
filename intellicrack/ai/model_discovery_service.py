@@ -140,8 +140,11 @@ class ModelDiscoveryService:
     def get_configured_and_discovered_models(self, force_refresh: bool = False) -> dict[str, dict[str, Any]]:
         """Get both configured models and API-discovered models.
 
+        Args:
+            force_refresh: Force refresh even if cache is valid
+
         Returns:
-            Dictionary with 'configured' and 'discovered' keys containing model info
+            dict[str, dict[str, Any]]: Dictionary with 'configured' and 'discovered' keys containing model info
 
         """
         configured_models = self._config_manager.list_model_configs()
@@ -404,7 +407,12 @@ _DISCOVERY_SERVICE: ModelDiscoveryService | None = None
 
 
 def get_model_discovery_service() -> ModelDiscoveryService:
-    """Get the global model discovery service instance."""
+    """Get the global model discovery service instance.
+
+    Returns:
+        ModelDiscoveryService: The global model discovery service instance
+
+    """
     global _DISCOVERY_SERVICE
     if _DISCOVERY_SERVICE is None:
         _DISCOVERY_SERVICE = ModelDiscoveryService()

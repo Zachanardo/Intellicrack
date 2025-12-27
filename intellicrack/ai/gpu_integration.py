@@ -108,7 +108,12 @@ except ImportError:
         """Fallback GPU autoloader when real one is unavailable."""
 
         def get_memory_info(self) -> dict[str, object]:
-            """Get memory info (fallback returns empty dict)."""
+            """Get memory info (fallback returns empty dict).
+
+            Returns:
+                dict[str, object]: Empty dictionary for CPU fallback mode.
+
+            """
             return {}
 
         def synchronize(self) -> None:
@@ -128,7 +133,17 @@ class GPUIntegration:
         logger.info("GPU Integration initialized: %s", self.gpu_info["type"])
 
     def get_device_info(self) -> dict[str, Any]:
-        """Get comprehensive device information."""
+        """Get comprehensive device information.
+
+        Returns:
+            dict[str, Any]: Device information dictionary with available, type,
+                device, info, and optional runtime keys.
+
+        Raises:
+            ImportError: (caught internally) May be raised if PyTorch is not
+                available during runtime info collection.
+
+        """
         info = self.gpu_info.copy()
 
         # Add additional runtime info if available
@@ -192,7 +207,13 @@ class GPUIntegration:
         return to_device(tensor)
 
     def get_memory_usage(self) -> dict[str, object]:
-        """Get current GPU memory usage."""
+        """Get current GPU memory usage.
+
+        Returns:
+            dict[str, object]: Memory usage information from GPU autoloader,
+                or empty dict if unavailable.
+
+        """
         return _gpu_autoloader_instance.get_memory_info()
 
     def synchronize(self) -> None:
@@ -200,14 +221,25 @@ class GPUIntegration:
         _gpu_autoloader_instance.synchronize()
 
     def is_available(self) -> bool:
-        """Check if GPU acceleration is available."""
+        """Check if GPU acceleration is available.
+
+        Returns:
+            bool: True if GPU acceleration is available, False otherwise.
+
+        """
         available = self.gpu_info.get("available")
         if isinstance(available, bool):
             return available
         return False
 
     def get_backend_name(self) -> str:
-        """Get the backend name."""
+        """Get the backend name.
+
+        Returns:
+            str: The GPU backend name (e.g., "nvidia_cuda", "intel_xpu", "amd_rocm"),
+                or "Unknown" if unavailable.
+
+        """
         info = self.gpu_info.get("info", {})
         if isinstance(info, dict):
             backend = info.get("backend", "Unknown")

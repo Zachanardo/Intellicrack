@@ -97,7 +97,11 @@ try:
 
     MITMPROXY_AVAILABLE = True
 except ImportError:
-    pass
+    http = None
+    anticache = None
+    Options = None
+    DumpMaster = None
+    MITMPROXY_AVAILABLE = False
 
 
 logger = get_logger(__name__)
@@ -1018,7 +1022,7 @@ class MITMProxyAddon:
         modify_rules = self.intercept_rules.get("modify", [])
         return any("url_pattern" in rule and re.search(rule["url_pattern"], url) for rule in modify_rules)
 
-    def _apply_request_modifications(self, flow: http.HTTPFlow) -> None:
+    def _apply_request_modifications(self, flow: "http.HTTPFlow") -> None:
         """Apply modifications to intercepted request.
 
         Args:
@@ -1040,7 +1044,7 @@ class MITMProxyAddon:
             except Exception as e:
                 logger.debug("Failed to modify request body: %s", e, exc_info=True)
 
-    def _synthesize_response(self, flow: http.HTTPFlow) -> None:
+    def _synthesize_response(self, flow: "http.HTTPFlow") -> None:
         """Synthesize license validation response.
 
         Args:
@@ -1074,7 +1078,7 @@ class MITMProxyAddon:
             )
             self.state_machine.transition(LicenseState.ACTIVE)
 
-    def _get_request_json(self, flow: http.HTTPFlow) -> dict[Any, Any]:
+    def _get_request_json(self, flow: "http.HTTPFlow") -> dict[Any, Any]:
         try:
             result = json.loads(flow.request.text)
             return result if isinstance(result, dict) else {}

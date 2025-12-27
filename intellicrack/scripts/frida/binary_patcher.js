@@ -660,7 +660,7 @@ const BinaryPatcher = {
                         if (byte === 0) {
                             break;
                         }
-                        str += String.fromCharCode(byte);
+                        str += String.fromCodePoint(byte);
                     }
                     return str;
                 },
@@ -1549,11 +1549,8 @@ const BinaryPatcher = {
                         result,
                     });
                 } catch (error) {
-                    reject({
-                        nodeId: node.id,
-                        success: false,
-                        error: error.message,
-                    });
+                    const errorMessage = `Node ${node.id} failed: ${error.message}`;
+                    reject(new Error(errorMessage));
                 }
             }),
     },

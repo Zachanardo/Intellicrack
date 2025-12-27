@@ -21,6 +21,24 @@
 // Intercepts at multiple layers: Network, DNS, Crypto, Process, Registry, File System
 // Includes anti-detection, stealth timing, and modern protocol support
 
+function matchAwsIpDomain(domain) {
+    if (!domain.endsWith('.amazonaws.com')) {
+        return false;
+    }
+    const prefix = domain.slice(0, -'.amazonaws.com'.length);
+    const parts = prefix.split('-');
+    if (parts.length !== 4) {
+        return false;
+    }
+    for (const part of parts) {
+        const num = Number.parseInt(part, 10);
+        if (Number.isNaN(num) || num < 0 || num > 255 || String(num) !== part) {
+            return false;
+        }
+    }
+    return true;
+}
+
 // === CONFIGURATION & GLOBAL STATE ===
 
 const CONFIG = {
@@ -139,7 +157,8 @@ function encryptData(data) {
     const key = 0xDE_AD_BE_EF;
     let result = '';
     for (let i = 0; i < data.length; i++) {
-        result += String.fromCharCode(data.charCodeAt(i) ^ (key >> (8 * (i % 4))));
+        const codePoint = data.codePointAt(i) || 0;
+        result += String.fromCodePoint(codePoint ^ (key >> (8 * (i % 4))));
     }
     return btoa(result);
 }
@@ -149,8 +168,11 @@ function detectDomainRotation(domain) {
         return false;
     }
 
+    if (matchAwsIpDomain(domain)) {
+        return true;
+    }
+
     const suspiciousPatterns = [
-        /(?:\d{1,3}-){3}\d{1,3}\.amazonaws\.com/,
         /[\da-f]{8,}\.cloudfront\.net/,
         /[a-z]{8,16}\.(com|net|org)$/,
         /telemetry\d+\./,
@@ -204,7 +226,9 @@ tryAttach('ntdll.dll', 'NtCreateFile', {
                 this.blockTcp = true;
                 TELEMETRY_STATS.blockedConnections++;
             }
-        } catch {}
+        } catch {
+            this.blockTcp = false;
+        }
     },
     onLeave(retval) {
         if (this.blockTcp) {
@@ -301,7 +325,9 @@ tryAttach('winhttp.dll', 'WinHttpSendRequest', {
                 this.blockRequest = true;
                 TELEMETRY_STATS.blockedConnections++;
             }
-        } catch {}
+        } catch {
+            this.blockRequest = false;
+        }
     },
     onLeave(retval) {
         if (this.blockRequest) {
@@ -327,7 +353,9 @@ tryAttach('httpapi.dll', 'HttpSendHttpResponse', {
                     this.blockResponse = true;
                     TELEMETRY_STATS.blockedConnections++;
                 }
-            } catch {}
+            } catch {
+                this.blockResponse = false;
+            }
         }
     },
     onLeave(retval) {
@@ -363,7 +391,9 @@ if (CONFIG.cryptoHooking) {
                         timestamp: Date.now(),
                     });
                 }
-            } catch {}
+            } catch {
+                this.blockCrypto = false;
+            }
         },
         onLeave(retval) {
             if (this.blockCrypto) {
@@ -399,7 +429,9 @@ if (CONFIG.cryptoHooking) {
                             TELEMETRY_STATS.cryptoInterceptions++;
                         }
                     }
-                } catch {}
+                } catch {
+                    this.blockCert = false;
+                }
             }
         },
         onLeave(retval) {
@@ -428,7 +460,9 @@ if (CONFIG.cryptoHooking) {
                     action: 'bcrypt_signature_blocked',
                     timestamp: Date.now(),
                 });
-            } catch {}
+            } catch {
+                this.blockBCrypt = false;
+            }
         },
         onLeave(retval) {
             if (this.blockBCrypt) {
@@ -583,7 +617,9 @@ tryAttach('ws2_32.dll', 'send', {
                     this.blockSend = true;
                     TELEMETRY_STATS.blockedConnections++;
                 }
-            } catch {}
+            } catch {
+                this.blockSend = false;
+            }
         }
     },
     onLeave(retval) {
@@ -933,7 +969,9 @@ tryAttach('ntdll.dll', 'NtCreateProcess', {
                 action: 'ntcreateprocess_blocked',
                 timestamp: Date.now(),
             });
-        } catch {}
+        } catch {
+            this.blockNtProcess = false;
+        }
     },
     onLeave(retval) {
         if (this.blockNtProcess) {
@@ -1095,7 +1133,9 @@ tryAttach('ntdll.dll', 'NtSetValueKey', {
                     this.blockNtRegistry = true;
                     TELEMETRY_STATS.blockedRegistry++;
                 }
-            } catch {}
+            } catch {
+                this.blockNtRegistry = false;
+            }
         }
     },
     onLeave(retval) {
@@ -1225,7 +1265,9 @@ tryAttach('kernel32.dll', 'WriteFile', {
                         timestamp: Date.now(),
                     });
                 }
-            } catch {}
+            } catch {
+                this.blockWrite = false;
+            }
         }
     },
     onLeave(retval) {

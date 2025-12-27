@@ -58,43 +58,99 @@ class UIControllerProtocol(Protocol):
     """Protocol defining the interface for UI controller objects."""
 
     def analyze_file(self, file_path: str) -> None:
-        """Analyze the specified file."""
+        """Analyze the specified file.
+
+        Args:
+            file_path: Path to the file to analyze.
+        """
         pass
 
     def generate_scripts(self, file_path: str) -> None:
-        """Generate scripts for the specified file."""
+        """Generate scripts for the specified file.
+
+        Args:
+            file_path: Path to the file for which to generate scripts.
+        """
         pass
 
     def show_file_properties(self, file_path: Path) -> None:
-        """Show file properties dialog."""
+        """Show file properties dialog.
+
+        Args:
+            file_path: Path object representing the file to display properties for.
+        """
         pass
 
     def generate_frida_script(self, target: str, script_type: str) -> str:
-        """Generate a Frida script."""
+        """Generate a Frida script.
+
+        Args:
+            target: Target process or binary name.
+            script_type: Type of Frida script to generate.
+
+        Returns:
+            str: Generated Frida script content.
+        """
         return ""
 
     def generate_ghidra_script(self, target: str, script_type: str) -> str:
-        """Generate a Ghidra script."""
+        """Generate a Ghidra script.
+
+        Args:
+            target: Target binary name.
+            script_type: Type of Ghidra script to generate.
+
+        Returns:
+            str: Generated Ghidra script content.
+        """
         return ""
 
     def generate_r2_script(self, target: str, script_type: str) -> str:
-        """Generate a Radare2 script."""
+        """Generate a Radare2 script.
+
+        Args:
+            target: Target binary name.
+            script_type: Type of Radare2 script to generate.
+
+        Returns:
+            str: Generated Radare2 script content.
+        """
         return ""
 
     def execute_frida_script(self, script: str, target: str) -> None:
-        """Execute a Frida script."""
+        """Execute a Frida script.
+
+        Args:
+            script: Frida script content to execute.
+            target: Target process or binary name.
+        """
         pass
 
     def execute_ghidra_script(self, script: str, target: str) -> None:
-        """Execute a Ghidra script."""
+        """Execute a Ghidra script.
+
+        Args:
+            script: Ghidra script content to execute.
+            target: Target binary name.
+        """
         pass
 
     def execute_r2_script(self, script: str, target: str) -> None:
-        """Execute a Radare2 script."""
+        """Execute a Radare2 script.
+
+        Args:
+            script: Radare2 script content to execute.
+            target: Target binary name.
+        """
         pass
 
     def execute_custom_script(self, script: str, language: str) -> None:
-        """Execute a custom script."""
+        """Execute a custom script.
+
+        Args:
+            script: Script content to execute.
+            language: Programming language of the script.
+        """
         pass
 
 
@@ -260,7 +316,12 @@ class RealTimeChart:
         self.max_points = 100
 
     def update_data(self, value: float, label: str = "") -> None:
-        """Update chart with new data point."""
+        """Update chart with new data point.
+
+        Args:
+            value: Numeric value to add to the chart.
+            label: Optional label for the data point.
+        """
         current_time = time.time()
         self.data_points.append((current_time, value, label))
 
@@ -452,7 +513,13 @@ class LogViewer:
         self.text_widget.tag_configure("SEARCH_HIGHLIGHT", background="#ffff00", foreground="#000000")
 
     def add_log(self, level: str, message: str, source: str = "") -> None:
-        """Add log entry."""
+        """Add log entry.
+
+        Args:
+            level: Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL).
+            message: Log message content.
+            source: Optional source identifier for the log entry.
+        """
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
         entry = {
             "timestamp": timestamp,
@@ -506,7 +573,13 @@ class LogViewer:
         self.text_widget.see(tk.END)
 
     def highlight_search_term(self, start_pos: str, end_pos: str, search_term: str) -> None:
-        """Highlight search terms in text."""
+        """Highlight search terms in text.
+
+        Args:
+            start_pos: Starting position in text widget.
+            end_pos: Ending position in text widget.
+            search_term: Term to search for and highlight.
+        """
         content = self.text_widget.get(start_pos, end_pos)
         start_idx = 0
 
@@ -526,11 +599,19 @@ class LogViewer:
             start_idx = idx + 1
 
     def on_search(self, event: tk.Event | None = None) -> None:
-        """Handle search input."""
+        """Handle search input.
+
+        Args:
+            event: Optional tkinter event object.
+        """
         self.refresh_display()
 
     def on_filter_change(self, event: tk.Event | None = None) -> None:
-        """Handle filter change."""
+        """Handle filter change.
+
+        Args:
+            event: Optional tkinter event object.
+        """
         self.refresh_display()
 
     def clear_logs(self) -> None:
@@ -603,7 +684,11 @@ class ProgressTracker:
         self.max_speed_history: int = 10
 
     def start(self, total_items: int = 100) -> None:
-        """Start progress tracking."""
+        """Start progress tracking.
+
+        Args:
+            total_items: Total number of items to process.
+        """
         self.total_items = total_items
         self.completed_items = 0
         start = time.time()
@@ -614,7 +699,12 @@ class ProgressTracker:
         self.update_display()
 
     def update(self, completed: int, status: str = "") -> None:
-        """Update progress."""
+        """Update progress.
+
+        Args:
+            completed: Number of items completed so far.
+            status: Optional status message to display.
+        """
         if self.start_time is None:
             self.start()
 
@@ -661,7 +751,14 @@ class ProgressTracker:
         self.parent.update_idletasks()
 
     def format_time(self, seconds: float) -> str:
-        """Format time duration."""
+        """Format time duration.
+
+        Args:
+            seconds: Duration in seconds to format.
+
+        Returns:
+            str: Formatted time string (e.g., "1m 30s", "2h 15m").
+        """
         if seconds < 60:
             return f"{int(seconds)}s"
         if seconds < 3600:
@@ -673,7 +770,11 @@ class ProgressTracker:
         return f"{hours}h {minutes}m"
 
     def finish(self, status: str = "Complete") -> None:
-        """Finish progress tracking."""
+        """Finish progress tracking.
+
+        Args:
+            status: Final status message to display.
+        """
         self.progress_var.set(100)
         self.status_label.config(text=status)
         self.eta_label.config(text="")
@@ -738,7 +839,7 @@ class FileExplorerPanel:
         self.browse_btn.pack(side=tk.RIGHT, padx=1)
 
     def create_file_tree(self) -> None:
-        """Create file tree widget."""
+        """Create file tree widget with columns for size, modification date, and file type."""
         tree_frame = ttk.Frame(self.frame)
         tree_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=2)
 
@@ -776,7 +877,7 @@ class FileExplorerPanel:
         self.tree.bind("<<TreeviewSelect>>", self.on_selection_change)
 
     def create_status_bar(self) -> None:
-        """Create status bar."""
+        """Create status bar with file count display."""
         self.status_frame = ttk.Frame(self.frame)
         self.status_frame.pack(fill=tk.X, padx=5, pady=2)
 
@@ -787,7 +888,7 @@ class FileExplorerPanel:
         self.file_count_label.pack(side=tk.RIGHT)
 
     def create_context_menu(self) -> None:
-        """Create right-click context menu."""
+        """Create right-click context menu for file operations."""
         self.context_menu = tk.Menu(self.frame, tearoff=0)
         self.context_menu.add_command(label="Analyze File", command=self.analyze_selected)
         self.context_menu.add_command(label="Generate Scripts", command=self.generate_scripts)
@@ -798,7 +899,7 @@ class FileExplorerPanel:
         self.context_menu.add_command(label="Properties", command=self.show_properties)
 
     def refresh_tree(self) -> None:
-        """Refresh file tree."""
+        """Refresh file tree with current directory contents."""
         try:
             # Clear existing items
             for item in self.tree.get_children():
@@ -868,7 +969,11 @@ class FileExplorerPanel:
             self.status_label.config(text=f"Error: {e}")
 
     def _process_directory_items(self, items: list[dict[str, Any]]) -> None:
-        """Process directory items for enhanced functionality."""
+        """Process directory items for enhanced functionality.
+
+        Args:
+            items: List of directory items to process.
+        """
         # Cache items for future operations like search, filtering, etc.
         self._cached_items = items
 
@@ -897,7 +1002,14 @@ class FileExplorerPanel:
             }
 
     def get_file_icon(self, file_path: Path) -> str:
-        """Get icon for file type."""
+        """Get icon for file type.
+
+        Args:
+            file_path: Path to the file.
+
+        Returns:
+            str: Icon character or emoji for the file type.
+        """
         suffix = file_path.suffix.lower()
 
         icons = {
@@ -926,7 +1038,14 @@ class FileExplorerPanel:
         return icons.get(suffix, "📄")
 
     def format_file_size(self, size: int) -> str:
-        """Format file size in human readable format."""
+        """Format file size in human readable format.
+
+        Args:
+            size: File size in bytes.
+
+        Returns:
+            str: Formatted file size string (e.g., "1.5 MB").
+        """
         size_float: float = float(size)
         for unit in ["B", "KB", "MB", "GB", "TB"]:
             if size_float < 1024.0:
@@ -935,7 +1054,11 @@ class FileExplorerPanel:
         return f"{size_float:.1f} PB"
 
     def on_double_click(self, event: tk.Event) -> None:
-        """Handle double-click on tree item."""
+        """Handle double-click on tree item.
+
+        Args:
+            event: Tkinter event object.
+        """
         item = self.tree.selection()[0]
         item_path = Path(self.tree.set(item, "path"))
 
@@ -947,19 +1070,31 @@ class FileExplorerPanel:
             self.analyze_file(item_path)
 
     def on_right_click(self, event: tk.Event) -> None:
-        """Handle right-click on tree item."""
+        """Handle right-click on tree item.
+
+        Args:
+            event: Tkinter event object.
+        """
         if item := self.tree.identify_row(event.y):
             self.tree.selection_set(item)
             self.context_menu.post(event.x_root, event.y_root)
 
     def on_selection_change(self, event: tk.Event) -> None:
-        """Handle selection change."""
+        """Handle selection change.
+
+        Args:
+            event: Tkinter event object.
+        """
         if selection := self.tree.selection():
             item_path = Path(self.tree.set(selection[0], "path"))
             self.status_label.config(text=str(item_path))
 
     def on_path_change(self, event: tk.Event) -> None:
-        """Handle path entry change."""
+        """Handle path entry change.
+
+        Args:
+            event: Tkinter event object.
+        """
         try:
             new_path = Path(self.path_var.get())
             if new_path.is_dir():
@@ -970,7 +1105,7 @@ class FileExplorerPanel:
             self.path_var.set(str(self.current_path))
 
     def go_back(self) -> None:
-        """Navigate back."""
+        """Navigate back to parent directory."""
         # Simple implementation - go to parent
         self.go_up()
 
@@ -981,20 +1116,24 @@ class FileExplorerPanel:
             self.refresh_tree()
 
     def browse_folder(self) -> None:
-        """Browse for folder."""
+        """Browse for folder using file dialog."""
         if folder := filedialog.askdirectory(initialdir=str(self.current_path)):
             self.current_path = Path(folder)
             self.refresh_tree()
 
     def analyze_selected(self) -> None:
-        """Analyze selected file."""
+        """Analyze selected file from the tree."""
         if selection := self.tree.selection():
             item_path = Path(self.tree.set(selection[0], "path"))
             if item_path.is_file():
                 self.analyze_file(item_path)
 
     def analyze_file(self, file_path: Path) -> None:
-        """Trigger file analysis."""
+        """Trigger file analysis.
+
+        Args:
+            file_path: Path to the file to analyze.
+        """
         self.ui_controller.analyze_file(str(file_path))
 
     def generate_scripts(self) -> None:
@@ -1024,7 +1163,7 @@ class FileExplorerPanel:
             self.parent.clipboard_append(str(item_path))
 
     def show_properties(self) -> None:
-        """Show file properties dialog."""
+        """Show file properties dialog for selected item."""
         if selection := self.tree.selection():
             item_path = Path(self.tree.set(selection[0], "path"))
             self.ui_controller.show_file_properties(item_path)
@@ -1221,7 +1360,11 @@ class AnalysisViewerPanel:
         self.history_tree.bind("<Double-1>", self.on_history_double_click)
 
     def update_analysis(self, result: AnalysisResult) -> None:
-        """Update analysis display with new results."""
+        """Update analysis display with new results.
+
+        Args:
+            result: AnalysisResult object containing analysis data.
+        """
         self.current_analysis = result
 
         # Update overview
@@ -1237,7 +1380,11 @@ class AnalysisViewerPanel:
         self.add_to_history(result)
 
     def update_overview(self, result: AnalysisResult) -> None:
-        """Update overview tab."""
+        """Update overview tab.
+
+        Args:
+            result: AnalysisResult object to display in overview.
+        """
         # File info
         file_info = f"File: {result.target_file}\n"
         file_info += f"Size: {Path(result.target_file).stat().st_size if Path(result.target_file).exists() else 'Unknown'}\n"

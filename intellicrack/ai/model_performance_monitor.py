@@ -148,6 +148,9 @@ class ModelPerformanceMonitor:
             history_size: Number of metrics to keep in memory
             save_dir: Directory to save metrics
 
+        Raises:
+            ImportError: (caught internally) If optional GPU dependencies fail to load
+
         """
         self.history_size = history_size
         self.metrics_history: dict[str, deque[PerformanceMetrics]] = {}
@@ -358,14 +361,24 @@ class ModelPerformanceMonitor:
         return metrics
 
     def _get_memory_usage(self) -> float:
-        """Get current memory usage in MB."""
+        """Get current memory usage in MB.
+
+        Returns:
+            float: Current process memory usage in megabytes, or 0.0 if unavailable
+
+        """
         if HAS_PSUTIL and psutil is not None:
             process = psutil.Process()
             return float(process.memory_info().rss / (1024 * 1024))
         return 0.0
 
     def _get_gpu_memory_usage(self) -> float:
-        """Get GPU memory usage in MB."""
+        """Get GPU memory usage in MB.
+
+        Returns:
+            float: Total GPU memory used across all devices in megabytes, or 0.0 if unavailable
+
+        """
         if not self.has_gpu:
             return 0.0
 
@@ -384,7 +397,12 @@ class ModelPerformanceMonitor:
             return 0.0
 
     def _get_gpu_utilization(self) -> float:
-        """Get GPU utilization percentage."""
+        """Get GPU utilization percentage.
+
+        Returns:
+            float: GPU utilization as a percentage (0-100), or 0.0 if unavailable
+
+        """
         if not self.has_gpu:
             return 0.0
 
@@ -405,7 +423,13 @@ class ModelPerformanceMonitor:
             return 0.0
 
     def _update_benchmark(self, model_id: str, metrics: PerformanceMetrics) -> None:
-        """Update benchmark data for a model."""
+        """Update benchmark data for a model.
+
+        Args:
+            model_id: Model identifier
+            metrics: Performance metrics to include in benchmark calculation
+
+        """
         history = list(self.metrics_history.get(model_id, []))
         if not history:
             return
@@ -848,7 +872,12 @@ _PERFORMANCE_MONITOR = None
 
 
 def get_performance_monitor() -> ModelPerformanceMonitor:
-    """Get the global performance monitor."""
+    """Get the global performance monitor.
+
+    Returns:
+        ModelPerformanceMonitor: The singleton performance monitor instance
+
+    """
     global _PERFORMANCE_MONITOR
     if _PERFORMANCE_MONITOR is None:
         _PERFORMANCE_MONITOR = ModelPerformanceMonitor()

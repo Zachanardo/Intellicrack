@@ -63,7 +63,29 @@ class ChangeStatus(Enum):
 
 @dataclass
 class CodeChange:
-    """Represents a single code change."""
+    """Represents a single code change.
+
+    Encapsulates all information about a proposed code modification including
+    original and modified code, modification type, confidence score, and
+    application status.
+
+    Attributes:
+        change_id: Unique identifier for this code change.
+        file_path: Path to the file being modified.
+        modification_type: Enum indicating the type of modification.
+        description: Human-readable description of the modification.
+        original_code: Original code before modification.
+        modified_code: Modified code after applying changes.
+        start_line: Starting line number in the file (1-based).
+        end_line: Ending line number in the file (1-based, inclusive).
+        confidence: Confidence score (0.0-1.0) for this modification.
+        reasoning: Explanation of why this modification was generated.
+        status: Current status of the change (pending, approved, applied, etc.).
+        created_at: Timestamp when this change was created.
+        applied_at: Timestamp when change was applied (None if not applied).
+        dependencies: List of change IDs this change depends on.
+        impact_analysis: Dictionary with analysis of potential impact.
+    """
 
     change_id: str
     file_path: str
@@ -84,7 +106,21 @@ class CodeChange:
 
 @dataclass
 class ModificationRequest:
-    """Request for code modification."""
+    """Request for code modification.
+
+    Encapsulates a high-level code modification request with target files,
+    requirements, constraints, and context information.
+
+    Attributes:
+        request_id: Unique identifier for this modification request.
+        description: High-level description of the desired modifications.
+        target_files: List of file paths to be modified.
+        context_files: List of files providing context for modifications.
+        requirements: List of specific requirements to implement.
+        constraints: List of constraints to observe during modification.
+        created_at: Timestamp when this request was created.
+        priority: Priority level (low, medium, high). Defaults to "medium".
+    """
 
     request_id: str
     description: str
@@ -98,7 +134,22 @@ class ModificationRequest:
 
 @dataclass
 class CodeContext:
-    """Context information for code modification."""
+    """Context information for code modification.
+
+    Extracted structural and syntactic information about source code files,
+    used to provide context to AI modification systems.
+
+    Attributes:
+        file_path: Path to the analyzed file.
+        content: Full source code content of the file.
+        language: Programming language identifier (python, javascript, etc.).
+        imports: List of import/require statements found in the file.
+        classes: List of class names defined in the file.
+        functions: List of function/method names defined in the file.
+        variables: List of variable names found in the file.
+        dependencies: List of external package dependencies.
+        ast_info: Dictionary with abstract syntax tree analysis information.
+    """
 
     file_path: str
     content: str
@@ -132,7 +183,18 @@ class CodeAnalyzer:
         }
 
     def analyze_file(self, file_path: str) -> CodeContext:
-        """Analyze a file and extract context information."""
+        """Analyze a file and extract context information.
+
+        Determines the file language and delegates to the appropriate analysis
+        method (Python AST, JavaScript regex, or generic pattern matching).
+
+        Args:
+            file_path: Path to the file to analyze.
+
+        Returns:
+            CodeContext: Extracted context information including imports, classes,
+                functions, variables, and abstract syntax tree metadata.
+        """
         try:
             # Try to use AIFileTools for file reading if available
             content = None
@@ -175,7 +237,18 @@ class CodeAnalyzer:
             )
 
     def _analyze_python_file(self, file_path: str, content: str) -> CodeContext:
-        """Analyze Python file using AST."""
+        """Analyze Python file using abstract syntax tree parsing.
+
+        Parses Python source code to extract imports, classes, functions,
+        variables, and calculate cyclomatic complexity.
+
+        Args:
+            file_path: Path to the Python file being analyzed.
+            content: Source code content of the file.
+
+        Returns:
+            CodeContext: Extracted context with Python-specific analysis results.
+        """
         imports = []
         classes = []
         functions = []
@@ -222,7 +295,18 @@ class CodeAnalyzer:
         )
 
     def _analyze_js_file(self, file_path: str, content: str) -> CodeContext:
-        """Analyze JavaScript/TypeScript file using regex patterns."""
+        """Analyze JavaScript/TypeScript file using regex patterns.
+
+        Extracts JavaScript/TypeScript structure including imports, classes,
+        functions, and variables using regular expression matching.
+
+        Args:
+            file_path: Path to the JavaScript/TypeScript file being analyzed.
+            content: Source code content of the file.
+
+        Returns:
+            CodeContext: Extracted context with JavaScript-specific analysis results.
+        """
         # Import patterns
         import_pattern = r'(?:import|require)\s*\(?[\'"`]([^\'"`]+)[\'"`]\)?'
         imports = re.findall(import_pattern, content)
@@ -253,7 +337,19 @@ class CodeAnalyzer:
         )
 
     def _analyze_generic_file(self, file_path: str, content: str, language: str) -> CodeContext:
-        """Analyze unsupported file types."""
+        """Analyze unsupported file types using language-specific patterns.
+
+        Applies basic function detection patterns for C, C++, and Java files
+        when built-in analyzers are unavailable.
+
+        Args:
+            file_path: Path to the file being analyzed.
+            content: Source code content of the file.
+            language: Programming language identifier (c, cpp, java, etc.).
+
+        Returns:
+            CodeContext: Generic context with detected functions for the language.
+        """
         # Basic function detection
         function_patterns = {
             "c": r"(?:\w+\s+)*(\w+)\s*\([^)]*\)\s*\{",
@@ -279,7 +375,17 @@ class CodeAnalyzer:
         )
 
     def _calculate_complexity(self, tree: ast.AST) -> int:
-        """Calculate cyclomatic complexity of Python AST."""
+        """Calculate cyclomatic complexity of Python abstract syntax tree.
+
+        Computes McCabe cyclomatic complexity by counting control flow nodes
+        including conditionals, loops, exception handlers, and boolean operators.
+
+        Args:
+            tree: Abstract syntax tree to analyze.
+
+        Returns:
+            int: Cyclomatic complexity score (minimum 1).
+        """
         return 1 + sum(
             isinstance(
                 node,
@@ -297,7 +403,17 @@ class CodeAnalyzer:
         )
 
     def _extract_dependencies(self, imports: list[str]) -> list[str]:
-        """Extract external dependencies from imports."""
+        """Extract external dependencies from imports.
+
+        Filters out Python standard library imports and relative imports,
+        returning only third-party package dependencies.
+
+        Args:
+            imports: List of import statements to filter.
+
+        Returns:
+            list[str]: List of unique external dependency names.
+        """
         # Filter out standard library and relative imports
         standard_libs = {
             "os",
@@ -327,7 +443,19 @@ class DiffGenerator:
     """Generates and formats code diffs."""
 
     def generate_unified_diff(self, original: str, modified: str, filename: str = "file") -> str:
-        """Generate unified diff format."""
+        """Generate unified diff in standard patch format.
+
+        Creates a unified diff representation suitable for display or patching,
+        showing line-by-line changes between original and modified code.
+
+        Args:
+            original: Original source code content.
+            modified: Modified source code content.
+            filename: Optional filename for diff headers. Defaults to "file".
+
+        Returns:
+            str: Unified diff string with context lines.
+        """
         original_lines = original.splitlines(keepends=True)
         modified_lines = modified.splitlines(keepends=True)
 
@@ -342,7 +470,18 @@ class DiffGenerator:
         return "".join(diff)
 
     def generate_side_by_side_diff(self, original: str, modified: str) -> dict[str, Any]:
-        """Generate side-by-side diff data."""
+        """Generate side-by-side diff data structure.
+
+        Creates a structured representation of differences between code versions,
+        organizing lines by change type and providing offset information.
+
+        Args:
+            original: Original source code content.
+            modified: Modified source code content.
+
+        Returns:
+            dict[str, Any]: Dictionary with original_lines, modified_lines, and changes lists.
+        """
         original_lines = original.splitlines()
         modified_lines = modified.splitlines()
 
@@ -423,7 +562,18 @@ class DiffGenerator:
         return diff_data
 
     def get_change_summary(self, original: str, modified: str) -> dict[str, int]:
-        """Get summary of changes."""
+        """Calculate quantitative summary of changes between code versions.
+
+        Counts additions, deletions, and modifications at the line level
+        to provide a high-level overview of change magnitude.
+
+        Args:
+            original: Original source code content.
+            modified: Modified source code content.
+
+        Returns:
+            dict[str, int]: Dictionary with additions, deletions, modifications, and total_changes counts.
+        """
         original_lines = original.splitlines()
         modified_lines = modified.splitlines()
 
@@ -475,7 +625,19 @@ class IntelligentCodeModifier:
         self.backup_directory.mkdir(parents=True, exist_ok=True)
 
     def gather_project_context(self, project_root: str, target_files: list[str] | None = None) -> dict[str, CodeContext]:
-        """Gather context about the entire project."""
+        """Gather context information about the entire project.
+
+        Analyzes target files or discovers supported file types in project root,
+        extracting context for each file up to a configured limit.
+
+        Args:
+            project_root: Root directory path of the project to analyze.
+            target_files: Optional list of specific file paths to analyze.
+                If None, discovers all supported file types in project_root.
+
+        Returns:
+            dict[str, CodeContext]: Mapping of relative file paths to their extracted context.
+        """
         logger.info("Gathering project context from: %s", project_root)
 
         project_path = Path(project_root)
@@ -514,7 +676,21 @@ class IntelligentCodeModifier:
         constraints: list[str] | None = None,
         context_files: list[str] | None = None,
     ) -> ModificationRequest:
-        """Create a new modification request."""
+        """Create a new modification request for AI-powered code changes.
+
+        Constructs a structured request object containing target files, requirements,
+        constraints, and context information for code modification.
+
+        Args:
+            description: High-level description of the desired modifications.
+            target_files: List of file paths that should be modified.
+            requirements: Optional list of specific requirements to implement.
+            constraints: Optional list of constraints to observe during modification.
+            context_files: Optional list of files providing context for modifications.
+
+        Returns:
+            ModificationRequest: Structured request object with unique request ID.
+        """
         request_id = f"mod_{int(datetime.now().timestamp())}"
 
         return ModificationRequest(
@@ -527,7 +703,17 @@ class IntelligentCodeModifier:
         )
 
     def analyze_modification_request(self, request: ModificationRequest) -> list[CodeChange]:
-        """Analyze a modification request and generate code changes."""
+        """Analyze a modification request and generate AI-powered code changes.
+
+        Processes a modification request by analyzing target files, creating
+        prompts for the LLM, and parsing responses into CodeChange objects.
+
+        Args:
+            request: ModificationRequest object containing modification details.
+
+        Returns:
+            list[CodeChange]: List of generated CodeChange objects stored as pending changes.
+        """
         logger.info("Analyzing modification request: %s", request.request_id)
 
         # Gather context for target files
@@ -558,7 +744,19 @@ class IntelligentCodeModifier:
         return changes
 
     def _create_modification_prompt(self, request: ModificationRequest, context: CodeContext) -> str:
-        """Create a prompt for AI modification."""
+        """Create a structured prompt for AI-powered code modification.
+
+        Generates a detailed prompt for the LLM containing the modification request,
+        target file information, requirements, constraints, and instructions for
+        response format.
+
+        Args:
+            request: ModificationRequest with high-level modification details.
+            context: CodeContext with extracted information about the target file.
+
+        Returns:
+            str: Formatted prompt string for the LLM.
+        """
         return f"""
 # Code Modification Request
 
@@ -614,7 +812,17 @@ Requirements:
 """
 
     def _get_ai_modification_response(self, prompt: str) -> str:
-        """Get AI response for modification."""
+        """Request AI-generated code modifications from the LLM.
+
+        Sends a formatted prompt to the LLM and retrieves the modification response.
+        Returns empty string on error to allow graceful fallback.
+
+        Args:
+            prompt: Formatted prompt containing modification requirements.
+
+        Returns:
+            str: LLM response content containing proposed code modifications.
+        """
         try:
             messages = [
                 LLMMessage(
@@ -632,7 +840,19 @@ Requirements:
             return ""
 
     def _parse_modification_response(self, response: str, file_path: str, request: ModificationRequest) -> list[CodeChange]:
-        """Parse AI response into CodeChange objects."""
+        """Parse LLM response into structured CodeChange objects.
+
+        Extracts JSON from the LLM response and converts it into CodeChange instances
+        with proper typing and modification metadata for later application.
+
+        Args:
+            response: LLM response text containing JSON modifications.
+            file_path: Path to the file being modified.
+            request: Original ModificationRequest for context and ID information.
+
+        Returns:
+            list[CodeChange]: List of parsed CodeChange objects from the response.
+        """
         changes: list[CodeChange] = []
 
         try:
@@ -683,7 +903,17 @@ Requirements:
         return changes
 
     def preview_changes(self, change_ids: list[str]) -> dict[str, Any]:
-        """Preview changes before applying them."""
+        """Preview pending code changes before application.
+
+        Generates unified diffs and metadata for specified pending changes,
+        identifying affected files and flagging high-risk modifications.
+
+        Args:
+            change_ids: List of change IDs to preview from pending changes.
+
+        Returns:
+            dict[str, Any]: Preview data with changes, files_affected, and risk assessment.
+        """
         files_affected_set: set[str] = set()
         changes_list: list[dict[str, Any]] = []
         total_changes_count: int = 0
@@ -730,7 +960,19 @@ Requirements:
         return preview_data
 
     def apply_changes(self, change_ids: list[str], create_backup: bool = True) -> dict[str, Any]:
-        """Apply the specified changes to files."""
+        """Apply pending code changes to target files.
+
+        Executes specified changes with optional file backups, updating change status
+        and modification history. Groups changes by file for efficient application.
+
+        Args:
+            change_ids: List of change IDs to apply from pending changes.
+            create_backup: Whether to create file backups before applying changes.
+                Defaults to True.
+
+        Returns:
+            dict[str, Any]: Results with applied, failed, backup paths, and error details.
+        """
         results: dict[str, Any] = {
             "applied": [],
             "failed": [],
@@ -788,7 +1030,17 @@ Requirements:
         return results
 
     def _create_backup(self, file_path: str) -> Path:
-        """Create a backup of the file."""
+        """Create a timestamped backup copy of a file.
+
+        Creates a backup with timestamp in the configured backup directory,
+        preserving file metadata and permissions.
+
+        Args:
+            file_path: Path to the file to backup.
+
+        Returns:
+            Path: Path to the created backup file.
+        """
         source_path = Path(file_path)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         backup_name = f"{source_path.name}.{timestamp}.backup"
@@ -802,7 +1054,18 @@ Requirements:
         return backup_path
 
     def _apply_changes_to_file(self, file_path: str, changes: list[CodeChange]) -> bool:
-        """Apply multiple changes to a single file."""
+        """Apply multiple code changes to a single file.
+
+        Reads the file, applies changes in descending line order to preserve offsets,
+        and writes modified content back to disk with UTF-8 encoding.
+
+        Args:
+            file_path: Path to the file to modify.
+            changes: List of CodeChange objects to apply in order.
+
+        Returns:
+            bool: True if all changes applied successfully, False otherwise.
+        """
         try:
             # Read current file content
             content = None
@@ -853,7 +1116,17 @@ Requirements:
             return False
 
     def reject_changes(self, change_ids: list[str]) -> dict[str, Any]:
-        """Reject the specified changes."""
+        """Reject specified pending code changes.
+
+        Marks changes as rejected, moves them to modification history,
+        and removes them from pending changes.
+
+        Args:
+            change_ids: List of change IDs to reject.
+
+        Returns:
+            dict[str, Any]: Dictionary with rejected and not_found change IDs.
+        """
         results: dict[str, Any] = {"rejected": [], "not_found": []}
 
         for change_id in change_ids:
@@ -869,7 +1142,17 @@ Requirements:
         return results
 
     def get_modification_history(self, limit: int = 50) -> list[dict[str, Any]]:
-        """Get modification history."""
+        """Retrieve modification history with optional limit.
+
+        Returns applied and rejected changes from history, sorted by creation time
+        in descending order, useful for auditing and reviewing past modifications.
+
+        Args:
+            limit: Maximum number of history entries to return. Defaults to 50.
+
+        Returns:
+            list[dict[str, Any]]: List of change records with metadata and timestamps.
+        """
         history = sorted(self.modification_history, key=lambda c: c.created_at, reverse=True)
 
         return [
@@ -887,7 +1170,14 @@ Requirements:
         ]
 
     def get_pending_changes(self) -> list[dict[str, Any]]:
-        """Get all pending changes."""
+        """Retrieve all pending code changes awaiting review or application.
+
+        Returns a list of pending changes with their metadata and descriptions
+        for preview or batch processing.
+
+        Returns:
+            list[dict[str, Any]]: List of pending change records with details.
+        """
         return [
             {
                 "change_id": change.change_id,

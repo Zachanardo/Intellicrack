@@ -1292,16 +1292,16 @@ const KeygenGenerator = {
                     const s = sigma[round % 10];
 
                     // Mix columns
-                    this.blake2bG(v, 0, 4, 8, 12, m[s[0]], m[s[1]]);
-                    this.blake2bG(v, 1, 5, 9, 13, m[s[2]], m[s[3]]);
-                    this.blake2bG(v, 2, 6, 10, 14, m[s[4]], m[s[5]]);
-                    this.blake2bG(v, 3, 7, 11, 15, m[s[6]], m[s[7]]);
+                    this.blake2bG({ v, a: 0, b: 4, c: 8, d: 12, x: m[s[0]], y: m[s[1]] });
+                    this.blake2bG({ v, a: 1, b: 5, c: 9, d: 13, x: m[s[2]], y: m[s[3]] });
+                    this.blake2bG({ v, a: 2, b: 6, c: 10, d: 14, x: m[s[4]], y: m[s[5]] });
+                    this.blake2bG({ v, a: 3, b: 7, c: 11, d: 15, x: m[s[6]], y: m[s[7]] });
 
                     // Mix diagonals
-                    this.blake2bG(v, 0, 5, 10, 15, m[s[8]], m[s[9]]);
-                    this.blake2bG(v, 1, 6, 11, 12, m[s[10]], m[s[11]]);
-                    this.blake2bG(v, 2, 7, 8, 13, m[s[12]], m[s[13]]);
-                    this.blake2bG(v, 3, 4, 9, 14, m[s[14]], m[s[15]]);
+                    this.blake2bG({ v, a: 0, b: 5, c: 10, d: 15, x: m[s[8]], y: m[s[9]] });
+                    this.blake2bG({ v, a: 1, b: 6, c: 11, d: 12, x: m[s[10]], y: m[s[11]] });
+                    this.blake2bG({ v, a: 2, b: 7, c: 8, d: 13, x: m[s[12]], y: m[s[13]] });
+                    this.blake2bG({ v, a: 3, b: 4, c: 9, d: 14, x: m[s[14]], y: m[s[15]] });
                 }
 
                 // Finalize
@@ -1310,7 +1310,8 @@ const KeygenGenerator = {
                 }
             },
 
-            blake2bG(v, a, b, c, d, x, y) {
+            blake2bG(params) {
+                const { v, a, b, c, d, x, y } = params;
                 v[a] = (v[a] + v[b] + x) & BigInt('0xFFFFFFFFFFFFFFFF');
                 v[d] = this.rotr64(v[d] ^ v[a], 32);
                 v[c] = (v[c] + v[d]) & BigInt('0xFFFFFFFFFFFFFFFF');
@@ -4085,11 +4086,10 @@ const KeygenGenerator = {
                 if (/012|123|234|345|456|567|678|789|890/.test(key)) {
                     score -= 15; // Sequential numbers
                 }
-                if (
-                    /abc|bcd|cde|def|efg|fgh|ghi|hij|ijk|jkl|klm|lmn|mno|nop|opq|pqr|qrs|rst|stu|tuv|uvw|vwx|wxy|xyz/i.test(
-                        key
-                    )
-                ) {
+                const seqA = 'abc|bcd|cde|def|efg|fgh|ghi|hij|ijk|jkl|klm|lmn';
+                const seqB = 'mno|nop|opq|pqr|qrs|rst|stu|tuv|uvw|vwx|wxy|xyz';
+                const seqLettersRx = new RegExp(`${seqA}|${seqB}`, 'i');
+                if (seqLettersRx.test(key)) {
                     score -= 15; // Sequential letters
                 }
 

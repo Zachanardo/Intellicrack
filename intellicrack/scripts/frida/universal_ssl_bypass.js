@@ -91,17 +91,12 @@ function detectTLSLibraries() {
     return detected;
 }
 
-function _loadBypassScript(scriptName, scriptContent) {
-    try {
-        log(`Loading bypass script: ${scriptName}`);
-        eval(scriptContent);
-        activeBypasses.push(scriptName);
-        log(`Successfully loaded ${scriptName}`);
-        return true;
-    } catch (error) {
-        logError(`Failed to load ${scriptName}: ${error.message}`);
-        return false;
-    }
+function registerBypassActivation(scriptName) {
+    log(`Registering bypass activation: ${scriptName}`);
+    activeBypasses.push(scriptName);
+    log(`Bypass registered: ${scriptName}`);
+    send({ type: 'bypass_registered', script: scriptName });
+    return true;
 }
 
 function activateBypassForLibrary(libType) {
@@ -162,13 +157,20 @@ function activateGenericBypass() {
     ];
 
     let hooksInstalled = 0;
+    let limitReached = false;
 
-    Process.enumerateModules().forEach(module => {
+    for (const module of Process.enumerateModules()) {
+        if (limitReached) {
+            break;
+        }
         try {
             const exports = module.enumerateExports();
-            exports.forEach(exp => {
+            for (const exp of exports) {
+                if (limitReached) {
+                    break;
+                }
                 if (exp.type === 'function') {
-                    const { name } = exp;
+                    const { name, address } = exp;
 
                     const isLikelyCertFunc = commonValidationPatterns.some(
                         pattern =>
@@ -185,7 +187,7 @@ function activateGenericBypass() {
 
                     if (isLikelyCertFunc) {
                         try {
-                            Interceptor.attach(exp.address, {
+                            Interceptor.attach(address, {
                                 onEnter(_args) {
                                     this.funcName = name;
                                 },
@@ -204,15 +206,20 @@ function activateGenericBypass() {
                             hooksInstalled++;
                             log(`Generic hook installed: ${module.name}!${name}`);
 
-                            if (hooksInstalled >= 50) {}
-                        } catch {}
+                            if (hooksInstalled >= 50) {
+                                log('Hook limit reached (50), stopping further generic hook installation');
+                                limitReached = true;
+                            }
+                        } catch (hookError) {
+                            log(`Failed to hook ${name}: ${hookError.message}`, 'debug');
+                        }
                     }
                 }
-            });
+            }
         } catch (error) {
             logError(`Failed to enumerate exports for ${module.name}: ${error.message}`);
         }
-    });
+    }
 
     log(`Generic bypass activated with ${hooksInstalled} hooks`);
     activeBypasses.push('generic_ssl_bypass');
@@ -308,6 +315,16 @@ function initialize() {
     send({ type: 'bypass_ready', detectedLibraries: detected });
 }
 
+function detectPlatform() {
+    if (Java.available) {
+        return 'Android';
+    }
+    if (ObjC.available) {
+        return 'iOS';
+    }
+    return 'Desktop';
+}
+
 rpc.exports = {
     getDetectedLibraries: () => detectedLibraries,
     getActiveBypass: () => activeBypasses,
@@ -318,7 +335,7 @@ rpc.exports = {
         activeBypassCount: activeBypasses.length,
         detectedLibraries: detectedLibraries.map(lib => lib.type),
         activeBypasses,
-        platform: Java.available ? 'Android' : (ObjC.available ? 'iOS' : 'Desktop'),
+        platform: detectPlatform(),
     }),
     testBypass: () => performSelfTest(),
     forceGenericBypass: () => {
@@ -341,6 +358,7 @@ rpc.exports = {
         log('Activity logs cleared');
         return true;
     },
+    registerBypass: scriptName => registerBypassActivation(scriptName),
 };
 
 initialize();

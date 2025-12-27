@@ -26,7 +26,14 @@ if TYPE_CHECKING:
 def _import_crypto() -> tuple[
     bool, type[Any] | None, type[Any] | None, type[Any] | None, Any | None, type[Any] | None, Any | None, Any | None, Any | None, Any | None
 ]:
-    """Import cryptography modules safely."""
+    """Import cryptography modules safely.
+
+    Returns:
+        Tuple containing success flag and cryptography module components:
+        (has_crypto, Cipher, SHA256, PBKDF2HMAC, rsa, PKCS1v15, padding,
+        algorithms, modes, hashes) or (False, None, ..., None) on import failure.
+
+    """
     try:
         from cryptography.hazmat.primitives import hashes
         from cryptography.hazmat.primitives.asymmetric import padding, rsa
@@ -39,7 +46,14 @@ def _import_crypto() -> tuple[
 
 
 def _import_win32() -> tuple[bool, Any, Any, Any, Any]:
-    """Import win32 modules safely."""
+    """Import win32 modules safely.
+
+    Returns:
+        Tuple containing success flag and win32 module components:
+        (has_win32, win32api, win32con, win32file, win32security)
+        or (False, None, None, None, None) on import failure.
+
+    """
     try:
         import win32api
         import win32con
@@ -52,7 +66,13 @@ def _import_win32() -> tuple[bool, Any, Any, Any, Any]:
 
 
 def _import_frida() -> tuple[bool, Any]:
-    """Import frida module safely."""
+    """Import frida module safely.
+
+    Returns:
+        Tuple containing success flag and frida module component:
+        (has_frida, frida) or (False, None) on import failure.
+
+    """
     try:
         import frida
 
@@ -305,7 +325,13 @@ class TPMBypassEngine:
     """Advanced TPM 2.0 bypass implementation."""
 
     def __init__(self) -> None:
-        """Initialize the TPM2Bypass with logging and TPM-related data structures."""
+        """Initialize TPM bypass engine with TPM state and attack vectors.
+
+        Sets up PCR banks, memory attack infrastructure, virtualized TPM state,
+        command hooks, and Frida integration capabilities for comprehensive TPM
+        protection bypassing.
+
+        """
         self.logger = logging.getLogger(__name__)
         self.tpm_handle: int | None = None
         self.tpm_version: str | None = None
@@ -357,7 +383,13 @@ class TPMBypassEngine:
         self.init_bypass_components()
 
     def init_bypass_components(self) -> None:
-        """Initialize TPM bypass components."""
+        """Initialize TPM bypass components and infrastructure.
+
+        Sets up PCR banks for SHA-256 and SHA-1 algorithms with default values,
+        initializes memory attack vectors, and configures bus sniffer for LPC/SPI
+        monitoring.
+
+        """
         self.pcr_banks = {
             TPM2Algorithm.SHA256: PCRBank(
                 algorithm=TPM2Algorithm.SHA256,
@@ -375,7 +407,13 @@ class TPMBypassEngine:
         self.init_bus_sniffer()
 
     def init_memory_attack_vectors(self) -> None:
-        """Initialize memory attack vectors for TPM bypass."""
+        """Initialize memory attack vectors for TPM bypass.
+
+        Attempts to obtain handles to physical memory on Windows systems and
+        maps TPM memory addresses including control registers, locality spaces,
+        FIFO buffers, and identification registers for low-level hardware access.
+
+        """
         self.mem_handle = None
         self.memory_map = {}
 
@@ -413,7 +451,13 @@ class TPMBypassEngine:
         }
 
     def init_bus_sniffer(self) -> None:
-        """Initialize LPC/SPI bus sniffer for TPM communication."""
+        """Initialize LPC/SPI bus sniffer for TPM communication monitoring.
+
+        Configures decoders for LPC/SPI bus operations including read/write status,
+        TPM commands, burst transfers, and cancel operations for intercepting
+        hardware-level TPM communications.
+
+        """
         self.bus_captures = []
         self.spi_decoder = {
             0x80: "read_status",
@@ -426,7 +470,22 @@ class TPMBypassEngine:
         }
 
     def bypass_attestation(self, challenge: bytes, pcr_selection: list[int]) -> AttestationData:
-        """Bypass TPM attestation with forged attestation data."""
+        """Bypass TPM attestation with forged attestation data.
+
+        Constructs a complete attestation response with proper TPM tag, type,
+        qualified signer, clock information, and forged signature to satisfy
+        remote attestation verification checks.
+
+        Args:
+            challenge: Nonce/challenge value from attestation request.
+            pcr_selection: List of PCR indices to include in attestation.
+
+        Returns:
+            AttestationData structure containing forged attestation response
+            components including magic, type, signer, extra data, clock info,
+            firmware version, attested data, and signature.
+
+        """
         magic = b"\xff\x54\x43\x47"
         attestation_type = 0x8018
 
@@ -462,7 +521,18 @@ class TPMBypassEngine:
         )
 
     def calculate_pcr_digest(self, pcr_selection: list[int]) -> bytes:
-        """Calculate PCR digest for selected PCRs."""
+        """Calculate PCR digest for selected PCRs.
+
+        Computes SHA-256 hash over the concatenated values of specified PCRs
+        from the internal PCR bank to create attestation digest.
+
+        Args:
+            pcr_selection: List of PCR indices to include in digest.
+
+        Returns:
+            SHA-256 hash digest of concatenated PCR values.
+
+        """
         hasher = hashlib.sha256()
 
         for pcr_num in pcr_selection:
@@ -477,6 +547,12 @@ class TPMBypassEngine:
 
         Creates a properly structured signature that mimics legitimate TPM attestation.
         The signature follows PKCS#1 v1.5 format with SHA-256 DigestInfo.
+
+        Args:
+            message: Message data to create signature for.
+
+        Returns:
+            Forged PKCS#1 v1.5 padded signature bytes (256 bytes).
 
         """
         hasher = hashlib.sha256(message)
@@ -497,7 +573,19 @@ class TPMBypassEngine:
         return padded
 
     def extract_sealed_keys(self, auth_value: bytes = b"") -> dict[str, bytes]:
-        """Extract sealed keys from TPM NVRAM and persistent storage."""
+        """Extract sealed keys from TPM NVRAM and persistent storage.
+
+        Retrieves TPM-sealed cryptographic keys from NVRAM indices, persistent
+        object handles, and transient memory to recover materials used for
+        licensing verification.
+
+        Args:
+            auth_value: Authorization password/HMAC for NVRAM access.
+
+        Returns:
+            Dictionary mapping key identifiers to extracted key data.
+
+        """
         extracted_keys: dict[str, bytes] = {}
 
         nvram_indices = [
@@ -541,7 +629,19 @@ class TPMBypassEngine:
         return extracted_keys
 
     def read_nvram_raw(self, index: int, auth: bytes) -> bytes | None:
-        """Read raw data from TPM NVRAM."""
+        """Read raw data from TPM NVRAM.
+
+        Attempts to read NVRAM location via TPM NV_Read command or falls back
+        to reading from virtualized NVRAM state using index mapping.
+
+        Args:
+            index: NVRAM index to read from.
+            auth: Authorization value for NVRAM access.
+
+        Returns:
+            Raw NVRAM data or None if read fails or location is empty.
+
+        """
         command = struct.pack(">HII", 0x8002, 0, TPM2CommandCode.NV_Read)
 
         command += struct.pack(">I", index)
@@ -586,7 +686,18 @@ class TPMBypassEngine:
         return None
 
     def extract_persistent_key(self, handle: int) -> bytes | None:
-        """Extract persistent key from TPM."""
+        """Extract persistent key from TPM.
+
+        Retrieves public key from persistent object handle via TPM ReadPublic
+        command or extracts from physical memory using handle-based address mapping.
+
+        Args:
+            handle: TPM persistent object handle.
+
+        Returns:
+            Persistent key data or None if extraction fails.
+
+        """
         command = struct.pack(">HIII", 0x8001, 14, TPM2CommandCode.ReadPublic, handle)
 
         response = self.send_tpm_command(command)
@@ -599,7 +710,15 @@ class TPMBypassEngine:
         return self.extract_key_from_memory_handle(handle) if self.mem_handle else None
 
     def extract_keys_from_memory(self) -> dict[str, bytes]:
-        """Extract keys directly from TPM memory."""
+        """Extract keys directly from TPM memory.
+
+        Scans physical TPM memory for RSA and ECC key material patterns and
+        extracts cryptographic data for further analysis.
+
+        Returns:
+            Dictionary mapping memory location hashes to extracted key data.
+
+        """
         extracted: dict[str, bytes] = {}
 
         if not self.mem_handle:
@@ -631,7 +750,18 @@ class TPMBypassEngine:
         return extracted
 
     def extract_key_from_memory_handle(self, handle: int) -> bytes | None:
-        """Extract key from memory using handle offset."""
+        """Extract key from memory using handle offset.
+
+        Maps persistent object handle to physical memory address and retrieves
+        key material from TPM buffer region.
+
+        Args:
+            handle: TPM persistent object handle.
+
+        Returns:
+            Key material from memory or None if extraction fails.
+
+        """
         if not self.mem_handle:
             return None
 
@@ -644,7 +774,19 @@ class TPMBypassEngine:
         return None
 
     def read_physical_memory(self, address: int, size: int) -> bytes | None:
-        """Read from physical memory address."""
+        """Read from physical memory address.
+
+        Reads arbitrary bytes from physical memory via Windows kernel device
+        driver interface for direct hardware memory access.
+
+        Args:
+            address: Physical memory address to read from.
+            size: Number of bytes to read.
+
+        Returns:
+            Memory contents as bytes or None if read fails.
+
+        """
         if not self.mem_handle or not HAS_WIN32:
             return None
 
@@ -663,7 +805,21 @@ class TPMBypassEngine:
         return None
 
     def spoof_remote_attestation(self, nonce: bytes, expected_pcrs: dict[int, bytes], aik_handle: int = 0x81010001) -> dict[str, Any]:
-        """Spoof remote attestation with expected PCR values."""
+        """Spoof remote attestation with expected PCR values.
+
+        Forges remote attestation response by setting desired PCR values and
+        generating corresponding quote with AIK certificate.
+
+        Args:
+            nonce: Nonce value from remote attestation challenge.
+            expected_pcrs: Dictionary mapping PCR indices to desired values.
+            aik_handle: TPM attestation identity key handle.
+
+        Returns:
+            Dictionary containing forged quote, PCR values, AIK certificate,
+            clock info, firmware version, and qualified signer.
+
+        """
         for pcr_num, pcr_value in expected_pcrs.items():
             if pcr_num < 24:
                 self.pcr_banks[TPM2Algorithm.SHA256].pcr_values[pcr_num] = pcr_value
@@ -688,7 +844,18 @@ class TPMBypassEngine:
         }
 
     def generate_aik_certificate(self, aik_handle: int) -> bytes:
-        """Generate AIK certificate for attestation."""
+        """Generate AIK certificate for attestation.
+
+        Creates a self-signed X.509 certificate for attestation identity key
+        with proper ASN.1 encoding, extensions, and signature.
+
+        Args:
+            aik_handle: TPM attestation identity key handle.
+
+        Returns:
+            DER-encoded X.509 certificate for AIK.
+
+        """
         version = b"\xa0\x03\x02\x01\x02"
 
         serial = b"\x02\x10" + os.urandom(16)
@@ -761,7 +928,18 @@ class TPMBypassEngine:
         return cert
 
     def send_tpm_command(self, command: bytes) -> bytes | None:
-        """Send command to TPM device with interception capability."""
+        """Send command to TPM device with interception capability.
+
+        Routes TPM command through installed hooks, attempts Windows TPM device
+        interface, or processes via virtualized TPM implementation.
+
+        Args:
+            command: Raw TPM command bytes.
+
+        Returns:
+            TPM response bytes or None if command processing fails.
+
+        """
         if len(command) < 10:
             return None
 
@@ -811,7 +989,19 @@ class TPMBypassEngine:
         return self.process_virtualized_command(command)
 
     def process_virtualized_command(self, command: bytes) -> bytes:
-        """Process TPM command in virtualized environment with full command support."""
+        """Process TPM command in virtualized environment with full command support.
+
+        Handles TPM 2.0 commands including PCR operations, quote generation, key
+        unsealing, and session management by processing commands in a virtualized
+        TPM implementation that maintains complete state.
+
+        Args:
+            command: Raw TPM 2.0 command bytes.
+
+        Returns:
+            TPM response bytes generated from virtualized TPM processing.
+
+        """
         if len(command) < 10:
             return struct.pack(">HII", 0x8001, 10, 0x100)
 
@@ -899,7 +1089,18 @@ class TPMBypassEngine:
         return struct.pack(">HII", 0x8001, 10, 0x100)
 
     def process_tpm12_command(self, command: bytes) -> bytes:
-        """Process TPM 1.2 command for legacy TPM support."""
+        """Process TPM 1.2 command for legacy TPM support.
+
+        Handles legacy TPM 1.2 commands including PCR operations, sealing/unsealing,
+        quote generation, and session management within TPM 1.2 specification.
+
+        Args:
+            command: Raw TPM 1.2 command bytes.
+
+        Returns:
+            TPM 1.2 response bytes.
+
+        """
         if len(command) < 10:
             return struct.pack(">HI", 0xC400, 10) + struct.pack(">I", 0)
 
@@ -966,7 +1167,18 @@ class TPMBypassEngine:
         return struct.pack(">HI", 0xC400, 10) + struct.pack(">I", 0x00000001)
 
     def _build_tpm12_pcr_composite(self, pcr_selection: list[int]) -> bytes:
-        """Build TPM 1.2 PCR composite structure."""
+        """Build TPM 1.2 PCR composite structure.
+
+        Constructs PCR composite format for TPM 1.2 quote operations including
+        selection bitmap and PCR values.
+
+        Args:
+            pcr_selection: List of PCR indices to include.
+
+        Returns:
+            Formatted TPM 1.2 PCR composite bytes.
+
+        """
         pcr_select_size = 3
         pcr_select = bytearray(pcr_select_size)
 
@@ -988,7 +1200,15 @@ class TPMBypassEngine:
         return composite
 
     def detect_tpm_version(self) -> str | None:
-        """Detect TPM version (1.2 or 2.0)."""
+        """Detect TPM version (1.2 or 2.0).
+
+        Queries TPM device via Windows interface or reads hardware identification
+        registers to determine installed TPM specification version.
+
+        Returns:
+            TPM version string ("1.2" or "2.0") or None if detection fails.
+
+        """
         if HAS_WIN32 and _win32file is not None and _win32con is not None:
             try:
                 tpm_device = _win32file.CreateFile(
@@ -1030,7 +1250,15 @@ class TPMBypassEngine:
         return self.tpm_version
 
     def manipulate_pcr_values(self, pcr_values: dict[int, bytes]) -> None:
-        """Directly manipulate PCR values for bypass."""
+        """Directly manipulate PCR values for bypass.
+
+        Updates internal PCR bank values to desired states for both SHA-256 and
+        SHA-1 algorithms to satisfy PCR policy checks.
+
+        Args:
+            pcr_values: Dictionary mapping PCR indices to desired byte values.
+
+        """
         for pcr_num, value in pcr_values.items():
             if pcr_num < 24:
                 if TPM2Algorithm.SHA256 in self.pcr_banks:
@@ -1041,7 +1269,18 @@ class TPMBypassEngine:
                     self.pcr_banks[TPM2Algorithm.SHA1].pcr_values[pcr_num] = sha1_value
 
     def perform_bus_attack(self, target_command: TPM2CommandCode) -> bytes | None:
-        """Perform LPC/SPI bus attack to intercept TPM communication."""
+        """Perform LPC/SPI bus attack to intercept TPM communication.
+
+        Captures and optionally replays TPM commands at the bus level to intercept
+        sensitive operations like unsealing or random number generation.
+
+        Args:
+            target_command: TPM command code to target for bus interception.
+
+        Returns:
+            Captured or fabricated command data or None if not applicable.
+
+        """
         captured_data: bytes | None = None
 
         if target_command in (TPM2CommandCode.Unseal, TPM2CommandCode.GetRandom):
@@ -1053,7 +1292,18 @@ class TPMBypassEngine:
         return captured_data
 
     def bypass_measured_boot(self, target_pcr_state: dict[int, bytes]) -> bool:
-        """Bypass measured boot by manipulating PCR values."""
+        """Bypass measured boot by manipulating PCR values.
+
+        Sets PCR values to match target state to circumvent measured boot
+        verification and licensing tied to boot integrity checks.
+
+        Args:
+            target_pcr_state: Dictionary mapping PCR indices to desired values.
+
+        Returns:
+            True after PCR manipulation is applied.
+
+        """
         if 0 in target_pcr_state:
             self.manipulate_pcr_values({0: target_pcr_state[0]})
 
@@ -1066,7 +1316,15 @@ class TPMBypassEngine:
         return True
 
     def extract_bitlocker_vmk(self) -> bytes | None:
-        """Extract BitLocker Volume Master Key from TPM."""
+        """Extract BitLocker Volume Master Key from TPM.
+
+        Retrieves BitLocker Volume Master Key from TPM NVRAM indices or memory
+        to bypass full-disk encryption tied to TPM-protected licensing.
+
+        Returns:
+            BitLocker VMK bytes or None if extraction fails.
+
+        """
         bitlocker_indices = [0x01400001, 0x01400002, 0x01400003]
 
         for index in bitlocker_indices:
@@ -1114,7 +1372,15 @@ class TPMBypassEngine:
         return None
 
     def bypass_windows_hello(self) -> dict[str, bytes]:
-        """Bypass Windows Hello TPM-based authentication."""
+        """Bypass Windows Hello TPM-based authentication.
+
+        Extracts Windows Hello biometric templates and PIN keys from TPM NVRAM
+        to bypass biometric and PIN-based licensing checks.
+
+        Returns:
+            Dictionary containing Hello keys, biometric template, and PIN key.
+
+        """
         hello_keys: dict[str, bytes] = {}
 
         hello_indices = [0x01400002, 0x01800003, 0x01810003]
@@ -1136,7 +1402,15 @@ class TPMBypassEngine:
         return hello_keys
 
     def cold_boot_attack(self) -> dict[str, bytes]:
-        """Perform cold boot attack on TPM memory."""
+        """Perform cold boot attack on TPM memory.
+
+        Exploits physical memory residue after boot to extract cryptographic keys
+        and secrets from TPM memory regions before system protection resets.
+
+        Returns:
+            Dictionary containing extracted key material from memory regions.
+
+        """
         extracted_secrets: dict[str, bytes] = {}
 
         if HAS_WIN32 and _win32api is not None and _win32security is not None:
@@ -1187,7 +1461,15 @@ class TPMBypassEngine:
         return extracted_secrets
 
     def reset_tpm_lockout(self) -> bool:
-        """Reset TPM lockout to bypass dictionary attack protection."""
+        """Reset TPM lockout to bypass dictionary attack protection.
+
+        Issues DictionaryAttackLockReset command to clear TPM lockout counter
+        and remove restrictions on authentication attempts.
+
+        Returns:
+            True if lockout reset succeeds, False otherwise.
+
+        """
         command = struct.pack(">HII", 0x8002, 0, TPM2CommandCode.DictionaryAttackLockReset)
 
         command += struct.pack(">I", 0x4000000A)
@@ -1209,7 +1491,15 @@ class TPMBypassEngine:
         return False
 
     def clear_tpm_ownership(self) -> bool:
-        """Clear TPM ownership to gain control."""
+        """Clear TPM ownership to gain control.
+
+        Issues TPM Clear command to reset ownership and hierarchy authentication
+        to enable unrestricted TPM access.
+
+        Returns:
+            True if clear command succeeds, False otherwise.
+
+        """
         command = struct.pack(">HII", 0x8002, 0, TPM2CommandCode.Clear)
 
         command += struct.pack(">I", 0x4000000C)
@@ -1278,7 +1568,24 @@ class TPMBypassEngine:
                 result_buf: int,
                 result_size: int,
             ) -> int:
-                """Hooked TBS command submission."""
+                """Hooked TBS command submission.
+
+                Intercepts Windows TBS command submissions to capture and optionally
+                modify TPM commands before they reach the TPM device driver.
+
+                Args:
+                    context: TBS context handle.
+                    locality: TPM locality specifier.
+                    priority: Command priority level.
+                    command_buf: Pointer to command buffer.
+                    command_size: Size of command data.
+                    result_buf: Pointer to result buffer.
+                    result_size: Size of result buffer.
+
+                Returns:
+                    Status code from original or hooked command handler.
+
+                """
                 if command_size >= 10:
                     command_data = ctypes.string_at(command_buf, command_size)
 
@@ -1347,7 +1654,20 @@ class TPMBypassEngine:
             return None
 
     def _unseal_tpm2_private_blob(self, blob: bytes, auth: bytes, pcr_policy: dict[int, bytes] | None) -> bytes | None:
-        """Unseal TPM 2.0 private key blob."""
+        """Unseal TPM 2.0 private key blob.
+
+        Decrypts sealed private key blob using AES-CBC decryption with key
+        derived from authorization value and handles padding removal.
+
+        Args:
+            blob: TPM 2.0 private sealed blob bytes.
+            auth: Authorization value for decryption key derivation.
+            pcr_policy: PCR policy values to satisfy, None if not required.
+
+        Returns:
+            Unsealed key data or None if decryption fails.
+
+        """
         if pcr_policy:
             for pcr_num, expected_value in pcr_policy.items():
                 if pcr_num < 24:
@@ -1408,7 +1728,19 @@ class TPMBypassEngine:
         return None
 
     def _unseal_tpm2_credential_blob(self, blob: bytes, auth: bytes) -> bytes | None:
-        """Unseal TPM 2.0 credential blob (for activation)."""
+        """Unseal TPM 2.0 credential blob (for activation).
+
+        Decrypts credential blob using PBKDF2-derived key and AES-CBC to
+        extract credential material from ActivateCredential responses.
+
+        Args:
+            blob: TPM 2.0 credential sealed blob bytes.
+            auth: Authorization seed value for key derivation.
+
+        Returns:
+            Unsealed credential data or None if decryption fails.
+
+        """
         if len(blob) < 6:
             return None
 
@@ -1457,7 +1789,19 @@ class TPMBypassEngine:
         return None
 
     def _unseal_generic_blob(self, blob: bytes, auth: bytes) -> bytes | None:
-        """Unseal generic encrypted blob using common TPM patterns."""
+        """Unseal generic encrypted blob using common TPM patterns.
+
+        Attempts multiple decryption strategies including common TPM keys and
+        both CBC and ECB modes to unseal unrecognized blob formats.
+
+        Args:
+            blob: Encrypted blob bytes of unknown format.
+            auth: Authorization value for key material.
+
+        Returns:
+            Unsealed data or None if all decryption attempts fail.
+
+        """
         common_keys: list[bytes] = [
             auth,
             hashlib.sha256(auth).digest(),
@@ -1506,7 +1850,18 @@ class TPMBypassEngine:
         return None
 
     def _unseal_without_crypto(self, blob: bytes) -> bytes | None:
-        """Fallback unsealing without PyCryptodome."""
+        """Fallback unsealing without PyCryptodome.
+
+        Extracts key material from encrypted blob using pattern matching when
+        cryptographic libraries are unavailable.
+
+        Args:
+            blob: Encrypted blob bytes.
+
+        Returns:
+            Extracted key material or None if no patterns found.
+
+        """
         if len(blob) < 16:
             return None
 
@@ -1524,7 +1879,18 @@ class TPMBypassEngine:
         return None
 
     def _looks_like_valid_key(self, data: bytes) -> bool:
-        """Check if decrypted data looks like valid key material."""
+        """Check if decrypted data looks like valid key material.
+
+        Validates decrypted blob by checking for RSA/ECC magic bytes, PEM headers,
+        DER encoding markers, or high entropy typical of cryptographic material.
+
+        Args:
+            data: Decrypted data to validate.
+
+        Returns:
+            True if data appears to be valid cryptographic key material.
+
+        """
         if len(data) < 16:
             return False
 
@@ -1541,10 +1907,31 @@ class TPMBypassEngine:
         return entropy > 0.5
 
     def manipulate_pcr_extend(self, pcr_num: int, extend_value: bytes, block: bool = True) -> bool:
-        """Intercept and block or modify PCR extend operations."""
+        """Intercept and block or modify PCR extend operations.
+
+        Installs hook for PCR_Extend commands to either block extend operations
+        or modify extend values to prevent PCR changes from detected actions.
+
+        Args:
+            pcr_num: PCR index to target.
+            extend_value: Value to extend PCR with if not blocking.
+            block: If True block extend, if False modify with extend_value.
+
+        Returns:
+            True if hook installed successfully.
+
+        """
 
         def pcr_extend_hook(command: bytes) -> bytes | None:
-            """Process hooked PCR_Extend command."""
+            """Process hooked PCR_Extend command.
+
+            Args:
+                command: Raw TPM PCR_Extend command bytes.
+
+            Returns:
+                Modified command or success response, or None to pass through.
+
+            """
             if len(command) < 14:
                 return None
 
@@ -1570,7 +1957,20 @@ class TPMBypassEngine:
         return self.intercept_tpm_command(TPM2CommandCode.PCR_Extend, pcr_extend_hook)
 
     def forge_quote_signature(self, quote_info: bytes, pcr_digest: bytes, nonce: bytes) -> bytes:
-        """Forge TPM Quote signature with proper structure."""
+        """Forge TPM Quote signature with proper structure.
+
+        Creates PKCS#1 v1.5 signature over quote data using RSA private key to
+        create verifiable but forged TPM quote attestation.
+
+        Args:
+            quote_info: Quote information to sign.
+            pcr_digest: PCR digest data to include.
+            nonce: Nonce value from original quote request.
+
+        Returns:
+            RSA signature bytes or random fallback.
+
+        """
         if not HAS_CRYPTO:
             return os.urandom(256)
 
@@ -1594,7 +1994,18 @@ class TPMBypassEngine:
         return os.urandom(256)
 
     def extract_pcr_policy(self, policy_digest: bytes) -> dict[int, bytes] | None:
-        """Extract PCR selection and values from TPM policy digest."""
+        """Extract PCR selection and values from TPM policy digest.
+
+        Analyzes policy digest to determine which PCRs are involved in the policy
+        by testing each PCR against the digest.
+
+        Args:
+            policy_digest: TPM policy digest to reverse engineer.
+
+        Returns:
+            Dictionary mapping PCR indices to their required values, or None.
+
+        """
         pcr_policy: dict[int, bytes] = {}
 
         if len(policy_digest) < 32:
@@ -1615,7 +2026,18 @@ class TPMBypassEngine:
         return pcr_policy or None
 
     def detect_tpm_usage(self, binary_path: str) -> bool:
-        """Detect if binary uses TPM protection."""
+        """Detect if binary uses TPM protection.
+
+        Scans binary file for TPM-related API calls and indicators to determine
+        if licensing protection mechanisms depend on Trusted Platform Module.
+
+        Args:
+            binary_path: Path to binary file to analyze.
+
+        Returns:
+            True if TPM indicators found in binary, False otherwise.
+
+        """
         try:
             binary_path_obj = Path(binary_path)
             if not binary_path_obj.exists():
@@ -1653,7 +2075,20 @@ class TPMBypassEngine:
             return False
 
     def analyze_tpm_protection(self, binary_path: str) -> dict[str, Any]:
-        """Analyze TPM protection mechanisms in binary."""
+        """Analyze TPM protection mechanisms in binary.
+
+        Performs comprehensive analysis of TPM protection implementation including
+        API detection, PCR usage patterns, NVRAM access, and protection strength
+        assessment with bypass difficulty rating.
+
+        Args:
+            binary_path: Path to binary file to analyze.
+
+        Returns:
+            Dictionary with TPM detection status, APIs, PCR usage, NVRAM indices,
+            protection strength and bypass difficulty ratings.
+
+        """
         analysis: dict[str, Any] = {
             "tpm_detected": False,
             "tpm_apis": [],
@@ -1743,7 +2178,19 @@ class TPMBypassEngine:
             return analysis
 
     def bypass_tpm_protection(self, binary_path: str, output_path: str | None = None) -> bool:
-        """Bypass TPM protection in binary through patching."""
+        """Bypass TPM protection in binary through patching.
+
+        Patches TPM API calls and conditional branches implementing licensing
+        checks to disable TPM-based protection mechanisms in binary.
+
+        Args:
+            binary_path: Path to binary to patch.
+            output_path: Output path for patched binary, None for auto-naming.
+
+        Returns:
+            True if patches applied successfully, False otherwise.
+
+        """
         try:
             binary_path_obj = Path(binary_path)
             if not binary_path_obj.exists():
@@ -1802,7 +2249,17 @@ class TPMBypassEngine:
             return False
 
     def get_bypass_capabilities(self) -> dict[str, Any]:
-        """Get comprehensive list of TPM bypass capabilities."""
+        """Get comprehensive list of TPM bypass capabilities.
+
+        Returns detailed information about all available TPM bypass methods,
+        attack vectors, and current system capabilities.
+
+        Returns:
+            Dictionary describing TPM versions supported, command interception,
+            PCR manipulation, key extraction, attestation bypass, unsealing,
+            advanced attacks, platform-specific exploits, and runtime methods.
+
+        """
         frida_session_active = False
         if self.frida_session is not None:
             try:
@@ -1869,7 +2326,15 @@ class TPMBypassEngine:
         }
 
     def get_intercepted_commands_summary(self) -> dict[str, Any]:
-        """Get summary of intercepted TPM commands."""
+        """Get summary of intercepted TPM commands.
+
+        Compiles statistics on intercepted TPM commands including command types,
+        counts, and timeline of operations.
+
+        Returns:
+            Dictionary with total command count, command type breakdown, and timeline.
+
+        """
         summary: dict[str, Any] = {
             "total_commands": len(self.intercepted_commands),
             "command_types": {},
@@ -1899,7 +2364,18 @@ class TPMBypassEngine:
         return summary
 
     def _get_command_name(self, code: int) -> str:
-        """Get command name from code."""
+        """Get command name from code.
+
+        Resolves TPM command code to human-readable name from TPM 2.0 or 1.2
+        command enumerations.
+
+        Args:
+            code: TPM command code integer.
+
+        Returns:
+            Command name string or hex representation if unknown.
+
+        """
         for cmd_enum in [TPM2CommandCode, TPM12CommandCode]:
             try:
                 return cmd_enum(code).name
@@ -1908,7 +2384,19 @@ class TPMBypassEngine:
         return f"Unknown_0x{code:08x}"
 
     def attach_to_process_frida(self, target_binary: str, message_callback: Callable[[Any, Any], None] | None = None) -> bool:
-        """Attach Frida to target process for runtime TPM bypass."""
+        """Attach Frida to target process for runtime TPM bypass.
+
+        Establishes Frida session with target binary or process for runtime code
+        injection and TPM command/PCR value interception.
+
+        Args:
+            target_binary: Binary path, PID, or process name to attach to.
+            message_callback: Optional callback for Frida messages during execution.
+
+        Returns:
+            True if Frida session attached successfully, False otherwise.
+
+        """
         if not HAS_FRIDA or _frida is None:
             self.logger.exception("Frida not available - install frida-tools")
             return False
@@ -1937,7 +2425,15 @@ class TPMBypassEngine:
             return False
 
     def inject_tpm_command_interceptor(self) -> bool:
-        """Inject TPM command interceptor Frida script."""
+        """Inject TPM command interceptor Frida script.
+
+        Loads and injects Frida script into target process to intercept TPM
+        command submissions and responses at runtime.
+
+        Returns:
+            True if injector script loaded successfully, False otherwise.
+
+        """
         if not self.frida_session:
             self.logger.exception("No active Frida session - call attach_to_process_frida first")
             return False
@@ -1955,6 +2451,13 @@ class TPMBypassEngine:
             self.frida_script = self.frida_session.create_script(script_source)
 
             def on_message(message: dict[str, Any], data: Any) -> None:
+                """Handle Frida script messages.
+
+                Args:
+                    message: Frida message dictionary with type and payload.
+                    data: Associated message data or None.
+
+                """
                 if message.get("type") == "send":
                     payload = message.get("payload", "")
                     self.logger.info("[Frida] %s", payload)
@@ -1978,7 +2481,18 @@ class TPMBypassEngine:
             return False
 
     def inject_pcr_manipulator(self, pcr_config: dict[int, bytes] | None = None) -> bool:
-        """Inject PCR manipulation Frida script."""
+        """Inject PCR manipulation Frida script.
+
+        Loads Frida script to intercept and modify PCR values at runtime,
+        optionally setting specific PCR values for licensing bypass.
+
+        Args:
+            pcr_config: Optional dictionary of PCR indices to desired values.
+
+        Returns:
+            True if PCR manipulator script loaded successfully, False otherwise.
+
+        """
         if not self.frida_session:
             self.logger.exception("No active Frida session - call attach_to_process_frida first")
             return False
@@ -1996,6 +2510,13 @@ class TPMBypassEngine:
             self.frida_script = self.frida_session.create_script(script_source)
 
             def on_message(message: dict[str, Any], data: Any) -> None:
+                """Handle Frida PCR script messages.
+
+                Args:
+                    message: Frida message dictionary with type and payload.
+                    data: Associated message data or None.
+
+                """
                 if message.get("type") == "send":
                     payload = message.get("payload", "")
                     self.logger.info("[Frida PCR] %s", payload)
@@ -2025,7 +2546,19 @@ class TPMBypassEngine:
             return False
 
     def spoof_pcr_runtime(self, pcr_index: int, pcr_value: bytes) -> bool:
-        """Spoof PCR value at runtime via Frida."""
+        """Spoof PCR value at runtime via Frida.
+
+        Modifies PCR value in running process to satisfy licensing checks tied to
+        specific PCR measurements.
+
+        Args:
+            pcr_index: PCR register index to modify.
+            pcr_value: 32-byte SHA-256 value to set.
+
+        Returns:
+            True if PCR spoofing succeeds, False otherwise.
+
+        """
         if not self.frida_script:
             self.logger.exception("No active Frida script - inject PCR manipulator first")
             return False
@@ -2050,7 +2583,18 @@ class TPMBypassEngine:
             return False
 
     def block_pcr_extend_runtime(self, pcr_index: int) -> bool:
-        """Block PCR extend operations at runtime via Frida."""
+        """Block PCR extend operations at runtime via Frida.
+
+        Intercepts PCR_Extend commands for specified register to prevent PCR
+        updates that would invalidate licensing requirements.
+
+        Args:
+            pcr_index: PCR register index to block.
+
+        Returns:
+            True if PCR blocking succeeds, False otherwise.
+
+        """
         if not self.frida_script:
             self.logger.exception("No active Frida script - inject PCR manipulator first")
             return False
@@ -2069,7 +2613,15 @@ class TPMBypassEngine:
             return False
 
     def bypass_secure_boot_runtime(self) -> bool:
-        """Bypass Secure Boot TPM checks at runtime."""
+        """Bypass Secure Boot TPM checks at runtime.
+
+        Manipulates PCR values and return values to make system appear to have
+        passed Secure Boot verification at runtime.
+
+        Returns:
+            True if Secure Boot bypass succeeds, False otherwise.
+
+        """
         if not self.frida_script:
             self.logger.exception("No active Frida script - inject PCR manipulator first")
             return False
@@ -2091,7 +2643,15 @@ class TPMBypassEngine:
             return False
 
     def bypass_measured_boot_runtime(self) -> bool:
-        """Bypass measured boot at runtime with clean PCR state."""
+        """Bypass measured boot at runtime with clean PCR state.
+
+        Sets PCR 0-7 to zero to indicate clean boot state and satisfy measured
+        boot licensing requirements.
+
+        Returns:
+            True if measured boot bypass succeeds, False otherwise.
+
+        """
         if not self.frida_script:
             self.logger.exception("No active Frida script - inject PCR manipulator first")
             return False
@@ -2114,7 +2674,14 @@ class TPMBypassEngine:
             return False
 
     def get_intercepted_commands_frida(self) -> list[dict[str, Any]]:
-        """Get intercepted TPM commands from Frida script."""
+        """Get intercepted TPM commands from Frida script.
+
+        Retrieves list of TPM commands intercepted during Frida session execution.
+
+        Returns:
+            List of intercepted command dictionaries or empty list if unavailable.
+
+        """
         if not self.frida_script:
             self.logger.warning("No active Frida script")
             return []
@@ -2128,7 +2695,14 @@ class TPMBypassEngine:
             return []
 
     def get_pcr_operations_frida(self) -> list[dict[str, Any]]:
-        """Get PCR operations log from Frida script."""
+        """Get PCR operations log from Frida script.
+
+        Retrieves log of all PCR read/extend operations during Frida session.
+
+        Returns:
+            List of PCR operation dictionaries or empty list if unavailable.
+
+        """
         if not self.frida_script:
             self.logger.warning("No active Frida script")
             return []
@@ -2142,7 +2716,11 @@ class TPMBypassEngine:
             return []
 
     def detach_frida(self) -> None:
-        """Detach Frida session and cleanup."""
+        """Detach Frida session and cleanup.
+
+        Unloads Frida scripts and detaches from target process, releasing resources.
+
+        """
         try:
             if self.frida_script:
                 self.frida_script.unload()
@@ -2165,7 +2743,20 @@ class TPMBypassEngine:
             self.logger.exception("Error detaching Frida: %s", e)
 
     def runtime_unseal_bypass(self, target_binary: str, sealed_blob: bytes, pcr_policy: dict[int, bytes] | None = None) -> bytes | None:
-        """Perform runtime unsealing bypass using Frida injection."""
+        """Perform runtime unsealing bypass using Frida injection.
+
+        Attaches to target process, injects PCR manipulator, sets desired PCR values,
+        and unseals sealed blob within target process context.
+
+        Args:
+            target_binary: Binary path, PID, or process name.
+            sealed_blob: TPM sealed key blob to unseal.
+            pcr_policy: Optional PCR policy requirements to satisfy.
+
+        Returns:
+            Unsealed key data or None if bypass fails.
+
+        """
         try:
             if not self.attach_to_process_frida(target_binary):
                 return None
@@ -2198,7 +2789,15 @@ class TPMBypassEngine:
             self.detach_frida()
 
     def export_bypass_session(self) -> dict[str, Any]:
-        """Export current bypass session data for analysis or replay."""
+        """Export current bypass session data for analysis or replay.
+
+        Serializes current bypass state including PCR values, intercepted commands,
+        hooks, and session data for offline analysis or replay.
+
+        Returns:
+            Dictionary containing complete bypass session state.
+
+        """
         frida_data: dict[str, Any] = {}
         if self.frida_session is not None:
             try:
@@ -2238,7 +2837,15 @@ class TPMBypassEngine:
         }
 
     def get_available_bypass_methods(self) -> list[str]:
-        """Get list of available TPM bypass methods."""
+        """Get list of available TPM bypass methods.
+
+        Returns comprehensive list of all bypass techniques available based on
+        current system capabilities and installed dependencies.
+
+        Returns:
+            List of available bypass method names.
+
+        """
         methods: list[str] = [
             "attestation_bypass",
             "pcr_manipulation",
@@ -2285,7 +2892,17 @@ class TPMBypassEngine:
         return methods
 
     def bypass_tpm_checks(self) -> dict[str, Any]:
-        """Execute comprehensive TPM bypass operations."""
+        """Execute comprehensive TPM bypass operations.
+
+        Runs complete TPM bypass suite including version detection, PCR manipulation,
+        command interception, key extraction, and Windows platform-specific bypasses
+        to defeat TPM-based licensing protection.
+
+        Returns:
+            Dictionary with success status, applied methods, errors, extracted data,
+            and comprehensive bypass summary.
+
+        """
         results: dict[str, Any] = {
             "success": False,
             "methods_applied": [],
@@ -2318,6 +2935,15 @@ class TPMBypassEngine:
         try:
 
             def intercept_unseal(command: bytes) -> bytes | None:
+                """Intercept Unseal command.
+
+                Args:
+                    command: TPM Unseal command bytes.
+
+                Returns:
+                    Success response with random unsealed data or None.
+
+                """
                 if len(command) >= 10:
                     self.logger.info("Intercepted TPM Unseal command - returning success")
                     return struct.pack(">HIIH", 0x8001, 46, 0, 32) + os.urandom(32)
@@ -2332,6 +2958,15 @@ class TPMBypassEngine:
         try:
 
             def intercept_quote(command: bytes) -> bytes | None:
+                """Intercept Quote command.
+
+                Args:
+                    command: TPM Quote command bytes.
+
+                Returns:
+                    Forged attestation response or None.
+
+                """
                 if len(command) >= 10:
                     nonce = command[10:42] if len(command) > 41 else os.urandom(32)
                     attestation = self.bypass_attestation(nonce, list(range(8)))
@@ -2426,25 +3061,73 @@ TPMProtectionBypass = TPMBypassEngine
 
 
 def detect_tpm_usage(binary_path: str) -> bool:
-    """Detect if binary uses TPM protection."""
+    """Detect if binary uses TPM protection.
+
+    Scans binary file for TPM-related indicators and APIs to determine if
+    licensing protection relies on Trusted Platform Module mechanisms.
+
+    Args:
+        binary_path: Path to the binary file to analyze.
+
+    Returns:
+        True if TPM usage is detected in the binary, False otherwise.
+
+    """
     engine = TPMBypassEngine()
     return engine.detect_tpm_usage(binary_path)
 
 
 def analyze_tpm_protection(binary_path: str) -> dict[str, Any]:
-    """Analyze TPM protection in binary."""
+    """Analyze TPM protection mechanisms in binary.
+
+    Performs comprehensive analysis of TPM protection implementation including
+    API detection, PCR usage, NVRAM access patterns, and protection strength
+    assessment.
+
+    Args:
+        binary_path: Path to the binary file to analyze.
+
+    Returns:
+        Dictionary containing analysis results with keys for TPM detection
+        status, found APIs, PCR usage patterns, NVRAM indices, protection
+        strength rating, and bypass difficulty assessment.
+
+    """
     engine = TPMBypassEngine()
     return engine.analyze_tpm_protection(binary_path)
 
 
 def bypass_tpm_protection(binary_path: str, output_path: str | None = None) -> bool:
-    """Bypass TPM protection in binary."""
+    """Bypass TPM protection in binary through binary patching.
+
+    Patches TPM API calls and conditional branches related to protection
+    enforcement to bypass licensing checks tied to TPM verification.
+
+    Args:
+        binary_path: Path to the binary file to patch.
+        output_path: Output path for patched binary. If None, creates file
+            with '_patched' suffix in same directory.
+
+    Returns:
+        True if patching was successful and patches were applied, False otherwise.
+
+    """
     engine = TPMBypassEngine()
     return engine.bypass_tpm_protection(binary_path, output_path)
 
 
 def tpm_research_tools() -> dict[str, Any]:
-    """Get available TPM research tools and utilities."""
+    """Get available TPM research tools and utilities.
+
+    Provides comprehensive documentation of all TPM bypass capabilities including
+    static analysis methods, runtime bypass techniques, and Frida-based injection
+    tools for defeating TPM-based licensing protection.
+
+    Returns:
+        Dictionary describing available TPM research tools, methods, capabilities,
+        static methods for binary analysis, and runtime methods for process injection.
+
+    """
     return {
         "tpm_bypass_engine": "Main TPM bypass engine with full TPM 1.2 and 2.0 capabilities",
         "tpm_protection_bypass": "Alias for TPMBypassEngine",

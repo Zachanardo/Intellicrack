@@ -772,7 +772,12 @@ _ADAPTER_MANAGER = None
 
 
 def get_adapter_manager() -> LoRAAdapterManager:
-    """Get the global LoRA adapter manager."""
+    """Get the global LoRA adapter manager.
+
+    Returns:
+        LoRAAdapterManager: The singleton instance of the global LoRA adapter manager.
+
+    """
     global _ADAPTER_MANAGER
     if _ADAPTER_MANAGER is None:
         _ADAPTER_MANAGER = LoRAAdapterManager()

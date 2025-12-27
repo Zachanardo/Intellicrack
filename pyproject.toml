@@ -73,7 +73,7 @@ dependencies = [
     "python-fx @ git+https://github.com/Zachanardo/pyfx.git",
 
     # Security & Network
-    # "mitmproxy @ git+https://github.com/Zachanardo/mitmproxy.git",
+    "mitmproxy @ git+https://github.com/Zachanardo/mitmproxy.git",
     "scapy>=2.7.0,<3",
     "cryptography",
     "paramiko>=4.0.0,<5",
@@ -243,7 +243,6 @@ dependencies = [
     "httpx>=0.28.1,<0.29",
     "humanfriendly>=10.0,<11",
     "ipython>=9.8.0,<10",
-    "isort>=7.0.0,<8",
     "itsdangerous>=2.2.0,<3",
     "kiwisolver>=1.4.9,<2",
     "lxml>=6.0.2,<7",
@@ -264,7 +263,6 @@ dependencies = [
     "prompt-toolkit>=3.0.52,<4",
     "pyasn1>=0.6.1,<0.7",
     "pyasn1-modules>=0.4.2,<0.5",
-    "pycodestyle>=2.14.0,<3",
     "pydantic-settings>=2.12.0,<3",
     "pyparsing>=3.2.5,<4",
     "python-dateutil>=2.9.0.post0,<3",

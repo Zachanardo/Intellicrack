@@ -256,7 +256,21 @@ class LicenseAnalyzer:
         self._setup_windows_apis()
 
     def attach(self, target: str) -> bool:
-        """Attach to target process for license analysis."""
+        """Attach to target process for license analysis.
+
+        Resolves target by process ID or process name and opens a process handle
+        with full access rights for memory manipulation.
+
+        Args:
+            target: Process ID as string (e.g., "1234") or process name (e.g., "app.exe")
+
+        Returns:
+            True if successfully attached to the process, False otherwise.
+
+        Raises:
+            No exceptions are raised; errors are logged and False is returned.
+
+        """
         logger.debug("Attempting to attach to target: '%s'", target)
         try:
             if target.isdigit():
@@ -701,7 +715,20 @@ class LicenseAnalyzer:
         return "none"
 
     def find_license_checks(self) -> list[dict[str, Any]]:
-        """Scan memory for potential license check locations."""
+        """Scan memory for potential license check locations.
+
+        Searches executable memory regions for strings commonly associated with
+        licensing mechanisms and analyzes code context around them to identify
+        license validation routines.
+
+        Returns:
+            List of dictionaries containing license check information with keys:
+                - address: Memory address where license string was found
+                - string: The license-related string found
+                - type: Type of check detected (conditional_check, function_call, etc.)
+                - jump_addresses: List of conditional jumps near the location
+
+        """
         if not self.process_handle:
             logger.debug("No process attached. Cannot find license checks.")
             return []
@@ -751,7 +778,20 @@ class LicenseAnalyzer:
         return license_checks
 
     def _analyze_license_check_context(self, address: int) -> dict[str, Any] | None:
-        """Analyze code around potential license check."""
+        """Analyze code around potential license check.
+
+        Reads memory before and after the target address and searches for
+        conditional jump instructions and function call patterns indicative
+        of license validation logic.
+
+        Args:
+            address: Memory address of the license string to analyze
+
+        Returns:
+            Dictionary with keys 'type' and 'jumps' if context found, None otherwise.
+            Type can be 'conditional_check', 'function_call', or 'unknown'.
+
+        """
         logger.debug("Analyzing license check context around address 0x%X.", address)
         # Read surrounding bytes
         before = self.read_memory(max(address - 100, 0), 100)
@@ -795,7 +835,19 @@ class LicenseAnalyzer:
         return None
 
     def patch_license_check(self, address: int, patch_type: str = "nop") -> bool:
-        """Patch a license check at the given address."""
+        """Patch a license check at the given address.
+
+        Writes bytes to memory to bypass license validation logic using
+        various patching strategies (NOP, conditional jump inversion, return true).
+
+        Args:
+            address: Memory address of the license check to patch
+            patch_type: Patching strategy - "nop", "always_true", "always_false", or "return_true"
+
+        Returns:
+            True if patch was successfully written, False otherwise.
+
+        """
         if not self.process_handle:
             logger.debug("No process attached. Cannot patch license check.")
             return False
@@ -851,7 +903,19 @@ class LicenseAnalyzer:
         return success
 
     def read_memory(self, address: int, size: int) -> bytes | None:
-        """Read memory from attached process."""
+        """Read memory from attached process.
+
+        Reads arbitrary memory content from the attached process at specified
+        address and size using Windows API ReadProcessMemory.
+
+        Args:
+            address: Starting memory address to read from
+            size: Number of bytes to read
+
+        Returns:
+            Bytes read from memory, or None if read operation failed.
+
+        """
         logger.debug("Attempting to read %s bytes from address 0x%X.", size, address)
         if not self.process_handle:
             logger.debug("No process attached. Cannot read memory.")
@@ -873,7 +937,20 @@ class LicenseAnalyzer:
         return None
 
     def write_memory(self, address: int, data: bytes) -> bool:
-        """Write memory to attached process."""
+        """Write memory to attached process.
+
+        Writes bytes to process memory at specified address, automatically
+        changing memory protection to PAGE_EXECUTE_READWRITE and restoring
+        original protection after writing.
+
+        Args:
+            address: Starting memory address to write to
+            data: Bytes to write to memory
+
+        Returns:
+            True if write operation succeeded, False otherwise.
+
+        """
         logger.debug("Attempting to write %s bytes to address 0x%X.", len(data), address)
         if not self.process_handle:
             logger.debug("No process attached. Cannot write memory.")
@@ -917,7 +994,18 @@ class LicenseAnalyzer:
         return bool(success)
 
     def _get_memory_regions(self) -> list[dict[str, Any]]:
-        """Get memory regions of attached process."""
+        """Get memory regions of attached process.
+
+        Enumerates all committed memory regions in the process virtual address
+        space using VirtualQueryEx, collecting base address, size, and protection flags.
+
+        Returns:
+            List of dictionaries with keys:
+                - base_address: Starting address of region
+                - size: Size of region in bytes
+                - protection: Memory protection flags (combination of PAGE_* values)
+
+        """
         if not self.process_handle:
             logger.debug("No process attached. Cannot get memory regions.")
             return []
@@ -962,7 +1050,11 @@ class LicenseAnalyzer:
         return regions
 
     def detach(self) -> None:
-        """Detach from current process."""
+        """Detach from current process.
+
+        Closes the process handle and clears internal process state (PID and handle).
+
+        """
         if self.process_handle:
             kernel32.CloseHandle(self.process_handle)
             self.process_handle = None
@@ -973,7 +1065,13 @@ class LicenseAnalyzer:
             logger.debug("No process attached to detach from.")
 
     def _setup_windows_apis(self) -> None:
-        """Set up Windows API function signatures."""
+        """Set up Windows API function signatures.
+
+        Configures argument and return types for Windows API functions used
+        for process manipulation including ReadProcessMemory, WriteProcessMemory,
+        and other memory/process related APIs.
+
+        """
         self.kernel32 = kernel32
         self.ntdll = ntdll
         self.advapi32 = advapi32
@@ -1033,7 +1131,19 @@ class LicenseAnalyzer:
         self.kernel32.GetProcAddress.restype = ctypes.c_void_p
 
     def scan_pattern(self, pattern: bytes, mask: bytes | None = None) -> list[int]:
-        """Scan memory for byte pattern."""
+        """Scan memory for byte pattern.
+
+        Searches all executable memory regions for byte sequences matching the
+        pattern, with optional mask support for wildcard bytes.
+
+        Args:
+            pattern: Byte sequence to search for
+            mask: Optional mask where each byte indicates if pattern byte is fixed (0xFF) or wildcard (0x00)
+
+        Returns:
+            List of memory addresses where pattern was found.
+
+        """
         if not self.process_handle:
             logger.debug("No process attached. Cannot scan pattern.")
             return []
@@ -1067,7 +1177,21 @@ class LicenseAnalyzer:
         return matches
 
     def _masked_pattern_scan(self, memory: bytes, pattern: bytes, mask: bytes, base_addr: int) -> list[int]:
-        """Scan with wildcard mask support."""
+        """Scan with wildcard mask support.
+
+        Performs pattern matching with mask where masked bytes (0xFF) must match
+        exactly and unmasked bytes (0x00) are treated as wildcards.
+
+        Args:
+            memory: Memory buffer to scan
+            pattern: Byte pattern to match
+            mask: Mask indicating fixed (0xFF) vs wildcard (0x00) bytes
+            base_addr: Base address of the memory buffer for result addresses
+
+        Returns:
+            List of absolute addresses where pattern matched.
+
+        """
         matches = []
         pattern_len = len(pattern)
         logger.debug(
@@ -1115,7 +1239,18 @@ class LicenseAnalyzer:
         results_lock = threading.Lock()
 
         def scan_region_for_patterns(region: dict[str, Any]) -> dict[str, list[int]]:
-            """Worker function to scan a single region for all patterns."""
+            """Worker function to scan a single region for all patterns.
+
+            Reads a memory region and searches for all provided patterns,
+            returning results as a dictionary mapping pattern names to addresses.
+
+            Args:
+                region: Dictionary with base_address, size, and protection info
+
+            Returns:
+                Dictionary mapping pattern names to lists of matched addresses.
+
+            """
             local_results: dict[Any, list[int]] = {pattern["name"]: [] for pattern in patterns}
             logger.debug("Worker scanning region 0x%X (size: 0x%X).", region["base_address"], region["size"])
             try:
@@ -1192,7 +1327,15 @@ class LicenseAnalyzer:
         return results
 
     def _initialize_disassembler(self) -> Any:
-        """Initialize Capstone disassembler based on architecture."""
+        """Initialize Capstone disassembler based on architecture.
+
+        Creates and configures a Capstone disassembler instance for x86/x64
+        architecture matching the target process bitness.
+
+        Returns:
+            Configured Capstone disassembler instance.
+
+        """
         import capstone
 
         is_64bit = ctypes.sizeof(ctypes.c_voidp) == 8
@@ -1202,7 +1345,22 @@ class LicenseAnalyzer:
         return md
 
     def _scan_references_to(self, address: int, start_addr: int, end_addr: int, md: Any) -> list[dict[str, Any]]:
-        """Scan memory regions for references TO target address."""
+        """Scan memory regions for references TO target address.
+
+        Analyzes all executable memory regions within specified range for
+        disassembled instruction references and raw pointer references to
+        the target address.
+
+        Args:
+            address: Target address to find references to
+            start_addr: Start of scan range
+            end_addr: End of scan range
+            md: Capstone disassembler instance
+
+        Returns:
+            List of dictionaries containing reference information.
+
+        """
         import struct
 
         import capstone
@@ -1232,7 +1390,21 @@ class LicenseAnalyzer:
         return references
 
     def _disassemble_for_references(self, memory: bytes, region_start: int, target_address: int, md: Any) -> list[dict[str, Any]]:
-        """Disassemble memory and find instruction references to target address."""
+        """Disassemble memory and find instruction references to target address.
+
+        Disassembles memory bytes and checks each instruction for direct branches
+        or memory references to the target address.
+
+        Args:
+            memory: Memory buffer to disassemble
+            region_start: Starting address of the memory buffer
+            target_address: Address to find references to
+            md: Capstone disassembler instance
+
+        Returns:
+            List of dictionaries with reference details.
+
+        """
         import capstone
 
         references = []
@@ -1244,7 +1416,19 @@ class LicenseAnalyzer:
         return references
 
     def _check_direct_branch(self, insn: Any, target_address: int) -> dict[str, Any] | None:
-        """Check if instruction is a direct branch to target address."""
+        """Check if instruction is a direct branch to target address.
+
+        Tests if a disassembled instruction is a branch/call with an immediate
+        operand that matches the target address.
+
+        Args:
+            insn: Capstone instruction object
+            target_address: Address to check for
+
+        Returns:
+            Dictionary with reference details if match found, None otherwise.
+
+        """
         import capstone
 
         branch_mnemonics = ["call", "jmp", "je", "jne", "jz", "jnz", "ja", "jb", "jg", "jl"]
@@ -1260,7 +1444,19 @@ class LicenseAnalyzer:
         return None
 
     def _check_memory_references(self, insn: Any, target_address: int) -> list[dict[str, Any]]:
-        """Check instruction operands for memory references to target address."""
+        """Check instruction operands for memory references to target address.
+
+        Examines instruction operands for memory and immediate references
+        matching the target address.
+
+        Args:
+            insn: Capstone instruction object
+            target_address: Address to check for
+
+        Returns:
+            List of reference dictionaries if matches found, empty list otherwise.
+
+        """
         import capstone
 
         references: list[dict[str, Any]] = []
@@ -1285,7 +1481,21 @@ class LicenseAnalyzer:
         return references
 
     def _scan_data_pointers(self, memory: bytes, region_start: int, target_address: int, is_64bit: bool) -> list[dict[str, Any]]:
-        """Scan memory for raw pointer references to target address."""
+        """Scan memory for raw pointer references to target address.
+
+        Searches memory buffer for raw pointer values (32-bit or 64-bit)
+        matching the target address.
+
+        Args:
+            memory: Memory buffer to scan
+            region_start: Starting address of memory buffer
+            target_address: Address to find pointers to
+            is_64bit: Whether to search for 64-bit or 32-bit pointers
+
+        Returns:
+            List of dictionaries with pointer reference details.
+
+        """
         import struct
 
         references = []
@@ -1304,7 +1514,20 @@ class LicenseAnalyzer:
         return references
 
     def _scan_references_from(self, address: int, scan_range: int, md: Any) -> list[dict[str, Any]]:
-        """Scan for references FROM the target address."""
+        """Scan for references FROM the target address.
+
+        Disassembles code at target address and analyzes instructions for
+        branches and memory/immediate references.
+
+        Args:
+            address: Starting address to scan from
+            scan_range: Maximum bytes to scan
+            md: Capstone disassembler instance
+
+        Returns:
+            List of dictionaries with branch and reference details.
+
+        """
         import capstone
 
         references = []
@@ -1322,7 +1545,19 @@ class LicenseAnalyzer:
         return references
 
     def _check_branch_from(self, insn: Any, base_address: int) -> dict[str, Any] | None:
-        """Check if instruction branches to another address."""
+        """Check if instruction branches to another address.
+
+        Tests if a disassembled instruction is a branch/call and returns
+        the target address information.
+
+        Args:
+            insn: Capstone instruction object
+            base_address: Base address for offset calculation
+
+        Returns:
+            Dictionary with branch target info if branch found, None otherwise.
+
+        """
         import capstone
 
         branch_mnemonics = ["call", "jmp", "je", "jne", "jz", "jnz", "ja", "jb", "jg", "jl"]
@@ -1338,7 +1573,19 @@ class LicenseAnalyzer:
         return None
 
     def _check_operand_references(self, insn: Any, base_address: int) -> list[dict[str, Any]]:
-        """Check instruction operands for address references."""
+        """Check instruction operands for address references.
+
+        Analyzes instruction operands for memory displacement and immediate
+        values that could be address references.
+
+        Args:
+            insn: Capstone instruction object
+            base_address: Base address for offset calculation
+
+        Returns:
+            List of dictionaries with operand reference details.
+
+        """
         import capstone
 
         references = []
@@ -1490,7 +1737,19 @@ class LicenseAnalyzer:
         return signature
 
     def _find_common_sequences(self, samples: list[bytes], min_length: int = 4) -> list[bytes]:
-        """Find common byte sequences across samples."""
+        """Find common byte sequences across samples.
+
+        Identifies byte sequences that appear in all provided samples,
+        returning longest sequences first.
+
+        Args:
+            samples: List of byte sequences to analyze
+            min_length: Minimum length for sequences to consider
+
+        Returns:
+            List of common byte sequences found, sorted by length descending.
+
+        """
         logger.debug("Finding common sequences across %s samples (min_length: %s).", len(samples), min_length)
         if len(samples) < 2:
             logger.debug("Less than 2 samples, no common sequences to find.")
@@ -1521,7 +1780,20 @@ class LicenseAnalyzer:
         return common_sequences[:10]  # Return top 10 sequences
 
     def _refine_signature(self, pattern: bytearray, mask: bytearray, common_sequences: list[bytes]) -> tuple[bytearray, bytearray]:
-        """Refine signature using common sequences."""
+        """Refine signature using common sequences.
+
+        Improves pattern and mask by marking bytes in common sequences as fixed
+        (0xFF in mask) to increase signature specificity.
+
+        Args:
+            pattern: Initial byte pattern array
+            mask: Initial mask array
+            common_sequences: List of common byte sequences found in samples
+
+        Returns:
+            Tuple of refined (pattern, mask) arrays.
+
+        """
         logger.debug("Refining signature using common sequences.")
         refined_pattern = bytearray(pattern)
         refined_mask = bytearray(mask)
@@ -1540,7 +1812,19 @@ class LicenseAnalyzer:
         return refined_pattern, refined_mask
 
     def _generate_yara_hex(self, pattern: bytearray, mask: bytearray) -> str:
-        """Generate YARA-compatible hex string with wildcards."""
+        """Generate YARA-compatible hex string with wildcards.
+
+        Converts pattern and mask into YARA-style hex notation where fixed
+        bytes are in hex format and wildcards are represented as ?? or [n].
+
+        Args:
+            pattern: Byte pattern array
+            mask: Mask array where 0xFF=fixed, 0x00=wildcard
+
+        Returns:
+            YARA-compatible hex string with space-separated bytes.
+
+        """
         hex_parts = []
 
         i = 0
@@ -1644,7 +1928,19 @@ class LicenseAnalyzer:
         return signatures
 
     def _get_cache_key(self, pattern: bytes, mask: bytes | None = None) -> str:
-        """Generate unique cache key for pattern."""
+        """Generate unique cache key for pattern.
+
+        Creates a unique cache key by hashing the pattern and optional mask
+        using SHA256, returning first 16 hex characters.
+
+        Args:
+            pattern: Byte pattern to generate key for
+            mask: Optional mask bytes to include in key
+
+        Returns:
+            16-character hexadecimal cache key.
+
+        """
         import hashlib
 
         key_data = pattern
@@ -1653,7 +1949,17 @@ class LicenseAnalyzer:
         return hashlib.sha256(key_data).hexdigest()[:16]
 
     def _is_cache_valid(self, key: str) -> bool:
-        """Check if cache entry is still valid."""
+        """Check if cache entry is still valid.
+
+        Tests whether a cached pattern entry has not exceeded its TTL.
+
+        Args:
+            key: Cache key to check
+
+        Returns:
+            True if cache entry exists and is within TTL, False otherwise.
+
+        """
         import time
 
         if key not in self._cache_timestamps:
@@ -1662,7 +1968,12 @@ class LicenseAnalyzer:
         return age < self._cache_ttl
 
     def _evict_oldest_cache(self) -> None:
-        """Evict oldest cache entries when cache is full."""
+        """Evict oldest cache entries when cache is full.
+
+        Removes the oldest (least recently accessed) cache entry when
+        cache size reaches maximum capacity.
+
+        """
         import time
 
         if len(self._pattern_cache) >= self._cache_max_size:
@@ -1682,7 +1993,19 @@ class LicenseAnalyzer:
                 logger.debug("Evicted cache entry: %s", oldest_key)
 
     def scan_pattern_cached(self, pattern: bytes, mask: bytes | None = None) -> list[int]:
-        """Scan memory for byte pattern with caching."""
+        """Scan memory for byte pattern with caching.
+
+        Scans for byte pattern with transparent result caching. Returns cached
+        results if pattern was previously scanned and cache is still valid.
+
+        Args:
+            pattern: Byte sequence to search for
+            mask: Optional mask for wildcard matching
+
+        Returns:
+            List of memory addresses where pattern was found.
+
+        """
         import time
 
         cache_key = self._get_cache_key(pattern, mask)
@@ -1710,7 +2033,14 @@ class LicenseAnalyzer:
             return results
 
     def invalidate_cache(self, pattern: bytes | None = None) -> None:
-        """Invalidate cache entries."""
+        """Invalidate cache entries.
+
+        Clears cache entries either for a specific pattern or all cached patterns.
+
+        Args:
+            pattern: Specific pattern to invalidate, or None to clear all cache.
+
+        """
         with self._cache_lock:
             if pattern:
                 # Invalidate specific pattern
@@ -1731,7 +2061,21 @@ class LicenseAnalyzer:
                 logger.debug("All cache entries invalidated.")
 
     def get_cache_stats(self) -> dict[str, Any]:
-        """Get cache performance statistics."""
+        """Get cache performance statistics.
+
+        Returns current cache performance metrics including hits, misses, and hit rate.
+
+        Returns:
+            Dictionary with cache statistics:
+                - hits: Number of cache hits
+                - misses: Number of cache misses
+                - evictions: Number of evicted entries
+                - hit_rate: Hit rate as fraction (0.0-1.0)
+                - cache_size: Current number of cached entries
+                - max_size: Maximum cache capacity
+                - ttl_seconds: Cache TTL in seconds
+
+        """
         with self._cache_lock:
             total_requests = self._cache_stats["hits"] + self._cache_stats["misses"]
             hit_rate = self._cache_stats["hits"] / total_requests if total_requests > 0 else 0.0
@@ -1749,7 +2093,12 @@ class LicenseAnalyzer:
             return stats
 
     def optimize_cache_performance(self) -> None:
-        """Optimize cache based on usage patterns."""
+        """Optimize cache based on usage patterns.
+
+        Removes expired entries and adjusts cache size based on hit rate to
+        optimize performance.
+
+        """
         import time
 
         logger.debug("Optimizing cache performance.")
@@ -1776,7 +2125,18 @@ class LicenseAnalyzer:
             logger.debug("Cache optimization complete.")
 
     def batch_scan_with_cache(self, patterns: list[dict[str, Any]]) -> dict[str, list[int]]:
-        """Batch scan multiple patterns with intelligent caching."""
+        """Batch scan multiple patterns with intelligent caching.
+
+        Efficiently scans multiple byte patterns, using cached results when
+        available and performing concurrent scans for new patterns.
+
+        Args:
+            patterns: List of pattern dictionaries with 'name', 'bytes', and optional 'mask' keys
+
+        Returns:
+            Dictionary mapping pattern names to lists of matched addresses.
+
+        """
         logger.debug("Starting batch scan for %s patterns.", len(patterns))
         results = {}
         cached_patterns = []
@@ -1823,7 +2183,15 @@ class LicenseAnalyzer:
         return results
 
     def get_peb_address(self) -> int | None:
-        """Get PEB address for current process."""
+        """Get PEB address for current process.
+
+        Queries process information using NtQueryInformationProcess to retrieve
+        the Process Environment Block address.
+
+        Returns:
+            PEB base address as integer, or None if query failed.
+
+        """
         logger.debug("Attempting to retrieve PEB address.")
         if not self.process_handle:
             logger.debug("No process attached. Cannot get PEB address.")
@@ -1865,7 +2233,14 @@ class LicenseAnalyzer:
             return None
 
     def read_peb(self) -> Peb | None:
-        """Read PEB structure from target process."""
+        """Read PEB structure from target process.
+
+        Reads the Process Environment Block structure from target process memory.
+
+        Returns:
+            Peb structure instance if successfully read, None otherwise.
+
+        """
         logger.debug("Attempting to read PEB structure.")
         if not self.process_handle:
             logger.debug("No process attached. Cannot read PEB.")
@@ -1905,7 +2280,20 @@ class LicenseAnalyzer:
         clear_nt_global_flag: bool = True,
         clear_heap_flags: bool = True,
     ) -> bool:
-        """Manipulate PEB flags to bypass anti-debugging checks."""
+        """Manipulate PEB flags to bypass anti-debugging checks.
+
+        Modifies PEB structure fields (BeingDebugged, NtGlobalFlag, heap flags)
+        to hide process from debugger detection mechanisms.
+
+        Args:
+            clear_being_debugged: Clear BeingDebugged flag if True
+            clear_nt_global_flag: Clear NtGlobalFlag field if True
+            clear_heap_flags: Clear heap debugging flags if True
+
+        Returns:
+            True if at least one modification succeeded, False if all failed.
+
+        """
         logger.debug(
             "Manipulating PEB flags: clear_being_debugged=%s, clear_nt_global_flag=%s, clear_heap_flags=%s",
             clear_being_debugged,
@@ -2020,7 +2408,15 @@ class LicenseAnalyzer:
             return False
 
     def hide_from_debugger(self) -> bool:
-        """Hide process from debugger detection using multiple techniques."""
+        """Hide process from debugger detection using multiple techniques.
+
+        Applies multiple anti-debugging techniques including PEB manipulation,
+        debug port clearance, debug object handle removal, and debug flags clearing.
+
+        Returns:
+            True if at least one technique was successfully applied, False otherwise.
+
+        """
         logger.debug("Attempting to hide process from debugger detection.")
         if not self.process_handle:
             logger.debug("No process attached. Cannot hide from debugger.")
@@ -2119,7 +2515,19 @@ class LicenseAnalyzer:
         return False
 
     def check_peb_for_debugger(self) -> dict[str, bool]:
-        """Check PEB for various debugger indicators."""
+        """Check PEB for various debugger indicators.
+
+        Scans PEB structure fields and uses Windows API to detect debugger
+        presence indicators.
+
+        Returns:
+            Dictionary with boolean flags for detected indicators:
+                - BeingDebugged: PEB.BeingDebugged flag value
+                - NtGlobalFlag: Debug flags set in NtGlobalFlag
+                - HeapFlags: Debug flags set in heap structure
+                - DebuggerPresent: IsDebuggerPresent API result
+
+        """
         logger.debug("Checking PEB for debugger indicators.")
         indicators = {
             "BeingDebugged": False,
@@ -2176,7 +2584,18 @@ class LicenseAnalyzer:
         return indicators
 
     def modify_peb_image_path(self, new_path: str) -> bool:
-        """Modify the image path in PEB to disguise process."""
+        """Modify the image path in PEB to disguise process.
+
+        Changes the ImagePathName field in RTL_USER_PROCESS_PARAMETERS to spoof
+        the process's executable path, useful for anti-analysis purposes.
+
+        Args:
+            new_path: New path string to set as the process image path
+
+        Returns:
+            True if modification succeeded, False otherwise.
+
+        """
         logger.debug("Attempting to modify PEB image path to: '%s'", new_path)
         if not self.process_handle:
             logger.debug("No process attached. Cannot modify PEB image path.")
@@ -2261,7 +2680,26 @@ class LicenseAnalyzer:
         return False
 
     def walk_vad_tree(self) -> list[dict[str, Any]]:
-        """Walk Virtual Address Descriptor tree to enumerate all memory regions."""
+        """Walk Virtual Address Descriptor tree to enumerate all memory regions.
+
+        Uses NtQueryVirtualMemory to walk process address space and enumerate
+        all committed memory regions with their properties.
+
+        Returns:
+            List of dictionaries for each committed memory region with keys:
+                - base_address: Region starting address
+                - allocation_base: Allocation base address
+                - region_size: Size of region in bytes
+                - state: Memory state (COMMIT, RESERVE, FREE)
+                - protection: Current protection flags
+                - type: Memory type (PRIVATE, MAPPED, IMAGE)
+                - allocation_protect: Original allocation protection
+                - is_executable: Boolean if region has execute permission
+                - is_writable: Boolean if region has write permission
+                - is_guarded: Boolean if PAGE_GUARD is set
+                - is_nocache: Boolean if PAGE_NOCACHE is set
+
+        """
         logger.debug("Starting VAD tree walk to enumerate memory regions.")
         if not self.process_handle:
             logger.debug("No process attached. Cannot walk VAD tree.")
@@ -2347,7 +2785,17 @@ class LicenseAnalyzer:
         return vad_entries
 
     def _parse_protection_flags(self, protect: int) -> str:
-        """Parse memory protection flags to human-readable string."""
+        """Parse memory protection flags to human-readable string.
+
+        Converts Windows PAGE_* protection flag constants to human-readable format.
+
+        Args:
+            protect: Protection flags bitmask
+
+        Returns:
+            Pipe-separated string of protection flag names.
+
+        """
         protections = []
 
         if protect & 0x01:
@@ -2376,17 +2824,46 @@ class LicenseAnalyzer:
         return "|".join(protections) if protections else "UNKNOWN"
 
     def _parse_memory_state(self, state: int) -> str:
-        """Parse memory state to human-readable string."""
+        """Parse memory state to human-readable string.
+
+        Converts memory state flags to human-readable names.
+
+        Args:
+            state: Memory state flags
+
+        Returns:
+            String representation of memory state.
+
+        """
         states = {0x1000: "COMMIT", 0x2000: "RESERVE", 0x10000: "FREE"}
         return states.get(state, f"UNKNOWN(0x{state:X})")
 
     def _parse_memory_type(self, mem_type: int) -> str:
-        """Parse memory type to human-readable string."""
+        """Parse memory type to human-readable string.
+
+        Converts memory type flags to human-readable names.
+
+        Args:
+            mem_type: Memory type flags
+
+        Returns:
+            String representation of memory type.
+
+        """
         types = {0x20000: "PRIVATE", 0x40000: "MAPPED", 0x1000000: "IMAGE"}
         return types.get(mem_type, f"UNKNOWN(0x{mem_type:X})")
 
     def find_hidden_memory_regions(self) -> list[dict[str, Any]]:
-        """Find potentially hidden memory regions using VAD analysis."""
+        """Find potentially hidden memory regions using VAD analysis.
+
+        Scans for memory regions with suspicious characteristics that may
+        indicate hidden code, injected DLLs, or anti-analysis measures.
+
+        Returns:
+            List of dictionaries with suspicious regions, sorted by suspicion level.
+            Each entry includes suspicious_indicators and suspicion_level fields.
+
+        """
         logger.debug("Starting search for potentially hidden memory regions.")
         vad_entries = self.walk_vad_tree()
         hidden_regions = []
@@ -2444,7 +2921,15 @@ class LicenseAnalyzer:
         return hidden_regions
 
     def enumerate_executable_regions(self) -> list[dict[str, Any]]:
-        """Enumerate all executable memory regions."""
+        """Enumerate all executable memory regions.
+
+        Identifies all executable regions in process memory and attempts to
+        classify them as modules, JIT code, or potential shellcode.
+
+        Returns:
+            List of executable region dictionaries with identified_as and confidence fields.
+
+        """
         vad_entries = self.walk_vad_tree()
         executable_regions = []
 
@@ -2480,7 +2965,17 @@ class LicenseAnalyzer:
         return executable_regions
 
     def _get_module_name_at_address(self, address: int) -> str | None:
-        """Get module name at specified address."""
+        """Get module name at specified address.
+
+        Determines which loaded module (DLL/EXE) owns the memory at specified address.
+
+        Args:
+            address: Memory address to look up
+
+        Returns:
+            Module filename if found, None otherwise.
+
+        """
         try:
             for module in self.enumerate_modules():
                 module_base = module["base"]
@@ -2497,7 +2992,15 @@ class LicenseAnalyzer:
         return None
 
     def analyze_memory_gaps(self) -> list[dict[str, Any]]:
-        """Analyze gaps between memory regions for potential hiding spots."""
+        """Analyze gaps between memory regions for potential hiding spots.
+
+        Identifies unused memory gaps that could potentially be used for code injection
+        or other evasion techniques.
+
+        Returns:
+            List of gap dictionaries with gap_start, gap_size, and adjacent region info.
+
+        """
         vad_entries = self.walk_vad_tree()
         gaps = []
 
@@ -2539,7 +3042,16 @@ class LicenseAnalyzer:
         return gaps
 
     def detect_vad_manipulation(self) -> dict[str, Any]:
-        """Detect signs of VAD manipulation or hiding techniques."""
+        """Detect signs of VAD manipulation or hiding techniques.
+
+        Analyzes Virtual Address Descriptors for signs of address space manipulation,
+        shellcode injection, and other anti-analysis techniques.
+
+        Returns:
+            Dictionary with detection results including vad_hiding_detected, anomalies,
+            suspicious_regions, and confidence score (0.0-1.0).
+
+        """
         detection_results: dict[str, Any] = {
             "vad_hiding_detected": False,
             "anomalies": [],
@@ -2622,7 +3134,15 @@ class LicenseAnalyzer:
         return detection_results
 
     def _get_all_memory_regions_raw(self) -> list[dict[str, Any]]:
-        """Get all memory regions using low-level scanning."""
+        """Get all memory regions using low-level scanning.
+
+        Uses VirtualQueryEx to enumerate all committed memory regions
+        with minimal filtering.
+
+        Returns:
+            List of dictionaries with memory region information.
+
+        """
         regions = []
         current_address = 0
         max_address = 0x7FFFFFFFFFFFFFFF if ctypes.sizeof(ctypes.c_voidp) == 8 else 0x7FFFFFFF
@@ -2655,7 +3175,20 @@ class LicenseAnalyzer:
         return regions
 
     def find_code_caves(self, min_size: int = 16, max_size: int = 0x10000) -> list[dict[str, Any]]:
-        """Find code caves suitable for injection."""
+        """Find code caves suitable for injection.
+
+        Searches for unused memory regions (caves) within loaded modules,
+        memory gaps, and function padding that could be used for code injection.
+
+        Args:
+            min_size: Minimum cave size to report (bytes)
+            max_size: Maximum cave size to report (bytes)
+
+        Returns:
+            List of code cave dictionaries sorted by injection score.
+            Each cave has address, size, type, score, and is_executable fields.
+
+        """
         caves = []
 
         # 1. Find caves in loaded modules (section slack space)
@@ -2681,7 +3214,19 @@ class LicenseAnalyzer:
         return caves
 
     def _find_section_slack_caves(self, min_size: int, max_size: int) -> list[dict[str, Any]]:
-        """Find caves in PE section slack space."""
+        """Find caves in PE section slack space.
+
+        Analyzes PE section headers to find unused slack space between virtual
+        and raw sizes that could host injected code.
+
+        Args:
+            min_size: Minimum cave size to report
+            max_size: Maximum cave size to report
+
+        Returns:
+            List of section slack cave dictionaries.
+
+        """
         caves = []
 
         try:
@@ -2759,7 +3304,19 @@ class LicenseAnalyzer:
         return caves
 
     def _find_memory_gap_caves(self, min_size: int, max_size: int) -> list[dict[str, Any]]:
-        """Find caves in memory gaps between regions."""
+        """Find caves in memory gaps between regions.
+
+        Analyzes gaps in the memory address space to identify potential
+        injection locations between allocated regions.
+
+        Args:
+            min_size: Minimum cave size to report
+            max_size: Maximum cave size to report
+
+        Returns:
+            List of memory gap cave dictionaries.
+
+        """
         caves = []
         gaps = self.analyze_memory_gaps()
 
@@ -2791,7 +3348,19 @@ class LicenseAnalyzer:
         return caves
 
     def _find_unused_region_caves(self, min_size: int, max_size: int) -> list[dict[str, Any]]:
-        """Find caves in allocated but unused memory regions."""
+        """Find caves in allocated but unused memory regions.
+
+        Scans committed memory regions for contiguous sequences of null or
+        padding bytes that could host injected code.
+
+        Args:
+            min_size: Minimum cave size to report
+            max_size: Maximum cave size to report
+
+        Returns:
+            List of unused region cave dictionaries.
+
+        """
         caves = []
         vad_entries = self.walk_vad_tree()
 
@@ -2852,7 +3421,19 @@ class LicenseAnalyzer:
         return caves
 
     def _find_padding_caves(self, min_size: int, max_size: int) -> list[dict[str, Any]]:
-        """Find caves in padding between functions."""
+        """Find caves in padding between functions.
+
+        Identifies function padding (INT3, NOP, NULL bytes) in executable
+        regions that could be repurposed for code injection.
+
+        Args:
+            min_size: Minimum cave size to report
+            max_size: Maximum cave size to report
+
+        Returns:
+            List of function padding cave dictionaries.
+
+        """
         caves = []
 
         try:
@@ -2937,7 +3518,24 @@ class LicenseAnalyzer:
         return caves
 
     def validate_code_cave(self, address: int, size: int) -> dict[str, Any]:
-        """Validate a code cave for safety and accessibility."""
+        """Validate a code cave for safety and accessibility.
+
+        Checks if a code cave location is readable, writable, safe from overwriting
+        valid code, and allocates a quality score for injection suitability.
+
+        Args:
+            address: Starting address of the code cave
+            size: Size of the cave to validate
+
+        Returns:
+            Dictionary with validation results:
+                - is_valid: True if cave passes all safety checks
+                - is_safe: True if cave is empty/padding
+                - is_accessible: True if cave is readable/writable
+                - issues: List of validation issues found
+                - score: Quality score (higher is better)
+
+        """
         validation: dict[str, Any] = {
             "is_valid": False,
             "is_safe": False,
@@ -3001,7 +3599,19 @@ class LicenseAnalyzer:
         return validation
 
     def select_optimal_cave(self, caves: list[dict[str, Any]], required_size: int) -> dict[str, Any] | None:
-        """Select the most suitable code cave for injection."""
+        """Select the most suitable code cave for injection.
+
+        Evaluates and ranks available code caves, validating each one and
+        selecting the highest-scoring suitable cave.
+
+        Args:
+            caves: List of code cave dictionaries to evaluate
+            required_size: Minimum size cave must be to be suitable
+
+        Returns:
+            Best-scoring cave dictionary with validation info, or None if no suitable caves.
+
+        """
         suitable_caves = []
 
         for cave in caves:
@@ -3034,7 +3644,19 @@ class LicenseAnalyzer:
         return best_cave
 
     def generate_polymorphic_nops(self, length: int, arch: str = "x86") -> bytes:
-        """Generate polymorphic NOP sled with varying instructions."""
+        """Generate polymorphic NOP sled with varying instructions.
+
+        Creates a NOP sled with diverse instruction variants to evade pattern-based
+        detection while maintaining no-operation semantics. Supports x86 and x64 architectures.
+
+        Args:
+            length: Desired sled length in bytes
+            arch: Architecture "x86" or "x64" (default "x86")
+
+        Returns:
+            Bytes representing a polymorphic NOP sled of requested length.
+
+        """
         import random
 
         if length <= 0:
@@ -3166,7 +3788,19 @@ class LicenseAnalyzer:
         return bytes(nop_sled[:length])
 
     def generate_semantic_nops(self, length: int, preserve_registers: bool = True) -> bytes:
-        """Generate semantic NOPs that perform no-effect operations."""
+        """Generate semantic NOPs that perform no-effect operations.
+
+        Creates instruction sequences that appear to be operations but have no net
+        effect (e.g., PUSH/POP pairs, XOR twice), evading detection better than simple NOPs.
+
+        Args:
+            length: Desired sled length in bytes
+            preserve_registers: If True, use only register-preserving patterns
+
+        Returns:
+            Bytes representing semantic NOP instructions of requested length.
+
+        """
         import random
 
         if length <= 0:
@@ -3241,7 +3875,18 @@ class LicenseAnalyzer:
         return bytes(semantic_sled[:length])
 
     def generate_antidisassembly_nops(self, length: int) -> bytes:
-        """Generate NOPs with anti-disassembly tricks."""
+        """Generate NOPs with anti-disassembly tricks.
+
+        Creates instruction sequences designed to confuse linear disassemblers,
+        using overlapping instructions, conditional jumps, and undefined opcodes.
+
+        Args:
+            length: Desired sled length in bytes
+
+        Returns:
+            Bytes representing anti-disassembly NOP instructions.
+
+        """
         if length <= 0:
             return b""
 
@@ -3281,7 +3926,19 @@ class LicenseAnalyzer:
         return bytes(anti_sled[:length])
 
     def create_randomized_nop_sled(self, length: int, techniques: list[str] | None = None) -> bytes:
-        """Create a highly randomized NOP sled using multiple techniques."""
+        """Create a highly randomized NOP sled using multiple techniques.
+
+        Generates a NOP sled by randomly mixing polymorphic, semantic, and
+        anti-disassembly techniques to evade signature detection.
+
+        Args:
+            length: Desired sled length in bytes
+            techniques: List of techniques to use or None for default ["polymorphic", "semantic", "anti_disassembly"]
+
+        Returns:
+            Bytes representing a randomized NOP sled of requested length.
+
+        """
         if length <= 0:
             return b""
 
@@ -3325,11 +3982,34 @@ class LicenseAnalyzer:
         return result
 
     def patch_bytes(self, address: int, new_bytes: bytes) -> bool:
-        """Patch bytes at specified address."""
+        """Patch bytes at specified address.
+
+        Writes bytes to process memory at specified address.
+
+        Args:
+            address: Memory address to patch
+            new_bytes: Bytes to write
+
+        Returns:
+            True if write succeeded, False otherwise.
+
+        """
         return self.write_memory(address, new_bytes)
 
     def find_conditional_jumps(self, start_addr: int, size: int = 0x1000) -> list[dict[str, Any]]:
-        """Find all conditional jumps in code region."""
+        """Find all conditional jumps in code region.
+
+        Scans memory for conditional jump instructions (JZ, JE, JNE, JB, etc.),
+        including both 1-byte and 6-byte variants.
+
+        Args:
+            start_addr: Starting address to scan
+            size: Bytes to scan (default 0x1000)
+
+        Returns:
+            List of jump instructions found with address, mnemonic, target, and size.
+
+        """
         jumps: list[dict[str, Any]] = []
         memory = self.read_memory(start_addr, size)
 
@@ -3406,7 +4086,18 @@ class LicenseAnalyzer:
         return jumps
 
     def bypass_serial_check(self, address: int) -> bool:
-        """Bypass serial validation at specified address."""
+        """Bypass serial validation at specified address.
+
+        Patches conditional jumps near target address or replaces code with
+        "return true" (MOV EAX, 1; RET) to bypass serial number validation.
+
+        Args:
+            address: Address of serial validation code
+
+        Returns:
+            True if bypass patch was successfully applied, False otherwise.
+
+        """
         jumps = self.find_conditional_jumps(address, 0x100)
 
         for jump in jumps:
@@ -3419,13 +4110,38 @@ class LicenseAnalyzer:
         return self.patch_bytes(address, b"\xb8\x01\x00\x00\x00\xc3")
 
     def patch_trial_expiration(self, address: int, days: int = 9999) -> bool:
-        """Patch trial expiration to extend trial period."""
+        """Patch trial expiration to extend trial period.
+
+        Replaces code with MOV EAX instruction loading a new day count,
+        extending the trial period by modifying the expiration check.
+
+        Args:
+            address: Address of trial expiration code
+            days: Number of days to set (default 9999)
+
+        Returns:
+            True if patch was successfully applied, False otherwise.
+
+        """
         days_bytes = struct.pack("<I", days)
         patch = b"\xb8" + days_bytes + b"\xc3"
         return self.patch_bytes(address, patch)
 
     def manipulate_registry(self, key_path: str, value_name: str, new_value: str | int | bytes) -> bool:
-        """Manipulate registry entries for license keys."""
+        """Manipulate registry entries for license keys.
+
+        Writes license key information or other values to Windows registry,
+        supporting string, DWORD, and binary value types.
+
+        Args:
+            key_path: Registry key path (e.g., "HKEY_CURRENT_USER\\Software\\AppName")
+            value_name: Value name to set
+            new_value: Value to set (str, int, or bytes)
+
+        Returns:
+            True if registry write succeeded, False otherwise.
+
+        """
         try:
             import winreg
 
@@ -3449,7 +4165,18 @@ class LicenseAnalyzer:
             return False
 
     def inject_dll(self, dll_path: str) -> bool:
-        """Inject DLL into target process."""
+        """Inject DLL into target process.
+
+        Allocates memory in target process, writes DLL path, and creates
+        a remote thread to load the DLL via LoadLibraryA.
+
+        Args:
+            dll_path: Full path to DLL file to inject
+
+        Returns:
+            True if DLL was successfully injected, False otherwise.
+
+        """
         if not self.process_handle:
             return False
 
@@ -3500,7 +4227,20 @@ class LicenseAnalyzer:
         return False
 
     def hook_api(self, module_name: str, function_name: str, hook_address: int) -> bool:
-        """Install hook for Windows API function."""
+        """Install hook for Windows API function.
+
+        Patches the import address table or function prologue to redirect
+        calls to a hook function.
+
+        Args:
+            module_name: Module name (e.g., "kernel32.dll")
+            function_name: Function name to hook
+            hook_address: Address of hook function
+
+        Returns:
+            True if hook was successfully installed, False otherwise.
+
+        """
         if not self.process_handle:
             return False
 
@@ -3534,7 +4274,15 @@ class LicenseAnalyzer:
         return False
 
     def detect_protection(self) -> str | None:
-        """Detect protection scheme used by target."""
+        """Detect protection scheme used by target.
+
+        Scans process memory for known protection scheme signatures
+        (Themida, VMProtect, Enigma, etc.).
+
+        Returns:
+            Name of detected protection scheme, or None if not recognized.
+
+        """
         if not self.process_handle:
             return None
 
@@ -3547,15 +4295,47 @@ class LicenseAnalyzer:
         return None
 
     def read_process_memory(self, address: int, size: int) -> bytes | None:
-        """Alias for read_memory for compatibility."""
+        """Alias for read_memory for compatibility.
+
+        Provides API compatibility with alternative calling conventions.
+
+        Args:
+            address: Starting memory address to read
+            size: Number of bytes to read
+
+        Returns:
+            Bytes read from memory or None if read failed.
+
+        """
         return self.read_memory(address, size)
 
     def write_process_memory(self, address: int, data: bytes) -> bool:
-        """Alias for write_memory for compatibility."""
+        """Alias for write_memory for compatibility.
+
+        Provides API compatibility with alternative calling conventions.
+
+        Args:
+            address: Memory address to write to
+            data: Bytes to write
+
+        Returns:
+            True if write succeeded, False otherwise.
+
+        """
         return self.write_memory(address, data)
 
     def get_module_base(self, module_name: str) -> int | None:
-        """Get base address of loaded module."""
+        """Get base address of loaded module.
+
+        Queries process memory maps to find the base address of a loaded module/DLL.
+
+        Args:
+            module_name: Module or DLL name to find
+
+        Returns:
+            Base address of module if found, None otherwise.
+
+        """
         if not self.pid:
             return None
 

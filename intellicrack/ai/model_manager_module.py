@@ -121,22 +121,73 @@ class ModelBackend(ABC):
 
     @abstractmethod
     def load_model(self, model_path: str) -> Any:
-        """Load a model from the given path."""
+        """Load a model from the given path.
+
+        Args:
+            model_path: Path to the model file to load.
+
+        Returns:
+            Any: Loaded model object.
+
+        Raises:
+            ImportError: If required backend is not available.
+            OSError: If model file cannot be read.
+            ValueError: If model file format is invalid.
+            RuntimeError: If model loading fails.
+        """
 
     @abstractmethod
     def predict(self, model: Any, input_data: Any) -> Any:
-        """Make predictions using the model."""
+        """Make predictions using the model.
+
+        Args:
+            model: Loaded model object.
+            input_data: Input data for prediction.
+
+        Returns:
+            Any: Model predictions from the loaded model.
+
+        Raises:
+            ImportError: If required backend is not available.
+            OSError: If prediction fails due to I/O error.
+            ValueError: If input data format is invalid.
+            RuntimeError: If prediction computation fails.
+        """
 
     @abstractmethod
     def get_model_info(self, model: Any) -> dict[str, Any]:
-        """Get information about the model."""
+        """Get information about the model.
+
+        Args:
+            model: Loaded model object.
+
+        Returns:
+            dict[str, Any]: Dictionary containing model metadata and information.
+
+        Raises:
+            AttributeError: If model lacks expected attributes.
+            RuntimeError: If information retrieval fails.
+        """
 
 
 class PyTorchBackend(ModelBackend):
-    """PyTorch model backend."""
+    """PyTorch model backend for loading and using PyTorch neural networks."""
 
     def load_model(self, model_path: str) -> Any:
-        """Load a PyTorch model."""
+        """Load a PyTorch model from disk.
+
+        Args:
+            model_path: Path to the PyTorch model file.
+
+        Returns:
+            Any: Loaded PyTorch model in evaluation mode.
+
+        Raises:
+            ImportError: If PyTorch is not available.
+            OSError: If model file cannot be read.
+            ValueError: If model file is corrupted or incompatible.
+            RuntimeError: If model loading fails.
+        """
         if not HAS_TORCH or torch is None:
             raise ImportError("PyTorch not available")
 
@@ -150,7 +201,21 @@ class PyTorchBackend(ModelBackend):
             raise
 
     def predict(self, model: Any, input_data: Any) -> Any:
-        """Make predictions using PyTorch model."""
+        """Make predictions using PyTorch model.
+
+        Args:
+            model: Loaded PyTorch model.
+            input_data: Input data (ndarray, list, or tensor).
+
+        Returns:
+            Any: Model predictions as numpy array or tensor.
+
+        Raises:
+            ImportError: If PyTorch is not available.
+            OSError: If prediction fails due to I/O error.
+            ValueError: If input data format is invalid.
+            RuntimeError: If model prediction fails.
+        """
         if not HAS_TORCH or torch is None:
             raise ImportError("PyTorch not available")
 
@@ -171,7 +236,14 @@ class PyTorchBackend(ModelBackend):
             raise
 
     def get_model_info(self, model: Any) -> dict[str, Any]:
-        """Get PyTorch model information."""
+        """Get PyTorch model information and metadata.
+
+        Args:
+            model: Loaded PyTorch model.
+
+        Returns:
+            dict[str, Any]: Dictionary with backend, type, and parameter count.
+        """
         info: dict[str, Any] = {
             "backend": "pytorch",
             "type": type(model).__name__,
@@ -188,10 +260,23 @@ class PyTorchBackend(ModelBackend):
 
 
 class TensorFlowBackend(ModelBackend):
-    """TensorFlow model backend."""
+    """TensorFlow model backend for Keras and TensorFlow neural networks."""
 
     def load_model(self, model_path: str) -> Any:
-        """Load a TensorFlow model."""
+        """Load a TensorFlow/Keras model from disk.
+
+        Args:
+            model_path: Path to the TensorFlow model file or directory.
+
+        Returns:
+            Any: Loaded TensorFlow/Keras model.
+
+        Raises:
+            ImportError: If TensorFlow is not available.
+            OSError: If model file cannot be read.
+            ValueError: If model file format is invalid.
+            RuntimeError: If model loading fails.
+        """
         if not HAS_TENSORFLOW or tf is None:
             raise ImportError("TensorFlow not available")
 
@@ -202,7 +287,21 @@ class TensorFlowBackend(ModelBackend):
             raise
 
     def predict(self, model: Any, input_data: Any) -> Any:
-        """Make predictions using TensorFlow model."""
+        """Make predictions using TensorFlow model.
+
+        Args:
+            model: Loaded TensorFlow/Keras model.
+            input_data: Input data (ndarray or array-like).
+
+        Returns:
+            Any: Model predictions as numpy array.
+
+        Raises:
+            ImportError: If TensorFlow is not available.
+            OSError: If prediction fails due to I/O error.
+            ValueError: If input data format is invalid.
+            RuntimeError: If model prediction fails.
+        """
         if not HAS_TENSORFLOW:
             raise ImportError("TensorFlow not available")
 
@@ -216,7 +315,14 @@ class TensorFlowBackend(ModelBackend):
             raise
 
     def get_model_info(self, model: Any) -> dict[str, Any]:
-        """Get TensorFlow model information."""
+        """Get TensorFlow model information and metadata.
+
+        Args:
+            model: Loaded TensorFlow/Keras model.
+
+        Returns:
+            dict[str, Any]: Dictionary with backend, type, and parameter count.
+        """
         info: dict[str, Any] = {
             "backend": "tensorflow",
             "type": type(model).__name__,
@@ -233,10 +339,23 @@ class TensorFlowBackend(ModelBackend):
 
 
 class ONNXBackend(ModelBackend):
-    """ONNX model backend."""
+    """ONNX model backend for ONNX Runtime inference."""
 
     def load_model(self, model_path: str) -> Any:
-        """Load an ONNX model."""
+        """Load an ONNX model with validation.
+
+        Args:
+            model_path: Path to the ONNX model file (.onnx).
+
+        Returns:
+            Any: ONNX Runtime InferenceSession for the model.
+
+        Raises:
+            ImportError: If ONNX Runtime is not available.
+            OSError: If model file cannot be read.
+            ValueError: If model file is invalid or fails validation.
+            RuntimeError: If model loading fails.
+        """
         if not HAS_ONNX:
             raise ImportError("ONNX Runtime not available")
 
@@ -251,7 +370,21 @@ class ONNXBackend(ModelBackend):
             raise
 
     def predict(self, model: Any, input_data: Any) -> Any:
-        """Make predictions using ONNX model."""
+        """Make predictions using ONNX model.
+
+        Args:
+            model: ONNX Runtime InferenceSession.
+            input_data: Input data (ndarray or array-like).
+
+        Returns:
+            Any: Model predictions as numpy array or tuple of arrays.
+
+        Raises:
+            ImportError: If ONNX Runtime is not available.
+            OSError: If prediction fails due to I/O error.
+            ValueError: If input data format is invalid.
+            RuntimeError: If model prediction fails.
+        """
         if not HAS_ONNX:
             raise ImportError("ONNX Runtime not available")
 
@@ -268,7 +401,14 @@ class ONNXBackend(ModelBackend):
             raise
 
     def get_model_info(self, model: Any) -> dict[str, Any]:
-        """Get ONNX model information."""
+        """Get ONNX model information and schema.
+
+        Args:
+            model: ONNX Runtime InferenceSession.
+
+        Returns:
+            dict[str, Any]: Dictionary with backend type, inputs, and outputs metadata.
+        """
         info: dict[str, Any] = {
             "backend": "onnx",
             "type": "ONNX Runtime Session",
@@ -301,10 +441,23 @@ class ONNXBackend(ModelBackend):
 
 
 class SklearnBackend(ModelBackend):
-    """Scikit-learn model backend."""
+    """Scikit-learn model backend for traditional ML models."""
 
     def load_model(self, model_path: str) -> Any:
-        """Load a scikit-learn model."""
+        """Load a scikit-learn model from disk.
+
+        Args:
+            model_path: Path to the joblib-serialized scikit-learn model.
+
+        Returns:
+            Any: Loaded scikit-learn model object.
+
+        Raises:
+            ImportError: If joblib is not available.
+            OSError: If model file cannot be read.
+            ValueError: If model file format is invalid.
+            RuntimeError: If model loading fails.
+        """
         if not HAS_JOBLIB:
             raise ImportError("Joblib not available")
 
@@ -315,7 +468,20 @@ class SklearnBackend(ModelBackend):
             raise
 
     def predict(self, model: Any, input_data: Any) -> Any:
-        """Make predictions using scikit-learn model."""
+        """Make predictions using scikit-learn model.
+
+        Args:
+            model: Loaded scikit-learn model.
+            input_data: Input data (ndarray or array-like).
+
+        Returns:
+            Any: Model predictions (class labels or probabilities).
+
+        Raises:
+            OSError: If prediction fails due to I/O error.
+            ValueError: If input data format is invalid.
+            RuntimeError: If model prediction fails.
+        """
         try:
             if np is not None and not isinstance(input_data, np.ndarray):
                 input_data = np.array(input_data)
@@ -328,7 +494,14 @@ class SklearnBackend(ModelBackend):
             raise
 
     def get_model_info(self, model: Any) -> dict[str, Any]:
-        """Get scikit-learn model information."""
+        """Get scikit-learn model information and metadata.
+
+        Args:
+            model: Loaded scikit-learn model.
+
+        Returns:
+            dict[str, Any]: Dictionary with backend, type, and model-specific metadata.
+        """
         info: dict[str, Any] = {
             "backend": "sklearn",
             "type": type(model).__name__,
@@ -353,7 +526,6 @@ class ModelCache:
             cache_dir: Directory for storing cached models.
                       Defaults to ~/.intellicrack/model_cache if not provided.
             max_cache_size: Maximum number of models to keep in cache.
-
         """
         self.logger = logging.getLogger(f"{__name__}.ModelCache")
         self.cache_dir = cache_dir or os.path.join(os.path.expanduser("~"), ".intellicrack", "model_cache")
@@ -365,7 +537,14 @@ class ModelCache:
         os.makedirs(self.cache_dir, exist_ok=True)
 
     def _get_cache_key(self, model_path: str) -> str:
-        """Generate a cache key for the model."""
+        """Generate a cache key for the model.
+
+        Args:
+            model_path: Path to the model file.
+
+        Returns:
+            SHA256 hex digest hash of the model path and modification time.
+        """
         try:
             mtime = Path(model_path).stat().st_mtime
             key_string = f"{model_path}_{mtime}"
@@ -375,7 +554,14 @@ class ModelCache:
             return hashlib.sha256(model_path.encode()).hexdigest()
 
     def get(self, model_path: str) -> Any:
-        """Get model from cache."""
+        """Get model from cache.
+
+        Args:
+            model_path: Path to the model file.
+
+        Returns:
+            Cached model object if found, None otherwise.
+        """
         with self.lock:
             cache_key = self._get_cache_key(model_path)
 
@@ -387,7 +573,12 @@ class ModelCache:
             return None
 
     def put(self, model_path: str, model: Any) -> None:
-        """Put model in cache."""
+        """Put model in cache.
+
+        Args:
+            model_path: Path to the model file.
+            model: Model object to cache.
+        """
         with self.lock:
             cache_key = self._get_cache_key(model_path)
 
@@ -416,7 +607,11 @@ class ModelCache:
             logger.info("Model cache cleared")
 
     def get_cache_info(self) -> dict[str, Any]:
-        """Get cache statistics."""
+        """Get cache statistics.
+
+        Returns:
+            Dictionary containing cache size, max size, directory, and cached model keys.
+        """
         with self.lock:
             return {
                 "size": len(self.cache),
@@ -434,9 +629,8 @@ class ModelManager:
 
         Args:
             models_dir: Directory containing AI models. If None, defaults to
-                        ../models relative to this file
-            cache_size: Maximum number of models to keep in cache
-
+                        ../models relative to this file.
+            cache_size: Maximum number of models to keep in cache.
         """
         self.models_dir = models_dir or os.path.join(os.path.dirname(__file__), "..", "models")
         self.cache = ModelCache(max_cache_size=cache_size)
@@ -458,7 +652,11 @@ class ModelManager:
         self._load_model_metadata()
 
     def _initialize_backends(self) -> dict[str, ModelBackend]:
-        """Initialize available model backends."""
+        """Initialize available model backends.
+
+        Returns:
+            Dictionary mapping model format strings to backend instances.
+        """
         backends: dict[str, ModelBackend] = {}
 
         if HAS_TORCH:
@@ -503,7 +701,14 @@ class ModelManager:
             logger.exception("Failed to save model metadata: %s", e)
 
     def _detect_model_type(self, model_path: str) -> str:
-        """Detect the model type from file extension or content."""
+        """Detect the model type from file extension or content.
+
+        Args:
+            model_path: Path to the model file or directory.
+
+        Returns:
+            Detected model type string (pytorch, tensorflow, onnx, sklearn, etc).
+        """
         file_ext = Path(model_path).suffix.lower().lstrip(".")
 
         # Direct extension mapping
@@ -527,7 +732,19 @@ class ModelManager:
         model_type: str | None = None,
         metadata: dict[str, Any] | None = None,
     ) -> None:
-        """Register a model with the manager."""
+        """Register a model with the manager.
+
+        Args:
+            model_id: Unique identifier for the model.
+            model_path: Path to the model file.
+            model_type: Model type (pytorch, tensorflow, onnx, sklearn).
+                       Auto-detected if None.
+            metadata: Optional metadata dictionary for the model.
+
+        Raises:
+            FileNotFoundError: If model file does not exist.
+            ValueError: If model type is unsupported.
+        """
         with self.lock:
             if not os.path.exists(model_path):
                 raise FileNotFoundError(f"Model file not found: {model_path}")
@@ -555,6 +772,15 @@ class ModelManager:
         - Protection pattern recognition
         - Script generation assistance
         - Binary analysis and classification
+
+        Args:
+            model_id: Unique model identifier or pretrained/ path.
+
+        Returns:
+            Loaded model object.
+
+        Raises:
+            ValueError: If model not found and cannot be auto-downloaded.
         """
         with self.lock:
             # Check if it's a pre-trained model request
@@ -604,6 +830,15 @@ class ModelManager:
         - pretrained/protection_classifier: Classifies protection mechanisms
         - pretrained/script_generator: Assists in script generation
         - pretrained/binary_analyzer: Analyzes binary structure and patterns
+
+        Args:
+            model_id: Pretrained model identifier (must start with pretrained/).
+
+        Returns:
+            Loaded pre-trained model object.
+
+        Raises:
+            ValueError: If model_id is not a recognized pre-trained model.
         """
         model_map = {
             "pretrained/vulnerability_detector": self._create_vulnerability_detector,
@@ -622,7 +857,14 @@ class ModelManager:
         raise ValueError(f"Unknown pre-trained model: {model_id}")
 
     def _create_vulnerability_detector(self) -> Any:
-        """Create a vulnerability detection model using neural networks."""
+        """Create a vulnerability detection model using neural networks.
+
+        Returns:
+            Model object for vulnerability detection (PyTorch or scikit-learn).
+
+        Raises:
+            RuntimeError: If no ML backend is available.
+        """
         if HAS_TORCH:
             import torch
             from torch import nn
@@ -664,7 +906,14 @@ class ModelManager:
                     return x
 
                 def detect_vulnerabilities(self, binary_features: Any) -> list[list[dict[str, Any]]]:
-                    """Detect vulnerabilities from binary feature vectors."""
+                    """Detect vulnerabilities from binary feature vectors.
+
+                    Args:
+                        binary_features: Tensor of binary features to analyze.
+
+                    Returns:
+                        List of vulnerability detections for each input sample.
+                    """
                     with torch.no_grad():
                         predictions = self.forward(binary_features)
                         top_k = torch.topk(predictions, k=3, dim=1)
@@ -712,7 +961,11 @@ class ModelManager:
         raise RuntimeError("No ML backend available for vulnerability detector")
 
     def _create_protection_classifier(self) -> Any:
-        """Create a protection mechanism classifier model."""
+        """Create a protection mechanism classifier model.
+
+        Returns:
+            Model object for classifying protection mechanisms.
+        """
         if HAS_TORCH:
             import torch
             from torch import nn
@@ -721,6 +974,12 @@ class ModelManager:
                 """Classifies protection mechanisms in binaries."""
 
                 def __init__(self, input_size: int = 512, num_classes: int = 15) -> None:
+                    """Initialize protection classifier neural network model.
+
+                    Args:
+                        input_size: Size of input features (default 512).
+                        num_classes: Number of protection classes to detect (default 15).
+                    """
                     super().__init__()
                     self.conv1 = nn.Conv1d(1, 32, kernel_size=3, padding=1)
                     self.conv2 = nn.Conv1d(32, 64, kernel_size=3, padding=1)
@@ -750,6 +1009,14 @@ class ModelManager:
                     ]
 
                 def forward(self, x: Any) -> Any:
+                    """Forward pass through protection classifier network.
+
+                    Args:
+                        x: Input tensor with protection features.
+
+                    Returns:
+                        Tensor with classification predictions for each protection type.
+                    """
                     x = x.unsqueeze(1)
                     x = self.pool(self.relu(self.conv1(x)))
                     x = self.pool(self.relu(self.conv2(x)))
@@ -760,7 +1027,14 @@ class ModelManager:
                     return x
 
                 def classify_protections(self, binary_features: Any) -> list[dict[str, Any]]:
-                    """Classify protection mechanisms from binary features."""
+                    """Classify protection mechanisms from binary features.
+
+                    Args:
+                        binary_features: Tensor of binary features to analyze.
+
+                    Returns:
+                        List of detected protection mechanisms with confidence scores.
+                    """
                     with torch.no_grad():
                         predictions = self.forward(binary_features)
                         return [
@@ -799,7 +1073,11 @@ class ModelManager:
         return SimpleProtectionClassifier()
 
     def _create_script_generator_model(self) -> Any:
-        """Create a model to assist in script generation."""
+        """Create a model to assist in script generation.
+
+        Returns:
+            Model object for generating exploitation scripts.
+        """
         if HAS_TORCH:
             from torch import nn
 
@@ -807,6 +1085,13 @@ class ModelManager:
                 """LSTM-based model for generating exploitation scripts."""
 
                 def __init__(self, vocab_size: int = 10000, embedding_dim: int = 256, hidden_dim: int = 512) -> None:
+                    """Initialize script generator LSTM model.
+
+                    Args:
+                        vocab_size: Size of vocabulary (default 10000).
+                        embedding_dim: Embedding dimension (default 256).
+                        hidden_dim: Hidden layer dimension (default 512).
+                    """
                     super().__init__()
                     self.embedding = nn.Embedding(vocab_size, embedding_dim)
                     self.lstm = nn.LSTM(embedding_dim, hidden_dim, num_layers=2, batch_first=True, dropout=0.2)
@@ -832,13 +1117,30 @@ Memory.writeByteArray(patch_addr, {bytes});""",
                     }
 
                 def forward(self, x: Any, hidden: Any = None) -> tuple[Any, Any]:
+                    """Forward pass through script generation LSTM model.
+
+                    Args:
+                        x: Input token tensor.
+                        hidden: Hidden state from previous iteration (optional).
+
+                    Returns:
+                        Tuple of output tensor and updated hidden state.
+                    """
                     embed = self.embedding(x)
                     output, hidden = self.lstm(embed, hidden)
                     output = self.fc(output)
                     return output, hidden
 
                 def generate_script_snippet(self, protection_type: str, target_info: dict[str, Any]) -> str:
-                    """Generate script snippet for specific protection type."""
+                    """Generate script snippet for specific protection type.
+
+                    Args:
+                        protection_type: Type of protection mechanism to target.
+                        target_info: Dictionary containing target binary information.
+
+                    Returns:
+                        Frida script snippet for bypassing the specified protection.
+                    """
                     if protection_type == "license_check":
                         return self.script_templates["frida_hook"].format(
                             function="CheckLicense",
@@ -871,7 +1173,11 @@ Memory.writeByteArray(patch_addr, {bytes});""",
         return TemplateScriptGenerator()
 
     def _create_binary_analyzer_model(self) -> Any:
-        """Create a comprehensive binary analysis model."""
+        """Create a comprehensive binary analysis model.
+
+        Returns:
+            Model object for analyzing binary structure and characteristics.
+        """
         if HAS_TORCH:
             import torch
             from torch import nn
@@ -880,6 +1186,12 @@ Memory.writeByteArray(patch_addr, {bytes});""",
                 """Comprehensive binary analysis using CNN + attention."""
 
                 def __init__(self, input_channels: int = 1, num_features: int = 128) -> None:
+                    """Initialize binary analyzer model with CNN and attention.
+
+                    Args:
+                        input_channels: Number of input channels (default 1).
+                        num_features: Number of features for attention mechanism (default 128).
+                    """
                     super().__init__()
                     self.conv1 = nn.Conv2d(input_channels, 32, kernel_size=3, padding=1)
                     self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
@@ -908,6 +1220,14 @@ Memory.writeByteArray(patch_addr, {bytes});""",
                     ]
 
                 def forward(self, x: Any) -> tuple[Any, Any, Any]:
+                    """Forward pass through binary analyzer network.
+
+                    Args:
+                        x: Input binary tensor.
+
+                    Returns:
+                        Tuple of (architecture, compiler, packer) classification tensors.
+                    """
                     x = torch.relu(self.conv1(x))
                     x = self.pool(x)
                     x = torch.relu(self.conv2(x))
@@ -927,7 +1247,14 @@ Memory.writeByteArray(patch_addr, {bytes});""",
                     return arch, compiler, packer
 
                 def analyze_binary(self, binary_tensor: Any) -> dict[str, Any]:
-                    """Comprehensive binary analysis."""
+                    """Comprehensive binary analysis.
+
+                    Args:
+                        binary_tensor: Tensor representation of the binary to analyze.
+
+                    Returns:
+                        Dictionary containing architecture, compiler, and packer analysis results.
+                    """
                     with torch.no_grad():
                         arch, compiler, packer = self.forward(binary_tensor)
 
@@ -967,7 +1294,14 @@ Memory.writeByteArray(patch_addr, {bytes});""",
         return HeuristicBinaryAnalyzer()
 
     def _download_model_from_zoo(self, model_id: str) -> bool:
-        """Download model from online model zoo (Hugging Face, etc)."""
+        """Download model from online model zoo (Hugging Face, etc).
+
+        Args:
+            model_id: Model identifier to download.
+
+        Returns:
+            True if download succeeded, False otherwise.
+        """
         # Model zoo URLs for different model types
         model_zoo_urls = {
             "vulnerability_detector_v1": "https://huggingface.co/intellicrack/vuln-detector/resolve/main/model.onnx",
@@ -1001,7 +1335,19 @@ Memory.writeByteArray(patch_addr, {bytes});""",
             return False
 
     def _load_model_with_fallback(self, model_path: str, model_type: str, model_id: str) -> object:
-        """Load model with fallback mechanisms for missing files."""
+        """Load model with fallback mechanisms for missing files.
+
+        Args:
+            model_path: Path to the model file.
+            model_type: Type of model (pytorch, tensorflow, sklearn).
+            model_id: Unique model identifier.
+
+        Returns:
+            Loaded model object.
+
+        Raises:
+            FileNotFoundError: If model file not found and fallback creation fails.
+        """
         if not os.path.exists(model_path):
             logger.warning("Model file not found: %s", model_path)
             # Try to create a default model
@@ -1028,7 +1374,16 @@ Memory.writeByteArray(patch_addr, {bytes});""",
         return backend.load_model(model_path)
 
     def _optimize_loaded_model(self, model: Any, model_id: str, model_type: str) -> Any:
-        """Apply optimizations to loaded model."""
+        """Apply optimizations to loaded model.
+
+        Args:
+            model: Loaded model object.
+            model_id: Unique model identifier.
+            model_type: Type of model (pytorch, tensorflow, sklearn).
+
+        Returns:
+            Optimized model object.
+        """
         if GPU_AUTOLOADER_AVAILABLE:
             try:
                 if get_device is not None:
@@ -1078,12 +1433,14 @@ Memory.writeByteArray(patch_addr, {bytes});""",
         - Binary analysis predictions
 
         Args:
-            model_id: Model identifier or pretrained model path
-            input_data: Input data (binary features, code patterns, etc)
+            model_id: Model identifier or pretrained model path.
+            input_data: Input data (binary features, code patterns, etc).
 
         Returns:
-            Prediction results with confidence scores and recommendations
+            Any: Prediction results with confidence scores and recommendations.
 
+        Raises:
+            ValueError: If model_id is unknown or invalid.
         """
         # Handle pretrained models with specialized prediction logic
         if model_id.startswith("pretrained/"):
@@ -1110,7 +1467,18 @@ Memory.writeByteArray(patch_addr, {bytes});""",
         raise ValueError(f"Cannot predict with model {model_id}")
 
     def _predict_with_pretrained(self, model_id: str, input_data: Any) -> dict[str, Any]:
-        """Make predictions using pretrained models with structured output."""
+        """Make predictions using pretrained models with structured output.
+
+        Args:
+            model_id: Pretrained model identifier.
+            input_data: Input data for prediction.
+
+        Returns:
+            Dictionary containing prediction results and metadata.
+
+        Raises:
+            ValueError: If model_id is unknown.
+        """
         model = self.load_model(model_id)
 
         if model_id == "pretrained/vulnerability_detector":
@@ -1126,7 +1494,15 @@ Memory.writeByteArray(patch_addr, {bytes});""",
         raise ValueError(f"Unknown pretrained model: {model_id}")
 
     def _predict_vulnerabilities(self, model: Any, input_data: Any) -> dict[str, Any]:
-        """Predict vulnerabilities with scoring and recommendations."""
+        """Predict vulnerabilities with scoring and recommendations.
+
+        Args:
+            model: Vulnerability detector model.
+            input_data: Binary data or feature vector.
+
+        Returns:
+            Dictionary with vulnerabilities, security score, risk level, and recommendations.
+        """
         features: Any
         if isinstance(input_data, bytes):
             features = self._extract_binary_features(input_data)
@@ -1263,7 +1639,15 @@ Memory.writeByteArray(patch_addr, {bytes});""",
         }
 
     def _predict_protections(self, model: Any, input_data: Any) -> dict[str, Any]:
-        """Predict protection mechanisms in binary."""
+        """Predict protection mechanisms in binary.
+
+        Args:
+            model: Protection classifier model.
+            input_data: Binary data or feature vector.
+
+        Returns:
+            Dictionary with detected protections, categorization, and bypass difficulty.
+        """
         protections: list[dict[str, Any]]
         if hasattr(model, "classify_protections"):
             protections = model.classify_protections(input_data)
@@ -1296,7 +1680,15 @@ Memory.writeByteArray(patch_addr, {bytes});""",
         }
 
     def _predict_script_generation(self, model: Any, input_data: dict[str, Any]) -> dict[str, Any]:
-        """Generate script predictions and templates."""
+        """Generate script predictions and templates.
+
+        Args:
+            model: Script generator model.
+            input_data: Dictionary with protection_type and target_info.
+
+        Returns:
+            Dictionary with script content, type, and alternative approaches.
+        """
         protection_type = str(input_data.get("protection_type", "unknown"))
         target_info: dict[str, Any] = input_data.get("target_info", {}) if isinstance(input_data.get("target_info"), dict) else {}
 
@@ -1334,7 +1726,15 @@ Interceptor.attach(IsDebuggerPresent, {
         }
 
     def _predict_binary_analysis(self, model: Any, input_data: Any) -> dict[str, Any]:
-        """Comprehensive binary analysis prediction."""
+        """Comprehensive binary analysis prediction.
+
+        Args:
+            model: Binary analyzer model.
+            input_data: Binary data or tensor.
+
+        Returns:
+            Dictionary with analysis results, classification, and recommended tools.
+        """
         analysis: dict[str, Any]
         if hasattr(model, "analyze_binary"):
             analysis = model.analyze_binary(input_data)
@@ -1367,7 +1767,14 @@ Interceptor.attach(IsDebuggerPresent, {
         }
 
     def _extract_binary_features(self, binary_data: bytes) -> "np.ndarray[Any, np.dtype[np.float32]]":
-        """Extract feature vector from binary data."""
+        """Extract feature vector from binary data.
+
+        Args:
+            binary_data: Raw binary data to extract features from.
+
+        Returns:
+            Numpy array of float32 features with fixed size of 1024.
+        """
         byte_counts: np.ndarray[Any, np.dtype[np.float64]] = np.zeros(256)
         data_slice = binary_data[:10000]
         for byte in data_slice:
@@ -1391,7 +1798,14 @@ Interceptor.attach(IsDebuggerPresent, {
         return np.array(features, dtype=np.float32)
 
     def _calculate_entropy(self, data: bytes) -> float:
-        """Calculate Shannon entropy of data."""
+        """Calculate Shannon entropy of data.
+
+        Args:
+            data: Binary data to analyze.
+
+        Returns:
+            Float entropy value between 0 and 8.
+        """
         import math
 
         if not data:
@@ -1407,7 +1821,15 @@ Interceptor.attach(IsDebuggerPresent, {
         return entropy
 
     def _extract_strings(self, data: bytes, min_length: int = 4) -> list[str]:
-        """Extract ASCII strings from binary data."""
+        """Extract ASCII strings from binary data.
+
+        Args:
+            data: Binary data to scan.
+            min_length: Minimum string length to extract (default 4).
+
+        Returns:
+            List of extracted ASCII strings.
+        """
         import re
 
         ascii_pattern = rb"[\x20-\x7E]{" + str(min_length).encode() + rb",}"
@@ -1416,7 +1838,15 @@ Interceptor.attach(IsDebuggerPresent, {
         return [s.decode("ascii", errors="ignore") for s in strings]
 
     def _calculate_severity(self, vuln_type: str, confidence: float) -> str:
-        """Calculate vulnerability severity."""
+        """Calculate vulnerability severity.
+
+        Args:
+            vuln_type: Type of vulnerability detected.
+            confidence: Confidence score between 0 and 1.
+
+        Returns:
+            str: Severity level: CRITICAL, HIGH, MEDIUM, or LOW.
+        """
         high_severity_vulns = ["buffer_overflow", "command_injection", "use_after_free"]
         medium_severity_vulns = ["format_string", "integer_overflow", "path_traversal"]
 
@@ -1430,7 +1860,14 @@ Interceptor.attach(IsDebuggerPresent, {
         return "LOW"
 
     def _find_similar_cves(self, vuln_type: str) -> list[str]:
-        """Find similar CVEs for vulnerability type."""
+        """Find similar CVEs for vulnerability type.
+
+        Args:
+            vuln_type: Type of vulnerability to search for.
+
+        Returns:
+            list[str]: List of CVE identifiers related to the vulnerability type.
+        """
         cve_database: dict[str, list[str]] = {
             "buffer_overflow": ["CVE-2021-44228", "CVE-2021-34527", "CVE-2020-1472"],
             "format_string": ["CVE-2012-0809", "CVE-2015-0235"],
@@ -1441,7 +1878,14 @@ Interceptor.attach(IsDebuggerPresent, {
         return cve_database.get(vuln_type, [])
 
     def _get_risk_level(self, security_score: float) -> str:
-        """Determine risk level from security score."""
+        """Determine risk level from security score.
+
+        Args:
+            security_score: Score between 0 and 100.
+
+        Returns:
+            str: Risk level: LOW, MEDIUM, HIGH, or CRITICAL.
+        """
         if security_score >= 90:
             return "LOW"
         if security_score >= 70:
@@ -1449,7 +1893,14 @@ Interceptor.attach(IsDebuggerPresent, {
         return "HIGH" if security_score >= 50 else "CRITICAL"
 
     def _generate_vuln_recommendations(self, vulnerabilities: list[dict[str, Any]]) -> list[str]:
-        """Generate recommendations for found vulnerabilities."""
+        """Generate recommendations for found vulnerabilities.
+
+        Args:
+            vulnerabilities: List of vulnerability dictionaries.
+
+        Returns:
+            list[str]: List of recommendation strings for remediation.
+        """
         recommendations: list[str] = []
 
         for vuln in vulnerabilities:
@@ -1466,7 +1917,14 @@ Interceptor.attach(IsDebuggerPresent, {
         return list(set(recommendations))
 
     def _calculate_bypass_difficulty(self, protections: list[dict[str, Any]]) -> str:
-        """Calculate difficulty of bypassing protections."""
+        """Calculate difficulty of bypassing protections.
+
+        Args:
+            protections: List of detected protection dictionaries.
+
+        Returns:
+            str: Difficulty level: BEGINNER, INTERMEDIATE, or EXPERT.
+        """
         difficult_protections = ["code_virtualization", "anti_tamper", "hardware_lock"]
         medium_protections = ["packing", "anti_debug", "integrity_check"]
 
@@ -1478,7 +1936,14 @@ Interceptor.attach(IsDebuggerPresent, {
         return "INTERMEDIATE" if has_medium else "BEGINNER"
 
     def _generate_bypass_strategies(self, protections: list[dict[str, Any]]) -> dict[str, Any]:
-        """Generate bypass strategies for detected protections."""
+        """Generate bypass strategies for detected protections.
+
+        Args:
+            protections: List of detected protection dictionaries.
+
+        Returns:
+            dict[str, Any]: Dictionary mapping protection types to bypass strategies.
+        """
         strategies: dict[str, Any] = {}
 
         for protection in protections:
@@ -1495,7 +1960,14 @@ Interceptor.attach(IsDebuggerPresent, {
         return strategies
 
     def _generate_alternative_approaches(self, protection_type: str) -> list[str]:
-        """Generate alternative approaches for bypassing protections."""
+        """Generate alternative approaches for bypassing protections.
+
+        Args:
+            protection_type: Type of protection to bypass.
+
+        Returns:
+            List of alternative bypass approaches.
+        """
         approaches = {
             "license_check": [
                 "Patch binary directly",
@@ -1513,7 +1985,14 @@ Interceptor.attach(IsDebuggerPresent, {
         return approaches.get(protection_type, ["Manual analysis required"])
 
     def _generate_testing_steps(self, protection_type: str) -> list[str]:
-        """Generate testing steps for bypass verification."""
+        """Generate testing steps for bypass verification.
+
+        Args:
+            protection_type: Type of protection to test bypass for.
+
+        Returns:
+            List of testing steps to verify the bypass.
+        """
         steps = {
             "license_check": [
                 "1. Apply bypass script",
@@ -1531,7 +2010,14 @@ Interceptor.attach(IsDebuggerPresent, {
         return steps.get(protection_type, ["Test bypass effectiveness"])
 
     def _analyze_sections(self, binary_data: bytes) -> list[dict[str, Any]]:
-        """Analyze binary sections."""
+        """Analyze binary sections.
+
+        Args:
+            binary_data: Binary data to analyze.
+
+        Returns:
+            list[dict[str, Any]]: List of binary section dictionaries with metadata.
+        """
         sections: list[dict[str, Any]] = []
 
         if binary_data[:2] == b"MZ":
@@ -1552,7 +2038,14 @@ Interceptor.attach(IsDebuggerPresent, {
         return sections
 
     def _find_suspicious_imports(self, binary_data: bytes) -> list[str]:
-        """Find suspicious API imports in binary."""
+        """Find suspicious API imports in binary.
+
+        Args:
+            binary_data: Binary data to scan for imports.
+
+        Returns:
+            List of suspicious API names found.
+        """
         suspicious_apis = [
             b"VirtualAlloc",
             b"WriteProcessMemory",
@@ -1568,7 +2061,14 @@ Interceptor.attach(IsDebuggerPresent, {
         return [api.decode("ascii") for api in suspicious_apis if api in binary_data]
 
     def _classify_binary_type(self, analysis: dict[str, Any]) -> str:
-        """Classify binary type based on analysis."""
+        """Classify binary type based on analysis.
+
+        Args:
+            analysis: Dictionary of binary analysis results.
+
+        Returns:
+            str: Classification string for the binary type.
+        """
         if analysis.get("likely_packed"):
             return "Packed Executable"
         if analysis.get("suspicious_imports"):
@@ -1576,7 +2076,14 @@ Interceptor.attach(IsDebuggerPresent, {
         return "Standard Executable"
 
     def _recommend_analysis_tools(self, analysis: dict[str, Any]) -> list[str]:
-        """Recommend tools based on binary analysis."""
+        """Recommend tools based on binary analysis.
+
+        Args:
+            analysis: Dictionary of binary analysis results.
+
+        Returns:
+            List of recommended analysis tools.
+        """
         tools = ["Ghidra", "x64dbg", "Radare2"]
 
         if analysis.get("likely_packed"):
@@ -1587,7 +2094,14 @@ Interceptor.attach(IsDebuggerPresent, {
         return tools
 
     def _generate_analysis_steps(self, analysis: dict[str, Any]) -> list[str]:
-        """Generate next analysis steps."""
+        """Generate next analysis steps.
+
+        Args:
+            analysis: Dictionary of binary analysis results.
+
+        Returns:
+            List of recommended next analysis steps.
+        """
         steps: list[str] = []
 
         if analysis.get("likely_packed"):
@@ -1605,7 +2119,15 @@ Interceptor.attach(IsDebuggerPresent, {
         return steps
 
     def predict_batch(self, model_id: str, batch_data: list[Any]) -> list[Any]:
-        """Make batch predictions with GPU optimization."""
+        """Make batch predictions with GPU optimization.
+
+        Args:
+            model_id: Unique model identifier.
+            batch_data: List of input data for batch prediction.
+
+        Returns:
+            List of prediction results.
+        """
         model = self.load_model(model_id)
         model_info = self.model_metadata[model_id]
         model_type = model_info["type"]
@@ -1635,7 +2157,17 @@ Interceptor.attach(IsDebuggerPresent, {
         return results
 
     def get_model_info(self, model_id: str) -> dict[str, Any]:
-        """Get information about a model."""
+        """Get information about a model.
+
+        Args:
+            model_id: Unique model identifier.
+
+        Returns:
+            dict[str, Any]: Dictionary with model metadata and information.
+
+        Raises:
+            ValueError: If model_id is not registered.
+        """
         if model_id not in self.model_metadata:
             raise ValueError(f"Model not registered: {model_id}")
 
@@ -1656,18 +2188,30 @@ Interceptor.attach(IsDebuggerPresent, {
         return dict(model_info)
 
     def list_models(self) -> list[str]:
-        """List all registered models."""
+        """List all registered models.
+
+        Returns:
+            list[str]: List of registered model identifiers.
+        """
         return list(self.model_metadata.keys())
 
     def unload_model(self, model_id: str) -> None:
-        """Unload a model from memory."""
+        """Unload a model from memory.
+
+        Args:
+            model_id: Unique model identifier.
+        """
         with self.lock:
             if model_id in self.loaded_models:
                 del self.loaded_models[model_id]
                 logger.info("Unloaded model: %s", model_id)
 
     def unregister_model(self, model_id: str) -> None:
-        """Unregister a model."""
+        """Unregister a model.
+
+        Args:
+            model_id: Unique model identifier.
+        """
         with self.lock:
             if model_id in self.model_metadata:
                 del self.model_metadata[model_id]
@@ -1679,7 +2223,11 @@ Interceptor.attach(IsDebuggerPresent, {
             logger.info("Unregistered model: %s", model_id)
 
     def get_available_backends(self) -> list[str]:
-        """Get list of available backends."""
+        """Get list of available backends.
+
+        Returns:
+            list[str]: List of backend format strings.
+        """
         return list(self.backends.keys())
 
     def clear_cache(self) -> None:
@@ -1687,11 +2235,19 @@ Interceptor.attach(IsDebuggerPresent, {
         self.cache.clear()
 
     def get_cache_info(self) -> dict[str, Any]:
-        """Get cache information."""
+        """Get cache information.
+
+        Returns:
+            dict[str, Any]: Dictionary with cache statistics.
+        """
         return self.cache.get_cache_info()
 
     def get_manager_stats(self) -> dict[str, Any]:
-        """Get manager statistics."""
+        """Get manager statistics.
+
+        Returns:
+            dict[str, Any]: Dictionary with manager statistics and metadata.
+        """
         with self.lock:
             return {
                 "registered_models": len(self.model_metadata),
@@ -1702,7 +2258,14 @@ Interceptor.attach(IsDebuggerPresent, {
             }
 
     def import_local_model(self, file_path: str) -> dict[str, Any] | None:
-        """Import a local model file."""
+        """Import a local model file.
+
+        Args:
+            file_path: Path to the local model file.
+
+        Returns:
+            dict[str, Any] | None: Dictionary with model metadata if successful, None otherwise.
+        """
         try:
             if not os.path.exists(file_path):
                 return None
@@ -1724,11 +2287,22 @@ Interceptor.attach(IsDebuggerPresent, {
             return None
 
     def get_available_repositories(self) -> list[str]:
-        """Get list of available model repositories."""
+        """Get list of available model repositories.
+
+        Returns:
+            list[str]: List of repository names.
+        """
         return ["huggingface", "local", "custom"]
 
     def get_available_models(self, repository: str | None = None) -> list[dict[str, Any]]:
-        """Get list of available models."""
+        """Get list of available models.
+
+        Args:
+            repository: Optional repository filter.
+
+        Returns:
+            list[dict[str, Any]]: List of available model dictionaries with metadata.
+        """
         models = []
         for model_id, metadata in self.model_metadata.items():
             model_info = {
@@ -1742,7 +2316,14 @@ Interceptor.attach(IsDebuggerPresent, {
         return models
 
     def get_model_path(self, model_id: str) -> str:
-        """Get the file path for a model."""
+        """Get the file path for a model.
+
+        Args:
+            model_id: Unique model identifier.
+
+        Returns:
+            Full path to the model file or empty string if not found.
+        """
         if model_id in self.model_metadata:
             model_info = self.model_metadata[model_id]
             path = str(model_info.get("path", ""))
@@ -1786,7 +2367,15 @@ Interceptor.attach(IsDebuggerPresent, {
         return ""
 
     def import_api_model(self, model_name: str, api_config: dict[str, Any]) -> dict[str, Any] | None:
-        """Import a model from an API."""
+        """Import a model from an API.
+
+        Args:
+            model_name: Name of the model on the API.
+            api_config: Configuration dictionary for API access.
+
+        Returns:
+            dict[str, Any] | None: Dictionary with model metadata if successful, None otherwise.
+        """
         try:
             model_id = f"api_{model_name}"
 
@@ -1813,12 +2402,11 @@ Interceptor.attach(IsDebuggerPresent, {
         """Train a machine learning model with provided data.
 
         Args:
-            training_data: Training data for the model
-            model_type: Type of model to train (pytorch, tensorflow, sklearn)
+            training_data: Training data for the model.
+            model_type: Type of model to train (pytorch, tensorflow, sklearn).
 
         Returns:
-            bool: True if training succeeded, False otherwise
-
+            bool: True if training succeeded, False otherwise.
         """
         try:
             logger.info("Training %s model with provided data", model_type)
@@ -2258,7 +2846,11 @@ Interceptor.attach(IsDebuggerPresent, {
 
     @property
     def repositories(self) -> list[str]:
-        """Get available repositories."""
+        """Get available repositories.
+
+        Returns:
+            List of available repository names.
+        """
         return self.get_available_repositories()
 
     def evaluate_model_with_split(
@@ -2272,15 +2864,14 @@ Interceptor.attach(IsDebuggerPresent, {
         """Evaluate a model using train_test_split for proper validation.
 
         Args:
-            model_id: Model identifier
-            data: Input features
-            labels: Target labels
-            test_size: Proportion of data to use for testing
-            random_state: Random seed for reproducibility
+            model_id: Model identifier.
+            data: Input features array.
+            labels: Target labels array.
+            test_size: Proportion of data to use for testing (0.0-1.0).
+            random_state: Random seed for reproducibility.
 
         Returns:
-            Dictionary with evaluation metrics
-
+            Dictionary with evaluation metrics including train/test scores and metrics.
         """
         try:
             from sklearn.model_selection import train_test_split
@@ -2398,14 +2989,21 @@ class AsyncModelManager:
 
         Args:
             model_manager: The underlying ModelManager instance to wrap with async capabilities.
-
         """
         self.logger = logging.getLogger(f"{__name__}.AsyncModelManager")
         self.model_manager = model_manager
         self.thread_pool: dict[str, threading.Thread] = {}
 
     def load_model_async(self, model_id: str, callback: Callable[..., None] | None = None) -> threading.Thread | None:
-        """Load a model asynchronously."""
+        """Load a model asynchronously.
+
+        Args:
+            model_id: Unique model identifier.
+            callback: Optional callback function for async results.
+
+        Returns:
+            Thread object if async loading started, None otherwise.
+        """
         # Skip thread creation during testing
         if os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS"):
             self.logger.info("Skipping async model loading (testing mode)")
@@ -2435,7 +3033,16 @@ class AsyncModelManager:
         return thread
 
     def predict_async(self, model_id: str, input_data: object, callback: Callable[..., None] | None = None) -> threading.Thread | None:
-        """Make predictions asynchronously."""
+        """Make predictions asynchronously.
+
+        Args:
+            model_id: Unique model identifier.
+            input_data: Input data for prediction.
+            callback: Optional callback function for async results.
+
+        Returns:
+            Thread object if async prediction started, None otherwise.
+        """
         # Skip thread creation during testing
         if os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS"):
             self.logger.info("Skipping async prediction (testing mode)")
@@ -2467,7 +3074,15 @@ class AsyncModelManager:
 
 # Factory function for easy instantiation
 def create_model_manager(models_dir: str | None = None, cache_size: int = 5) -> ModelManager:
-    """Create a model manager instance."""
+    """Create a model manager instance.
+
+    Args:
+        models_dir: Directory for storing models. Defaults to ../models.
+        cache_size: Maximum number of models to cache in memory.
+
+    Returns:
+        ModelManager: Configured ModelManager instance for AI model management.
+    """
     return ModelManager(models_dir=models_dir, cache_size=cache_size)
 
 
@@ -2476,7 +3091,14 @@ _GLOBAL_MODEL_MANAGER = None
 
 
 def get_global_model_manager() -> ModelManager:
-    """Get the global model manager instance."""
+    """Get the global model manager instance.
+
+    Creates a singleton instance on first call. Subsequent calls
+    return the same instance.
+
+    Returns:
+        ModelManager: Global ModelManager instance for AI model management.
+    """
     global _GLOBAL_MODEL_MANAGER  # pylint: disable=global-statement
     if _GLOBAL_MODEL_MANAGER is None:
         _GLOBAL_MODEL_MANAGER = create_model_manager()
@@ -2491,7 +3113,6 @@ class ModelFineTuner:
 
         Args:
             model_manager: The ModelManager instance for accessing and managing models.
-
         """
         self.logger = logging.getLogger(f"{__name__}.ModelFineTuner")
         self.model_manager = model_manager
@@ -2511,17 +3132,19 @@ class ModelFineTuner:
         """Fine-tune a pre-trained model on custom data.
 
         Args:
-            model_id: ID of the model to fine-tune
-            training_data: Training dataset
-            validation_data: Optional validation dataset
-            epochs: Number of training epochs
-            learning_rate: Learning rate for optimization
-            batch_size: Batch size for training
-            callback: Optional callback for progress updates
+            model_id: ID of the model to fine-tune.
+            training_data: Training dataset for fine-tuning.
+            validation_data: Optional validation dataset for evaluation.
+            epochs: Number of training epochs (default 10).
+            learning_rate: Learning rate for optimization (default 0.001).
+            batch_size: Batch size for training (default 32).
+            callback: Optional callback for progress updates.
 
         Returns:
-            Dict with training results and metrics
+            dict[str, Any]: Dictionary with training results and metrics.
 
+        Raises:
+            ValueError: If fine-tuning is not supported for the model type.
         """
         with self.lock:
             model = self.model_manager.load_model(model_id)
@@ -2632,7 +3255,20 @@ class ModelFineTuner:
         batch_size: int,
         callback: Callable[..., None],
     ) -> dict[str, Any]:
-        """Fine-tune a PyTorch model."""
+        """Fine-tune a PyTorch model.
+
+        Args:
+            model: PyTorch model to fine-tune.
+            training_data: Training dataset (features, labels).
+            validation_data: Validation dataset (features, labels).
+            epochs: Number of training epochs.
+            learning_rate: Learning rate for optimizer.
+            batch_size: Batch size for training.
+            callback: Progress callback function.
+
+        Returns:
+            Dictionary with training metrics and loss history.
+        """
         if not HAS_TORCH or torch is None or nn is None:
             return {"error": "PyTorch not available"}
 
@@ -2707,7 +3343,20 @@ class ModelFineTuner:
         batch_size: int,
         callback: Callable[..., None],
     ) -> dict[str, Any]:
-        """Fine-tune a TensorFlow model."""
+        """Fine-tune a TensorFlow model.
+
+        Args:
+            model: TensorFlow/Keras model to fine-tune.
+            training_data: Training dataset (features, labels).
+            validation_data: Validation dataset (features, labels).
+            epochs: Number of training epochs.
+            learning_rate: Learning rate for optimizer.
+            batch_size: Batch size for training.
+            callback: Progress callback function.
+
+        Returns:
+            Dictionary with training metrics and loss history.
+        """
         if keras is None:
             return {"error": "Keras not available"}
 
@@ -2751,7 +3400,17 @@ class ModelFineTuner:
         validation_data: Any,
         callback: Callable[..., None],
     ) -> dict[str, Any]:
-        """Fine-tune a scikit-learn model."""
+        """Fine-tune a scikit-learn model.
+
+        Args:
+            model: Scikit-learn model to fine-tune.
+            training_data: Training dataset (features, labels).
+            validation_data: Validation dataset (features, labels).
+            callback: Progress callback function.
+
+        Returns:
+            Dictionary with training metrics and validation scores.
+        """
         X_train: Any
         y_train: Any
         X_train, y_train = training_data
@@ -2775,7 +3434,14 @@ class ModelFineTuner:
         return results
 
     def get_training_history(self, model_id: str) -> dict[str, Any] | None:
-        """Get training history for a fine-tuned model."""
+        """Get training history for a fine-tuned model.
+
+        Args:
+            model_id: Unique model identifier.
+
+        Returns:
+            dict[str, Any] | None: Training history dictionary if available, None otherwise.
+        """
         return self.training_history.get(model_id)
 
 
@@ -2783,13 +3449,14 @@ def import_custom_model(model_path: str, model_type: str | None = None, model_id
     """Import a custom AI model into the system.
 
     Args:
-        model_path: Path to the model file
-        model_type: Type of model (pytorch, tensorflow, onnx, sklearn)
-        model_id: Optional custom ID for the model
+        model_path: Path to the model file.
+        model_type: Type of model (pytorch, tensorflow, onnx, sklearn).
+                   Auto-detected if None.
+        model_id: Optional custom ID for the model.
+                 Auto-generated if None.
 
     Returns:
-        Dict with import results and model information
-
+        dict[str, Any]: Dictionary with import results containing success flag, model_id, path, and info.
     """
     manager = get_global_model_manager()
 
@@ -2833,12 +3500,17 @@ def load_model(model_id: str, model_path: str | None = None) -> object:
     """Load a model using the global model manager.
 
     Args:
-        model_id: ID of the model to load
-        model_path: Optional path if model needs to be registered first
+        model_id: ID of the model to load.
+        model_path: Optional path if model needs to be registered first.
+                   Type auto-detected from extension.
 
     Returns:
-        Loaded model object
+        object: Loaded model object ready for inference.
 
+    Raises:
+        ValueError: If model not found or type unsupported.
+        OSError: If model file cannot be read.
+        RuntimeError: If loading fails.
     """
     try:
         manager = get_global_model_manager()
@@ -2871,13 +3543,15 @@ def save_model(model_id: str, save_path: str, model_format: str = "auto") -> dic
     """Save a loaded model to disk.
 
     Args:
-        model_id: ID of the loaded model
-        save_path: Path where to save the model
-        model_format: Format to save in (auto-detected from extension)
+        model_id: ID of the loaded model.
+        save_path: Path where to save the model.
+        model_format: Format to save in (auto-detected from extension if "auto").
 
     Returns:
-        Dict with save results
+        dict[str, object]: Dictionary with success flag, model_id, save_path, and format.
 
+    Raises:
+        ImportError: If required dependencies for model format are not available.
     """
     try:
         manager = get_global_model_manager()
@@ -2943,8 +3617,7 @@ def list_available_models() -> dict[str, Any]:
     """List all available models in the global manager.
 
     Returns:
-        Dict containing model information
-
+        dict[str, Any]: Dictionary with success flag, model_count, and detailed model information.
     """
     try:
         manager = get_global_model_manager()
@@ -2979,12 +3652,12 @@ def configure_ai_provider(provider_name: str, config: dict[str, Any]) -> dict[st
     """Configure an AI provider for the model manager.
 
     Args:
-        provider_name: Name of the provider (openai, anthropic, local, etc.)
-        config: Configuration dictionary
+        provider_name: Name of the provider (openai, anthropic, local, etc.).
+                      Supported: local, openai, anthropic, huggingface, onnx, pytorch, tensorflow, sklearn.
+        config: Configuration dictionary with provider-specific settings.
 
     Returns:
-        Configuration result
-
+        dict[str, Any]: Dictionary with success flag, provider info, and configuration details.
     """
     try:
         # This would integrate with LLM backends when available

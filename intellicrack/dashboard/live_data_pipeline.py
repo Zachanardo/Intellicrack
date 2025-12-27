@@ -23,9 +23,17 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Protocol, cast
 
 import numpy as np
+
+
+class WebSocketProtocol(Protocol):
+    """Protocol for WebSocket connections with async send."""
+
+    async def send(self, message: str) -> None:
+        """Send a message over the WebSocket connection."""
+        ...
 
 
 logger = logging.getLogger(__name__)
@@ -586,7 +594,7 @@ class LiveDataPipeline:
 
             for connection in self.websocket_connections:
                 try:
-                    ws_connection = cast("Any", connection)
+                    ws_connection = cast(WebSocketProtocol, connection)
                     asyncio.run_coroutine_threadsafe(ws_connection.send(message_json), asyncio.get_event_loop())
                 except Exception as e:
                     self.logger.exception("Error sending to WebSocket: %s", e)

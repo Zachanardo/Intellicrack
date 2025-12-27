@@ -47,7 +47,15 @@ class R2BypassGenerator:
     """
 
     def __init__(self, binary_path: str, radare2_path: str | None = None) -> None:
-        """Initialize bypass generator."""
+        """Initialize the R2BypassGenerator instance with analysis engines.
+
+        Sets up the license bypass generator with decompilation, vulnerability analysis,
+        and AI-powered analysis capabilities for comprehensive license protection analysis.
+
+        Args:
+            binary_path: Absolute path to the binary file to analyze for license protections.
+            radare2_path: Optional path to the radare2 executable. If None, uses system PATH.
+        """
         self.binary_path = binary_path
         self.radare2_path = radare2_path
         self.logger = logging.getLogger(__name__)
@@ -60,17 +68,35 @@ class R2BypassGenerator:
     def _get_r2_session(self, binary_path: str) -> AbstractContextManager[R2Session | R2SessionPoolAdapter]:
         """Get an r2 session context manager for the specified binary.
 
+        Creates a context manager for managing radare2 session lifecycle with proper
+        resource cleanup. Supports both direct sessions and pooled session adapters
+        for efficient binary analysis operations.
+
         Args:
-            binary_path: Path to the binary file to analyze.
+            binary_path: Absolute path to the binary file for radare2 analysis.
 
         Returns:
-            Context manager yielding an R2Session or R2SessionPoolAdapter instance.
-
+            Context manager yielding an R2Session or R2SessionPoolAdapter instance
+                for binary analysis operations.
         """
         return r2_session(binary_path, self.radare2_path)
 
     def generate_comprehensive_bypass(self) -> dict[str, Any]:
-        """Generate comprehensive license bypass solutions."""
+        """Generate comprehensive license bypass solutions for the analyzed binary.
+
+        Orchestrates complete bypass generation including strategy development, patch creation,
+        keygen algorithm generation, and implementation guides with risk assessment.
+
+        Returns:
+            Dictionary containing bypass strategies, automated patches, keygen algorithms,
+            registry modifications, file modifications, memory patches, API hooks, validation
+            bypasses, success probabilities, implementation guides, and risk assessments.
+            On error, includes an 'error' key with exception details.
+
+        Note:
+            This is the primary entry point for comprehensive license bypass generation.
+            All sub-generators are called sequentially to build a complete analysis.
+        """
         result: dict[str, Any] = {
             "binary_path": self.binary_path,
             "bypass_strategies": [],
@@ -119,7 +145,19 @@ class R2BypassGenerator:
         return result
 
     def generate_bypass(self, license_info: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Provide API compatibility by delegating to generate_comprehensive_bypass."""
+        """Generate bypass solution with API compatibility for legacy interfaces.
+
+        Delegates to generate_comprehensive_bypass while maintaining backward compatibility
+        with code expecting a 'method' and 'bypass_type' field in the result dictionary.
+
+        Args:
+            license_info: Optional dictionary containing license information. Not currently
+                used but maintained for interface compatibility with existing code.
+
+        Returns:
+            Dictionary with bypass results including 'method' and 'bypass_type' fields.
+            Structure is compatible with legacy API while containing all comprehensive data.
+        """
         result = self.generate_comprehensive_bypass()
 
         # Ensure result has expected structure for tests
@@ -137,7 +175,23 @@ class R2BypassGenerator:
         return result
 
     def _analyze_license_mechanisms(self, r2: R2Session | R2SessionPoolAdapter) -> dict[str, Any]:
-        """Analyze license validation mechanisms in detail."""
+        """Analyze license validation mechanisms in detail across the binary.
+
+        Performs comprehensive analysis of license validation by identifying license-related
+        functions, extracting validation logic, analyzing cryptographic operations, examining
+        license strings, and detecting API calls related to validation.
+
+        Args:
+            r2: Active radare2 session or session pool adapter for binary analysis.
+
+        Returns:
+            Dictionary containing analysis results with keys: validation_functions,
+            crypto_operations, string_patterns, registry_operations, file_operations,
+            network_operations, time_checks, hardware_checks, and validation_flow.
+
+        Note:
+            Errors during sub-analysis steps are logged but do not halt the overall analysis.
+        """
         analysis: dict[str, Any] = {
             "validation_functions": [],
             "crypto_operations": [],
@@ -190,7 +244,21 @@ class R2BypassGenerator:
         return analysis
 
     def _extract_validation_logic(self, decompiled: dict[str, Any], func: dict[str, Any]) -> dict[str, Any]:
-        """Extract license validation logic from decompiled function."""
+        """Extract license validation logic patterns from decompiled function pseudocode.
+
+        Analyzes decompiled function to identify validation type, complexity, bypass points,
+        and associated security mechanisms like cryptography, network validation, time checks,
+        and hardware fingerprinting.
+
+        Args:
+            decompiled: Dictionary containing decompiled function data with pseudocode and
+                license_patterns keys.
+            func: Dictionary containing function metadata including name and offset information.
+
+        Returns:
+            Dictionary with validation_type, complexity, bypass_points, crypto_usage,
+            network_validation, time_based, and hardware_fingerprint indicators.
+        """
         validation_info = {
             "function": func,
             "validation_type": "unknown",
@@ -255,7 +323,18 @@ class R2BypassGenerator:
         return validation_info
 
     def _extract_crypto_operations(self, decompiled: dict[str, Any]) -> list[dict[str, Any]]:
-        """Extract cryptographic operations from decompiled code."""
+        """Extract cryptographic operations from decompiled function pseudocode.
+
+        Identifies cryptographic function calls in pseudocode including AES, DES, RSA,
+        SHA, MD5, hash functions, encryption/decryption operations, and cipher operations.
+
+        Args:
+            decompiled: Dictionary containing decompiled function data with pseudocode key.
+
+        Returns:
+            List of dictionaries with line_number, operation, full_line, algorithm, and
+            purpose for each cryptographic operation found.
+        """
         crypto_ops = []
 
         pseudocode = decompiled.get("pseudocode", "")
@@ -289,7 +368,22 @@ class R2BypassGenerator:
         return crypto_ops
 
     def _analyze_license_strings(self, r2: R2Session | R2SessionPoolAdapter) -> list[dict[str, Any]]:
-        """Analyze license-related strings."""
+        """Analyze license-related strings in the binary.
+
+        Searches for license-related keywords in the binary including license, serial,
+        key, activation, registration, trial, demo, expire, valid, invalid, and piracy.
+
+        Args:
+            r2: Active radare2 session or session pool adapter for string searching.
+
+        Returns:
+            List of dictionaries with keyword, address, content, context, and
+            bypass_potential for each license-related string found.
+
+        Note:
+            Individual keyword search failures are logged and skipped without halting
+            the overall string analysis.
+        """
         patterns = []
 
         try:
@@ -335,7 +429,23 @@ class R2BypassGenerator:
         return patterns
 
     def _analyze_validation_apis(self, r2: R2Session | R2SessionPoolAdapter) -> dict[str, list[dict[str, Any]]]:
-        """Analyze API calls used in validation."""
+        """Analyze API calls used in validation mechanisms.
+
+        Examines imported APIs to identify registry operations, file operations, network
+        operations, time checks, and hardware checks related to license validation.
+
+        Args:
+            r2: Active radare2 session or session pool adapter for API analysis.
+
+        Returns:
+            Dictionary with keys: registry_operations, file_operations, network_operations,
+            time_checks, hardware_checks, each containing lists of identified API calls
+            with purpose and bypass_method information.
+
+        Note:
+            Errors during individual API analysis are logged and skipped without halting
+            the overall API analysis.
+        """
         api_analysis: dict[str, list[dict[str, Any]]] = {
             "registry_operations": [],
             "file_operations": [],
@@ -408,7 +518,19 @@ class R2BypassGenerator:
         return api_analysis
 
     def _build_validation_flow(self, analysis: dict[str, Any]) -> list[dict[str, Any]]:
-        """Build the validation flow diagram."""
+        """Build a validation flow diagram from analysis results.
+
+        Creates an ordered sequence of validation steps with difficulty assessment and
+        recommended bypass approaches for each function.
+
+        Args:
+            analysis: Dictionary containing validation_functions with validation_type,
+                complexity, and other validation metadata.
+
+        Returns:
+            List of flow step dictionaries with step number, function name, validation_type,
+            complexity, bypass_difficulty, and recommended_approach.
+        """
         flow = []
 
         validation_functions = analysis.get("validation_functions", [])
@@ -427,7 +549,21 @@ class R2BypassGenerator:
         return flow
 
     def _generate_bypass_strategies(self, license_analysis: dict[str, Any]) -> list[dict[str, Any]]:
-        """Generate bypass strategies based on analysis."""
+        """Generate bypass strategies based on license analysis results.
+
+        Analyzes validation function types and API usage patterns to generate targeted
+        bypass strategies including direct patching, cryptographic bypasses, network
+        interception, time manipulation, and registry modifications.
+
+        Args:
+            license_analysis: Dictionary containing validation_functions and registry_operations
+                with validation_type and other analysis metadata.
+
+        Returns:
+            List of strategy dictionaries with strategy name, description, success_rate,
+            difficulty level, and implementation details.
+
+        """
         strategies = []
 
         validation_functions = license_analysis.get("validation_functions", [])
@@ -500,6 +636,14 @@ class R2BypassGenerator:
         that go beyond simple NOP operations. It analyzes control flow graphs, identifies
         optimal patch points, and generates multi-byte patches that properly maintain
         program flow while bypassing protections.
+
+        Args:
+            r2: Active radare2 session or session pool adapter for binary analysis.
+            license_analysis: Dictionary containing validation functions and analysis results.
+
+        Returns:
+            List of patch dictionaries containing address, bytes, and method information.
+
         """
         patches = []
         validation_functions = license_analysis.get("validation_functions", [])
@@ -560,8 +704,21 @@ class R2BypassGenerator:
     def _generate_keygen_algorithms(self, license_analysis: dict[str, Any]) -> list[dict[str, Any]]:
         """Generate real keygen algorithms through deep cryptographic analysis.
 
-        This method performs actual analysis of cryptographic routines to generate
-        working keygens by reverse engineering the validation logic.
+        Analyzes cryptographic operations to reverse engineer license key generation
+        logic by identifying hash-based, AES, RSA, and custom algorithm implementations
+        and generating working keygen code for each.
+
+        Args:
+            license_analysis: Dictionary containing crypto_operations with algorithm,
+                purpose, and implementation details.
+
+        Returns:
+            List of keygen dictionaries with algorithm, type, complexity, success_probability,
+            and implementation details for each generated keygen.
+
+        Note:
+            This method performs actual analysis of cryptographic routines to generate
+            working keygens by reverse engineering the validation logic.
         """
         keygens = []
         crypto_operations = license_analysis.get("crypto_operations", [])
@@ -598,10 +755,22 @@ class R2BypassGenerator:
         return keygens
 
     def _analyze_crypto_implementation(self, crypto_op: dict[str, Any]) -> dict[str, Any]:
-        """Perform deep analysis of cryptographic implementation.
+        """Perform deep analysis of cryptographic implementation in binary.
 
-        Extracts constants, S-boxes, round functions, and key schedules
-        from the binary to understand the exact crypto implementation.
+        Extracts cryptographic constants, S-boxes, round functions, key schedules,
+        initialization vectors, and salt values from the binary to understand the
+        exact cryptographic implementation details.
+
+        Args:
+            crypto_op: Dictionary containing cryptographic operation details including
+                address and size information.
+
+        Returns:
+            Dictionary with constants, s_boxes, round_functions, key_schedule,
+            initialization_vectors, and salt_values extracted from the binary.
+
+        Note:
+            This method uses radare2 to extract cryptographic artifacts from binary code.
         """
         analysis: dict[str, Any] = {
             "constants": [],
@@ -672,10 +841,22 @@ class R2BypassGenerator:
         return analysis
 
     def _generate_hash_based_keygen(self, crypto_op: dict[str, Any], crypto_details: dict[str, Any]) -> dict[str, Any]:
-        """Generate real hash-based keygen implementation.
+        """Generate real hash-based keygen implementation code.
 
-        Creates working keygen code that replicates the hash-based
-        validation logic found in the target binary.
+        Creates working keygen code that replicates the hash-based validation logic
+        found in the target binary including hash algorithm, input construction,
+        and output transformation patterns.
+
+        Args:
+            crypto_op: Dictionary containing cryptographic operation details including
+                algorithm identification.
+            crypto_details: Dictionary with extracted crypto implementation details like
+                salt values and round functions.
+
+        Returns:
+            Dictionary with algorithm, type, complexity, success_probability, and
+            implementation containing generated keygen code with dependencies and
+            hash construction analysis.
         """
         algorithm = crypto_op.get("algorithm", "MD5")
 
@@ -699,7 +880,23 @@ class R2BypassGenerator:
         }
 
     def _generate_hash_keygen_code(self, algorithm: str, construction: dict[str, Any], details: dict[str, Any]) -> str:
-        """Generate actual working keygen code for hash-based validation."""
+        """Generate actual working Python keygen code for hash-based license validation.
+
+        Creates executable Python code that implements the reverse-engineered hash-based
+        key generation logic, including input processing, hash computation, and output
+        formatting matching the original application.
+
+        Args:
+            algorithm: Hash algorithm used (MD5, SHA1, SHA256, etc.).
+            construction: Dictionary with uses_username, uses_hwid, uses_date, format,
+                transformation, and components describing hash input construction.
+            details: Dictionary with salt_values and other extracted implementation details.
+
+        Returns:
+            String containing complete, executable Python keygen code with generate_license_key
+            and validate_key functions.
+
+        """
         code = f'''#!/usr/bin/env python3
 """
 Keygen for {algorithm}-based license validation
@@ -803,7 +1000,23 @@ if __name__ == "__main__":
         return code
 
     def _analyze_hash_construction(self, crypto_op: dict[str, Any]) -> dict[str, Any]:
-        """Analyze how the hash input is constructed from user data."""
+        """Analyze how the hash input is constructed from user data.
+
+        Examines string operations and data handling in cryptographic functions to
+        determine which user inputs are used in hash computation and how they are
+        formatted before hashing.
+
+        Args:
+            crypto_op: Dictionary containing cryptographic operation with address reference.
+
+        Returns:
+            Dictionary with uses_username, uses_hwid, uses_date, format, transformation,
+            and components describing hash input construction.
+
+        Note:
+            Format can be 'concatenated' or 'formatted'. Transformation can be
+            'uppercase', 'partial', or None.
+        """
         components: list[str] = []
         construction: dict[str, Any] = {
             "uses_username": False,
@@ -857,7 +1070,20 @@ if __name__ == "__main__":
         return construction
 
     def _generate_aes_keygen(self, crypto_op: dict[str, Any], crypto_details: dict[str, Any]) -> dict[str, Any]:
-        """Generate AES-based keygen with real key derivation."""
+        """Generate AES-based keygen with real key derivation.
+
+        Creates keygen implementation for AES-based license validation by extracting
+        key derivation functions, cipher modes, and key sizes from cryptographic analysis.
+
+        Args:
+            crypto_op: Dictionary containing cryptographic operation details.
+            crypto_details: Dictionary with extracted AES implementation details including
+                key_size and mode information.
+
+        Returns:
+            Dictionary with algorithm, type, complexity, success_probability, and
+            implementation containing AES keygen code with key derivation analysis.
+        """
         return {
             "algorithm": "AES",
             "type": "symmetric",
@@ -875,7 +1101,23 @@ if __name__ == "__main__":
         }
 
     def _generate_rsa_keygen(self, crypto_op: dict[str, Any], crypto_details: dict[str, Any]) -> dict[str, Any]:
-        """Generate RSA-based keygen with modulus extraction."""
+        """Generate RSA-based keygen with modulus extraction.
+
+        Creates keygen for RSA-based license validation by extracting the public
+        modulus and identifying padding schemes, then generating working RSA signatures.
+
+        Args:
+            crypto_op: Dictionary containing cryptographic operation details with
+                RSA algorithm identification.
+            crypto_details: Dictionary with extracted RSA implementation details.
+
+        Returns:
+            Dictionary with algorithm, type, complexity, success_probability, and
+            implementation containing RSA keygen code with modulus and padding information.
+
+        Note:
+            RSA keygens typically require extracted public modulus for signature generation.
+        """
         modulus = self._extract_rsa_modulus(crypto_op)
 
         # Determine key size from modulus or use default
@@ -906,7 +1148,19 @@ if __name__ == "__main__":
         }
 
     def _reverse_custom_algorithm(self, crypto_op: dict[str, Any], crypto_details: dict[str, Any]) -> dict[str, Any]:
-        """Reverse engineer custom cryptographic algorithms."""
+        """Reverse engineer custom cryptographic algorithms.
+
+        Analyzes proprietary cryptographic implementations to extract algorithm logic,
+        operations, and parameters for keygen generation.
+
+        Args:
+            crypto_op: Dictionary containing custom cryptographic operation details.
+            crypto_details: Dictionary with extracted implementation details.
+
+        Returns:
+            Dictionary with algorithm marked as Custom, type as proprietary, complexity,
+            success_probability, and implementation with reverse-engineered logic.
+        """
         custom_logic = self._analyze_custom_crypto(crypto_op)
         return {
             "algorithm": "Custom",
@@ -924,7 +1178,20 @@ if __name__ == "__main__":
         }
 
     def _generate_generic_keygen(self, crypto_op: dict[str, Any], crypto_details: dict[str, Any]) -> dict[str, Any]:
-        """Generate generic keygen for unknown algorithms."""
+        """Generate generic keygen for unknown or unrecognized algorithms.
+
+        Creates a pattern-based keygen when specific algorithm is not identified,
+        using statistical analysis of key format and input patterns.
+
+        Args:
+            crypto_op: Dictionary containing cryptographic operation details with
+                algorithm field.
+            crypto_details: Dictionary with extracted implementation details.
+
+        Returns:
+            Dictionary with generic algorithm type, lower success probability, and
+            implementation with pattern-based keygen code.
+        """
         return {
             "algorithm": crypto_op.get("algorithm", "Unknown"),
             "type": "generic",
@@ -940,7 +1207,17 @@ if __name__ == "__main__":
         }
 
     def _extract_sbox_data(self, r2: R2Session | R2SessionPoolAdapter, func_addr: int) -> list[int]:
-        """Extract S-box data from function."""
+        """Extract S-box data from AES function binary.
+
+        Reads 256 bytes of S-box lookup table data from the specified function address.
+
+        Args:
+            r2: Active radare2 session or pool adapter for memory reading.
+            func_addr: Memory address of the function containing S-box data.
+
+        Returns:
+            List of integers representing S-box values, or empty list if extraction fails.
+        """
         try:
             sbox_data = r2.cmdj(f"pxj 256 @ {hex(func_addr)}")
             if isinstance(sbox_data, list):
@@ -950,7 +1227,18 @@ if __name__ == "__main__":
             return []
 
     def _analyze_loop_iterations(self, r2: R2Session | R2SessionPoolAdapter, loop_addr: int) -> int:
-        """Analyze loop to determine iteration count."""
+        """Analyze loop to determine iteration count.
+
+        Examines loop structure to extract the number of instructions or iterations
+        used in cryptographic round functions.
+
+        Args:
+            r2: Active radare2 session or pool adapter for analysis.
+            loop_addr: Memory address of the loop to analyze.
+
+        Returns:
+            Integer representing number of iterations or instructions, or 0 if analysis fails.
+        """
         try:
             loop_info = r2.cmdj(f"afbj @ {hex(loop_addr)}")
             if isinstance(loop_info, list) and len(loop_info) > 0:
@@ -962,7 +1250,19 @@ if __name__ == "__main__":
             return 0
 
     def _find_key_expansion(self, r2: R2Session | R2SessionPoolAdapter, func_addr: int) -> dict[str, Any] | None:
-        """Find and analyze key expansion routine."""
+        """Find and analyze key expansion routine in function.
+
+        Searches for key expansion or key schedule patterns in disassembly to identify
+        AES round count and key derivation details.
+
+        Args:
+            r2: Active radare2 session or pool adapter for disassembly analysis.
+            func_addr: Memory address of the cryptographic function.
+
+        Returns:
+            Dictionary with 'found', 'address', and 'rounds' if key expansion found,
+            None otherwise.
+        """
         try:
             # Look for key expansion patterns
             disasm = r2.cmd(f"pdf @ {hex(func_addr)}")
@@ -977,7 +1277,19 @@ if __name__ == "__main__":
             return None
 
     def _find_ivs(self, r2: R2Session | R2SessionPoolAdapter, func_addr: int) -> list[str]:
-        """Find initialization vectors."""
+        """Find initialization vectors used in cipher operations.
+
+        Searches for 16-byte patterns in function data that could represent AES
+        initialization vectors.
+
+        Args:
+            r2: Active radare2 session or pool adapter for data searching.
+            func_addr: Memory address of the cryptographic function.
+
+        Returns:
+            List of hexadecimal strings representing potential initialization vectors,
+            limited to first 3 found.
+        """
         ivs = []
         try:
             # Look for 16-byte patterns (AES IV size)
@@ -994,7 +1306,18 @@ if __name__ == "__main__":
         return ivs
 
     def _find_salts(self, r2: R2Session | R2SessionPoolAdapter, func_addr: int) -> list[str]:
-        """Find salt values used in crypto."""
+        """Find salt values used in cryptographic key derivation.
+
+        Searches for string constants that could represent salt values used in
+        password-based key derivation functions.
+
+        Args:
+            r2: Active radare2 session or pool adapter for string extraction.
+            func_addr: Memory address of the cryptographic function.
+
+        Returns:
+            List of string salt values extracted from function strings.
+        """
         salts: list[str] = []
         try:
             strings = r2.cmdj(f"izzj @ {hex(func_addr)}")
@@ -1009,14 +1332,37 @@ if __name__ == "__main__":
         return salts
 
     def _extract_crypto_validation_logic(self, crypto_op: dict[str, Any]) -> dict[str, Any]:
-        """Extract the validation logic from crypto operation."""
+        """Extract the validation logic from cryptographic operation.
+
+        Analyzes cryptographic operation to determine how the computed hash or
+        signature is compared with stored values for validation.
+
+        Args:
+            crypto_op: Dictionary containing cryptographic operation details.
+
+        Returns:
+            Dictionary with comparison_type (e.g., 'equality') and validation_steps
+            describing the validation process.
+        """
         return {
             "comparison_type": "equality",
             "validation_steps": ["hash_input", "compare_with_stored", "return_result"],
         }
 
     def _generate_test_vectors(self, algorithm: str, construction: dict[str, Any]) -> list[dict[str, Any]]:
-        """Generate test vectors for validation."""
+        """Generate test vectors for keygen validation.
+
+        Creates example input/output pairs for testing the reverse-engineered keygen
+        based on the identified hash construction pattern.
+
+        Args:
+            algorithm: Hash algorithm name (MD5, SHA1, SHA256, etc.).
+            construction: Dictionary with uses_username, uses_hwid, uses_date, and
+                format describing input construction.
+
+        Returns:
+            List of test vector dictionaries with input and expected output key values.
+        """
         vectors: list[dict[str, Any]] = []
         if construction.get("uses_username"):
             vectors.append(
@@ -1028,7 +1374,18 @@ if __name__ == "__main__":
         return vectors
 
     def _generate_aes_keygen_code(self, crypto_details: dict[str, Any]) -> str:
-        """Generate AES keygen implementation code."""
+        """Generate AES keygen implementation Python code.
+
+        Creates executable Python code for AES-based key generation using PBKDF2
+        key derivation with extracted salt values and parameters.
+
+        Args:
+            crypto_details: Dictionary with salt_values, key_size, and other AES
+                implementation parameters extracted from binary.
+
+        Returns:
+            String containing complete Python keygen script with generate_aes_key function.
+        """
         return '''#!/usr/bin/env python3
 """AES-based License Keygen"""
 from Crypto.Cipher import AES
@@ -1048,15 +1405,49 @@ if __name__ == "__main__":
 '''
 
     def _analyze_key_derivation(self, crypto_op: dict[str, Any]) -> dict[str, Any]:
-        """Analyze key derivation function."""
+        """Analyze key derivation function parameters.
+
+        Identifies key derivation method, iteration count, and salt size used in
+        password-based key derivation for encryption.
+
+        Args:
+            crypto_op: Dictionary containing cryptographic operation details.
+
+        Returns:
+            Dictionary with method, iterations, and salt_size for KDF.
+        """
         return {"method": "PBKDF2", "iterations": 10000, "salt_size": 16}
 
     def _identify_aes_mode(self, crypto_details: dict[str, Any]) -> str:
-        """Identify AES operation mode."""
+        """Identify AES operation mode from extracted details.
+
+        Determines whether AES operates in CBC, ECB, or other mode based on
+        presence of initialization vectors and other parameters.
+
+        Args:
+            crypto_details: Dictionary with initialization_vectors and other AES details.
+
+        Returns:
+            str: AES mode identifier ('CBC', 'ECB', 'GCM', etc.).
+
+        """
         return "CBC" if crypto_details.get("initialization_vectors") else "ECB"
 
     def _extract_rsa_modulus(self, crypto_op: dict[str, Any]) -> str | None:
-        """Extract RSA modulus from binary."""
+        """Extract RSA modulus from binary data.
+
+        Searches the binary for RSA public key modulus by identifying exponent
+        patterns (typically 0x010001) and extracting adjacent data.
+
+        Args:
+            crypto_op: Dictionary containing cryptographic operation address.
+
+        Returns:
+            Hexadecimal string representation of RSA modulus, or None if not found.
+
+        Note:
+            Searches for 1024, 2048, and 4096-bit RSA key candidates.
+        """
         try:
             addr = crypto_op.get("address", 0)
             if not addr:
@@ -1167,7 +1558,21 @@ if __name__ == "__main__":
         return None
 
     def _generate_rsa_keygen_code(self, modulus: str | None, crypto_details: dict[str, Any]) -> str:
-        """Generate RSA keygen implementation."""
+        """Generate RSA keygen implementation Python code.
+
+        Creates Python code for RSA-based license generation using extracted modulus
+        and identified padding scheme.
+
+        Args:
+            modulus: Hexadecimal string of RSA public modulus, or None if not extracted.
+            crypto_details: Dictionary with padding and other RSA parameters.
+
+        Returns:
+            String containing executable Python RSA keygen code.
+
+        Note:
+            Requires extracted RSA private key for complete signature generation.
+        """
         return '''#!/usr/bin/env python3
 """RSA-based License Keygen"""
 from Crypto.PublicKey import RSA
@@ -1187,15 +1592,45 @@ if __name__ == "__main__":
 '''
 
     def _identify_rsa_padding(self, crypto_details: dict[str, Any]) -> str:
-        """Identify RSA padding scheme."""
+        """Identify RSA padding scheme from cryptographic details.
+
+        Determines whether PKCS1, OAEP, or other padding scheme is used in RSA operations.
+
+        Args:
+            crypto_details: Dictionary with RSA implementation parameters.
+
+        Returns:
+            str: RSA padding scheme identifier ('PKCS1', 'OAEP', 'PSS', etc.).
+        """
         return "PKCS1"
 
     def _analyze_custom_crypto(self, crypto_op: dict[str, Any]) -> dict[str, Any]:
-        """Analyze custom cryptographic algorithm."""
+        """Analyze custom cryptographic algorithm implementation.
+
+        Reverse engineers proprietary cryptographic operations including XOR,
+        bit rotation, substitution, and key management.
+
+        Args:
+            crypto_op: Dictionary containing custom algorithm operation details.
+
+        Returns:
+            Dictionary with operations list, key_size, rounds, and other parameters.
+        """
         return {"operations": ["xor", "rotate", "substitute"], "key_size": 16, "rounds": 4}
 
     def _generate_custom_keygen_code(self, custom_logic: dict[str, Any], crypto_details: dict[str, Any]) -> str:
-        """Generate custom algorithm keygen."""
+        """Generate custom algorithm keygen Python code.
+
+        Creates implementation code for reverse-engineered custom cryptographic
+        algorithms using identified operations and parameters.
+
+        Args:
+            custom_logic: Dictionary with operations, key_size, rounds from custom crypto analysis.
+            crypto_details: Dictionary with extracted implementation details.
+
+        Returns:
+            String containing executable Python keygen code for custom algorithm.
+        """
         return '''#!/usr/bin/env python3
 """Customize Algorithm Keygen"""
 
@@ -1218,7 +1653,18 @@ if __name__ == "__main__":
 '''
 
     def _generate_generic_keygen_code(self, crypto_op: dict[str, Any], crypto_details: dict[str, Any]) -> str:
-        """Generate generic pattern-based keygen."""
+        """Generate generic pattern-based keygen Python code.
+
+        Creates pattern-based key generation code using statistical analysis of key
+        format and character set from binary.
+
+        Args:
+            crypto_op: Dictionary containing cryptographic operation details.
+            crypto_details: Dictionary with extracted pattern details.
+
+        Returns:
+            String containing executable Python pattern-based keygen code.
+        """
         return '''#!/usr/bin/env python3
 """Provide Pattern-based Keygen"""
 import random
@@ -1244,11 +1690,34 @@ if __name__ == "__main__":
 '''
 
     def _analyze_key_patterns(self, crypto_op: dict[str, Any]) -> dict[str, Any]:
-        """Analyze key patterns from binary."""
+        """Analyze key patterns from binary analysis.
+
+        Identifies license key format, character set, and segmentation patterns
+        used in key validation.
+
+        Args:
+            crypto_op: Dictionary containing cryptographic operation details.
+
+        Returns:
+            Dictionary with format, charset, length describing key pattern.
+        """
         return {"format": "4x4-segmented", "charset": "alphanumeric_uppercase", "length": 16}
 
     def _generate_registry_modifications(self, license_analysis: dict[str, Any]) -> list[dict[str, Any]]:
-        """Generate registry modification instructions."""
+        """Generate registry modification instructions for license validation.
+
+        Creates registry operations to bypass license checks by creating/modifying
+        registry entries containing license information.
+
+        Args:
+            license_analysis: Dictionary containing registry_operations with API details.
+
+        Returns:
+            List of registry modification instructions with paths, values, and descriptions.
+
+        Note:
+            Windows platform specific. Creates registry entries that store license data.
+        """
         registry_ops = license_analysis.get("registry_operations", [])
 
         return [
@@ -1264,7 +1733,20 @@ if __name__ == "__main__":
         ]
 
     def _generate_file_modifications(self, license_analysis: dict[str, Any]) -> list[dict[str, Any]]:
-        """Generate file modification instructions."""
+        """Generate file modification instructions for license validation.
+
+        Creates file operations to bypass license checks by creating/modifying
+        files containing license information.
+
+        Args:
+            license_analysis: Dictionary containing file_operations with API details.
+
+        Returns:
+            List of file modification instructions with paths, content, and descriptions.
+
+        Note:
+            Predicts license file paths and generates realistic license file content.
+        """
         file_ops = license_analysis.get("file_operations", [])
 
         return [
@@ -1278,7 +1760,20 @@ if __name__ == "__main__":
         ]
 
     def _generate_memory_patches(self, r2: R2Session | R2SessionPoolAdapter, license_analysis: dict[str, Any]) -> list[dict[str, Any]]:
-        """Generate runtime memory patches."""
+        """Generate runtime memory patches for license validation functions.
+
+        Creates in-memory patches to bypass validation functions by replacing their
+        code with instructions that return success without performing validation.
+
+        Args:
+            r2: Active radare2 session or pool adapter for binary reading.
+            license_analysis: Dictionary containing validation_functions with addresses
+                and function information.
+
+        Returns:
+            List of memory patch dictionaries with address, original bytes, patch bytes,
+            and descriptions.
+        """
         patches = []
 
         validation_functions = license_analysis.get("validation_functions", [])
@@ -1298,7 +1793,19 @@ if __name__ == "__main__":
         return patches
 
     def _generate_api_hooks(self, license_analysis: dict[str, Any]) -> list[dict[str, Any]]:
-        """Generate API hook implementations."""
+        """Generate API hook implementations for license validation APIs.
+
+        Creates hooks for registry and file access APIs that intercept calls to
+        redirect validation data or return license information.
+
+        Args:
+            license_analysis: Dictionary containing registry_operations and file_operations
+                with API details.
+
+        Returns:
+            List of API hook dictionaries with API name, hook type, implementation code,
+            and descriptions.
+        """
         # Registry API hooks
         registry_ops = license_analysis.get("registry_operations", [])
         hooks = [
@@ -1324,7 +1831,20 @@ if __name__ == "__main__":
         return hooks
 
     def _generate_validation_bypasses(self, license_analysis: dict[str, Any]) -> list[dict[str, Any]]:
-        """Generate validation bypass techniques."""
+        """Generate validation bypass techniques for each validation step.
+
+        Creates specific bypass approaches for each validation function in the
+        validation flow based on its characteristics and complexity.
+
+        Args:
+            license_analysis: Dictionary containing validation_flow with step-by-step
+                validation function information.
+
+        Returns:
+            List of bypass technique dictionaries with steps, required tools,
+            success indicators, and descriptions.
+
+        """
         bypasses = []
 
         validation_flow = license_analysis.get("validation_flow", [])
@@ -1344,7 +1864,20 @@ if __name__ == "__main__":
 
     # Helper methods for implementation generation
     def _suggest_bypass_method(self, pattern: dict[str, Any]) -> str:
-        """Suggest bypass method for a validation pattern."""
+        """Suggest bypass method for a validation pattern.
+
+        Analyzes instruction patterns to recommend patching strategies for license
+        validation checkpoints. Determines optimal patching technique based on
+        instruction type (conditionals, jumps, returns).
+
+        Args:
+            pattern: Dictionary with 'line' containing assembly instruction and
+                bypass-related metadata.
+
+        Returns:
+            String describing recommended bypass method: 'nop_conditional',
+                'force_return_true', 'modify_jump_target', or 'nop_instruction'.
+        """
         line = pattern.get("line", "").lower()
 
         if "if" in line and ("valid" in line or "check" in line):
@@ -1356,7 +1889,18 @@ if __name__ == "__main__":
         return "nop_instruction"
 
     def _identify_crypto_algorithm(self, operation: str) -> str:
-        """Identify cryptographic algorithm from operation name."""
+        """Identify cryptographic algorithm from operation name.
+
+        Parses operation strings to extract cryptographic algorithm type used in
+        license validation routines. Supports AES, DES, RSA, SHA and MD5 algorithms.
+
+        Args:
+            operation: String containing cryptographic operation name or function call.
+
+        Returns:
+            String identifier for algorithm type: 'AES', 'DES', 'RSA', 'SHA', 'MD5',
+                or 'Unknown' if algorithm cannot be determined.
+        """
         op_lower = operation.lower()
 
         if "aes" in op_lower:
@@ -1370,7 +1914,18 @@ if __name__ == "__main__":
         return "MD5" if "md5" in op_lower else "Unknown"
 
     def _identify_crypto_purpose(self, line: str) -> str:
-        """Identify purpose of cryptographic operation."""
+        """Identify purpose of cryptographic operation in license validation.
+
+        Analyzes cryptographic operation context to determine whether operation serves
+        for license key validation, integrity checking, or general data protection.
+
+        Args:
+            line: Source code or disassembly line containing cryptographic operation.
+
+        Returns:
+            String purpose identifier: 'key_validation', 'integrity_check',
+                'data_protection', or 'unknown'.
+        """
         line_lower = line.lower()
 
         if any(keyword in line_lower for keyword in ["key", "serial", "license"]):
@@ -1382,7 +1937,19 @@ if __name__ == "__main__":
         return "unknown"
 
     def _assess_string_bypass_potential(self, string_content: str) -> str:
-        """Assess bypass potential for license string."""
+        """Assess bypass potential for license-related string found in binary.
+
+        Analyzes string content to determine how easily the string can be exploited
+        for license bypass. Error messages and warnings have higher bypass potential
+        than status messages.
+
+        Args:
+            string_content: License-related string extracted from binary.
+
+        Returns:
+            String assessment rating: 'high' for error/warning messages,
+                'medium' for success messages, or 'low' for generic strings.
+        """
         content_lower = string_content.lower()
 
         if any(keyword in content_lower for keyword in ["invalid", "expired", "trial"]):
@@ -1392,7 +1959,19 @@ if __name__ == "__main__":
         return "low"
 
     def _assess_bypass_difficulty(self, func_info: dict[str, Any]) -> str:
-        """Assess bypass difficulty for function."""
+        """Assess bypass difficulty for validation function.
+
+        Evaluates function characteristics including complexity and validation type
+        to determine difficulty level of bypassing the protection mechanism.
+        Cryptographic validations and complex functions are rated as harder.
+
+        Args:
+            func_info: Dictionary with 'complexity' (low/medium/high) and
+                'validation_type' (simple/cryptographic/online/time_based/hardware_fingerprint).
+
+        Returns:
+            String difficulty rating: 'easy', 'medium', or 'hard'.
+        """
         complexity = func_info.get("complexity", "low")
         validation_type = func_info.get("validation_type", "simple")
 
@@ -1403,7 +1982,20 @@ if __name__ == "__main__":
         return "easy"
 
     def _recommend_bypass_approach(self, func_info: dict[str, Any]) -> str:
-        """Recommend bypass approach for function."""
+        """Recommend bypass approach for validation function.
+
+        Selects optimal bypass strategy based on validation type detected in the
+        binary. Maps validation types to specialized bypass techniques for
+        licensing protection analysis.
+
+        Args:
+            func_info: Dictionary containing 'validation_type' with values:
+                simple, cryptographic, online, time_based, or hardware_fingerprint.
+
+        Returns:
+            String recommending bypass approach: 'direct_patching', 'crypto_bypass',
+                'network_interception', 'time_manipulation', or 'hardware_spoofing'.
+        """
         validation_type = func_info.get("validation_type", "simple")
 
         approach_map = {
@@ -1417,7 +2009,21 @@ if __name__ == "__main__":
         return approach_map.get(validation_type, "direct_patching")
 
     def _generate_direct_patch_implementation(self, func_info: dict[str, Any]) -> dict[str, str]:
-        """Generate direct patch implementation."""
+        """Generate direct patch implementation strategy for simple validation.
+
+        Creates patching instructions for directly modifying license validation
+        functions to always return success using NOP instructions or return value
+        manipulation.
+
+        Args:
+            func_info: Dictionary containing function metadata with 'function' key
+                holding name and offset information.
+
+        Returns:
+            Dictionary with keys: method (binary_patch), target (function name),
+                patch_type (nop_validation), instructions (user-friendly steps),
+                and tools (required tools for patching).
+        """
         return {
             "method": "binary_patch",
             "target": func_info["function"]["name"],
@@ -1427,7 +2033,19 @@ if __name__ == "__main__":
         }
 
     def _generate_crypto_bypass_implementation(self, func_info: dict[str, Any]) -> dict[str, str]:
-        """Generate crypto bypass implementation."""
+        """Generate cryptographic bypass implementation strategy.
+
+        Creates strategy for bypassing cryptographic license validation by patching
+        the validation routine to skip crypto checks or inject successful results.
+
+        Args:
+            func_info: Dictionary containing function metadata with 'function' key
+                holding name and other function analysis details.
+
+        Returns:
+            Dictionary with keys: method (crypto_bypass), target (function name),
+                patch_type (skip_crypto_validation), instructions, and tools.
+        """
         return {
             "method": "crypto_bypass",
             "target": func_info["function"]["name"],
@@ -1437,7 +2055,21 @@ if __name__ == "__main__":
         }
 
     def _generate_network_bypass_implementation(self, func_info: dict[str, Any]) -> dict[str, str]:
-        """Generate network bypass implementation with real interception."""
+        """Generate network bypass implementation with real interception.
+
+        Creates production-ready network interception code for redirecting license
+        validation connections to local proxy servers or spoofing legitimate
+        license server responses.
+
+        Args:
+            func_info: Dictionary containing function metadata including function name,
+                offset, and other analysis details.
+
+        Returns:
+            dict[str, str]: Dictionary mapping bypass code descriptions to implementation details,
+                including bypass method, target function name, patch type, instructions,
+                and required tools for installation.
+        """
         func_name = func_info["function"]["name"]
         func_addr = func_info["function"]["offset"]
 
@@ -1619,7 +2251,20 @@ void apply_patch() {{
         }
 
     def _generate_time_bypass_implementation(self, func_info: dict[str, Any]) -> dict[str, str]:
-        """Generate time bypass implementation."""
+        """Generate time bypass implementation to defeat time-based license checks.
+
+        Creates implementation details for bypassing trial expiration and time-limited
+        licenses through system time manipulation and hooking time-related functions
+        like GetSystemTime and GetLocalTime.
+
+        Args:
+            func_info: Dictionary containing function metadata with 'function' key
+                holding name, offset, and other analysis details.
+
+        Returns:
+            Dictionary with keys: method (time_manipulation), target (function name),
+                patch_type (system_time_hook), instructions, and tools for installation.
+        """
         return {
             "method": "time_manipulation",
             "target": func_info["function"]["name"],
@@ -1629,7 +2274,21 @@ void apply_patch() {{
         }
 
     def _generate_registry_bypass_implementation(self, license_analysis: dict[str, Any]) -> dict[str, Any]:
-        """Generate registry bypass implementation based on license analysis."""
+        """Generate registry bypass implementation based on license analysis.
+
+        Produces implementation details for registry-based license bypass through
+        manipulation of registry keys storing license information, activation status,
+        and trial expiration data. Identifies target registry hive and specific keys.
+
+        Args:
+            license_analysis: Dictionary containing license analysis results with keys:
+                registry_patterns (list), license_keys (list), validation_methods (list).
+
+        Returns:
+            Dictionary with keys: method (registry_manipulation), target (hive name),
+                patch_type (registry_redirection), scope (bypass scope), instructions,
+                tools (Registry editor or API hooking), confidence (float score).
+        """
         # Extract registry-related patterns from license analysis
         registry_patterns = license_analysis.get("registry_patterns", [])
         license_keys = license_analysis.get("license_keys", [])
@@ -1674,7 +2333,21 @@ void apply_patch() {{
     def _create_binary_patch(
         self, r2: R2Session | R2SessionPoolAdapter, func_info: dict[str, Any], bypass_point: dict[str, Any]
     ) -> dict[str, Any] | None:
-        """Create binary patch for bypass point."""
+        """Create binary patch for bypass point.
+
+        Generates binary patch instructions for modifying compiled binary code at
+        identified bypass points. Extracts original instruction bytes and generates
+        replacement patch bytecode for license validation circumvention.
+
+        Args:
+            r2: Active radare2 session or pool adapter for binary disassembly analysis.
+            func_info: Dictionary containing 'function' key with name and offset fields.
+            bypass_point: Dictionary with 'line_number', 'bypass_method', and instruction details.
+
+        Returns:
+            Dictionary with patch information: function name, address, bypass_method,
+                original_bytes, and patch_bytes. Returns None if patch creation fails.
+        """
         func_addr = func_info["function"].get("offset", 0)
         if not func_addr:
             return None
@@ -1720,7 +2393,21 @@ void apply_patch() {{
             return None
 
     def _generate_keygen_implementation(self, crypto_op: dict[str, Any]) -> dict[str, str]:
-        """Generate keygen implementation."""
+        """Generate keygen implementation based on detected cryptographic algorithm.
+
+        Produces keygen code templates and implementation details for generating
+        valid license keys based on the cryptographic algorithms used in the
+        license validation mechanism. Selects appropriate keygen strategy based
+        on algorithm type (hash, symmetric, asymmetric).
+
+        Args:
+            crypto_op: Dictionary containing 'algorithm' field with cryptographic
+                operation type (MD5, SHA, AES, RSA, etc.).
+
+        Returns:
+            Dictionary with keys: type (keygen type), algorithm (name),
+                implementation (description), code_template (executable code).
+        """
         algorithm = crypto_op.get("algorithm", "Unknown")
 
         if algorithm in {"MD5", "SHA"}:
@@ -1745,7 +2432,21 @@ void apply_patch() {{
         }
 
     def _assess_keygen_feasibility(self, crypto_op: dict[str, Any]) -> float:
-        """Assess feasibility of keygen creation."""
+        """Assess feasibility of keygen creation for a cryptographic algorithm.
+
+        Evaluates the likelihood of successfully creating a functional keygen
+        tool based on the cryptographic algorithm detected in the license
+        validation mechanism. Scores reflect algorithm reversibility and practical
+        keygen creation likelihood.
+
+        Args:
+            crypto_op: Dictionary containing 'algorithm' field identifying
+                cryptographic algorithm type (MD5, SHA, AES, DES, RSA, etc.).
+
+        Returns:
+            Float feasibility score between 0.0 and 1.0. Hash-based: 0.8,
+                symmetric encryption: 0.5, RSA: 0.2, others: 0.3.
+        """
         algorithm = crypto_op.get("algorithm", "Unknown")
 
         if algorithm in ["MD5", "SHA", "CRC32"]:
@@ -1755,7 +2456,20 @@ void apply_patch() {{
         return 0.2 if algorithm in ["RSA"] else 0.3
 
     def _predict_registry_path(self, reg_op: dict[str, Any]) -> str:
-        """Predict registry path for license storage based on registry operation analysis."""
+        """Predict registry path for license storage based on registry operation analysis.
+
+        Analyzes registry operation patterns to predict the most likely registry
+        locations where license information is stored, including activation status,
+        trial expiration, and license key validation data on Windows systems.
+
+        Args:
+            reg_op: Dictionary with keys: key, value, access_type (read/write/system_write),
+                data_type (string/binary), app_name, and other registry metadata.
+
+        Returns:
+            String registry path in Windows format (e.g.,
+                HKEY_LOCAL_MACHINE\\Software\\AppName\\License) based on analyzed patterns.
+        """
         # Extract information from registry operation
         reg_key = reg_op.get("key", "")
         reg_value = reg_op.get("value", "")
@@ -1789,7 +2503,17 @@ void apply_patch() {{
         return common_paths[0]  # HKCU for user-specific
 
     def _generate_license_value(self) -> str:
-        """Generate valid license value using keygen algorithms."""
+        """Generate valid license value using keygen algorithms.
+
+        Creates realistic license values based on hardware identifiers and system
+        information, using multiple hash algorithms and checksum validation to
+        produce valid-looking license keys that pass client-side validation.
+
+        Returns:
+            String formatted license key with multiple components including hardware hash,
+                time-based component, system identifier, and checksum validation
+                in format: ABCD-1234-EFGH-5678.
+        """
         import hashlib
         import platform
         import time
@@ -1827,7 +2551,21 @@ void apply_patch() {{
         return "-".join(key_parts)
 
     def _predict_license_file_path(self, file_op: dict[str, Any]) -> str:
-        """Predict license file path based on file operation patterns."""
+        """Predict license file path based on file operation patterns.
+
+        Analyzes file operation patterns to predict the locations where license
+        files are stored on disk, including license data, registration files,
+        and key files used in the license validation mechanism. Determines file
+        extension and directory structure based on access patterns.
+
+        Args:
+            file_op: Dictionary with keys: path, type (binary/text/encrypted),
+                access_pattern, and other metadata from file operation analysis.
+
+        Returns:
+            String file path where license information is stored, with extension
+                determined by file type (.dat, .txt, .key, or .lic).
+        """
         # Extract file operation information
         file_path = file_op.get("path", "")
         file_type = file_op.get("type", "")
@@ -1866,7 +2604,18 @@ void apply_patch() {{
         return f"{base_name}{extension}"
 
     def _generate_license_file_content(self) -> str:
-        """Generate valid license file content based on analysis."""
+        """Generate valid license file content based on analysis.
+
+        Produces realistic license file content in multiple formats (JSON, XML,
+        binary, encrypted) that pass validation checks in protected software.
+        Includes hardware binding, expiration dates, and cryptographic signatures
+        to create valid-looking license files.
+
+        Returns:
+            String formatted license file content suitable for writing to disk.
+                Format automatically selected based on binary analysis:
+                JSON, XML, binary base64, or encrypted format.
+        """
         import base64
         import hashlib
         import json
@@ -2064,7 +2813,16 @@ LicenseVersion=2.0
 Compatible=1.0,1.5,2.0"""
 
     def _detect_license_format(self) -> str:
-        """Detect expected license format from binary analysis."""
+        """Detect expected license format from binary analysis.
+
+        Analyzes binary data to identify the format used for license files,
+        determining if licenses are JSON, XML, binary, encrypted, or INI format
+        based on magic bytes and string patterns.
+
+        Returns:
+            String format type: 'json', 'xml', 'binary', 'encrypted',
+                or 'ini' as default fallback.
+        """
         if not hasattr(self, "_binary_data") or not self._binary_data:
             return "ini"  # Default format
 
@@ -2083,7 +2841,20 @@ Compatible=1.0,1.5,2.0"""
         return "ini"
 
     def _get_original_bytes(self, r2: R2Session | R2SessionPoolAdapter, func_addr: int) -> str:
-        """Get original bytes at function address."""
+        """Get original bytes at function address.
+
+        Retrieves the raw instruction bytes at a given function address from
+        the binary, used for generating accurate patch replacements and
+        tracking original code for reversibility.
+
+        Args:
+            r2: Active radare2 session or pool adapter for memory reading.
+            func_addr: Integer memory address to extract bytes from.
+
+        Returns:
+            String hex-encoded bytes from the function address.
+                Returns 16 null bytes (32 hex chars) on error or invalid address.
+        """
         try:
             bytes_data = r2._execute_command(f"p8 16 @ {hex(func_addr)}")
             if bytes_data and isinstance(bytes_data, str):
@@ -2094,7 +2865,20 @@ Compatible=1.0,1.5,2.0"""
             return "00" * 16
 
     def _generate_patch_bytes(self, func_info: dict[str, Any]) -> str:
-        """Generate patch bytes for function based on function characteristics."""
+        """Generate patch bytes for function based on function characteristics.
+
+        Creates instruction bytes to replace function code with bypass logic,
+        selecting appropriate x86 instructions based on function name, size, and
+        expected purpose (validation, checking, trial detection, etc.).
+
+        Args:
+            func_info: Dictionary with 'function' key containing name, size,
+                and type information about the target function.
+
+        Returns:
+            String hex-encoded instruction bytes for patching the function.
+                Example: 'b8010000c3' for x86 return-true instruction.
+        """
         func_name: str = func_info.get("function", {}).get("name", "")
         func_size: int = func_info.get("function", {}).get("size", 0)
         func_info.get("function", {}).get("type", "")
@@ -2111,7 +2895,22 @@ Compatible=1.0,1.5,2.0"""
         return "b8010000c3"
 
     def _generate_registry_hook_code(self, reg_op: dict[str, Any]) -> str:
-        """Generate registry hook code with real license data generation."""
+        """Generate registry hook code with real license data generation.
+
+        Creates production-ready C code that hooks Windows registry functions to
+        intercept license key queries and return valid license data dynamically.
+        Supports binary, DWORD, and string license formats with hardware binding
+        and cryptographic validation.
+
+        Args:
+            reg_op: Dictionary with keys: key (registry key), value (value name),
+                data_type (binary/DWORD/string), app_name, format, expected_length,
+                checksum (algorithm name).
+
+        Returns:
+            String containing complete C code for registry interception hook.
+                Can be compiled and injected into protected applications.
+        """
         # Extract registry operation details
         reg_key = reg_op.get("key", "License")
         reg_value = reg_op.get("value", "Serial")
@@ -2310,7 +3109,20 @@ void InstallRegistryHook() {{
 }}"""
 
     def _generate_file_hook_code(self, file_op: dict[str, Any]) -> str:
-        """Generate file hook code with real license file content generation."""
+        """Generate file hook code with real license file content generation.
+
+        Creates production-ready C code that hooks file system functions to
+        intercept license file reads and provide valid license content. Supports
+        multiple license file formats including XML, JSON, INI, and binary.
+
+        Args:
+            file_op: Dictionary containing file operation details including file path,
+                file type, access pattern, application name, license format, and encryption method.
+
+        Returns:
+            str: Complete C code for file system interception hook that can be compiled
+                and injected to provide valid license files on-the-fly.
+        """
         # Extract file operation details
         file_path = file_op.get("path", "license")
         file_type = file_op.get("type", "text")
@@ -2641,7 +3453,19 @@ void InstallFileHook() {{
 }}"""
 
     def _generate_bypass_steps(self, step: dict[str, Any]) -> list[str]:
-        """Generate step-by-step bypass instructions."""
+        """Generate step-by-step bypass instructions.
+
+        Creates detailed procedural instructions for implementing a specific
+        bypass method, broken down into executable steps for users to follow.
+        Includes file operations, tool usage, and verification steps.
+
+        Args:
+            step: Dictionary with 'recommended_approach' field (direct_patching,
+                crypto_bypass, etc.) and other bypass analysis metadata.
+
+        Returns:
+            List of strings containing numbered procedural steps for performing the bypass.
+        """
         method = step.get("recommended_approach", "direct_patching")
 
         if method == "direct_patching":
@@ -2669,7 +3493,20 @@ void InstallFileHook() {{
         ]
 
     def _get_required_tools(self, step: dict[str, Any]) -> list[str]:
-        """Get required tools for bypass."""
+        """Get required tools for bypass implementation.
+
+        Identifies the software tools and utilities required to successfully
+        implement a particular bypass method based on its type and characteristics.
+        Supports patching, disassembly, hooking, and network interception tooling.
+
+        Args:
+            step: Dictionary with 'recommended_approach' field indicating bypass
+                method type (direct_patching, crypto_bypass, etc.).
+
+        Returns:
+            List of tool names required for bypass implementation including
+                disassemblers, hex editors, debuggers, and hooking tools.
+        """
         method = step.get("recommended_approach", "direct_patching")
 
         tool_map = {
@@ -2683,7 +3520,20 @@ void InstallFileHook() {{
         return tool_map.get(method, ["Disassembler", "Hex Editor"])
 
     def _get_success_indicators(self, step: dict[str, Any]) -> list[str]:
-        """Get success indicators for bypass based on step characteristics."""
+        """Get success indicators for bypass based on step characteristics.
+
+        Identifies observable signs that indicate successful bypass implementation
+        and license protection circumvention. Indicators vary by bypass method and
+        target type (direct patching, registry manipulation, etc.).
+
+        Args:
+            step: Dictionary with fields: recommended_approach (method type),
+                target_type (license_check/trial/activation), bypass_method.
+
+        Returns:
+            List of observable success indicators such as application launching
+                without license prompts, registry values containing valid licenses.
+        """
         # Extract step information
         method = step.get("recommended_approach", "")
         target_type = step.get("target_type", "")
@@ -2755,7 +3605,20 @@ void InstallFileHook() {{
         return list(set(indicators))  # Remove duplicates
 
     def _generate_patch_instruction(self, bypass_method: str) -> str:
-        """Generate patch instruction based on method."""
+        """Generate patch instruction based on method.
+
+        Maps bypass methods to their corresponding assembly-level instructions
+        that will be used to patch the binary at identified bypass points.
+        Supports x86/x64 instruction generation for license validation circumvention.
+
+        Args:
+            bypass_method: String identifier for bypass method (nop_instruction,
+                force_return_true, control_flow_redirect, etc.).
+
+        Returns:
+            String containing assembly language instructions for the patch operation
+                with register and memory operands as needed.
+        """
         instruction_map = {
             "nop_conditional": "NOP",
             "force_return_true": "MOV EAX, 1; RET",
@@ -2780,7 +3643,20 @@ void InstallFileHook() {{
         return instruction_map.get(bypass_method, "NOP")
 
     def _generate_patch_bytes_for_method(self, bypass_method: str) -> str:
-        """Generate patch bytes for specific method."""
+        """Generate patch bytes for specific method.
+
+        Produces hex-encoded machine code opcodes for x86/x64 architectures
+        that implement specific bypass methods for binary patching operations.
+        Supports license validation, key checking, and trial circumvention.
+
+        Args:
+            bypass_method: String identifier for bypass method (nop_instruction,
+                force_return_true, memory_override, etc.).
+
+        Returns:
+            str: Hex-encoded machine code bytes that can be directly written
+                to the binary file to implement the bypass instruction.
+        """
         # Complete x86 machine code opcodes for bypass methods
         byte_map = {
             "nop_conditional": "90",  # NOP
@@ -2810,7 +3686,19 @@ void InstallFileHook() {{
         return byte_map.get(bypass_method, "90")
 
     def _get_hash_keygen_template(self, algorithm: str) -> str:
-        """Get hash-based keygen template."""
+        """Get hash-based keygen template.
+
+        Provides Python source code template for generating license keys based on
+        cryptographic hash algorithms like MD5, SHA-1, or SHA-256. Generates
+        properly formatted keys from hardware identifiers.
+
+        Args:
+            algorithm: String name of hash algorithm (MD5, SHA1, SHA256, etc.).
+
+        Returns:
+            String containing executable Python code that generates license keys
+                by hashing hardware identifiers using the specified algorithm.
+        """
         return f"""
 # {algorithm} Keygen Template
 import hashlib
@@ -2828,7 +3716,16 @@ def generate_key(hardware_id):
 """
 
     def _get_aes_keygen_template(self) -> str:
-        """Get AES keygen template."""
+        """Get AES keygen template.
+
+        Provides Python source code template for generating AES-encrypted license
+        keys based on user information and derived encryption keys using
+        key derivation from hardware identifiers.
+
+        Returns:
+            String containing executable Python code that encrypts license data
+                using AES-128 encryption for key generation and validation.
+        """
         return """
 # AES Keygen Template
 from Crypto.Cipher import AES
@@ -2848,7 +3745,16 @@ def generate_key(user_info):
 """
 
     def _get_generic_keygen_template(self) -> str:
-        """Get generic keygen template."""
+        """Get generic keygen template.
+
+        Provides Python source code template for generating random license keys
+        when specific algorithm information is unavailable. Serves as a fallback
+        keygen approach for unknown protection schemes.
+
+        Returns:
+            String containing executable Python code for generating formatted
+                random license keys as a fallback keygen approach.
+        """
         return """
 # Generic Keygen Template
 import random
@@ -2865,7 +3771,20 @@ def generate_key():
 """
 
     def _calculate_success_probabilities(self, result: dict[str, Any]) -> dict[str, float]:
-        """Calculate success probabilities for different approaches."""
+        """Calculate success probabilities for different approaches.
+
+        Evaluates the likelihood of success for each bypass strategy based on
+        analysis results, including strategy type, confidence levels, and
+        complexity assessments of identified protection mechanisms.
+
+        Args:
+            result: Dictionary with 'bypass_strategies' (list) containing strategy
+                dictionaries with 'strategy' name and 'success_rate' values.
+
+        Returns:
+            Dictionary mapping strategy names to success probability values between
+                0.0 and 1.0. Includes 'overall' key with maximum probability.
+        """
         probabilities = {}
 
         strategies = result.get("bypass_strategies", [])
@@ -2882,7 +3801,21 @@ def generate_key():
         return probabilities
 
     def _generate_implementation_guide(self, result: dict[str, Any]) -> dict[str, Any]:
-        """Generate comprehensive implementation guide."""
+        """Generate comprehensive implementation guide.
+
+        Creates detailed user-facing implementation instructions for executing
+        the recommended bypass strategy, including tools, difficulty assessment,
+        and alternative approaches with success rates and risk mitigation guidance.
+
+        Args:
+            result: Dictionary with 'bypass_strategies' (list) containing strategy
+                dictionaries with strategy name, success_rate, difficulty, implementation.
+
+        Returns:
+            Dictionary with keys: recommended_approach, step_by_step_guide (list),
+                tools_needed (list), difficulty_level, success_probability (float),
+                alternative_methods (list).
+        """
         guide = {
             "recommended_approach": "",
             "step_by_step_guide": [],
@@ -2917,7 +3850,21 @@ def generate_key():
         return guide
 
     def _assess_bypass_risks(self, result: dict[str, Any]) -> dict[str, Any]:
-        """Assess risks associated with bypass methods based on result analysis."""
+        """Assess risks associated with bypass methods based on result analysis.
+
+        Evaluates legal, technical, and detection risks for each identified bypass
+        method and provides mitigation strategies to reduce those risks. Assesses
+        implications of implementing license protection circumvention techniques.
+
+        Args:
+            result: Dictionary with 'bypass_strategies' (list), 'license_mechanisms'
+                (dict), and 'binary_file' (str) information from analysis.
+
+        Returns:
+            Dictionary with keys: risk_level (str), risk_categories (dict),
+                risks (list), mitigations (list), recommendations (list),
+                overall_risk (str).
+        """
         # Extract information from result
         strategies = result.get("bypass_strategies", [])
         mechanisms = result.get("license_mechanisms", {})
@@ -3061,7 +4008,20 @@ def generate_key():
         }
 
     def _calculate_risk_level(self, strategies: list[dict[str, Any]], mechanisms: dict[str, Any]) -> str:
-        """Calculate overall risk level based on strategies and mechanisms."""
+        """Calculate overall risk level based on strategies and mechanisms.
+
+        Evaluates risk score based on number of required strategies and complexity of
+        detected protection mechanisms to determine overall bypass risk level and
+        implementation feasibility rating.
+
+        Args:
+            strategies: List of bypass strategy dictionaries to assess for complexity.
+            mechanisms: Dictionary with detected license protection mechanisms
+                (crypto_operations, hardware_checks, network_operations, etc.).
+
+        Returns:
+            String risk level: 'LOW' (score < 30), 'MEDIUM' (30-60), or 'HIGH' (60+).
+        """
         risk_score = 0
 
         risk_score += len(strategies) * 10
@@ -3078,7 +4038,20 @@ def generate_key():
         return "MEDIUM" if risk_score < 60 else "HIGH"
 
     def _get_recommended_precautions(self, strategies: list[dict[str, Any]]) -> list[str]:
-        """Get recommended precautions based on strategies."""
+        """Get recommended precautions based on strategies.
+
+        Provides security and safety recommendations specific to the bypass methods
+        that will be used, helping users mitigate risks and ensure stability
+        during implementation and testing.
+
+        Args:
+            strategies: List of bypass strategy dictionaries with 'strategy' field
+                indicating method type (direct_patching, network_interception, etc.).
+
+        Returns:
+            List of strings containing recommended precautions and safety measures
+                specific to the identified bypass strategies.
+        """
         precautions: list[str] = ["Always backup original files"]
 
         for strategy in strategies:
@@ -3096,7 +4069,18 @@ def generate_key():
         """Analyze the control flow graph of a function.
 
         Builds a comprehensive understanding of the function's control flow
-        including basic blocks, edges, loops, and conditional branches.
+        including basic blocks, edges, loops, and conditional branches to identify
+        optimal locations for license validation bypass patches and control flow
+        redirection opportunities.
+
+        Args:
+            r2: Active radare2 session or pool adapter for control flow analysis.
+            func_addr: Integer memory address of the function to analyze.
+
+        Returns:
+            Dictionary with keys: blocks (dict of block info), edges (list),
+                conditionals (list), loops (list), dominators (dict), entry_point,
+                exit_points (list), complexity (int).
         """
         try:
             blocks_result = r2.cmdj(f"agfj @ {hex(func_addr)}")
@@ -3170,7 +4154,18 @@ def generate_key():
         """Identify critical decision points in the control flow.
 
         Finds the optimal locations for patches by analyzing conditional branches,
-        loop conditions, and validation checks.
+        loop conditions, and validation checks within the control flow graph. Ranks
+        decision points by importance for license validation circumvention.
+
+        Args:
+            r2: Active radare2 session or pool adapter for instruction analysis.
+            func_addr: Integer memory address of the function being analyzed.
+            cfg: Dictionary containing control flow graph structure with blocks
+                and conditional information.
+
+        Returns:
+            List of decision point dictionaries with keys: address, type,
+                condition, bypass_method, importance (float), true_path, false_path.
         """
         decision_points = []
 
@@ -3217,7 +4212,17 @@ def generate_key():
         """Determine the optimal patching strategy for a decision point.
 
         Analyzes the context around the decision point to determine the most
-        effective and least disruptive patching approach.
+        effective and least disruptive patching approach based on condition type,
+        register usage, memory access patterns, and control flow context.
+
+        Args:
+            r2: Active radare2 session for instruction and architecture analysis.
+            decision_point: Dictionary with address, condition (dict), type fields.
+            cfg: Control flow graph dictionary for context analysis.
+
+        Returns:
+            Dictionary with keys: type (strategy type), sophistication, confidence
+                (float), side_effects (list), patch_location (int), instructions.
         """
         strategy = {
             "type": "basic_nop",
@@ -3301,7 +4306,22 @@ def generate_key():
     def _generate_register_patch(
         self, r2: R2Session | R2SessionPoolAdapter, decision_point: dict[str, Any], strategy: dict[str, Any]
     ) -> dict[str, Any]:
-        """Generate a patch that manipulates register values."""
+        """Generate a patch that manipulates register values.
+
+        Creates register manipulation patches that set specific register values before
+        license validation checks to force validation success. Supports x86/x64
+        and ARM architectures with appropriate instruction generation.
+
+        Args:
+            r2: Active radare2 session for architecture-specific code generation.
+            decision_point: Dictionary with address and condition information.
+            strategy: Dictionary with patch_location, target_register, target_value,
+                confidence, side_effects, and instructions.
+
+        Returns:
+            Dictionary with keys: type, address (hex string), target_register,
+                description, original_bytes, patch_bytes, confidence, side_effects.
+        """
         patch = {
             "type": "register_manipulation",
             "address": hex(strategy["patch_location"]),
@@ -3331,7 +4351,22 @@ def generate_key():
     def _generate_stack_patch(
         self, r2: R2Session | R2SessionPoolAdapter, decision_point: dict[str, Any], strategy: dict[str, Any]
     ) -> dict[str, Any]:
-        """Generate a patch that manipulates stack values."""
+        """Generate a patch that manipulates stack values.
+
+        Creates stack manipulation patches that override values on the stack to
+        pass validation checks that depend on stack frame data. Modifies stack
+        locations that store license validation flags or keys.
+
+        Args:
+            r2: Active radare2 session for instruction analysis.
+            decision_point: Dictionary with address and condition information.
+            strategy: Dictionary with patch_location, stack_offset, target_value,
+                confidence, side_effects, and instructions.
+
+        Returns:
+            Dictionary with keys: type, address (hex), stack_offset, description,
+                original_bytes, patch_bytes, confidence, side_effects.
+        """
         return {
             "type": "stack_manipulation",
             "address": hex(strategy["patch_location"]),
@@ -3347,7 +4382,22 @@ def generate_key():
     def _generate_flow_redirect_patch(
         self, r2: R2Session | R2SessionPoolAdapter, decision_point: dict[str, Any], strategy: dict[str, Any]
     ) -> dict[str, Any]:
-        """Generate a patch that redirects control flow."""
+        """Generate a patch that redirects control flow.
+
+        Creates control flow redirection patches that jump over validation code or
+        redirect execution to bypass license checks. Modifies jump targets to skip
+        validation failure paths or loop detection.
+
+        Args:
+            r2: Active radare2 session for jump instruction generation.
+            decision_point: Dictionary with address and condition information.
+            strategy: Dictionary with patch_location, redirect_to, confidence,
+                side_effects, and instructions.
+
+        Returns:
+            Dictionary with keys: type, address (hex), redirect_target (hex),
+                description, original_bytes, patch_bytes, confidence, side_effects.
+        """
         return {
             "type": "control_flow_redirect",
             "address": hex(strategy["patch_location"]),
@@ -3363,7 +4413,22 @@ def generate_key():
     def _generate_memory_override_patch(
         self, r2: R2Session | R2SessionPoolAdapter, decision_point: dict[str, Any], strategy: dict[str, Any]
     ) -> dict[str, Any]:
-        """Generate a patch that overrides memory values."""
+        """Generate a patch that overrides memory values.
+
+        Creates patches that write specific values to memory locations that contain
+        license validation data or flags. Overwrites license status, activation flags,
+        and validation result variables.
+
+        Args:
+            r2: Active radare2 session for memory instruction generation.
+            decision_point: Dictionary with address and condition information.
+            strategy: Dictionary with patch_location, target_address, target_value,
+                confidence, side_effects, and instructions.
+
+        Returns:
+            Dictionary with keys: type, address (hex), memory_target (hex),
+                description, original_bytes, patch_bytes, confidence, side_effects.
+        """
         return {
             "type": "memory_value_override",
             "address": hex(strategy["patch_location"]),
@@ -3379,7 +4444,22 @@ def generate_key():
     def _generate_return_injection_patch(
         self, r2: R2Session | R2SessionPoolAdapter, decision_point: dict[str, Any], strategy: dict[str, Any]
     ) -> dict[str, Any]:
-        """Generate a patch that injects a return value."""
+        """Generate a patch that injects a return value.
+
+        Creates patches that replace function calls with direct return value
+        injection to bypass the called function's validation logic entirely.
+        Skips validation function execution and returns success indicators.
+
+        Args:
+            r2: Active radare2 session for return instruction generation.
+            decision_point: Dictionary with address and condition information.
+            strategy: Dictionary with patch_location, desired_return, confidence,
+                side_effects, and instructions.
+
+        Returns:
+            Dictionary with keys: type, address (hex), injected_return,
+                description, original_bytes, patch_bytes, confidence, side_effects.
+        """
         return {
             "type": "return_value_injection",
             "address": hex(strategy["patch_location"]),
@@ -3393,7 +4473,21 @@ def generate_key():
         }
 
     def _analyze_condition(self, r2: R2Session | R2SessionPoolAdapter, address: int, disasm: str) -> dict[str, Any]:
-        """Analyze the condition being checked at a decision point."""
+        """Analyze the condition being checked at a decision point.
+
+        Examines assembly instructions at a conditional branch to determine what
+        values are being compared and what conditions need to be satisfied for
+        license validation. Identifies comparison types and target values.
+
+        Args:
+            r2: Active radare2 session for instruction analysis.
+            address: Integer memory address of the conditional instruction.
+            disasm: String containing disassembly listing at the address.
+
+        Returns:
+            Dictionary with keys: type (condition type), register, memory_address,
+                expected_value, comparison_type, and other metadata for patching.
+        """
         condition: dict[str, Any] = {
             "type": "unknown",
             "register": None,
@@ -3447,7 +4541,21 @@ def generate_key():
         return condition
 
     def _determine_bypass_method(self, condition_analysis: dict[str, Any]) -> str:
-        """Determine the best bypass method based on condition analysis."""
+        """Determine the best bypass method based on condition analysis.
+
+        Selects the most appropriate bypass technique based on the type of
+        condition being evaluated in the license validation logic. Maps condition
+        types to effective bypass strategies.
+
+        Args:
+            condition_analysis: Dictionary with 'type' key containing condition type
+                (register_comparison, memory_comparison, function_return_check, etc.).
+
+        Returns:
+            String bypass method name: 'set_register_value' (registers),
+                'patch_memory_value' (memory), 'return_value_injection' (functions),
+                'clear_test_bits' (bitwise), or 'nop_instruction' (fallback).
+        """
         if condition_analysis["type"] == "register_comparison":
             return "set_register_value"
         if condition_analysis["type"] == "memory_comparison":
@@ -3459,7 +4567,22 @@ def generate_key():
         return "nop_instruction"
 
     def _assess_decision_importance(self, condition_analysis: dict[str, Any], cfg: dict[str, Any]) -> float:
-        """Assess the importance of a decision point for bypass."""
+        """Assess the importance of a decision point for bypass.
+
+        Calculates the criticality of a conditional branch to the license validation
+        flow, considering the condition type, dominator status, and distance from
+        function entry. Prioritizes key validation checks for patching efforts.
+
+        Args:
+            condition_analysis: Dictionary with 'type', 'is_dominator', and
+                'distance_from_entry' keys for importance assessment.
+            cfg: Dictionary containing control flow graph with dominators and
+                block distance information.
+
+        Returns:
+            Float importance score between 0.0 and 1.0. Base 0.5 plus 0.3 for
+                function checks, 0.2 for dominators, 0.1 for early entry checks.
+        """
         importance = 0.5
 
         # Higher importance for function return checks
@@ -3477,7 +4600,20 @@ def generate_key():
         return min(importance, 1.0)
 
     def _find_entry_validation_checks(self, r2: R2Session | R2SessionPoolAdapter, func_addr: int) -> list[dict[str, Any]]:
-        """Find validation checks at function entry."""
+        """Find validation checks at function entry.
+
+        Analyzes the first instructions of a function to identify immediate validation
+        checks that occur before the main function logic. Prioritizes early entry
+        checks as high-priority bypass targets.
+
+        Args:
+            r2: Active radare2 session for disassembly retrieval.
+            func_addr: Integer memory address of the function to analyze.
+
+        Returns:
+            List of validation check dictionaries with address, type (entry_validation),
+                line (disasm), line_number, bypass_method, and importance (float).
+        """
         entry_checks: list[dict[str, Any]] = []
 
         try:
@@ -3502,11 +4638,36 @@ def generate_key():
         return entry_checks
 
     def _detect_loops_in_cfg(self, cfg: dict[str, Any]) -> list[dict[str, Any]]:
-        """Detect loops in the control flow graph."""
+        """Detect loops in the control flow graph.
+
+        Identifies loop structures by finding back edges in the control flow graph
+        that indicate cyclic control flow paths. Useful for identifying repeated
+        validation or anti-debugging loops.
+
+        Args:
+            cfg: Dictionary containing control flow graph with edges (list of tuples)
+                and block information.
+
+        Returns:
+            List of loop dictionaries with keys: header (address), back_edge_source,
+                type (natural_loop).
+        """
         return [{"header": dst, "back_edge_source": src, "type": "natural_loop"} for src, dst in cfg["edges"] if dst < src]
 
     def _calculate_dominators(self, cfg: dict[str, Any]) -> dict[int, set[int]]:
-        """Calculate dominator sets for CFG nodes."""
+        """Calculate dominator sets for CFG nodes.
+
+        Computes the dominator relationship between control flow graph nodes to identify
+        execution paths that must pass through specific blocks. Used to identify
+        critical validation points.
+
+        Args:
+            cfg: Dictionary containing control flow graph with blocks (dict) and
+                edges (list of tuples).
+
+        Returns:
+            Dictionary mapping block addresses (int) to sets of dominating addresses.
+        """
         # Simple dominator calculation (can be optimized)
         nodes = list(cfg["blocks"].keys())
         entry = cfg["entry_point"]
@@ -3534,13 +4695,36 @@ def generate_key():
         return dominators
 
     def _is_loop_condition(self, decision_point: dict[str, Any], cfg: dict[str, Any]) -> bool:
-        """Check if decision point is a loop condition."""
+        """Check if decision point is a loop condition.
+
+        Determines whether a conditional branch is the header of a loop structure
+        by checking against detected loops in the control flow graph.
+
+        Args:
+            decision_point: Dictionary with 'address' field containing decision point address.
+            cfg: Dictionary containing control flow graph with loop information.
+
+        Returns:
+            Boolean: True if decision point is a loop header, False otherwise.
+        """
         addr = decision_point["address"]
 
         return any(loop["header"] == addr for loop in cfg.get("loops", []))
 
     def _find_loop_exit(self, decision_point: dict[str, Any], cfg: dict[str, Any]) -> int:
-        """Find the exit point of a loop."""
+        """Find the exit point of a loop.
+
+        Identifies the code location where control flow exits a loop structure,
+        determining the target address for control flow redirection around loops.
+
+        Args:
+            decision_point: Dictionary with 'address' field (loop header address).
+            cfg: Dictionary with blocks (dict) and exit_points for loop exit analysis.
+
+        Returns:
+            Integer loop exit point address where control flow continues after
+                loop condition becomes false.
+        """
         addr: int = decision_point["address"]
         block = cfg["blocks"].get(addr, {})
 
@@ -3556,7 +4740,19 @@ def generate_key():
         return addr + 100
 
     def _generate_register_set_instructions(self, register: str, value: int) -> str:
-        """Generate machine code to set a register to a specific value."""
+        """Generate machine code to set a register to a specific value.
+
+        Produces x86/x64 machine code to move an immediate value into a specified
+        register for use in bypass patches. Supports all general purpose and
+        extended registers with appropriate opcode selection.
+
+        Args:
+            register: String name of register (eax, rax, ebx, r8, al, ax, etc.).
+            value: Integer value to load into the register.
+
+        Returns:
+            String hex-encoded machine code opcodes for the register assignment.
+        """
         register_lower = register.lower()
 
         # x86/x64 general purpose registers
@@ -3616,7 +4812,19 @@ def generate_key():
         return "90" * 5
 
     def _generate_memory_write_instructions(self, address: str, value: int) -> str:
-        """Generate machine code to write a value to memory."""
+        """Generate machine code to write a value to memory.
+
+        Produces x86/x64 machine code to write an integer value to a specific
+        memory address for bypass patch implementation. Uses direct memory write
+        or register-based addressing depending on value ranges.
+
+        Args:
+            address: String hex address to write to (0x401000 format).
+            value: Integer value to write at the specified memory address.
+
+        Returns:
+            String hex-encoded machine code for memory write operation.
+        """
         try:
             addr_int = int(address, 16)
             # Generate x86 machine code for memory write
@@ -3634,22 +4842,67 @@ def generate_key():
             return f"B8{address.replace('0x', '').zfill(8)}C700{value:08X}"  # mov eax, address; mov [eax], value
 
     def _generate_return_injection_instructions(self, return_value: int) -> str:
-        """Generate machine code to inject a return value."""
+        """Generate machine code to inject a return value.
+
+        Produces x86 machine code that sets EAX to a specific return value and
+        immediately returns from the function. Effectively replaces a function
+        call with a direct return value injection.
+
+        Args:
+            return_value: Integer value to place in EAX before function return.
+
+        Returns:
+            String hex-encoded x86 machine code for return injection.
+        """
         # mov eax, return_value; ret
         return f"B8{return_value:08X}C3"
 
     def _generate_stack_manipulation_instructions(self, offset: int, value: int) -> str:
-        """Generate machine code to manipulate stack values."""
+        """Generate machine code to manipulate stack values.
+
+        Produces x86 machine code to write an integer value to the stack at a specific
+        offset from the current stack pointer. Used for modifying function arguments
+        and return addresses.
+
+        Args:
+            offset: Byte offset from ESP/RSP where value should be written.
+            value: Integer value to write to the stack location.
+
+        Returns:
+            String hex-encoded x86 machine code for stack write operation.
+        """
         # mov dword ptr [esp+offset], value
         return f"C74424{offset:02X}{value:08X}"
 
     def _generate_jump_instructions(self, target: int) -> str:
-        """Generate machine code for a jump instruction."""
+        """Generate machine code for a jump instruction.
+
+        Produces x86 relative jump machine code to redirect control flow to a target address.
+        Used for skipping loops, redirecting around validation checks, or jumping to success paths.
+
+        Args:
+            target: Integer target address for the jump operation.
+
+        Returns:
+            str: Hex-encoded x86 jump instruction machine code.
+        """
         # jmp target (relative)
         return f"E9{target:08X}"
 
     def _generate_arm_register_set(self, register: str, value: int) -> str:
-        """Generate ARM machine code to set a register."""
+        """Generate ARM machine code to set a register.
+
+        Produces ARM-specific machine code to load an immediate value into a general
+        purpose register using movw and movt instruction combinations for multi-byte
+        values.
+
+        Args:
+            register: String ARM register name (r0, r1, r2, r3, etc.).
+            value: Integer value to load into the register.
+
+        Returns:
+            String hex-encoded ARM machine code opcodes.
+        """
         # ARM specific implementation
         reg_map = {"r0": 0, "r1": 1, "r2": 2, "r3": 3}
         reg_num = reg_map.get(register, 0)
@@ -3659,7 +4912,19 @@ def generate_key():
         return f"{lower:04X}{reg_num:01X}0E3{upper:04X}{reg_num:01X}4E3"
 
     def _get_original_bytes_at(self, r2: R2Session | R2SessionPoolAdapter, address: int, size: int) -> str:
-        """Get original bytes at a specific address."""
+        """Get original bytes at a specific address.
+
+        Retrieves the raw instruction bytes at a given address from the loaded binary
+        for use in patch generation and byte comparison before patching.
+
+        Args:
+            r2: Active radare2 session for binary data retrieval.
+            address: Integer memory address to extract bytes from.
+            size: Number of bytes to retrieve.
+
+        Returns:
+            String hex-encoded bytes from address. Returns NOPs on error or invalid address.
+        """
         try:
             hex_bytes = r2._execute_command(f"px {size} @ {hex(address)}")
             if hex_bytes and isinstance(hex_bytes, str):
@@ -3675,7 +4940,18 @@ def generate_key():
         return "90" * size  # Return NOPs as fallback
 
     def _is_already_patched(self, bypass_point: dict[str, Any], patches: list[dict[str, Any]]) -> bool:
-        """Check if a bypass point has already been patched."""
+        """Check if a bypass point has already been patched.
+
+        Determines whether a bypass target location has already been modified by
+        comparing against previously generated patches to avoid duplicate patching.
+
+        Args:
+            bypass_point: Dictionary with 'address' field containing bypass target address.
+            patches: List of previously generated patch dictionaries with 'address' keys.
+
+        Returns:
+            Boolean: True if bypass point has been patched, False otherwise.
+        """
         point_addr = bypass_point.get("address", 0)
         return any(patch.get("address") == hex(point_addr) for patch in patches)
 
@@ -3683,13 +4959,17 @@ def generate_key():
 def generate_license_bypass(binary_path: str, radare2_path: str | None = None) -> dict[str, Any]:
     """Generate comprehensive license bypass for a binary.
 
+    Convenience function that creates an R2BypassGenerator instance and executes
+    a full comprehensive bypass analysis and code generation workflow on the
+    specified binary file.
+
     Args:
-        binary_path: Path to binary file
-        radare2_path: Optional path to radare2 executable
+        binary_path: Path to binary file for license bypass analysis.
+        radare2_path: Optional path to radare2 executable. Attempts auto-detection if not provided.
 
     Returns:
-        Complete bypass generation results
-
+        Dictionary containing complete bypass generation results with strategies,
+            patches, implementation guides, and risk assessments.
     """
     generator = R2BypassGenerator(binary_path, radare2_path)
     return generator.generate_comprehensive_bypass()

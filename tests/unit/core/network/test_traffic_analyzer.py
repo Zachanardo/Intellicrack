@@ -117,7 +117,7 @@ class TestNetworkTrafficAnalyzer:
                 self.thread = None
                 self.running = False
 
-            def start_flexlm_server(self):
+            def start_flexlm_server(self) -> Tuple[str, int]:
                 """Start FlexLM license server simulation."""
                 self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -152,7 +152,7 @@ class TestNetworkTrafficAnalyzer:
 
                 return ('127.0.0.1', self.port)
 
-            def start_hasp_server(self):
+            def start_hasp_server(self) -> Tuple[str, int]:
                 """Start HASP/Sentinel license server simulation."""
                 self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -263,7 +263,7 @@ class TestNetworkTrafficAnalyzer:
         os.unlink(cert_file.name)
         os.unlink(key_file.name)
 
-    def test_analyzer_initialization(self, analyzer):
+    def test_analyzer_initialization(self, analyzer: NetworkTrafficAnalyzer) -> None:
         """Test NetworkTrafficAnalyzer initialization with required capabilities."""
         assert analyzer is not None
         assert hasattr(analyzer, 'start_capture')
@@ -287,7 +287,7 @@ class TestNetworkTrafficAnalyzer:
         assert 1947 in analyzer.license_ports   # HASP/Sentinel
         assert 22350 in analyzer.license_ports  # CodeMeter
 
-    def test_real_pcap_analysis(self, analyzer, test_pcap_files):
+    def test_real_pcap_analysis(self, analyzer: NetworkTrafficAnalyzer, test_pcap_files: List[Path]) -> None:
         """Test analysis of real PCAP files from test fixtures."""
         for pcap_file in test_pcap_files[:3]:  # Test first 3 files
 
@@ -317,7 +317,7 @@ class TestNetworkTrafficAnalyzer:
                 assert results['total_connections'] >= 0
                 assert isinstance(results['license_servers'], list)
 
-    def test_live_traffic_capture_socket_backend(self, analyzer):
+    def test_live_traffic_capture_socket_backend(self, analyzer: NetworkTrafficAnalyzer) -> None:
         """Test live traffic capture using socket backend."""
         if os.name != 'nt':
             pytest.skip("Socket-based capture testing requires Windows")
@@ -325,7 +325,7 @@ class TestNetworkTrafficAnalyzer:
         # Test socket capture initialization
         capture_stats = None
 
-        def test_capture():
+        def test_capture() -> None:
             nonlocal capture_stats
             try:
                 capture_stats = analyzer._capture_with_socket(
@@ -481,7 +481,7 @@ class TestNetworkTrafficAnalyzer:
         if results['total_connections'] > 0:
             assert results['license_connections'] >= 0
 
-    def test_license_protocol_detection(self, analyzer):
+    def test_license_protocol_detection(self, analyzer: NetworkTrafficAnalyzer) -> None:
         """Test detection of various license protocols and patterns."""
         test_patterns = [
             # FlexLM protocol patterns
@@ -540,7 +540,7 @@ class TestNetworkTrafficAnalyzer:
         assert pattern_detections >= len(test_patterns) * 0.3, \
                f"Insufficient pattern detection: {pattern_detections}/{len(test_patterns)}"
 
-    def test_encrypted_traffic_analysis(self, analyzer, ssl_license_server):
+    def test_encrypted_traffic_analysis(self, analyzer: NetworkTrafficAnalyzer, ssl_license_server: Tuple[str, int]) -> None:
         """Test analysis of encrypted license traffic."""
         server_ip, server_port = ssl_license_server
         time.sleep(0.5)  # Allow server to start
@@ -604,7 +604,7 @@ class TestNetworkTrafficAnalyzer:
                 for protocol in protocols_detected
             )
 
-    def test_statistical_analysis_capabilities(self, analyzer):
+    def test_statistical_analysis_capabilities(self, analyzer: NetworkTrafficAnalyzer) -> None:
         """Test comprehensive statistical analysis of network traffic."""
         # Generate test traffic data
         test_connections = self._create_test_connection_data()
@@ -662,7 +662,7 @@ class TestNetworkTrafficAnalyzer:
         durations = stats['connection_durations']
         assert 'min' in durations and 'max' in durations and 'avg' in durations
 
-    def test_suspicious_traffic_detection(self, analyzer):
+    def test_suspicious_traffic_detection(self, analyzer: NetworkTrafficAnalyzer) -> None:
         """Test detection of suspicious traffic patterns and bypass attempts."""
         # Create suspicious traffic patterns
         suspicious_patterns = [
@@ -757,7 +757,7 @@ class TestNetworkTrafficAnalyzer:
                             for level in threat_levels)
         assert high_threat_count > 0, "Failed to detect high-threat patterns"
 
-    def test_license_server_identification(self, analyzer):
+    def test_license_server_identification(self, analyzer: NetworkTrafficAnalyzer) -> None:
         """Test identification of different license server types and endpoints."""
         # Define known license server patterns
         license_servers = [
@@ -837,7 +837,7 @@ class TestNetworkTrafficAnalyzer:
 
         assert len(found_patterns) >= 3, f"Insufficient license pattern diversity: {found_patterns}"
 
-    def test_visualization_generation(self, analyzer):
+    def test_visualization_generation(self, analyzer: NetworkTrafficAnalyzer) -> None:
         """Test generation of network visualizations."""
         if not hasattr(analyzer, '_generate_visualizations'):
             pytest.skip("Visualization functionality not available")
@@ -889,7 +889,7 @@ class TestNetworkTrafficAnalyzer:
         except Exception as e:
             pytest.fail(f"Visualization generation failed: {e}")
 
-    def test_html_report_generation(self, analyzer):
+    def test_html_report_generation(self, analyzer: NetworkTrafficAnalyzer) -> None:
         """Test generation of comprehensive HTML analysis reports."""
         # Populate analyzer with test data
         test_connections = self._create_test_connection_data()
@@ -933,7 +933,7 @@ class TestNetworkTrafficAnalyzer:
         # Cleanup
         os.unlink(report_file)
 
-    def test_performance_with_high_volume_traffic(self, analyzer):
+    def test_performance_with_high_volume_traffic(self, analyzer: NetworkTrafficAnalyzer) -> None:
         """Test analyzer performance with high-volume network traffic."""
         # Generate large volume of test packets
         start_time = time.time()
@@ -971,12 +971,12 @@ class TestNetworkTrafficAnalyzer:
         assert results is not None, "Analysis failed with high volume traffic"
         assert analysis_time < 10.0, f"Analysis too slow: {analysis_time:.2f} seconds"
 
-    def test_concurrent_analysis_thread_safety(self, analyzer):
+    def test_concurrent_analysis_thread_safety(self, analyzer: NetworkTrafficAnalyzer) -> None:
         """Test thread safety during concurrent traffic analysis."""
         errors = []
         results = []
 
-        def analyze_traffic_batch(thread_id):
+        def analyze_traffic_batch(thread_id: int) -> None:
             try:
                 for i in range(100):
                     # Generate unique packet data per thread
@@ -1089,7 +1089,7 @@ class TestNetworkTrafficAnalyzer:
 class TestTrafficAnalyzerIntegration:
     """Integration tests for NetworkTrafficAnalyzer with real-world scenarios."""
 
-    def test_complete_license_validation_workflow(self):
+    def test_complete_license_validation_workflow(self) -> None:
         """Test complete license validation workflow analysis."""
         analyzer = NetworkTrafficAnalyzer()
 
@@ -1142,7 +1142,7 @@ class TestTrafficAnalyzerIntegration:
             flexlm_patterns = [p for p in patterns_found if 'FLEXLM' in p or 'CHECKOUT' in p]
             assert flexlm_patterns, "FlexLM workflow patterns not detected"
 
-    def test_multi_protocol_license_environment(self):
+    def test_multi_protocol_license_environment(self) -> None:
         """Test analysis of environment with multiple license protocols."""
         analyzer = NetworkTrafficAnalyzer()
 

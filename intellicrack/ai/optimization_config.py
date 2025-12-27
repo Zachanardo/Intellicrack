@@ -1,5 +1,18 @@
 """AI System Optimization Configuration.
 
+This module provides comprehensive optimization management for AI systems, including:
+
+- Memory optimization through garbage collection and monitoring
+- Cache performance optimization with configurable rules
+- Configurable optimization rules with cooldown periods and custom handlers
+- Performance monitoring integration and metrics tracking
+- Configuration import/export for persistence
+- Optimization recommendations based on system health
+
+The OptimizationManager class coordinates all optimization activities and maintains
+statistics about optimization rule execution. Module-level functions provide convenient
+access to global optimization operations.
+
 Copyright (C) 2025 Zachary Flint
 
 This file is part of Intellicrack.
@@ -121,7 +134,11 @@ class OptimizationManager:
         logger.info("Optimization manager initialized")
 
     def _create_default_config(self) -> PerformanceConfig:
-        """Create default optimization configuration."""
+        """Create default optimization configuration.
+
+        Returns:
+            PerformanceConfig: Default performance configuration with predefined optimization rules.
+        """
         rules = [
             OptimizationRule(
                 name="high_memory_usage",
@@ -168,7 +185,11 @@ class OptimizationManager:
         return PerformanceConfig(optimization_rules=rules)
 
     def _setup_optimization_rules(self) -> None:
-        """Set up optimization rules with performance monitor."""
+        """Set up optimization rules with performance monitor.
+
+        Registers all enabled optimization rules with the performance monitor for
+        automatic threshold tracking and rule triggering.
+        """
         for rule in self.config.optimization_rules:
             if rule.enabled:
                 performance_monitor.add_optimization_rule(
@@ -176,7 +197,17 @@ class OptimizationManager:
                 )
 
     def _create_rule_handler(self, rule: OptimizationRule) -> Callable[[str, str, float], None]:
-        """Create handler for optimization rule."""
+        """Create handler for optimization rule.
+
+        Constructs a closure-based handler function that evaluates whether an
+        optimization rule should trigger based on metric name, level, and cooldown status.
+
+        Args:
+            rule: The optimization rule to create a handler for.
+
+        Returns:
+            Callable: A handler function that takes metric_name, level, and value parameters.
+        """
 
         def handler(metric_name: str, level: str, value: float) -> None:
             # Check if rule applies
@@ -193,7 +224,16 @@ class OptimizationManager:
         return handler
 
     def _rule_matches(self, rule: OptimizationRule, metric_name: str, level: str) -> bool:
-        """Check if rule matches the current metric and level."""
+        """Check if rule matches the current metric and level.
+
+        Args:
+            rule: The optimization rule to evaluate.
+            metric_name: The metric name being checked.
+            level: The severity level (e.g., "warning", "critical").
+
+        Returns:
+            bool: True if the rule applies to the metric and level, False otherwise.
+        """
         if rule.threshold_type != level:
             return False
 
@@ -201,7 +241,14 @@ class OptimizationManager:
         return bool(rule.metric_name in metric_name or metric_name.startswith(rule.metric_name))
 
     def _check_cooldown(self, rule: OptimizationRule) -> bool:
-        """Check if rule is within cooldown period."""
+        """Check if rule is within cooldown period.
+
+        Args:
+            rule: The optimization rule to check.
+
+        Returns:
+            bool: True if the rule is not on cooldown, False if still in cooldown period.
+        """
         if rule.last_triggered is None:
             return True
 
@@ -209,7 +256,21 @@ class OptimizationManager:
         return time_since_last.total_seconds() >= rule.cooldown_seconds
 
     def _execute_optimization(self, rule: OptimizationRule, metric_name: str, level: str, value: float) -> None:
-        """Execute optimization action."""
+        """Execute optimization action.
+
+        Performs the configured optimization action for a triggered rule, including
+        garbage collection, cache clearing, logging, or custom handlers. Updates
+        rule statistics and tracks last triggered time.
+
+        Args:
+            rule: The optimization rule being executed.
+            metric_name: The metric name that triggered the rule.
+            level: The severity level of the trigger.
+            value: The current value of the metric.
+
+        Raises:
+            No exceptions propagate; all exceptions are caught and logged internally.
+        """
         with self.lock:
             try:
                 logger.info("Executing optimization rule '%s' for %s=%s", rule.name, metric_name, value)
@@ -232,7 +293,11 @@ class OptimizationManager:
                 self._update_optimization_stats(rule.name, "error")
 
     def _execute_garbage_collection(self) -> None:
-        """Execute garbage collection optimization."""
+        """Execute garbage collection optimization.
+
+        Triggers garbage collection and tracks memory freed. Falls back to basic
+        garbage collection if psutil is not available for monitoring.
+        """
         if not PSUTIL_AVAILABLE:
             logger.warning("psutil not available - skipping memory monitoring during GC")
             gc.collect()
@@ -266,7 +331,10 @@ class OptimizationManager:
             self.gc_stats["objects_collected"] += collected
 
     def _execute_cache_clear(self) -> None:
-        """Execute cache clearing optimization."""
+        """Execute cache clearing optimization.
+
+        Clears the performance monitor cache and updates cache statistics.
+        """
         # Clear performance monitor cache
         cleared_entries = len(performance_monitor.performance_cache)
         performance_monitor.performance_cache.clear()
@@ -278,7 +346,17 @@ class OptimizationManager:
         logger.info("Cleared %d cache entries", cleared_entries)
 
     def _execute_logging(self, rule: OptimizationRule, metric_name: str, level: str, value: float) -> None:
-        """Execute logging optimization action."""
+        """Execute logging optimization action.
+
+        Logs a performance alert at the appropriate level (critical, warning, or info)
+        based on the severity indicated by the 'level' parameter.
+
+        Args:
+            rule: The optimization rule being logged.
+            metric_name: The metric name that triggered the alert.
+            level: The severity level (critical, warning, or info).
+            value: The current metric value.
+        """
         log_message = f"Performance alert - {rule.name}: {metric_name}={value} ({level})"
 
         if level == "critical":
@@ -289,7 +367,15 @@ class OptimizationManager:
             logger.info(log_message)
 
     def _update_optimization_stats(self, rule_name: str, action: str) -> None:
-        """Update optimization statistics."""
+        """Update optimization statistics.
+
+        Tracks optimization rule execution statistics including execution counts,
+        errors, and last execution timestamp.
+
+        Args:
+            rule_name: The name of the optimization rule.
+            action: The action type ("executed" or "error").
+        """
         if rule_name not in self.optimization_stats:
             self.optimization_stats[rule_name] = {
                 "executed": 0,
@@ -302,7 +388,14 @@ class OptimizationManager:
             self.optimization_stats[rule_name]["last_execution"] = datetime.now().isoformat()
 
     def add_custom_rule(self, rule: OptimizationRule) -> None:
-        """Add custom optimization rule."""
+        """Add custom optimization rule.
+
+        Adds a new optimization rule to the configuration and registers it with
+        the performance monitor if enabled.
+
+        Args:
+            rule: The optimization rule to add.
+        """
         self.config.optimization_rules.append(rule)
 
         if rule.enabled:
@@ -313,7 +406,14 @@ class OptimizationManager:
         logger.info("Added custom optimization rule: %s", rule.name)
 
     def enable_rule(self, rule_name: str) -> None:
-        """Enable optimization rule."""
+        """Enable optimization rule.
+
+        Enables a specific optimization rule by name. Logs a warning if the rule
+        is not found.
+
+        Args:
+            rule_name: The name of the rule to enable.
+        """
         for rule in self.config.optimization_rules:
             if rule.name == rule_name:
                 rule.enabled = True
@@ -323,7 +423,14 @@ class OptimizationManager:
         logger.warning("Optimization rule not found: %s", rule_name)
 
     def disable_rule(self, rule_name: str) -> None:
-        """Disable optimization rule."""
+        """Disable optimization rule.
+
+        Disables a specific optimization rule by name. Logs a warning if the rule
+        is not found.
+
+        Args:
+            rule_name: The name of the rule to disable.
+        """
         for rule in self.config.optimization_rules:
             if rule.name == rule_name:
                 rule.enabled = False
@@ -333,7 +440,16 @@ class OptimizationManager:
         logger.warning("Optimization rule not found: %s", rule_name)
 
     def get_optimization_summary(self) -> dict[str, Any]:
-        """Get optimization summary."""
+        """Get optimization summary.
+
+        Retrieves a comprehensive summary of optimization statistics including
+        configuration settings, garbage collection stats, cache stats, and
+        performance metrics.
+
+        Returns:
+            dict: A dictionary containing optimization configuration, statistics,
+                  and performance metrics summary.
+        """
         return {
             "config": {
                 "monitoring_enabled": self.config.enable_monitoring,
@@ -348,7 +464,11 @@ class OptimizationManager:
         }
 
     def optimize_memory_usage(self) -> None:
-        """Manual memory optimization."""
+        """Manual memory optimization.
+
+        Triggers garbage collection and cache clearing to reduce memory usage.
+        This is a manual intervention method that can be called explicitly.
+        """
         logger.info("Running manual memory optimization")
 
         # Force garbage collection
@@ -364,7 +484,11 @@ class OptimizationManager:
         logger.info("Manual memory optimization completed")
 
     def optimize_cache_performance(self) -> None:
-        """Optimize cache performance."""
+        """Optimize cache performance.
+
+        Cleans expired cache entries and updates cache statistics.
+        Only executes if cache optimization is enabled in configuration.
+        """
         if not self.config.enable_cache_optimization:
             return
 
@@ -379,7 +503,17 @@ class OptimizationManager:
         logger.info("Cache performance optimization completed")
 
     def benchmark_optimizations(self) -> dict[str, float]:
-        """Benchmark optimization effectiveness."""
+        """Benchmark optimization effectiveness.
+
+        Measures memory usage, object counts, and optimization efficiency by
+        running a synthetic memory load and tracking cleanup performance.
+        Falls back to zero metrics if psutil is unavailable.
+
+        Returns:
+            dict: Performance metrics including optimization time, memory saved,
+                  objects cleaned, and efficiency measurements. Returns zero-valued
+                  metrics on error.
+        """
         if not PSUTIL_AVAILABLE:
             logger.warning("psutil not available - returning simplified benchmark")
             return {"cpu_percent": 0.0, "memory_percent": 0.0}
@@ -439,7 +573,15 @@ class OptimizationManager:
             }
 
     def export_config(self, file_path: Path) -> None:
-        """Export optimization configuration."""
+        """Export optimization configuration.
+
+        Serializes the current optimization configuration to a JSON file including
+        all settings, cache configuration, and optimization rules.
+
+        Args:
+            file_path: The path where the configuration JSON file should be written.
+
+        """
         config_data = {
             "enable_monitoring": self.config.enable_monitoring,
             "monitoring_interval": self.config.monitoring_interval,
@@ -474,7 +616,18 @@ class OptimizationManager:
         logger.info("Optimization config exported to %s", file_path)
 
     def import_config(self, file_path: Path) -> None:
-        """Import optimization configuration."""
+        """Import optimization configuration.
+
+        Loads optimization configuration from a JSON file and updates the manager's
+        current configuration. Re-registers all optimization rules with the
+        performance monitor. Logs exceptions but doesn't propagate them.
+
+        Args:
+            file_path: The path to the JSON configuration file to load.
+
+        Raises:
+            No exceptions propagate; all errors are caught and logged internally.
+        """
         try:
             with open(file_path) as f:
                 config_data = json.load(f)
@@ -518,7 +671,14 @@ class OptimizationManager:
             logger.exception("Failed to import optimization config: %s", e)
 
     def get_recommendations(self) -> list[str]:
-        """Get optimization recommendations."""
+        """Get optimization recommendations.
+
+        Analyzes optimization statistics and system health to provide actionable
+        recommendations for performance tuning and configuration adjustments.
+
+        Returns:
+            list: A list of recommendation strings based on current optimization data.
+        """
         recommendations = []
         summary = self.get_optimization_summary()
 
@@ -554,16 +714,34 @@ optimization_manager = OptimizationManager()
 
 
 def optimize_ai_performance() -> None:
-    """Quick optimization of AI system performance."""
+    """Quick optimization of AI system performance.
+
+    Convenience function that triggers memory and cache optimization on the global
+    optimization manager instance. Useful for explicit performance optimization calls.
+    """
     optimization_manager.optimize_memory_usage()
     optimization_manager.optimize_cache_performance()
 
 
 def get_performance_recommendations() -> list[str]:
-    """Get performance optimization recommendations."""
+    """Get performance optimization recommendations.
+
+    Retrieves actionable optimization recommendations from the global optimization
+    manager based on current system health and statistics.
+
+    Returns:
+        list: A list of recommendation strings for system performance improvement.
+    """
     return optimization_manager.get_recommendations()
 
 
 def benchmark_ai_optimizations() -> dict[str, float]:
-    """Benchmark AI optimization effectiveness."""
+    """Benchmark AI optimization effectiveness.
+
+    Runs a benchmark test on the global optimization manager to measure optimization
+    efficiency including memory savings and object cleanup performance.
+
+    Returns:
+        dict: Performance metrics containing optimization effectiveness measurements.
+    """
     return optimization_manager.benchmark_optimizations()

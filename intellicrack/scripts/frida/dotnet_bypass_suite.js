@@ -27,6 +27,36 @@
  * License: GPL v3
  */
 
+function matchFourGroupSerial(str) {
+    const parts = str.split('-');
+    if (parts.length !== 4) {
+        return false;
+    }
+    for (const part of parts) {
+        if (!/^\d{4}$/.test(part)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function matchHexGuidPrefix(str) {
+    const parts = str.split('-');
+    if (parts.length < 3) {
+        return false;
+    }
+    if (!/^[\dA-Fa-f]{8}$/.test(parts[0])) {
+        return false;
+    }
+    if (!/^[\dA-Fa-f]{4}$/.test(parts[1])) {
+        return false;
+    }
+    if (!/^[\dA-Fa-f]{4}$/.test(parts[2])) {
+        return false;
+    }
+    return true;
+}
+
 const DotnetBypassSuite = {
     name: '.NET Bypass Suite',
     description: 'Advanced .NET runtime manipulation and protection bypass',
@@ -880,9 +910,7 @@ const DotnetBypassSuite = {
                         if (this.infoClass === 7 && this.buffer) {
                             this.buffer.writePointer(ptr(0));
                             self.stats.debuggerChecksDisabled++;
-                        }
-                        // ProcessDebugObjectHandle = 30
-                        else if (this.infoClass === 30 && this.buffer) {
+                        } else if (this.infoClass === 30 && this.buffer) {
                             this.buffer.writePointer(ptr(0));
                             self.stats.debuggerChecksDisabled++;
                         }
@@ -1126,17 +1154,17 @@ const DotnetBypassSuite = {
         try {
             const nameRva = methodDef.add(0x8).readU32();
             if (nameRva > 0 && nameRva < this.clrModule.size) {
-                var namePtr = this.clrModule.base.add(nameRva);
-                return namePtr.readUtf8String();
+                const rvaNamePtr = this.clrModule.base.add(nameRva);
+                return rvaNamePtr.readUtf8String();
             }
 
             const methodTablePtr = methodDef.readPointer();
             if (methodTablePtr && !methodTablePtr.isNull()) {
                 const methodDescPtr = methodTablePtr.add(0x10).readPointer();
                 if (methodDescPtr && !methodDescPtr.isNull()) {
-                    var namePtr = methodDescPtr.add(0x0).readPointer();
-                    if (namePtr && !namePtr.isNull()) {
-                        return namePtr.readUtf8String();
+                    const descNamePtr = methodDescPtr.add(0x0).readPointer();
+                    if (descNamePtr && !descNamePtr.isNull()) {
+                        return descNamePtr.readUtf8String();
                     }
                 }
             }
@@ -1190,17 +1218,17 @@ const DotnetBypassSuite = {
             return false;
         }
 
-        const patterns = [
-            /^[\dA-Z]{4,}-[\dA-Z]{4,}/,
-            /(?:\d{4}-){3}\d{4}/,
-            /[\dA-F]{8}(?:-[\dA-F]{4}){2}/,
-            /licen[cs]e|serial|key|activation/i,
-        ];
-
-        for (const pattern of patterns) {
-            if (pattern.test(str)) {
-                return true;
-            }
+        if (/^[\dA-Z]{4,}-[\dA-Z]{4,}/.test(str)) {
+            return true;
+        }
+        if (matchFourGroupSerial(str)) {
+            return true;
+        }
+        if (matchHexGuidPrefix(str)) {
+            return true;
+        }
+        if (/licen[cs]e|serial|key|activation/i.test(str)) {
+            return true;
         }
 
         return false;
@@ -1208,12 +1236,13 @@ const DotnetBypassSuite = {
 
     // Helper: Generate valid license
     generateValidLicense: original => {
-        // Generate a valid-looking license based on the original format
         if (/^[\dA-Z]{4,}-[\dA-Z]{4,}/.test(original)) {
             return 'INTC-RACK-2024-FULL';
-        } else if (/(?:\d{4}-){3}\d{4}/.test(original)) {
+        }
+        if (matchFourGroupSerial(original)) {
             return '1234-5678-9012-3456';
-        } else if (/[\dA-F]{8}-[\dA-F]{4}/.test(original)) {
+        }
+        if (matchHexGuidPrefix(original)) {
             return 'DEADBEEF-CAFE-BABE-F00D-123456789ABC';
         }
 

@@ -488,7 +488,18 @@ class FridaOperationLogger:
         return str(export_dir)
 
     def error(self, message: str) -> None:
-        """Log error message using operation logger."""
+        """Log error message using operation logger.
+
+        Records an error message through both the structured operation logging
+        system and the standard error logger for visibility.
+
+        Args:
+            message: Error message to log.
+
+        Side Effects:
+            - Calls log_operation with error classification
+            - Writes to operation logger at ERROR level
+        """
         self.log_operation("error", {"message": message, "level": "error"})
         self.op_logger.error(message)
 
@@ -671,7 +682,22 @@ class ProtectionDetector:
         return detected
 
     def analyze_string(self, string_data: str) -> set[ProtectionType]:
-        """Analyze strings for protection indicators."""
+        """Analyze strings for protection indicators.
+
+        Searches input strings for patterns that match known protection
+        techniques. Supports both case-sensitive and case-insensitive matching
+        based on signature configuration.
+
+        Args:
+            string_data: String to analyze for protection indicators.
+
+        Returns:
+            Set of detected ProtectionType enums matching string patterns.
+
+        Side Effects:
+            - Updates detected_protections with matched string patterns
+            - Records evidence for each detected protection type
+        """
         detected = set()
 
         for prot_type, signatures in self.protection_signatures.items():
@@ -689,11 +715,34 @@ class ProtectionDetector:
         return detected
 
     def register_adaptation_callback(self, callback: Callable[[ProtectionType, dict[str, Any] | set[str]], None]) -> None:
-        """Register callback for protection detection events."""
+        """Register callback for protection detection events.
+
+        Registers a callback function that will be invoked when a new protection
+        mechanism is detected, enabling real-time adaptation of bypass strategies.
+
+        Args:
+            callback: Function to call with signature (ProtectionType, dict/set).
+
+        Side Effects:
+            - Appends callback to adaptation_callbacks list
+            - Callback will be invoked by notify_protection_detected()
+        """
         self.adaptation_callbacks.append(callback)
 
     def notify_protection_detected(self, protection_type: ProtectionType, details: dict[str, Any]) -> None:
-        """Notify registered callbacks of detected protection."""
+        """Notify registered callbacks of detected protection.
+
+        Invokes all registered adaptation callbacks with the detected protection
+        type and evidence details. Continues operation if individual callbacks fail.
+
+        Args:
+            protection_type: Type of protection detected.
+            details: Dictionary containing evidence and context for the detection.
+
+        Side Effects:
+            - Calls each callback in adaptation_callbacks
+            - Logs exceptions from callbacks without raising
+        """
         for callback in self.adaptation_callbacks:
             try:
                 callback(protection_type, details)
@@ -701,7 +750,20 @@ class ProtectionDetector:
                 logger.exception("Adaptation callback error: %s", e)
 
     def get_detected_protections(self) -> dict[str, list[str]]:
-        """Get all detected protections with evidence."""
+        """Get all detected protections with evidence.
+
+        Returns a summary of all detected protection mechanisms along with
+        the specific evidence (API calls, strings, etc.) that triggered each detection.
+
+        Returns:
+            Dictionary mapping protection type names (strings) to lists of evidence strings.
+
+        Example:
+            {
+                'ANTI_DEBUG': ['kernel32.dll!IsDebuggerPresent'],
+                'LICENSE': ['license', 'api.example.com']
+            }
+        """
         return {prot_type.value: list(evidence) for prot_type, evidence in self.detected_protections.items()}
 
 
@@ -773,20 +835,49 @@ class HookBatcher:
         self.hook_queue.put(hook_spec)
 
     def start_batching(self) -> None:
-        """Start the batching thread."""
+        """Start the batching thread.
+
+        Starts a background daemon thread that processes hooks from the queue
+        in batches according to configured size and timeout limits.
+
+        Side Effects:
+            - Sets running flag to True
+            - Creates and starts batch processing thread
+            - Thread processes queue until stop_batching() is called
+        """
         self.running = True
         self.batch_thread = threading.Thread(target=self._batch_processor)
         self.batch_thread.daemon = True
         self.batch_thread.start()
 
     def stop_batching(self) -> None:
-        """Stop the batching thread."""
+        """Stop the batching thread.
+
+        Gracefully stops the background batch processing thread and waits for
+        it to complete its current operation.
+
+        Side Effects:
+            - Sets running flag to False
+            - Joins batch_thread if it exists
+            - Blocks until thread exits
+        """
         self.running = False
         if self.batch_thread:
             self.batch_thread.join()
 
     def _batch_processor(self) -> Generator[tuple[str, list[dict[str, Any]]], None, None]:
-        """Process hooks in batches."""
+        """Process hooks in batches.
+
+        Generator that continuously collects hooks from the queue and yields
+        them in batches, grouped by module for efficient installation.
+
+        Yields:
+            Tuples of (module_name, list of hook specifications for that module).
+
+        Complexity:
+            Time: O(n log n) per batch due to sorting
+            Space: O(b) where b is max_batch_size
+        """
         while self.running:
             batch: list[dict[str, Any]] = []
             deadline = time.time() + (self.batch_timeout_ms / 1000.0)
@@ -813,7 +904,16 @@ class HookBatcher:
                 yield from module_groups.items()
 
     def get_batch_stats(self) -> dict[str, Any]:
-        """Get batching statistics."""
+        """Get batching statistics.
+
+        Returns current statistics about the hook batching system including
+        pending hooks and their distribution by priority category.
+
+        Returns:
+            Dictionary containing:
+            - pending_hooks: Number of hooks waiting in queue
+            - categories: Dict mapping category names to counts
+        """
         return {
             "pending_hooks": self.hook_queue.qsize(),
             "categories": {cat.name: sum(h.get("category") == cat for h in list(self.hook_queue.queue)) for cat in HookCategory},
@@ -852,6 +952,9 @@ class FridaPerformanceOptimizer:
         Side Effects:
             - Creates psutil Process object
             - Initializes performance tracking structures
+
+        Raises:
+            ImportError: If psutil module is not available.
         """
         if psutil is None:
             raise ImportError("psutil is not available")
@@ -864,12 +967,31 @@ class FridaPerformanceOptimizer:
         self.performance_history: deque[dict[str, float]] = deque(maxlen=100)
 
     def measure_baseline(self) -> None:
-        """Measure baseline resource usage."""
+        """Measure baseline resource usage.
+
+        Records the current memory and CPU usage as a baseline for comparison
+        with later measurements to determine resource overhead.
+
+        Side Effects:
+            - Sets baseline_memory to current RSS memory usage
+            - Sets baseline_cpu to current CPU percentage
+        """
         self.baseline_memory = self.process.memory_info().rss
         self.baseline_cpu = self.process.cpu_percent(interval=0.1)
 
     def get_current_usage(self) -> dict[str, float]:
-        """Get current resource usage."""
+        """Get current resource usage.
+
+        Retrieves current resource utilization including memory, CPU, and
+        file handle counts relative to the baseline measurements.
+
+        Returns:
+            Dictionary containing:
+            - memory_mb: Memory usage in MB relative to baseline
+            - cpu_percent: Current CPU percentage
+            - threads: Number of active threads
+            - handles: Number of open file handles
+        """
         return {
             "memory_mb": (self.process.memory_info().rss - self.baseline_memory) / 1024 / 1024,
             "cpu_percent": self.process.cpu_percent(interval=0.1),
@@ -931,7 +1053,23 @@ class FridaPerformanceOptimizer:
         return True
 
     def optimize_script(self, script_code: str) -> str:
-        """Optimize Frida script for performance."""
+        """Optimize Frida script for performance.
+
+        Enhances provided Frida script with built-in caching and batching
+        mechanisms to reduce overhead. Injects helper functions for efficient
+        value caching and batched message sending.
+
+        Args:
+            script_code: Original Frida JavaScript script code.
+
+        Returns:
+            Enhanced script with optimization code prepended.
+
+        Note:
+            The optimization adds:
+            - 1-second caching for function results
+            - 50ms batching for send() messages
+        """
         # Add caching for frequently accessed values
         cache_code = """
         const _cache = new Map();
@@ -969,7 +1107,21 @@ class FridaPerformanceOptimizer:
         return "\n".join(optimizations) + "\n" + script_code
 
     def track_hook_performance(self, module: str, function: str, execution_time: float) -> None:
-        """Track individual hook performance."""
+        """Track individual hook performance.
+
+        Records performance metrics for a specific hooked function including
+        execution time and call rate. Updates call rates every second.
+
+        Args:
+            module: Module containing the hooked function.
+            function: Name of the hooked function.
+            execution_time: Execution time in milliseconds.
+
+        Side Effects:
+            - Creates entry in selective_hooks if new
+            - Updates total_time and call_count
+            - Recalculates call_rate every second
+        """
         hook_key = f"{module}!{function}"
 
         if hook_key not in self.selective_hooks:
@@ -993,7 +1145,17 @@ class FridaPerformanceOptimizer:
             stats["last_update"] = now
 
     def get_optimization_recommendations(self) -> list[str]:
-        """Get recommendations for optimization."""
+        """Get recommendations for optimization.
+
+        Analyzes current resource usage and hook performance to provide
+        specific optimization recommendations for reducing overhead.
+
+        Returns:
+            List of recommendation strings for resource optimization.
+
+        Example:
+            ['High memory usage detected. Consider reducing hook scope...']
+        """
         recommendations = []
         usage = self.get_current_usage()
 
@@ -1035,7 +1197,17 @@ class DynamicScriptGenerator:
     """
 
     def __init__(self) -> None:
-        """Initialize the dynamic script generator."""
+        """Initialize the dynamic script generator.
+
+        Sets up script generation system with protection handlers, hooking
+        strategies, and obfuscation engine for adaptive script generation.
+
+        Side Effects:
+            - Initializes protection handlers for all protection types
+            - Loads hooking strategies (aggressive, stealthy, adaptive, etc.)
+            - Configures obfuscation options
+            - Creates empty script cache
+        """
         self.protection_handlers = self._init_protection_handlers()
         self.hook_strategies = self._init_hook_strategies()
         self.obfuscation_engine = self._init_obfuscation()
@@ -1043,7 +1215,17 @@ class DynamicScriptGenerator:
         self.success_metrics: dict[str, float] = defaultdict(float)
 
     def _init_protection_handlers(self) -> dict[ProtectionType, Callable[[dict[str, Any]], str]]:
-        """Initialize protection-specific script generators."""
+        """Initialize protection-specific script generators.
+
+        Creates mapping of protection types to their corresponding script
+        generation methods for producing targeted bypass code.
+
+        Returns:
+            Dictionary mapping ProtectionType to script generator callables.
+
+        Note:
+            Each callable takes target_info dict and returns Frida script code.
+        """
         return {
             ProtectionType.ANTI_DEBUG: self._gen_antidebug_script,
             ProtectionType.ANTI_VM: self._gen_antivm_script,
@@ -1057,7 +1239,17 @@ class DynamicScriptGenerator:
         }
 
     def _init_hook_strategies(self) -> dict[str, Callable[[dict[str, Any]], str]]:
-        """Initialize adaptive hooking strategies."""
+        """Initialize adaptive hooking strategies.
+
+        Creates mapping of strategy names to their corresponding hook
+        generation methods for different attack approaches.
+
+        Returns:
+            Dictionary mapping strategy names to hook generator callables.
+
+        Note:
+            Available strategies: aggressive, stealthy, adaptive, minimal, comprehensive.
+        """
         return {
             "aggressive": self._aggressive_hooks,
             "stealthy": self._stealthy_hooks,
@@ -1067,7 +1259,18 @@ class DynamicScriptGenerator:
         }
 
     def _init_obfuscation(self) -> dict[str, bool]:
-        """Initialize script obfuscation engine."""
+        """Initialize script obfuscation engine.
+
+        Sets up obfuscation techniques to be applied to generated scripts
+        to evade detection and analysis.
+
+        Returns:
+            Dictionary mapping obfuscation technique names to enabled status.
+
+        Note:
+            Obfuscation techniques include variable renaming, control flow
+            modification, string encoding, dead code injection, and API hiding.
+        """
         return {
             "variable_renaming": True,
             "control_flow": True,
@@ -1085,15 +1288,28 @@ class DynamicScriptGenerator:
     ) -> str:
         """Generate dynamic Frida script based on target analysis.
 
+        Synthesizes a complete Frida script tailored to the target's detected
+        protections and specified hooking strategy. Combines base initialization,
+        evasion layer, protection-specific bypasses, and strategy-specific hooks.
+
         Args:
-            target_info: Binary analysis results
-            detected_protections: List of detected protection types
-            strategy: Hooking strategy to use
-            obfuscate: Whether to obfuscate the script
+            target_info: Dictionary containing binary analysis results including
+                        process info, detected strings, and API calls.
+            detected_protections: List of ProtectionType enums for protections
+                                 to bypass.
+            strategy: Hooking strategy name (aggressive, stealthy, adaptive,
+                     minimal, comprehensive). Defaults to adaptive.
+            obfuscate: Whether to apply obfuscation to the generated script.
 
         Returns:
-            Generated Frida script as string
+            Complete Frida JavaScript script as a string ready for injection.
 
+        Example:
+            script = generator.generate_script(
+                target_info={'process': 'app.exe'},
+                detected_protections=[ProtectionType.ANTI_DEBUG],
+                strategy='stealthy'
+            )
         """
         script_parts = [self._generate_base_init()]
 
@@ -1124,7 +1340,19 @@ class DynamicScriptGenerator:
         return script
 
     def _generate_base_init(self) -> str:
-        """Generate base initialization code."""
+        """Generate base initialization code.
+
+        Creates the foundational Frida script code that establishes the global
+        instrumentation context, API resolvers, and utility functions for all
+        subsequent hooks and bypass code.
+
+        Returns:
+            Frida JavaScript code string containing:
+            - Global context object (_IC) for tracking hooks and statistics
+            - API resolver with caching for efficient function address resolution
+            - Memory scanning utilities for pattern-based analysis
+            - Dynamic hook installation wrapper with error recovery
+        """
         return (
             """
 // Dynamic Frida Script - Generated by Intellicrack
@@ -1217,7 +1445,20 @@ function installHook(target, handler, options = {}) {
         )
 
     def _generate_evasion_layer(self) -> str:
-        """Generate anti-detection evasion code."""
+        """Generate anti-detection evasion code.
+
+        Creates JavaScript code that masks Frida's presence and defeats common
+        anti-analysis techniques including object enumeration, timing attacks,
+        thread detection, module filtering, and exception handler checks.
+
+        Returns:
+            Frida JavaScript evasion layer code string containing:
+            - Object property filtering to hide Frida internals
+            - Timing attack mitigation with jitter injection
+            - Thread ID masking for detection evasion
+            - Module enumeration filtering
+            - Exception handler bypass for debug register access
+        """
         return """
 // Anti-detection evasion layer
 (() => {
@@ -1292,7 +1533,23 @@ function installHook(target, handler, options = {}) {
 """
 
     def _gen_antidebug_script(self, target_info: dict[str, Any]) -> str:
-        """Generate anti-debug bypass script."""
+        """Generate anti-debug bypass script.
+
+        Creates Frida hooks to bypass anti-debugging protections by intercepting
+        common detection APIs and returning false/zero values to indicate no
+        debugger presence.
+
+        Args:
+            target_info: Dictionary containing target process information for
+                        customization.
+
+        Returns:
+            Frida JavaScript code for anti-debug bypass implementation.
+
+        Note:
+            Hooks target APIs including IsDebuggerPresent, CheckRemoteDebuggerPresent,
+            NtQueryInformationProcess, and OutputDebugString.
+        """
         return """
 // Anti-debug bypass implementation
 (() => {
@@ -1388,7 +1645,22 @@ function installHook(target, handler, options = {}) {
 """
 
     def _gen_antivm_script(self, target_info: dict[str, Any]) -> str:
-        """Generate anti-VM bypass script."""
+        """Generate anti-VM bypass script.
+
+        Creates Frida hooks to spoof VM detection mechanisms including CPUID
+        instruction results, CPU vendor strings, and registry keys that indicate
+        virtual machine presence.
+
+        Args:
+            target_info: Dictionary containing target process information.
+
+        Returns:
+            Frida JavaScript code for anti-VM bypass implementation.
+
+        Note:
+            Hooks and patches CPUID, registry queries, and system information APIs
+            to appear as legitimate hardware without hypervisor indicators.
+        """
         return """
 // Anti-VM bypass implementation
 (() => {
@@ -1488,7 +1760,25 @@ function installHook(target, handler, options = {}) {
 """
 
     def _gen_license_script(self, target_info: dict[str, Any]) -> str:
-        """Generate license bypass script."""
+        """Generate license validation bypass script.
+
+        Generates Frida instrumentation code that intercepts licensing validation
+        APIs including registry-based license checks, file-based license validation,
+        and network-based activation verification to analyze protection mechanisms.
+
+        Args:
+            target_info: Dictionary containing target process analysis results
+                        including process name, architecture, and detected APIs.
+
+        Returns:
+            Complete Frida JavaScript code as string for license protection analysis.
+
+        Implementation:
+            - Hooks registry operations (RegQueryValueEx, RegGetValue)
+            - Intercepts file operations (CreateFile for .lic files)
+            - Patches license validation decision points
+            - Tracks successful bypass attempts in statistics
+        """
         return """
 // License bypass implementation
 (() => {
@@ -1641,7 +1931,24 @@ function installHook(target, handler, options = {}) {
 """
 
     def _gen_integrity_script(self, target_info: dict[str, Any]) -> str:
-        """Generate integrity check bypass script."""
+        """Generate integrity check bypass script.
+
+        Generates Frida code that intercepts code integrity verification APIs
+        including hash computation, checksum validation, and signature verification
+        to analyze protection against unauthorized code modification.
+
+        Args:
+            target_info: Dictionary containing target process analysis results.
+
+        Returns:
+            Complete Frida JavaScript code for integrity check analysis.
+
+        Implementation:
+            - Hooks cryptographic hash functions (CryptHashData)
+            - Intercepts file validation (MapFileAndCheckSum)
+            - Patches integrity check decision points
+            - Provides valid checksums for modified code
+        """
         return """
 // Integrity check bypass implementation
 (() => {
@@ -1747,7 +2054,24 @@ function installHook(target, handler, options = {}) {
 """
 
     def _gen_hardware_script(self, target_info: dict[str, Any]) -> str:
-        """Generate hardware ID spoofing script."""
+        """Generate hardware ID spoofing script.
+
+        Generates Frida instrumentation for analyzing hardware-based licensing
+        protections including WMI queries, hardware identifier collection, and
+        hardware token/dongle validation mechanisms.
+
+        Args:
+            target_info: Dictionary containing target process analysis results.
+
+        Returns:
+            Complete Frida JavaScript code for hardware protection analysis.
+
+        Implementation:
+            - Spools hardware information queries (GetVolumeInformation, GetAdaptersInfo)
+            - Intercepts WMI queries for hardware identification
+            - Patches hardware validation routines
+            - Provides synthesized hardware identifiers
+        """
         return """
 // Hardware ID spoofing implementation
 (() => {
@@ -1831,7 +2155,24 @@ function installHook(target, handler, options = {}) {
 """
 
     def _gen_cloud_script(self, target_info: dict[str, Any]) -> str:
-        """Generate cloud license bypass script."""
+        """Generate cloud license bypass script.
+
+        Generates Frida code for analyzing cloud-based licensing protections
+        including SSL/TLS interception, HTTP/HTTPS license validation, and
+        network-based activation mechanisms.
+
+        Args:
+            target_info: Dictionary containing target process analysis results.
+
+        Returns:
+            Complete Frida JavaScript code for cloud license protection analysis.
+
+        Implementation:
+            - Intercepts SSL/TLS write and read operations
+            - Spools HTTP license validation requests
+            - Patches network-based activation checks
+            - Provides valid cloud responses
+        """
         return """
 // Cloud license bypass implementation
 (() => {
@@ -1909,7 +2250,24 @@ function installHook(target, handler, options = {}) {
 """
 
     def _gen_time_script(self, target_info: dict[str, Any]) -> str:
-        """Generate time-based protection bypass script."""
+        """Generate time-based protection bypass script.
+
+        Generates Frida instrumentation for analyzing time-based protections
+        including trial period enforcement, time-bomb checks, and timestamp
+        validation in licensing mechanisms.
+
+        Args:
+            target_info: Dictionary containing target process analysis results.
+
+        Returns:
+            Complete Frida JavaScript code for time-based protection analysis.
+
+        Implementation:
+            - Hooks system time functions (GetSystemTime, GetLocalTime)
+            - Manipulates returned time values to reset trial periods
+            - Intercepts performance counter and tick count APIs
+            - Bypasses timestamp-based validation checks
+        """
         return """
 // Time-based protection bypass
 (() => {
@@ -1980,7 +2338,24 @@ function installHook(target, handler, options = {}) {
 """
 
     def _gen_memory_script(self, target_info: dict[str, Any]) -> str:
-        """Generate memory protection bypass script."""
+        """Generate memory protection bypass script.
+
+        Generates Frida instrumentation for analyzing memory-based protections
+        including memory page protection validation, write protection detection,
+        and runtime code modification prevention mechanisms.
+
+        Args:
+            target_info: Dictionary containing target process analysis results.
+
+        Returns:
+            Complete Frida JavaScript code for memory protection analysis.
+
+        Implementation:
+            - Hooks VirtualProtect and VirtualProtectEx for page protection
+            - Intercepts WriteProcessMemory for memory write operations
+            - Bypasses read-only page detection
+            - Tracks memory protection changes for analysis
+        """
         return """
 // Memory protection bypass
 (() => {
@@ -2054,7 +2429,24 @@ function installHook(target, handler, options = {}) {
 """
 
     def _gen_kernel_script(self, target_info: dict[str, Any]) -> str:
-        """Generate kernel-level protection bypass script."""
+        """Generate kernel-level protection bypass script.
+
+        Generates Frida instrumentation for analyzing kernel-level protections
+        including driver interactions, DeviceIoControl calls, and kernel-mode
+        licensing validation mechanisms.
+
+        Args:
+            target_info: Dictionary containing target process analysis results.
+
+        Returns:
+            Complete Frida JavaScript code for kernel protection analysis.
+
+        Implementation:
+            - Hooks DeviceIoControl for driver communication
+            - Intercepts kernel-level license queries
+            - Patches driver response data
+            - Analyzes protection driver interactions
+        """
         return """
 // Kernel protection bypass
 (() => {
@@ -2198,7 +2590,22 @@ function installHook(target, handler, options = {}) {
 """
 
     def _aggressive_hooks(self, target_info: dict[str, Any]) -> str:
-        """Generate aggressive hooking strategy."""
+        """Generate aggressive hooking strategy.
+
+        Creates Frida code that aggressively hooks all functions related to
+        protection mechanisms. Hooks every function containing protection-related
+        keywords to maximize coverage and bypass effectiveness.
+
+        Args:
+            target_info: Dictionary containing target process analysis results.
+
+        Returns:
+            Complete Frida JavaScript code for aggressive hooking strategy.
+
+        Note:
+            This strategy has high overhead and may trigger anti-debugging
+            mechanisms. Best used for comprehensive analysis.
+        """
         return """
 // Aggressive hooking strategy
 (() => {
@@ -2230,7 +2637,21 @@ function installHook(target, handler, options = {}) {
 """
 
     def _stealthy_hooks(self, target_info: dict[str, Any]) -> str:
-        """Generate stealthy hooking strategy."""
+        """Generate stealthy hooking strategy.
+
+        Creates Frida code that minimally hooks only critical protection functions
+        with random timing delays to avoid detection by anti-analysis mechanisms.
+
+        Args:
+            target_info: Dictionary containing target process analysis results.
+
+        Returns:
+            Complete Frida JavaScript code for stealthy hooking strategy.
+
+        Note:
+            This strategy minimizes overhead and detection risk by hooking only
+            the most essential functions with timing randomization.
+        """
         return """
 // Stealthy hooking strategy
 (() => {
@@ -2263,7 +2684,22 @@ function installHook(target, handler, options = {}) {
 """
 
     def _adaptive_hooks(self, target_info: dict[str, Any]) -> str:
-        """Generate adaptive hooking strategy."""
+        """Generate adaptive hooking strategy.
+
+        Creates Frida code that dynamically adjusts hooking based on detected
+        protections and real-time analysis results. Hooks are installed and
+        modified based on protection detection feedback.
+
+        Args:
+            target_info: Dictionary containing target process analysis results.
+
+        Returns:
+            Complete Frida JavaScript code for adaptive hooking strategy.
+
+        Note:
+            This is the default strategy balancing coverage and stealth through
+            real-time adaptation based on protection detection.
+        """
         return """
 // Adaptive hooking strategy
 (() => {
@@ -2380,7 +2816,21 @@ function installHook(target, handler, options = {}) {
 """
 
     def _minimal_hooks(self, target_info: dict[str, Any]) -> str:
-        """Generate minimal hooking strategy."""
+        """Generate minimal hooking strategy.
+
+        Creates Frida code that hooks only the absolute minimum set of functions
+        required to bypass protections, prioritizing low detection risk and
+        minimal system impact.
+
+        Args:
+            target_info: Dictionary containing target process analysis results.
+
+        Returns:
+            Complete Frida JavaScript code for minimal hooking strategy.
+
+        Note:
+            Best for lightweight instrumentation with minimal overhead.
+        """
         return """
 // Minimal hooking strategy - only essential bypasses
 (() => {
@@ -2403,7 +2853,22 @@ function installHook(target, handler, options = {}) {
 """
 
     def _comprehensive_hooks(self, target_info: dict[str, Any]) -> str:
-        """Generate comprehensive hooking strategy."""
+        """Generate comprehensive hooking strategy.
+
+        Creates Frida code that comprehensively hooks all protection-related
+        functions across multiple categories including debugging, registry,
+        file operations, cryptography, networking, and memory management.
+
+        Args:
+            target_info: Dictionary containing target process analysis results.
+
+        Returns:
+            Complete Frida JavaScript code for comprehensive hooking strategy.
+
+        Note:
+            Maximum coverage strategy with highest overhead. Best for laboratory
+            analysis where resource constraints are not a concern.
+        """
         return """
 // Comprehensive hooking strategy - maximum coverage
 (() => {
@@ -2453,7 +2918,21 @@ function installHook(target, handler, options = {}) {
 """
 
     def _generate_runtime_adaptation(self) -> str:
-        """Generate runtime adaptation code."""
+        """Generate runtime adaptation code.
+
+        Creates Frida JavaScript code that monitors system state at runtime and
+        dynamically adapts bypass techniques based on detection of anti-analysis
+        or anti-debugging mechanisms.
+
+        Returns:
+            Complete Frida JavaScript code for runtime adaptation system.
+
+        Implementation:
+            - Monitors for suspicious patterns every 10 seconds
+            - Dynamically adjusts bypass strategies based on detection
+            - Sends adaptation notifications to control system
+            - Logs adaptation history for analysis
+        """
         return """
 // Runtime adaptation system
 (() => {
@@ -2539,7 +3018,24 @@ setInterval(() => {
 """
 
     def _obfuscate_script(self, script: str) -> str:
-        """Apply obfuscation to the generated script."""
+        """Apply obfuscation to the generated script.
+
+        Applies multiple obfuscation techniques to the generated Frida script
+        to reduce detectability and make reverse engineering more difficult.
+
+        Args:
+            script: Original Frida JavaScript script code.
+
+        Returns:
+            Obfuscated script string with applied obfuscation techniques.
+
+        Obfuscation Techniques:
+            - Variable name mangling with random identifiers
+            - String encoding using base64
+            - Comment removal
+            - Dead code injection
+            - Control flow modification
+        """
         import random
         import re
         import string
@@ -2707,6 +3203,9 @@ class FridaManager:
         Returns:
             True if attachment succeeded, False otherwise
 
+        Raises:
+            ImportError: If frida module is not available.
+
         Side Effects:
             - Creates Frida session
             - Stores session in self.sessions
@@ -2792,13 +3291,20 @@ class FridaManager:
     def add_custom_script(self, script_content: str, script_name: str) -> Path:
         """Add a custom Frida script to the scripts directory.
 
+        Writes provided JavaScript script code to the scripts directory with
+        appropriate naming and logging of the operation.
+
         Args:
-            script_content: JavaScript code for the script
-            script_name: Name for the script (without extension)
+            script_content: JavaScript code for the script.
+            script_name: Name for the script file (extension added if missing).
 
         Returns:
-            Path to the created script file
+            Path object pointing to the created script file.
 
+        Side Effects:
+            - Creates or overwrites script file in script directory
+            - Logs operation to operation logger
+            - Records script metadata (name, path, content length)
         """
         # Ensure script name ends with .js
         if not script_name.endswith(".js"):
@@ -2826,9 +3332,19 @@ class FridaManager:
     def list_available_scripts(self) -> list[dict[str, Any]]:
         """List all available Frida scripts.
 
-        Returns:
-            List of script information dictionaries
+        Enumerates all JavaScript files in the scripts directory and extracts
+        metadata including file size, modification time, and detected protection type.
 
+        Returns:
+            List of script information dictionaries, each containing:
+            - name: Script file name without extension
+            - path: Absolute path to script file
+            - size: File size in bytes
+            - modified: ISO format timestamp of last modification
+            - protection_type: Detected protection type or 'UNKNOWN'
+
+        Note:
+            Skips scripts that fail to read, logging exceptions without raising.
         """
         scripts = []
 
@@ -2865,7 +3381,29 @@ class FridaManager:
         return scripts
 
     def load_script(self, session_id: str, script_name: str, options: dict[str, Any] | None = None) -> bool:
-        """Load and inject a Frida script with optimization."""
+        """Load and inject a Frida script with optimization.
+
+        Loads a Frida script from the scripts directory, applies optimization
+        and instrumentation, then injects it into the target process session.
+
+        Args:
+            session_id: Identifier for the target Frida session.
+            script_name: Name of the script file (with or without .js extension).
+            options: Optional dictionary of script configuration options.
+
+        Returns:
+            True if script injection succeeded, False otherwise.
+
+        Raises:
+            ValueError: If session_id is not found in active sessions.
+            FileNotFoundError: If script file cannot be located.
+
+        Side Effects:
+            - Loads and applies script optimization
+            - Instruments script with logging hooks
+            - Registers script message handler
+            - Logs operation and performance metrics
+        """
         try:
             start_time = time.time()
 
@@ -2953,16 +3491,30 @@ class FridaManager:
     ) -> bool:
         """Generate and load a dynamic Frida script based on target analysis.
 
+        Uses the dynamic script generator to create a customized Frida script
+        tailored to detected protections, then injects it into the target session.
+        Automatically detects protections if not explicitly provided.
+
         Args:
-            session_id: Session ID to load script into
-            target_info: Binary analysis results (optional)
-            detected_protections: List of detected protection types (optional)
-            strategy: Hooking strategy ('adaptive', 'aggressive', 'stealthy', 'minimal', 'comprehensive')
-            obfuscate: Whether to obfuscate the generated script
+            session_id: Identifier for the target Frida session.
+            target_info: Binary analysis results dict (optional, auto-detected if None).
+            detected_protections: List of detected ProtectionType enums (optional,
+                                 auto-detected if None).
+            strategy: Hooking strategy to use (adaptive, aggressive, stealthy,
+                     minimal, comprehensive). Defaults to adaptive.
+            obfuscate: Whether to apply obfuscation to generated script. Defaults to True.
 
         Returns:
-            True if script was successfully generated and loaded, False otherwise
+            True if script was successfully generated and loaded, False otherwise.
 
+        Raises:
+            ValueError: If session_id is not found in active sessions.
+
+        Side Effects:
+            - Auto-detects protections if not provided
+            - Generates dynamic script using script generator
+            - Injects script into target session
+            - Logs operation and performance metrics
         """
         try:
             start_time = time.time()
@@ -3053,7 +3605,23 @@ class FridaManager:
             return False
 
     def _detect_protections_for_session(self, session_id: str) -> list[ProtectionType]:
-        """Auto-detect protections for a session by analyzing the target process."""
+        """Auto-detect protections for a session by analyzing the target process.
+
+        Injects a temporary detection script into the session to identify active
+        protection mechanisms by checking for common anti-debug APIs, VM detection,
+        and licensing DLLs.
+
+        Args:
+            session_id: Identifier for the target Frida session.
+
+        Returns:
+            List of detected ProtectionType enums. Empty list if session not found.
+
+        Side Effects:
+            - Creates temporary detection script
+            - Loads and unloads detection script in session
+            - Blocks for up to 500ms waiting for detection results
+        """
         detected = []
         try:
             session = self.sessions.get(session_id)
@@ -3135,7 +3703,27 @@ class FridaManager:
         return detected
 
     def _analyze_target(self, session_id: str) -> dict[str, Any]:
-        """Analyze target process to gather information for script generation."""
+        """Analyze target process to gather information for script generation.
+
+        Injects a temporary analysis script to collect target process information
+        including architecture, platform, loaded modules, and base addresses.
+
+        Args:
+            session_id: Identifier for the target Frida session.
+
+        Returns:
+            Dictionary containing analysis results with keys:
+            - arch: Process architecture (x86, x64, etc.)
+            - platform: OS platform (windows, linux, macos, etc.)
+            - modules: List of loaded module info dicts (name, base, size)
+            - base_address: Base address of main module
+            - size: Size of main module
+
+        Side Effects:
+            - Creates temporary analysis script
+            - Loads and unloads analysis script in session
+            - Blocks for up to 500ms waiting for results
+        """
         target_info: dict[str, Any] = {
             "arch": "unknown",
             "platform": "windows",
@@ -3201,7 +3789,25 @@ class FridaManager:
         return target_info
 
     def _instrument_script(self, script_code: str, script_name: str) -> str:
-        """Add instrumentation to script for logging."""
+        """Add instrumentation to script for logging.
+
+        Wraps the provided script code with instrumentation that tracks function
+        hooks, hook statistics, and sends logging information to the controller.
+
+        Args:
+            script_code: Original Frida JavaScript script code.
+            script_name: Name of the script being instrumented.
+
+        Returns:
+            Enhanced script code with logging instrumentation prepended.
+
+        Implementation:
+            - Tracks all installed hooks with unique identifiers
+            - Records hook call statistics
+            - Wraps Interceptor.attach for hook tracking
+            - Sends hook events to controller
+            - Measures script execution time
+        """
         instrumentation = f"""
         // Intellicrack Frida Instrumentation
         const _scriptName = '{script_name}';
@@ -3303,7 +3909,25 @@ class FridaManager:
         return instrumentation + "\n" + script_code
 
     def _on_script_message(self, session_id: str, script_name: str, message: dict[str, Any], data: bytes | bytearray | None) -> None:
-        """Handle messages from Frida scripts including binary data."""
+        """Handle messages from Frida scripts including binary data.
+
+        Routes script messages to appropriate handlers based on message type.
+        Processes both text-based structured messages and binary data from
+        scripts including memory dumps, screenshots, files, and encrypted data.
+
+        Args:
+            session_id: Identifier for the source Frida session.
+            script_name: Name of the script that sent the message.
+            message: Message dictionary with 'type' and 'payload' keys.
+            data: Optional binary data associated with the message.
+
+        Side Effects:
+            - Routes to specialized binary data handlers (_handle_*)
+            - Logs hook executions and performance metrics
+            - Notifies detector of detected protections
+            - Triggers adaptation callbacks
+            - Saves script output for persistence
+        """
         msg_type = message.get("type")
         payload = message.get("payload", {})
 
@@ -3430,7 +4054,20 @@ class FridaManager:
             )
 
     def _on_session_detached(self, session_id: str, reason: str) -> None:
-        """Handle session detachment."""
+        """Handle session detachment.
+
+        Performs cleanup when a Frida session is detached from the target process.
+        Removes session and associated scripts from tracking structures.
+
+        Args:
+            session_id: Identifier for the detached session.
+            reason: Reason for detachment (e.g., 'process_terminated', 'connection_lost').
+
+        Side Effects:
+            - Logs detachment operation
+            - Removes session from self.sessions
+            - Removes associated scripts from self.scripts
+        """
         self.logger.log_operation(
             "session_detached",
             {
@@ -3450,7 +4087,20 @@ class FridaManager:
             del self.scripts[key]
 
     def _on_protection_detected(self, protection_type: ProtectionType, details: dict[str, Any] | set[str]) -> None:
-        """Handle protection detection events."""
+        """Handle protection detection events.
+
+        Called when a protection mechanism is detected in the target process.
+        Logs the detection and triggers appropriate adaptation strategies.
+
+        Args:
+            protection_type: Type of detected protection mechanism.
+            details: Detection details as dict or set of evidence strings.
+
+        Side Effects:
+            - Logs bypass attempt for detection
+            - Calls appropriate adaptation function if available
+            - Logs exceptions from adaptation without raising
+        """
         # Log detection
         details_dict = details if isinstance(details, dict) else {"evidence": list(details)}
         self.logger.log_bypass_attempt(
@@ -3470,7 +4120,18 @@ class FridaManager:
 
     # Protection adaptation methods
     def _adapt_anti_debug(self, details: dict[str, Any] | set[str]) -> None:
-        """Adapt to anti-debugging protections."""
+        """Adapt to anti-debugging protections.
+
+        Loads anti-debugging bypass scripts and configures aggressive anti-debug
+        evasion when anti-debugging protection is detected.
+
+        Args:
+            details: Protection detection details containing session identifier.
+
+        Side Effects:
+            - Loads anti_debugger script if session available
+            - Logs bypass attempt with success status
+        """
         if isinstance(details, set):
             details = {"evidence": list(details)}
         session_id = details.get("session")
@@ -3495,7 +4156,19 @@ class FridaManager:
         )
 
     def _adapt_anti_vm(self, details: dict[str, Any] | set[str]) -> None:
-        """Adapt to anti-VM protections."""
+        """Adapt to anti-VM protections.
+
+        Loads virtualization detection bypass scripts and configures hardware
+        spoofing when anti-VM protection is detected.
+
+        Args:
+            details: Protection detection details containing session identifier.
+
+        Side Effects:
+            - Loads virtualization_bypass script if session available
+            - Configures hardware and hypervisor spoofing
+            - Logs bypass attempt with success status
+        """
         if isinstance(details, set):
             details = {"evidence": list(details)}
         session_id = details.get("session")
@@ -3520,7 +4193,20 @@ class FridaManager:
         )
 
     def _adapt_license(self, details: dict[str, Any] | set[str]) -> None:
-        """Adapt to license verification."""
+        """Adapt to license verification.
+
+        Loads appropriate license bypass scripts when license verification is detected.
+        Chooses bypass script based on whether registry or network license checking
+        is used.
+
+        Args:
+            details: Protection detection details containing session identifier.
+
+        Side Effects:
+            - Loads appropriate bypass script based on evidence
+            - Configures license check patching and server emulation
+            - Logs bypass attempt with success status
+        """
         if isinstance(details, set):
             details = {"evidence": list(details)}
         session_id = details.get("session")
@@ -3551,7 +4237,19 @@ class FridaManager:
         )
 
     def _adapt_integrity(self, details: dict[str, Any] | set[str]) -> None:
-        """Adapt to integrity checks."""
+        """Adapt to integrity checks.
+
+        Loads code integrity bypass scripts when code integrity protection is detected.
+        Patches checksum validation and hooks validation functions.
+
+        Args:
+            details: Protection detection details containing session identifier.
+
+        Side Effects:
+            - Loads code_integrity_bypass script if session available
+            - Configures checksum patching and validation hooking
+            - Logs bypass attempt with success status
+        """
         if isinstance(details, set):
             details = {"evidence": list(details)}
         session_id = details.get("session")
@@ -3576,7 +4274,19 @@ class FridaManager:
         )
 
     def _adapt_hardware(self, details: dict[str, Any] | set[str]) -> None:
-        """Adapt to hardware binding."""
+        """Adapt to hardware binding.
+
+        Loads hardware spoofing scripts when hardware-based licensing is detected.
+        Spools hardware identifiers to bypass hardware-locked licenses.
+
+        Args:
+            details: Protection detection details containing session identifier.
+
+        Side Effects:
+            - Loads hardware_spoofer script if session available
+            - Configures persistent hardware ID spoofing
+            - Logs bypass attempt with success status
+        """
         if isinstance(details, set):
             details = {"evidence": list(details)}
         session_id = details.get("session")
@@ -3601,7 +4311,19 @@ class FridaManager:
         )
 
     def _adapt_cloud(self, details: dict[str, Any] | set[str]) -> None:
-        """Adapt to cloud verification."""
+        """Adapt to cloud verification.
+
+        Loads cloud licensing bypass scripts when network-based license verification
+        is detected. Intercepts and modifies license verification responses.
+
+        Args:
+            details: Protection detection details containing session identifier.
+
+        Side Effects:
+            - Loads cloud_licensing_bypass script if session available
+            - Configures request interception and response modification
+            - Logs bypass attempt with success status
+        """
         if isinstance(details, set):
             details = {"evidence": list(details)}
         session_id = details.get("session")
@@ -3631,7 +4353,19 @@ class FridaManager:
         )
 
     def _adapt_time(self, details: dict[str, Any] | set[str]) -> None:
-        """Adapt to time-based protections."""
+        """Adapt to time-based protections.
+
+        Loads time manipulation scripts when time-based protections like trial limits
+        or time-bombs are detected. Freezes or manipulates system time.
+
+        Args:
+            details: Protection detection details containing session identifier.
+
+        Side Effects:
+            - Loads time_bomb_defuser script if session available
+            - Configures time freezing and trial extension
+            - Logs bypass attempt with success status
+        """
         if isinstance(details, set):
             details = {"evidence": list(details)}
         session_id = details.get("session")
@@ -3656,7 +4390,19 @@ class FridaManager:
         )
 
     def _adapt_memory(self, details: dict[str, Any] | set[str]) -> None:
-        """Adapt to memory protections."""
+        """Adapt to memory protections.
+
+        Loads memory protection bypass scripts when memory-based protections
+        like page protection or write guards are detected.
+
+        Args:
+            details: Protection detection details containing session identifier.
+
+        Side Effects:
+            - Loads memory_integrity_bypass script if session available
+            - Configures memory write protection bypass
+            - Logs bypass attempt with success status
+        """
         if isinstance(details, set):
             details = {"evidence": list(details)}
         session_id = details.get("session")
@@ -3681,7 +4427,19 @@ class FridaManager:
         )
 
     def _adapt_kernel(self, details: dict[str, Any] | set[str]) -> None:
-        """Adapt to kernel-mode protections."""
+        """Adapt to kernel-mode protections.
+
+        Loads kernel protection bypass scripts when kernel-mode protections
+        are detected. Implements user-mode emulation to avoid kernel analysis.
+
+        Args:
+            details: Protection detection details containing session identifier.
+
+        Side Effects:
+            - Loads kernel_mode_bypass script if session available
+            - Configures user-mode only operation
+            - Logs bypass attempt with success status
+        """
         if isinstance(details, set):
             details = {"evidence": list(details)}
         session_id = details.get("session")
@@ -3706,7 +4464,22 @@ class FridaManager:
         )
 
     def _handle_memory_dump(self, session_id: str, script_name: str, data: bytes | bytearray, payload: dict[str, Any]) -> None:
-        """Handle memory dump data from Frida scripts."""
+        """Handle memory dump data from Frida scripts.
+
+        Processes and stores memory dumps captured by Frida scripts. Analyzes
+        memory contents for protection mechanisms and extracts relevant data.
+
+        Args:
+            session_id: Identifier for the source Frida session.
+            script_name: Name of the script that captured the dump.
+            data: Binary memory contents as bytes or bytearray.
+            payload: Dictionary containing metadata (address, size, process_name).
+
+        Side Effects:
+            - Writes memory dump to binary file with timestamp
+            - Logs operation details
+            - Analyzes dump for protection patterns
+        """
         # Extract metadata from payload
         address = payload.get("address", "0x0")
         size = payload.get("size", len(data) if hasattr(data, "__len__") else 0)
@@ -3743,7 +4516,22 @@ class FridaManager:
             logger.exception("Failed to save memory dump: %s", e)
 
     def _handle_screenshot_data(self, session_id: str, script_name: str, data: bytes | bytearray, payload: dict[str, Any]) -> None:
-        """Handle screenshot data from Frida scripts."""
+        """Handle screenshot data from Frida scripts.
+
+        Processes screenshot data captured from the target application. Stores
+        images and optionally performs OCR or pattern analysis.
+
+        Args:
+            session_id: Identifier for the source Frida session.
+            script_name: Name of the script that captured the screenshot.
+            data: Image binary data as bytes or bytearray.
+            payload: Dictionary containing metadata (window_title, format, analyze).
+
+        Side Effects:
+            - Writes screenshot to image file with timestamp
+            - Logs operation details
+            - Performs OCR/pattern detection if requested
+        """
         # Extract metadata
         window_title = payload.get("window_title", "unknown")
         capture_time = payload.get("capture_time", datetime.now().isoformat())
@@ -3777,7 +4565,22 @@ class FridaManager:
             logger.exception("Failed to save screenshot: %s", e)
 
     def _handle_file_content(self, session_id: str, script_name: str, data: bytes | bytearray, payload: dict[str, Any]) -> None:
-        """Handle file content intercepted by Frida scripts."""
+        """Handle file content intercepted by Frida scripts.
+
+        Processes file read/write operations intercepted by Frida scripts.
+        Analyzes files for licensing-related content.
+
+        Args:
+            session_id: Identifier for the source Frida session.
+            script_name: Name of the script that intercepted the file operation.
+            data: File content as bytes or bytearray.
+            payload: Dictionary containing metadata (file_path, operation, size).
+
+        Side Effects:
+            - Logs file operation details
+            - Analyzes license/config files
+            - Tracks file persistence attempts
+        """
         # Extract file information
         file_path = payload.get("file_path", "unknown")
         operation = payload.get("operation", "read")  # read/write
@@ -3805,7 +4608,22 @@ class FridaManager:
             self._analyze_file_write(data, file_path, payload)
 
     def _handle_network_packet(self, session_id: str, script_name: str, data: bytes | bytearray, payload: dict[str, Any]) -> None:
-        """Handle network packet data from Frida scripts."""
+        """Handle network packet data from Frida scripts.
+
+        Processes network traffic intercepted by Frida scripts. Analyzes packets
+        for license server communication and network-based protection mechanisms.
+
+        Args:
+            session_id: Identifier for the source Frida session.
+            script_name: Name of the script that intercepted the packet.
+            data: Packet payload as bytes or bytearray.
+            payload: Dictionary containing metadata (direction, protocol, addresses, ports).
+
+        Side Effects:
+            - Logs network operation details
+            - Analyzes HTTP/HTTPS traffic for licensing
+            - Tracks license server communication
+        """
         # Extract packet information
         direction = payload.get("direction", "unknown")  # send/recv
         protocol = payload.get("protocol", "tcp")
@@ -3835,7 +4653,22 @@ class FridaManager:
             self._analyze_license_traffic(data, payload)
 
     def _handle_encrypted_data(self, session_id: str, script_name: str, data: bytes | bytearray, payload: dict[str, Any]) -> None:
-        """Handle encrypted data intercepted by Frida scripts."""
+        """Handle encrypted data intercepted by Frida scripts.
+
+        Processes encrypted and decrypted data intercepted from cryptographic operations.
+        Stores intercepted cryptographic material for analysis.
+
+        Args:
+            session_id: Identifier for the source Frida session.
+            script_name: Name of the script that intercepted the data.
+            data: Encrypted or decrypted payload as bytes or bytearray.
+            payload: Dictionary containing metadata (algorithm, operation, key_info, iv).
+
+        Side Effects:
+            - Writes crypto data to binary file with timestamp
+            - Logs operation details
+            - Analyzes decrypted data if available
+        """
         # Extract encryption information
         algorithm = payload.get("algorithm", "unknown")
         operation = payload.get("operation", "unknown")  # encrypt/decrypt
@@ -3872,7 +4705,15 @@ class FridaManager:
             logger.exception("Failed to save crypto data: %s", e)
 
     def _handle_generic_binary_data(self, session_id: str, script_name: str, data: bytes | bytearray, payload: dict[str, Any]) -> None:
-        """Handle generic binary data from Frida scripts."""
+        """Handle generic binary data from Frida scripts.
+
+        Args:
+            session_id: Unique identifier for the Frida analysis session
+            script_name: Name of the script that produced the data
+            data: Raw binary data received from the Frida script
+            payload: Dictionary containing metadata about the binary data including type and description
+
+        """
         # Extract any available metadata
         data_type = payload.get("data_type", "binary")
         description = payload.get("description", "Generic binary data")
@@ -3900,7 +4741,13 @@ class FridaManager:
             logger.exception("Failed to save binary data: %s", e)
 
     def _analyze_memory_dump(self, data: bytes | bytearray, payload: dict[str, Any]) -> None:
-        """Analyze memory dump for interesting patterns."""
+        """Analyze memory dump for interesting patterns.
+
+        Args:
+            data: Raw memory dump data to analyze
+            payload: Dictionary containing metadata about the memory dump
+
+        """
         # Convert to bytes if necessary
         if not isinstance(data, bytes):
             data = bytes(data)
@@ -3944,7 +4791,13 @@ class FridaManager:
             )
 
     def _analyze_screenshot(self, data: bytes | bytearray, payload: dict[str, Any]) -> None:
-        """Analyze screenshot for UI elements or text."""
+        """Analyze screenshot for UI elements or text.
+
+        Args:
+            data: Raw screenshot image data to analyze
+            payload: Dictionary containing metadata about the screenshot
+
+        """
         # Analyze screenshot data for UI elements
         analysis_results: dict[str, Any] = {
             "ui_elements": [],
@@ -3998,7 +4851,14 @@ class FridaManager:
         )
 
     def _analyze_license_file(self, data: bytes | bytearray, file_path: str, payload: dict[str, Any]) -> None:
-        """Analyze potential license file content."""
+        """Analyze potential license file content.
+
+        Args:
+            data: Raw file content data to analyze
+            file_path: Full path to the license file being analyzed
+            payload: Dictionary containing metadata about the file operation
+
+        """
         try:
             # Try to decode as text
             if isinstance(data, bytes):
@@ -4039,7 +4899,14 @@ class FridaManager:
             logger.debug("Failed to analyze license file: %s", e, exc_info=True)
 
     def _analyze_file_write(self, data: bytes | bytearray, file_path: str, payload: dict[str, Any]) -> None:
-        """Analyze file write operations for suspicious activity."""
+        """Analyze file write operations for suspicious activity.
+
+        Args:
+            data: Raw data being written to the file
+            file_path: Full path to the file being modified
+            payload: Dictionary containing metadata about the write operation
+
+        """
         # Use payload data for comprehensive analysis
         write_context = {
             "file_path": file_path,
@@ -4061,7 +4928,13 @@ class FridaManager:
             )
 
     def _analyze_http_traffic(self, data: bytes | bytearray, payload: dict[str, Any]) -> None:
-        """Analyze HTTP/HTTPS traffic for license checks."""
+        """Analyze HTTP/HTTPS traffic for license checks.
+
+        Args:
+            data: Raw HTTP request/response data to analyze
+            payload: Dictionary containing metadata about the network traffic
+
+        """
         try:
             if isinstance(data, bytes):
                 text_data = data.decode("utf-8", errors="ignore")
@@ -4086,7 +4959,13 @@ class FridaManager:
             logger.debug("Failed to analyze HTTP traffic: %s", e, exc_info=True)
 
     def _analyze_license_traffic(self, data: bytes | bytearray, payload: dict[str, Any]) -> None:
-        """Analyze potential license server communication."""
+        """Analyze potential license server communication.
+
+        Args:
+            data: Raw network data from license server communication
+            payload: Dictionary containing metadata about the network connection
+
+        """
         self.logger.log_operation(
             "license_server_communication",
             {
@@ -4107,7 +4986,13 @@ class FridaManager:
         )
 
     def _analyze_decrypted_data(self, data: bytes | bytearray, payload: dict[str, Any]) -> None:
-        """Analyze decrypted data for interesting content."""
+        """Analyze decrypted data for interesting content.
+
+        Args:
+            data: Raw decrypted data to analyze
+            payload: Dictionary containing metadata about the decryption operation
+
+        """
         try:
             # Try to interpret as text
             if isinstance(data, bytes):
@@ -4139,7 +5024,16 @@ class FridaManager:
             logger.debug("Failed to analyze decrypted data: %s", e, exc_info=True)
 
     def create_selective_instrumentation(self, target_apis: list[str], analysis_requirements: dict[str, Any]) -> str:
-        """Create selective instrumentation based on analysis requirements."""
+        """Create selective instrumentation based on analysis requirements.
+
+        Args:
+            target_apis: List of API names to instrument (format: "module!function")
+            analysis_requirements: Dictionary specifying analysis requirements including trace_api_calls, monitor_memory, detect_protections
+
+        Returns:
+            Complete Frida instrumentation script as a string
+
+        """
         script_parts = [
             "// Selective Instrumentation Script",
             "// Generated by Intellicrack Frida Manager",
@@ -4169,7 +5063,17 @@ class FridaManager:
         return "\n".join(script_parts)
 
     def _generate_hook_code(self, module: str, function: str, priority: HookCategory) -> str:
-        """Generate optimized hook code."""
+        """Generate optimized hook code.
+
+        Args:
+            module: Name of the DLL module containing the function (e.g., "kernel32.dll")
+            function: Name of the function to hook
+            priority: Hook priority level (CRITICAL, HIGH, MEDIUM, LOW)
+
+        Returns:
+            JavaScript Frida hook code as a string
+
+        """
         return f"""
         // Hook {module}!{function} (Priority: {priority.value})
         {{
@@ -4203,7 +5107,12 @@ class FridaManager:
         """
 
     def _generate_memory_monitoring_code(self) -> str:
-        """Generate memory monitoring code."""
+        """Generate memory monitoring code.
+
+        Returns:
+            JavaScript Frida code for memory allocation and deallocation tracking
+
+        """
         return """
         // Memory Monitoring
         const memoryWatches = new Map();
@@ -4245,7 +5154,12 @@ class FridaManager:
         """
 
     def _generate_protection_detection_code(self) -> str:
-        """Generate protection detection code."""
+        """Generate protection detection code.
+
+        Returns:
+            JavaScript Frida code for detecting protection mechanisms and security checks
+
+        """
         return """
         // Protection Detection
         const protectionAPIs = {
@@ -4269,7 +5183,12 @@ class FridaManager:
         """
 
     def get_statistics(self) -> dict[str, Any]:
-        """Get comprehensive statistics."""
+        """Get comprehensive statistics.
+
+        Returns:
+            Dictionary containing statistics from logger, detector, batcher, optimizer, and active sessions/scripts
+
+        """
         return {
             "logger": self.logger.get_statistics(),
             "detector": self.detector.get_detected_protections(),
@@ -4283,7 +5202,15 @@ class FridaManager:
         }
 
     def export_analysis(self, output_path: str | None = None) -> str:
-        """Export complete analysis results including script outputs."""
+        """Export complete analysis results including script outputs.
+
+        Args:
+            output_path: Optional custom output directory path for analysis results
+
+        Returns:
+            Path to the directory containing exported analysis results
+
+        """
         # Export logs
         log_dir = self.logger.export_logs(output_path)
 
@@ -4325,8 +5252,8 @@ class FridaManager:
         """Save script output for persistence.
 
         Args:
-            script_name: Name of the script
-            output: Output data to save
+            script_name: Name of the script producing the output
+            output: Output dictionary to save and persist
 
         """
         if script_name not in self.script_outputs:
@@ -4390,7 +5317,17 @@ class FridaManager:
         return results
 
     def cleanup(self) -> None:
-        """Clean up resources."""
+        """Clean up resources.
+
+        Performs cleanup operations including stopping batching, detaching all
+        Frida sessions, and clearing internal collections.
+
+        Side Effects:
+            - Stops batching operations
+            - Detaches all active Frida sessions
+            - Clears sessions and scripts collections
+
+        """
         # Stop batching
         self.batcher.stop_batching()
 
@@ -4407,7 +5344,14 @@ class FridaManager:
         self.scripts.clear()
 
     def _handle_structured_message(self, session_id: str, script_name: str, payload: dict[str, Any]) -> None:
-        """Handle structured messages from updated Frida scripts."""
+        """Handle structured messages from updated Frida scripts.
+
+        Args:
+            session_id: Unique identifier for the Frida analysis session
+            script_name: Name of the script sending the message
+            payload: Dictionary containing the structured message with type, target, action fields
+
+        """
         msg_type = payload.get("type")
         target = payload.get("target", script_name)
         action = payload.get("action", "unknown")
@@ -4443,7 +5387,14 @@ class FridaManager:
         )
 
     def _handle_info_message(self, session_id: str, script_name: str, payload: dict[str, Any]) -> None:
-        """Handle informational messages."""
+        """Handle informational messages.
+
+        Args:
+            session_id: Unique identifier for the Frida analysis session
+            script_name: Name of the script sending the message
+            payload: Dictionary containing the informational message payload
+
+        """
         target = payload.get("target", script_name)
         action = payload.get("action", "info")
 
@@ -4463,7 +5414,14 @@ class FridaManager:
             self._ui_message_callback("info", session_id, script_name, payload)
 
     def _handle_warning_message(self, session_id: str, script_name: str, payload: dict[str, Any]) -> None:
-        """Handle warning messages."""
+        """Handle warning messages.
+
+        Args:
+            session_id: Unique identifier for the Frida analysis session
+            script_name: Name of the script sending the message
+            payload: Dictionary containing the warning message payload
+
+        """
         target = payload.get("target", script_name)
         action = payload.get("action", "warning")
 
@@ -4485,7 +5443,14 @@ class FridaManager:
             self._ui_message_callback("warning", session_id, script_name, payload)
 
     def _handle_error_message(self, session_id: str, script_name: str, payload: dict[str, Any]) -> None:
-        """Handle error messages."""
+        """Handle error messages.
+
+        Args:
+            session_id: Unique identifier for the Frida analysis session
+            script_name: Name of the script sending the message
+            payload: Dictionary containing the error message payload
+
+        """
         target = payload.get("target", script_name)
         action = payload.get("action", "error")
         error_details = payload.get("error", "Unknown error")
@@ -4510,7 +5475,14 @@ class FridaManager:
             self._ui_message_callback("error", session_id, script_name, payload)
 
     def _handle_status_message(self, session_id: str, script_name: str, payload: dict[str, Any]) -> None:
-        """Handle status messages."""
+        """Handle status messages.
+
+        Args:
+            session_id: Unique identifier for the Frida analysis session
+            script_name: Name of the script sending the message
+            payload: Dictionary containing the status message payload
+
+        """
         target = payload.get("target", script_name)
         action = payload.get("action", "status")
         status = payload.get("status", "unknown")
@@ -4532,7 +5504,14 @@ class FridaManager:
             self._ui_message_callback("status", session_id, script_name, payload)
 
     def _handle_bypass_message(self, session_id: str, script_name: str, payload: dict[str, Any]) -> None:
-        """Handle bypass attempt messages."""
+        """Handle bypass attempt messages.
+
+        Args:
+            session_id: Unique identifier for the Frida analysis session
+            script_name: Name of the script sending the message
+            payload: Dictionary containing the bypass attempt message payload
+
+        """
         target = payload.get("target", script_name)
         action = payload.get("action", "bypass_attempt")
         technique = payload.get("technique", action)
@@ -4571,7 +5550,14 @@ class FridaManager:
             self._ui_message_callback("bypass", session_id, script_name, payload)
 
     def _handle_success_message(self, session_id: str, script_name: str, payload: dict[str, Any]) -> None:
-        """Handle success messages."""
+        """Handle success messages.
+
+        Args:
+            session_id: Unique identifier for the Frida analysis session
+            script_name: Name of the script sending the message
+            payload: Dictionary containing the success message payload
+
+        """
         target = payload.get("target", script_name)
         action = payload.get("action", "success")
 
@@ -4591,7 +5577,14 @@ class FridaManager:
             self._ui_message_callback("success", session_id, script_name, payload)
 
     def _handle_detection_message(self, session_id: str, script_name: str, payload: dict[str, Any]) -> None:
-        """Handle detection messages."""
+        """Handle detection messages.
+
+        Args:
+            session_id: Unique identifier for the Frida analysis session
+            script_name: Name of the script sending the message
+            payload: Dictionary containing the detection message payload
+
+        """
         target = payload.get("target", script_name)
         action = payload.get("action", "detection")
         detected_item = payload.get("detected", "unknown")
@@ -4627,7 +5620,14 @@ class FridaManager:
             self._ui_message_callback("detection", session_id, script_name, payload)
 
     def _handle_notification_message(self, session_id: str, script_name: str, payload: dict[str, Any]) -> None:
-        """Handle notification messages."""
+        """Handle notification messages.
+
+        Args:
+            session_id: Unique identifier for the Frida analysis session
+            script_name: Name of the script sending the message
+            payload: Dictionary containing the notification message payload
+
+        """
         target = payload.get("target", script_name)
         action = payload.get("action", "notification")
 
@@ -4647,7 +5647,17 @@ class FridaManager:
             self._ui_message_callback("notification", session_id, script_name, payload)
 
     def _infer_protection_type(self, target: str, action: str, payload: dict[str, Any]) -> ProtectionType:
-        """Infer protection type from message context."""
+        """Infer protection type from message context.
+
+        Args:
+            target: The target module or component being analyzed
+            action: The action or operation being performed
+            payload: Dictionary containing additional context information
+
+        Returns:
+            ProtectionType enum value inferred from the target and action context
+
+        """
         # Check target module name for protection type hints
         target_lower = target.lower()
         action_lower = action.lower()

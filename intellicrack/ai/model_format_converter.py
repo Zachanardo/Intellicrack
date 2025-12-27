@@ -1031,7 +1031,12 @@ _CONVERTER: ModelFormatConverter | None = None
 
 
 def get_model_converter() -> ModelFormatConverter:
-    """Get the global model format converter."""
+    """Get the global model format converter.
+
+    Returns:
+        ModelFormatConverter: The global model format converter instance.
+
+    """
     global _CONVERTER
     if _CONVERTER is None:
         _CONVERTER = ModelFormatConverter()

@@ -246,11 +246,22 @@ if (ObjC.available) {
                     const _hookBlock = ObjC.Block.implement({
                         types: originalDidReceiveChallenge.types,
                         implementation: (session, challenge, completionHandler) => {
+                            const sessionObj = new ObjC.Object(session);
                             const challengeObj = new ObjC.Object(challenge);
                             const authMethod = challengeObj
                                 .protectionSpace()
                                 .authenticationMethod()
                                 .toString();
+
+                            log(`NSURLSession challenge for session: ${sessionObj.description()}`);
+
+                            const completionBlock = new ObjC.Block(completionHandler);
+                            const NSURLSessionAuthChallengeDisposition = {
+                                UseCredential: 0,
+                                PerformDefaultHandling: 1,
+                                CancelAuthenticationChallenge: 2,
+                                RejectProtectionSpace: 3,
+                            };
 
                             if (authMethod === 'NSURLAuthenticationMethodServerTrust') {
                                 log('NSURLSession: Server trust challenge - auto-accepting');
@@ -258,14 +269,6 @@ if (ObjC.available) {
                                 const serverTrust = challengeObj.protectionSpace().serverTrust();
                                 const { NSURLCredential } = ObjC.classes;
                                 const credential = NSURLCredential.credentialForTrust_(serverTrust);
-
-                                const completionBlock = new ObjC.Block(completionHandler);
-                                const NSURLSessionAuthChallengeDisposition = {
-                                    UseCredential: 0,
-                                    PerformDefaultHandling: 1,
-                                    CancelAuthenticationChallenge: 2,
-                                    RejectProtectionSpace: 3,
-                                };
 
                                 completionBlock.implementation(
                                     NSURLSessionAuthChallengeDisposition.UseCredential,
@@ -276,10 +279,29 @@ if (ObjC.available) {
                                 return;
                             }
 
-                            return originalDidReceiveChallenge.implementation(
-                                session,
-                                challenge,
-                                completionHandler
+                            if (authMethod === 'NSURLAuthenticationMethodClientCertificate') {
+                                log('NSURLSession: Client cert challenge - rejecting space');
+                                completionBlock.implementation(
+                                    NSURLSessionAuthChallengeDisposition.RejectProtectionSpace,
+                                    null
+                                );
+                                send({ type: 'nsurlsession_client_cert_rejected' });
+                                return;
+                            }
+
+                            if (authMethod === 'NSURLAuthenticationMethodNTLM') {
+                                log('NSURLSession: NTLM challenge - canceling');
+                                completionBlock.implementation(
+                                    NSURLSessionAuthChallengeDisposition.CancelAuthenticationChallenge,
+                                    null
+                                );
+                                send({ type: 'nsurlsession_ntlm_canceled' });
+                                return;
+                            }
+
+                            completionBlock.implementation(
+                                NSURLSessionAuthChallengeDisposition.PerformDefaultHandling,
+                                null
                             );
                         },
                     });

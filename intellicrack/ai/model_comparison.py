@@ -160,7 +160,20 @@ class ModelComparison:
         max_tokens: int,
         temperature: float,
     ) -> ComparisonResult | None:
-        """Generate output from a single model."""
+        """Generate output from a single model.
+
+        Args:
+            model_id: The ID of the model to generate output from.
+            prompt: The user prompt to send to the model.
+            system_prompt: Optional system prompt to set context for the model.
+            max_tokens: Maximum number of tokens to generate.
+            temperature: Sampling temperature for controlling output randomness.
+
+        Returns:
+            ComparisonResult containing the model's output and performance metrics,
+            or None if generation fails.
+
+        """
         if not self.llm_manager:
             return None
 
@@ -224,7 +237,16 @@ class ModelComparison:
         model_id: str,
         results: list[ComparisonResult],
     ) -> ComparisonResult:
-        """Average multiple results from the same model."""
+        """Average multiple results from the same model.
+
+        Args:
+            model_id: The ID of the model being averaged.
+            results: List of ComparisonResult objects to average.
+
+        Returns:
+            ComparisonResult with median output and average performance metrics.
+
+        """
         if len(results) == 1:
             return results[0]
 
@@ -248,7 +270,16 @@ class ModelComparison:
         )
 
     def _analyze_outputs(self, results: list[ComparisonResult]) -> dict[str, Any]:
-        """Analyze and compare outputs."""
+        """Analyze and compare outputs.
+
+        Args:
+            results: List of ComparisonResult objects to analyze.
+
+        Returns:
+            Dictionary containing analysis metrics including output lengths,
+            performance metrics, and consistency information.
+
+        """
         analysis: dict[str, Any] = {
             "output_lengths": {},
             "performance": {},
@@ -299,7 +330,15 @@ class ModelComparison:
         return analysis
 
     def _calculate_similarities(self, results: list[ComparisonResult]) -> None:
-        """Calculate similarity scores between outputs."""
+        """Calculate similarity scores between outputs.
+
+        Modifies results in-place by setting similarity_scores attribute on each
+        ComparisonResult. Uses TF-IDF vectorization and cosine similarity.
+
+        Args:
+            results: List of ComparisonResult objects to calculate similarities for.
+
+        """
         try:
             from sklearn.feature_extraction.text import TfidfVectorizer
             from sklearn.metrics.pairwise import cosine_similarity
@@ -327,7 +366,16 @@ class ModelComparison:
         results: list[ComparisonResult],
         comparison_id: str,
     ) -> dict[str, Path]:
-        """Create visualization charts."""
+        """Create visualization charts.
+
+        Args:
+            results: List of ComparisonResult objects to visualize.
+            comparison_id: Unique identifier for the comparison run.
+
+        Returns:
+            Dictionary mapping visualization names to their file paths.
+
+        """
         visualizations = {}
 
         try:
@@ -524,7 +572,14 @@ class ModelComparison:
         return benchmark_results
 
     def _save_report(self, report: ComparisonReport) -> None:
-        """Save comparison report to disk."""
+        """Save comparison report to disk.
+
+        Saves report to JSON file in the save directory.
+
+        Args:
+            report: ComparisonReport object to save.
+
+        """
         report_file = self.save_dir / f"{report.comparison_id}_report.json"
 
         # Convert report to JSON-serializable format
@@ -681,7 +736,15 @@ _COMPARISON_TOOL = None
 
 
 def get_comparison_tool(llm_manager: LLMManager | None = None) -> ModelComparison:
-    """Get the global model comparison tool."""
+    """Get the global model comparison tool.
+
+    Args:
+        llm_manager: Optional LLMManager instance to use for model operations.
+
+    Returns:
+        The global ModelComparison instance, creating it if necessary.
+
+    """
     global _COMPARISON_TOOL
     if _COMPARISON_TOOL is None:
         _COMPARISON_TOOL = ModelComparison(llm_manager=llm_manager)

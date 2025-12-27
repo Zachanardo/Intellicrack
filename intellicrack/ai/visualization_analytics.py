@@ -146,7 +146,11 @@ class DataCollector:
         logger.info("Data collector initialized")
 
     def _initialize_collectors(self) -> None:
-        """Initialize metric collectors."""
+        """Initialize metric collectors for all metric types.
+
+        Sets up the mapping of metric types to their corresponding collection
+        functions, enabling automated data gathering from various AI components.
+        """
         self.collectors = {
             MetricType.PERFORMANCE: self._collect_performance_metrics,
             MetricType.SUCCESS_RATE: self._collect_success_rate_metrics,
@@ -158,7 +162,11 @@ class DataCollector:
         }
 
     def _start_data_collection(self) -> None:
-        """Start background data collection."""
+        """Start background data collection worker thread.
+
+        Initializes and starts a daemon thread that continuously collects
+        metrics from registered collectors at configured intervals.
+        """
         # Skip thread creation during testing
         if os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS"):
             logger.info("Skipping data collection worker (testing mode)")
@@ -185,7 +193,14 @@ class DataCollector:
         logger.info("Started data collection worker")
 
     def _collect_performance_metrics(self) -> list[DataPoint]:
-        """Collect performance metrics."""
+        """Collect performance metrics from monitoring system.
+
+        Gathers system health scores and operation execution times from the
+        performance monitor for visualization and trend analysis.
+
+        Returns:
+            List of DataPoint objects containing collected performance metrics.
+        """
         try:
             metrics_summary = performance_monitor.get_metrics_summary()
             data_points = []
@@ -220,7 +235,14 @@ class DataCollector:
             return []
 
     def _collect_success_rate_metrics(self) -> list[DataPoint]:
-        """Collect success rate metrics."""
+        """Collect success rate and confidence metrics from learning engine.
+
+        Extracts overall success rate and average confidence scores from the
+        learning engine for tracking AI operation effectiveness.
+
+        Returns:
+            List of DataPoint objects containing success rate and confidence metrics.
+        """
         try:
             # Get learning insights for success rates
             insights = self.learning_engine.get_learning_insights()
@@ -253,7 +275,14 @@ class DataCollector:
             return []
 
     def _collect_resource_usage_metrics(self) -> list[DataPoint]:
-        """Collect resource usage metrics."""
+        """Collect system resource usage metrics.
+
+        Gathers CPU, memory, and disk I/O usage metrics from the system
+        using psutil or fallback data when unavailable.
+
+        Returns:
+            List of DataPoint objects containing CPU, memory, and disk metrics.
+        """
         data_points = []
 
         if not PSUTIL_AVAILABLE:
@@ -316,7 +345,14 @@ class DataCollector:
             return []
 
     def _collect_error_rate_metrics(self) -> list[DataPoint]:
-        """Collect error rate metrics."""
+        """Collect error rate metrics based on historical error tracking.
+
+        Calculates the current system error rate using learning records and
+        error history buffers.
+
+        Returns:
+            List containing a single DataPoint with the current error rate percentage.
+        """
         try:
             # Real error rate calculation based on actual error tracking
             current_time = datetime.now()
@@ -335,7 +371,17 @@ class DataCollector:
             return []
 
     def _calculate_real_error_rate(self, current_time: datetime) -> float:
-        """Calculate real error rate based on actual system error tracking."""
+        """Calculate real error rate based on actual system error tracking.
+
+        Analyzes learning records and error history within a one-hour lookback
+        window to compute the system error rate as a percentage.
+
+        Args:
+            current_time: The current datetime for calculating time window.
+
+        Returns:
+            Error rate as a percentage (0.0-50.0), capped at 50%.
+        """
         try:
             # Calculate error rate from the last hour
             lookback_time = current_time - timedelta(hours=1)
@@ -378,7 +424,18 @@ class DataCollector:
             return 2.5
 
     def _has_error_indicators(self, record: dict[str, Any]) -> bool:
-        """Check if a learning record contains error indicators."""
+        """Check if a learning record contains error indicators.
+
+        Examines a learning record for various error indicators including
+        explicit error flags, error keywords, low confidence scores, and
+        execution time anomalies.
+
+        Args:
+            record: Learning record dictionary to analyze.
+
+        Returns:
+            True if error indicators are found, False otherwise.
+        """
         try:
             # Check for explicit error flags
             if record.get("error") or record.get("failed"):
@@ -421,7 +478,14 @@ class DataCollector:
             return False
 
     def _get_real_agent_metrics(self) -> tuple[int, int]:
-        """Get real agent activity metrics from the multi-agent system."""
+        """Get real agent activity metrics from the multi-agent system.
+
+        Analyzes learning records and orchestrator data to determine the number
+        of active agents and total tasks being processed.
+
+        Returns:
+            Tuple containing (active_agents_count, total_tasks_processed).
+        """
         try:
             # Check for active learning records to determine active agents
             current_time = datetime.now()
@@ -512,7 +576,14 @@ class DataCollector:
             return 1, 10
 
     def _collect_learning_metrics(self) -> list[DataPoint]:
-        """Collect learning progress metrics."""
+        """Collect learning progress metrics from the learning engine.
+
+        Extracts learning statistics including total records and per-metric
+        learning progress from the learning engine.
+
+        Returns:
+            List of DataPoint objects containing learning metrics.
+        """
         try:
             insights = self.learning_engine.get_learning_insights()
             data_points = []
@@ -546,12 +617,26 @@ class DataCollector:
             return []
 
     def _collect_exploit_chain_metrics(self) -> list[DataPoint]:
-        """Collect exploit chain metrics."""
-        # exploit_chain_builder module removed - returning empty data
+        """Collect exploit chain metrics from binary analysis.
+
+        Returns exploit chain analysis data for visualization. The exploit
+        chain builder module has been removed from the system, so this method
+        returns an empty list to maintain API compatibility.
+
+        Returns:
+            list[DataPoint]: Empty list as exploit chain analysis is disabled.
+        """
         return []
 
     def _collect_agent_activity_metrics(self) -> list[DataPoint]:
-        """Collect multi-agent activity metrics."""
+        """Collect multi-agent activity metrics.
+
+        Gathers data about active agents and total tasks being processed
+        from the multi-agent system.
+
+        Returns:
+            List of DataPoint objects containing active agent count and task volume.
+        """
         try:
             # Real agent activity data from multi-agent system
             active_agents, total_tasks = self._get_real_agent_metrics()
@@ -575,7 +660,18 @@ class DataCollector:
             return []
 
     def get_data(self, metric_type: MetricType, time_range: int = 3600) -> list[DataPoint]:
-        """Get collected data for metric type."""
+        """Get collected data for a specific metric type within time range.
+
+        Retrieves and filters data points from the data store based on the
+        specified metric type and time range window.
+
+        Args:
+            metric_type: The MetricType to retrieve data for.
+            time_range: Time window in seconds to look back (default: 3600).
+
+        Returns:
+            List of DataPoint objects collected within the time range.
+        """
         if metric_type.value not in self.data_store:
             return []
 
@@ -584,7 +680,11 @@ class DataCollector:
         return [point for point in self.data_store[metric_type.value] if point.timestamp >= cutoff_time]
 
     def stop_collection(self) -> None:
-        """Stop data collection."""
+        """Stop data collection worker thread.
+
+        Disables the background data collection process and stops
+        gathering metrics from registered collectors.
+        """
         self.collection_enabled = False
         logger.info("Stopped data collection")
 
@@ -606,7 +706,14 @@ class ChartGenerator:
         logger.info("Chart generator initialized")
 
     def _load_chart_templates(self) -> dict[str, dict[str, Any]]:
-        """Load chart configuration templates."""
+        """Load predefined chart configuration templates.
+
+        Returns a dictionary mapping template names to their configurations
+        for quick chart generation.
+
+        Returns:
+            Dictionary with chart template configurations indexed by template name.
+        """
         return {
             "performance_overview": {
                 "chart_type": ChartType.LINE_CHART,
@@ -647,7 +754,21 @@ class ChartGenerator:
 
     @profile_ai_operation("chart_generation")
     def generate_chart(self, template_name: str, custom_options: dict[str, Any] | None = None) -> ChartData:
-        """Generate chart from template."""
+        """Generate chart from predefined template with optional customization.
+
+        Creates a chart using a template configuration and merges any custom
+        options provided by the caller.
+
+        Args:
+            template_name: Name of the chart template to use.
+            custom_options: Optional dictionary of custom chart options to merge.
+
+        Returns:
+            ChartData object containing the generated chart with collected metrics.
+
+        Raises:
+            ValueError: If the template_name does not exist in templates.
+        """
         if template_name not in self.chart_templates:
             raise ValueError(f"Unknown chart template: {template_name}")
 
@@ -673,7 +794,18 @@ class ChartGenerator:
         )
 
     def generate_custom_chart(self, chart_config: dict[str, Any]) -> ChartData:
-        """Generate custom chart from configuration."""
+        """Generate custom chart from user-provided configuration.
+
+        Creates a chart with user-specified metrics, type, and options without
+        relying on predefined templates.
+
+        Args:
+            chart_config: Dictionary containing chart configuration with keys:
+                chart_type, metrics, time_range, title, x_axis_label, y_axis_label, options.
+
+        Returns:
+            ChartData object containing the custom chart with collected metrics.
+        """
         chart_type = ChartType(chart_config.get("chart_type", "line_chart"))
         metric_types = [MetricType(m) for m in chart_config.get("metrics", [])]
         time_range = chart_config.get("time_range", 3600)
@@ -695,7 +827,14 @@ class ChartGenerator:
         )
 
     def generate_exploit_chain_network_graph(self) -> ChartData:
-        """Generate network graph of exploit chains."""
+        """Generate network graph visualization of exploit chains.
+
+        Creates a network graph chart showing relationships between exploit chains.
+        Currently disabled as exploit chain builder module has been removed.
+
+        Returns:
+            ChartData object with network graph type and empty data points.
+        """
         return ChartData(
             chart_id=str(uuid.uuid4()),
             title="Exploit Chain Network (Disabled)",
@@ -705,7 +844,14 @@ class ChartGenerator:
         )
 
     def generate_vulnerability_heatmap(self) -> ChartData:
-        """Generate heatmap of vulnerability patterns."""
+        """Generate heatmap visualization of vulnerability patterns.
+
+        Creates a heatmap chart showing the distribution of vulnerability
+        patterns across protection types and severity levels.
+
+        Returns:
+            ChartData object with heatmap type containing protection pattern data.
+        """
         return ChartData(
             chart_id=str(uuid.uuid4()),
             title="Vulnerability Pattern Heatmap (Disabled)",
@@ -743,7 +889,14 @@ class DashboardManager:
         logger.info("Dashboard manager initialized")
 
     def _load_dashboard_templates(self) -> dict[str, dict[str, Any]]:
-        """Load dashboard templates."""
+        """Load predefined dashboard template configurations.
+
+        Returns a dictionary of dashboard templates with their chart configurations
+        and layout specifications.
+
+        Returns:
+            Dictionary mapping dashboard template names to their configurations.
+        """
         return {
             "ai_overview": {
                 "name": "AI System Overview",
@@ -778,7 +931,11 @@ class DashboardManager:
         }
 
     def _create_default_dashboards(self) -> None:
-        """Create default dashboards."""
+        """Create default dashboards from predefined templates.
+
+        Instantiates all dashboard templates and stores them in the dashboards
+        dictionary for immediate access.
+        """
         for template_name, template in self.dashboard_templates.items():
             if dashboard := self.create_dashboard_from_template(template_name):
                 self.dashboards[dashboard.dashboard_id] = dashboard
@@ -786,7 +943,17 @@ class DashboardManager:
 
     @profile_ai_operation("dashboard_creation")
     def create_dashboard_from_template(self, template_name: str) -> Dashboard | None:
-        """Create dashboard from template."""
+        """Create dashboard from predefined template configuration.
+
+        Generates a dashboard by loading a template, creating all configured charts,
+        and building the dashboard layout.
+
+        Args:
+            template_name: Name of the dashboard template to instantiate.
+
+        Returns:
+            Dashboard object with generated charts and layout, or None if template not found.
+        """
         if template_name not in self.dashboard_templates:
             logger.exception("Unknown dashboard template: %s", template_name)
             return None
@@ -816,7 +983,19 @@ class DashboardManager:
         )
 
     def create_custom_dashboard(self, name: str, description: str, chart_configs: list[dict[str, Any]]) -> Dashboard:
-        """Create custom dashboard."""
+        """Create custom dashboard with user-specified charts.
+
+        Generates a dashboard with custom charts created from provided configurations
+        and stores it in the dashboards dictionary.
+
+        Args:
+            name: Name for the custom dashboard.
+            description: Description of the dashboard contents and purpose.
+            chart_configs: List of chart configuration dictionaries for custom charts.
+
+        Returns:
+            Dashboard object with the custom charts and configuration.
+        """
         charts = []
 
         for chart_config in chart_configs:
@@ -838,7 +1017,17 @@ class DashboardManager:
         return dashboard
 
     def refresh_dashboard(self, dashboard_id: str) -> bool:
-        """Refresh dashboard data."""
+        """Refresh dashboard data by regenerating all charts.
+
+        Updates all charts in a dashboard with the latest collected metrics
+        and refreshes the last_updated timestamp.
+
+        Args:
+            dashboard_id: ID of the dashboard to refresh.
+
+        Returns:
+            True if dashboard refresh successful, False if dashboard not found.
+        """
         if dashboard_id not in self.dashboards:
             return False
 
@@ -856,7 +1045,17 @@ class DashboardManager:
         return True
 
     def _refresh_chart(self, chart: ChartData) -> ChartData | None:
-        """Refresh individual chart."""
+        """Refresh individual chart with latest collected data.
+
+        Attempts to match the chart with a known template and regenerate it,
+        or recreates it as a custom chart if no template match is found.
+
+        Args:
+            chart: ChartData object to refresh.
+
+        Returns:
+            Updated ChartData object with new data, or None if refresh fails.
+        """
         # Try to match with known templates
         for template_name in self.chart_generator.chart_templates:
             template = self.chart_generator.chart_templates[template_name]
@@ -875,11 +1074,27 @@ class DashboardManager:
         return self.chart_generator.generate_custom_chart(chart_config)
 
     def get_dashboard(self, dashboard_id: str) -> Dashboard | None:
-        """Get dashboard by ID."""
+        """Get dashboard by its unique identifier.
+
+        Retrieves a stored dashboard from the dashboards dictionary.
+
+        Args:
+            dashboard_id: Unique identifier of the dashboard to retrieve.
+
+        Returns:
+            Dashboard object if found, None otherwise.
+        """
         return self.dashboards.get(dashboard_id)
 
     def list_dashboards(self) -> list[dict[str, str | int]]:
-        """List all dashboards."""
+        """List all available dashboards with their metadata.
+
+        Returns a summary of all stored dashboards including their IDs, names,
+        descriptions, and chart counts.
+
+        Returns:
+            List of dictionaries containing dashboard metadata.
+        """
         return [
             {
                 "dashboard_id": dashboard.dashboard_id,
@@ -892,7 +1107,18 @@ class DashboardManager:
         ]
 
     def export_dashboard(self, dashboard_id: str, export_path: Path) -> bool:
-        """Export dashboard configuration."""
+        """Export dashboard configuration to JSON file.
+
+        Serializes a dashboard's configuration and metadata to a JSON file
+        for sharing, archival, or later import.
+
+        Args:
+            dashboard_id: Unique identifier of the dashboard to export.
+            export_path: Path object pointing to the output JSON file.
+
+        Returns:
+            True if export successful, False if dashboard not found or export fails.
+        """
         if dashboard_id not in self.dashboards:
             return False
 
@@ -943,7 +1169,17 @@ class AnalyticsEngine:
 
     @profile_ai_operation("trend_analysis")
     def analyze_performance_trends(self, time_range: int = 86400) -> dict[str, Any]:
-        """Analyze performance trends over time."""
+        """Analyze performance trends over specified time range.
+
+        Calculates trend direction, slope, mean value, and standard deviation
+        for performance metrics to identify improvement or degradation patterns.
+
+        Args:
+            time_range: Time window in seconds to analyze (default: 86400 = 24 hours).
+
+        Returns:
+            Dictionary containing trend analysis results with slope, statistics, and analysis text.
+        """
         performance_data = self.data_collector.get_data(MetricType.PERFORMANCE, time_range)
 
         if not performance_data:
@@ -988,7 +1224,14 @@ class AnalyticsEngine:
 
     @profile_ai_operation("success_rate_analysis")
     def analyze_success_patterns(self) -> dict[str, Any]:
-        """Analyze success rate patterns."""
+        """Analyze success rate patterns and identify improvement opportunities.
+
+        Examines success rate data over the last 24 hours to compute statistics,
+        identify patterns, and generate actionable recommendations.
+
+        Returns:
+            Dictionary containing success rate statistics, patterns, and recommendations.
+        """
         success_data = self.data_collector.get_data(MetricType.SUCCESS_RATE, 86400)
 
         if not success_data:
@@ -1033,7 +1276,18 @@ class AnalyticsEngine:
         }
 
     def _get_success_rate_recommendation(self, mean_success: float, patterns: list[str]) -> str:
-        """Get recommendation based on success rate analysis."""
+        """Get recommendation based on success rate analysis.
+
+        Generates actionable recommendations based on the mean success rate
+        and detected patterns in the success data.
+
+        Args:
+            mean_success: Mean success rate as a percentage (0-100).
+            patterns: List of identified patterns in the success data.
+
+        Returns:
+            String containing the recommendation for improving success rates.
+        """
         if mean_success < 70:
             return "Focus on improving error handling and algorithm reliability"
         if mean_success < 85:
@@ -1044,7 +1298,14 @@ class AnalyticsEngine:
 
     @profile_ai_operation("resource_efficiency_analysis")
     def analyze_resource_efficiency(self) -> dict[str, Any]:
-        """Analyze resource usage efficiency."""
+        """Analyze resource usage efficiency over the last hour.
+
+        Examines CPU, memory, and disk I/O usage to calculate efficiency ratings
+        and identify potential optimization opportunities.
+
+        Returns:
+            Dictionary containing efficiency analysis for each resource type and overall rating.
+        """
         resource_data = self.data_collector.get_data(MetricType.RESOURCE_USAGE, 3600)
 
         if not resource_data:
@@ -1095,7 +1356,17 @@ class AnalyticsEngine:
         }
 
     def _calculate_overall_efficiency(self, efficiency_analysis: dict[str, dict[str, Any]]) -> str:
-        """Calculate overall efficiency rating."""
+        """Calculate overall efficiency rating from individual resource ratings.
+
+        Aggregates efficiency ratings across all resource types to determine
+        an overall system efficiency assessment.
+
+        Args:
+            efficiency_analysis: Dictionary mapping resource types to their efficiency data.
+
+        Returns:
+            Overall efficiency rating string (excellent, good, monitor_closely, or needs_optimization).
+        """
         ratings = [analysis["efficiency_rating"] for analysis in efficiency_analysis.values()]
 
         if "concerning" in ratings:
@@ -1107,7 +1378,14 @@ class AnalyticsEngine:
         return "good"
 
     def generate_insights_report(self) -> dict[str, Any]:
-        """Generate comprehensive insights report."""
+        """Generate comprehensive insights report with analysis and recommendations.
+
+        Compiles performance trends, success patterns, resource efficiency analysis,
+        and generates actionable recommendations for system optimization.
+
+        Returns:
+            Dictionary containing comprehensive analytics report with all analyses and recommendations.
+        """
         report = {
             "generated_at": datetime.now().isoformat(),
             "performance_trends": self.analyze_performance_trends(),
@@ -1153,27 +1431,78 @@ class VisualizationAnalytics:
         logger.info("Visualization and analytics system initialized")
 
     def get_dashboard(self, dashboard_id: str) -> Dashboard | None:
-        """Get dashboard by ID."""
+        """Get dashboard by its unique identifier.
+
+        Retrieves a dashboard from the dashboard manager.
+
+        Args:
+            dashboard_id: Unique identifier of the dashboard to retrieve.
+
+        Returns:
+            Dashboard object if found, None otherwise.
+        """
         return self.dashboard_manager.get_dashboard(dashboard_id)
 
     def list_dashboards(self) -> list[dict[str, str | int]]:
-        """List all available dashboards."""
+        """List all available dashboards with metadata.
+
+        Retrieves summary information for all stored dashboards.
+
+        Returns:
+            List of dictionaries containing dashboard metadata.
+        """
         return self.dashboard_manager.list_dashboards()
 
     def refresh_dashboard(self, dashboard_id: str) -> bool:
-        """Refresh dashboard data."""
+        """Refresh dashboard data by updating all charts.
+
+        Requests the dashboard manager to refresh a dashboard's charts
+        with the latest collected metrics.
+
+        Args:
+            dashboard_id: Unique identifier of the dashboard to refresh.
+
+        Returns:
+            True if refresh successful, False if dashboard not found.
+        """
         return self.dashboard_manager.refresh_dashboard(dashboard_id)
 
     def create_custom_dashboard(self, name: str, description: str, chart_configs: list[dict[str, Any]]) -> Dashboard:
-        """Create custom dashboard."""
+        """Create custom dashboard with specified charts.
+
+        Delegates to the dashboard manager to create a new dashboard with
+        custom chart configurations.
+
+        Args:
+            name: Name for the custom dashboard.
+            description: Description of the dashboard contents and purpose.
+            chart_configs: List of chart configuration dictionaries.
+
+        Returns:
+            Dashboard object containing the custom charts and configuration.
+        """
         return self.dashboard_manager.create_custom_dashboard(name, description, chart_configs)
 
     def generate_insights_report(self) -> dict[str, Any]:
-        """Generate comprehensive analytics report."""
+        """Generate comprehensive analytics report with insights and recommendations.
+
+        Delegates to the analytics engine to generate a full report including
+        performance trends, success patterns, and resource efficiency analysis.
+
+        Returns:
+            Dictionary containing comprehensive analytics report.
+        """
         return self.analytics_engine.generate_insights_report()
 
     def get_system_status(self) -> dict[str, Any]:
-        """Get system status including visualization metrics."""
+        """Get system status including visualization and analytics metrics.
+
+        Retrieves current status of the visualization system including active
+        collectors, dashboard count, and data collection statistics.
+
+        Returns:
+            Dictionary containing system status and operational metrics.
+        """
         return {
             "data_collector_active": self.data_collector.collection_enabled,
             "total_dashboards": len(self.dashboard_manager.dashboards),
@@ -1248,7 +1577,18 @@ class VisualizationAnalytics:
             return None
 
     def _analyze_function_semantics(self, binary_data: bytes) -> list[dict[str, Any]]:
-        """Analyze binary to identify function purposes and semantics."""
+        """Analyze binary to identify function purposes and semantics.
+
+        Scans binary data for licensing and cryptographic signatures to identify
+        functions related to protection mechanisms, extracting purpose and context.
+
+        Args:
+            binary_data: Binary content as bytes to analyze.
+
+        Returns:
+            List of dictionaries containing identified functions with semantics,
+            offsets, purposes, and confidence scores.
+        """
         function_semantics: list[dict[str, Any]] = []
 
         licensing_signatures = [
@@ -1362,7 +1702,18 @@ class VisualizationAnalytics:
         return unique_functions[:100]
 
     def _extract_function_name(self, context: bytes, signature: bytes) -> str | None:
-        """Extract potential function name from context around signature."""
+        """Extract potential function name from context around signature.
+
+        Attempts to extract a meaningful function name from the binary context
+        surrounding a detected signature using regex pattern matching.
+
+        Args:
+            context: Binary context bytes surrounding the signature.
+            signature: The signature bytes that were matched.
+
+        Returns:
+            Extracted function name string if found, None otherwise.
+        """
         try:
             text = context.decode("utf-8", errors="ignore")
 
@@ -1385,7 +1736,18 @@ class VisualizationAnalytics:
             return None
 
     def _calculate_signature_confidence(self, context: bytes, signature: bytes) -> float:
-        """Calculate confidence score for a detected signature."""
+        """Calculate confidence score for a detected signature.
+
+        Evaluates the reliability of a signature match by analyzing surrounding
+        context including text patterns, null byte ratios, and printability.
+
+        Args:
+            context: Binary context bytes surrounding the signature.
+            signature: The signature bytes that were matched.
+
+        Returns:
+            Confidence score as float between 0.0 and 1.0.
+        """
         confidence = 0.5
 
         try:
@@ -1423,7 +1785,18 @@ class VisualizationAnalytics:
         return min(1.0, confidence)
 
     def _detect_code_patterns(self, binary_data: bytes) -> list[dict[str, Any]]:
-        """Detect code patterns related to licensing and protection."""
+        """Detect code patterns related to licensing and protection mechanisms.
+
+        Scans binary data for patterns indicating time checks, registry access,
+        network activation, hardware ID collection, anti-debug, and VM detection.
+
+        Args:
+            binary_data: Binary content as bytes to analyze.
+
+        Returns:
+            List of dictionaries containing detected code patterns with types,
+            names, descriptions, and offsets.
+        """
         patterns: list[dict[str, Any]] = []
 
         pattern_signatures = [
@@ -1489,7 +1862,18 @@ class VisualizationAnalytics:
         return patterns
 
     def _identify_protection_indicators(self, binary_data: bytes) -> list[dict[str, Any]]:
-        """Identify protection system indicators in the binary."""
+        """Identify protection system indicators in the binary.
+
+        Scans for signatures of known protection systems including commercial
+        packers, VM protectors, and license server technologies.
+
+        Args:
+            binary_data: Binary content as bytes to analyze.
+
+        Returns:
+            List of dictionaries containing identified protection systems with
+            signatures and confidence scores.
+        """
         indicators: list[dict[str, Any]] = []
 
         protection_systems = [
@@ -1526,7 +1910,18 @@ class VisualizationAnalytics:
         function_semantics: list[dict[str, Any]],
         code_patterns: list[dict[str, Any]],
     ) -> float:
-        """Calculate overall confidence in the analysis results."""
+        """Calculate overall confidence in the analysis results.
+
+        Aggregates confidence scores from detected functions and code patterns
+        to provide an overall reliability score for the analysis.
+
+        Args:
+            function_semantics: List of detected function dictionaries with confidence scores.
+            code_patterns: List of detected code pattern dictionaries with confidence scores.
+
+        Returns:
+            Overall confidence score as float between 0.0 and 1.0.
+        """
         if not function_semantics and not code_patterns:
             return 0.1
 
@@ -1602,7 +1997,19 @@ class VisualizationAnalytics:
         binary_name: str,
         semantic_results: dict[str, Any] | None,
     ) -> list[dict[str, Any]]:
-        """Generate Frida scripts based on semantic analysis."""
+        """Generate Frida scripts based on semantic analysis results.
+
+        Creates customized Frida hook scripts targeting licensing functions,
+        API tracing, anti-debug bypasses, and time spoofing based on analysis.
+
+        Args:
+            binary_name: Name of the binary being analyzed.
+            semantic_results: Results dictionary from binary semantic analysis.
+
+        Returns:
+            List of dictionaries containing Frida script configurations with
+            names, descriptions, and JavaScript code.
+        """
         scripts: list[dict[str, Any]] = [
             {
                 "name": f"{binary_name}_license_hook.js",
@@ -1645,7 +2052,19 @@ class VisualizationAnalytics:
         binary_name: str,
         semantic_results: dict[str, Any] | None,
     ) -> list[dict[str, Any]]:
-        """Generate Ghidra scripts based on semantic analysis."""
+        """Generate Ghidra scripts based on semantic analysis results.
+
+        Creates Ghidra analysis scripts for annotating licensing functions and
+        identifying cryptographic routines in the disassembled binary.
+
+        Args:
+            binary_name: Name of the binary being analyzed.
+            semantic_results: Results dictionary from binary semantic analysis.
+
+        Returns:
+            List of dictionaries containing Ghidra script configurations with
+            names, descriptions, and Java code.
+        """
         scripts: list[dict[str, Any]] = [
             {
                 "name": f"{binary_name}_LicenseAnalyzer.java",
@@ -1669,7 +2088,18 @@ class VisualizationAnalytics:
         binary_name: str,
         semantic_results: dict[str, Any] | None,
     ) -> str:
-        """Build Frida script for hooking licensing functions."""
+        """Build Frida script for hooking licensing functions.
+
+        Generates a Frida JavaScript hook script that intercepts and logs
+        calls to licensing-related functions in the target binary.
+
+        Args:
+            binary_name: Name of the binary being targeted.
+            semantic_results: Semantic analysis results containing function information.
+
+        Returns:
+            Frida JavaScript code as a string.
+        """
         target_functions: list[str] = []
         if semantic_results:
             target_functions.extend(
@@ -1729,7 +2159,18 @@ hookLicenseFunctions();
 '''
 
     def _build_api_trace_script(self, binary_name: str) -> str:
-        """Build Frida script for tracing licensing-related API calls."""
+        """Build Frida script for tracing licensing-related API calls.
+
+        Generates a Frida JavaScript script that hooks Windows API functions
+        related to registry, file, cryptography, and network operations used
+        in licensing validation.
+
+        Args:
+            binary_name: Name of the binary being targeted.
+
+        Returns:
+            Frida JavaScript code as a string.
+        """
         return f"""
 "use strict";
 
@@ -1765,7 +2206,18 @@ apis.forEach(function(apiGroup) {{
 """
 
     def _build_anti_debug_script(self, binary_name: str) -> str:
-        """Build Frida script for bypassing anti-debugging."""
+        """Build Frida script for bypassing anti-debugging checks.
+
+        Generates a Frida JavaScript script that hooks and manipulates anti-debug
+        API calls including IsDebuggerPresent, CheckRemoteDebuggerPresent, and
+        NtQueryInformationProcess to hide debugger presence.
+
+        Args:
+            binary_name: Name of the binary being targeted.
+
+        Returns:
+            Frida JavaScript code as a string.
+        """
         return f"""
 "use strict";
 
@@ -1812,7 +2264,17 @@ if (ntQueryInfo) {{
 """
 
     def _build_time_spoof_script(self, binary_name: str) -> str:
-        """Build Frida script for spoofing time-related calls."""
+        """Build Frida script for spoofing time-related system calls.
+
+        Generates a Frida JavaScript script that hooks GetSystemTime and
+        GetLocalTime to return a fixed date for bypassing trial period checks.
+
+        Args:
+            binary_name: Name of the binary being targeted.
+
+        Returns:
+            Frida JavaScript code as a string.
+        """
         return f"""
 "use strict";
 
@@ -1856,7 +2318,18 @@ if (getLocalTime) {{
         binary_name: str,
         semantic_results: dict[str, Any] | None,
     ) -> str:
-        """Build Ghidra script for analyzing licensing functions."""
+        """Build Ghidra script for analyzing and annotating licensing functions.
+
+        Generates a Ghidra analysis script that identifies licensing-related
+        functions by name patterns and adds comments and labels for analysis.
+
+        Args:
+            binary_name: Name of the binary being analyzed.
+            semantic_results: Semantic analysis results for reference.
+
+        Returns:
+            Ghidra Java code as a string.
+        """
         return f"""
 //@category Analysis
 //@menupath Analysis.License Analyzer
@@ -1916,7 +2389,17 @@ public class {binary_name}_LicenseAnalyzer extends GhidraScript {{
 """
 
     def _build_ghidra_crypto_finder(self, binary_name: str) -> str:
-        """Build Ghidra script for finding cryptographic routines."""
+        """Build Ghidra script for finding cryptographic routines.
+
+        Generates a Ghidra analysis script that scans for cryptographic constants
+        and patterns (AES S-box, MD5 init, SHA-1 init) used in licensing validation.
+
+        Args:
+            binary_name: Name of the binary being analyzed.
+
+        Returns:
+            Ghidra Java code as a string.
+        """
         return f"""
 //@category Analysis
 //@menupath Analysis.Crypto Finder

@@ -124,7 +124,25 @@ class WorkflowStatus(Enum):
 @log_all_methods
 @dataclass
 class PluginMetadata:
-    """Plugin metadata structure."""
+    """Plugin metadata structure.
+
+    Stores complete metadata for plugins including name, version, description,
+    type, capabilities, dependencies, and configuration schema for framework
+    integration and management.
+
+    Attributes:
+        name: Plugin identifier name.
+        version: Plugin version string in semantic versioning format.
+        description: Human-readable plugin description.
+        component_type: Type of component (GHIDRA_SCRIPT, FRIDA_SCRIPT, etc.).
+        author: Plugin author name or organization.
+        license: License type (GPL, MIT, etc.).
+        dependencies: List of required dependencies.
+        capabilities: List of plugin capabilities.
+        supported_formats: File formats supported by the plugin.
+        configuration_schema: JSON schema for configuration validation.
+        tags: Metadata tags for categorization and search.
+    """
 
     name: str
     version: str
@@ -139,7 +157,13 @@ class PluginMetadata:
     tags: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary."""
+        """Convert plugin metadata to dictionary representation.
+
+        Returns:
+            dict[str, Any]: Dictionary containing all plugin metadata fields
+                including name, version, description, type, and configuration
+                schema for serialization and transmission.
+        """
         return {
             "name": self.name,
             "version": self.version,
@@ -169,7 +193,23 @@ class ScriptMetadataDict(TypedDict):
 @log_all_methods
 @dataclass
 class Event:
-    """Event structure for inter-component communication."""
+    """Event structure for inter-component communication.
+
+    Represents events that flow through the event bus for asynchronous
+    communication between plugins, analysis components, and workflow engines.
+    Supports event priority, correlation, and time-to-live semantics.
+
+    Attributes:
+        event_type: Type of event (string identifier).
+        source: Name of the component that emitted the event.
+        target: Optional target component name for directed events.
+        data: Arbitrary event data payload as dictionary.
+        priority: Event priority level (CRITICAL to DEBUG).
+        timestamp: Creation timestamp in UTC.
+        event_id: Unique event identifier (UUID).
+        correlation_id: Optional correlation ID for tracking related events.
+        ttl: Optional time-to-live in seconds before event expires.
+    """
 
     event_type: str
     source: str
@@ -179,10 +219,16 @@ class Event:
     timestamp: datetime = field(default_factory=datetime.utcnow)
     event_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     correlation_id: str | None = None
-    ttl: int | None = None  # Time to live in seconds
+    ttl: int | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary."""
+        """Convert event to dictionary representation.
+
+        Returns:
+            dict[str, Any]: Dictionary containing event_id, event_type, source,
+                target, data, priority, timestamp in ISO format, correlation_id,
+                and ttl for serialization and transmission.
+        """
         return {
             "event_id": self.event_id,
             "event_type": self.event_type,
@@ -199,7 +245,24 @@ class Event:
 @log_all_methods
 @dataclass
 class WorkflowStep:
-    """Individual step in a workflow."""
+    """Individual step in a workflow.
+
+    Represents a single executable step within a workflow definition, specifying
+    the plugin to invoke, method to call, parameters, dependencies, and execution
+    options for licensing protection analysis.
+
+    Attributes:
+        step_id: Unique identifier for the step.
+        name: Human-readable step name for workflow display.
+        plugin_name: Name of the plugin that implements this step.
+        method: Method name to invoke on the plugin.
+        parameters: Dictionary of method parameters and arguments.
+        dependencies: List of step IDs that must complete before this step.
+        timeout: Optional execution timeout in seconds.
+        retry_count: Current number of retry attempts made.
+        max_retries: Maximum retry attempts allowed on failure.
+        condition: Optional Python expression for conditional step execution.
+    """
 
     step_id: str
     name: str
@@ -210,10 +273,16 @@ class WorkflowStep:
     timeout: int | None = None
     retry_count: int = 0
     max_retries: int = 3
-    condition: str | None = None  # Python expression for conditional execution
+    condition: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary."""
+        """Convert workflow step to dictionary representation.
+
+        Returns:
+            dict[str, Any]: Dictionary containing step_id, name, plugin_name, method,
+                parameters, dependencies, timeout, retry_count, max_retries, and
+                condition for serialization and workflow persistence.
+        """
         return {
             "step_id": self.step_id,
             "name": self.name,
@@ -231,7 +300,23 @@ class WorkflowStep:
 @log_all_methods
 @dataclass
 class WorkflowDefinition:
-    """Complete workflow definition."""
+    """Complete workflow definition.
+
+    Specifies a complete workflow for licensing protection analysis, including
+    all steps, execution configuration, error handling, and result aggregation
+    strategies for analyzing and bypassing protection mechanisms.
+
+    Attributes:
+        workflow_id: Unique workflow identifier.
+        name: Human-readable workflow name.
+        description: Detailed workflow description and purpose.
+        steps: List of WorkflowStep objects defining the execution sequence.
+        parallel_execution: Whether steps can execute in parallel.
+        timeout: Optional overall workflow timeout in seconds.
+        error_handling: Error strategy ("stop", "continue", or "retry").
+        result_aggregation: Result aggregation strategy ("merge", "last", "custom").
+        tags: Workflow tags for categorization and search.
+    """
 
     workflow_id: str
     name: str
@@ -239,12 +324,18 @@ class WorkflowDefinition:
     steps: list[WorkflowStep]
     parallel_execution: bool = False
     timeout: int | None = None
-    error_handling: str = "stop"  # stop, continue, retry
-    result_aggregation: str = "merge"  # merge, last, custom
+    error_handling: str = "stop"
+    result_aggregation: str = "merge"
     tags: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary."""
+        """Convert workflow definition to dictionary representation.
+
+        Returns:
+            dict[str, Any]: Dictionary containing workflow_id, name, description,
+                steps (as dictionaries), parallel_execution, timeout, error_handling,
+                result_aggregation, and tags for serialization and persistence.
+        """
         return {
             "workflow_id": self.workflow_id,
             "name": self.name,
@@ -260,10 +351,21 @@ class WorkflowDefinition:
 
 @log_all_methods
 class LoggingManager:
-    """Advanced logging manager with structured logging and multiple outputs."""
+    """Advanced logging manager with structured logging and multiple outputs.
+
+    Manages hierarchical logging configuration with multiple handlers (console,
+    file, JSON), component-specific loggers, and structured event logging for
+    comprehensive framework diagnostics and analysis tracking.
+    """
 
     def __init__(self, config: dict[str, Any] | str) -> None:
-        """Initialize advanced logging manager with configuration."""
+        """Initialize advanced logging manager with configuration.
+
+        Args:
+            config: Configuration dict or path to YAML config file. If dict,
+                used directly. If string ending with .yaml, loads from file.
+                Otherwise defaults to empty configuration.
+        """
         self.config: dict[str, Any] = config if isinstance(config, dict) else {}
         self.loggers: dict[str, logging.Logger] = {}
         self.handlers: dict[str, logging.Handler] = {}
@@ -286,7 +388,14 @@ class LoggingManager:
         self._setup_component_loggers()
 
     def _setup_root_logger(self) -> None:
-        """Set up root logger with multiple handlers."""
+        """Set up root logger with multiple handlers.
+
+        Configures the root logger with console, file, JSON, and error handlers
+        with appropriate formatters and log levels from configuration.
+
+        Returns:
+            None: Configures logging handlers and adds them to root logger.
+        """
         root_logger = logging.getLogger()
         root_logger.setLevel(logging.DEBUG)
 
@@ -345,7 +454,14 @@ class LoggingManager:
         self.handlers["error"] = error_handler
 
     def _setup_component_loggers(self) -> None:
-        """Set up specialized loggers for different components."""
+        """Set up specialized loggers for different components.
+
+        Creates named loggers for each framework component (plugin_manager,
+        workflow_engine, event_bus, etc.) with debug-level configuration.
+
+        Returns:
+            None: Initializes component-specific loggers.
+        """
         components = [
             "plugin_manager",
             "workflow_engine",
@@ -361,7 +477,17 @@ class LoggingManager:
             self.loggers[component] = logger
 
     def get_logger(self, name: str) -> logging.Logger:
-        """Get logger for specific component."""
+        """Get logger for specific component.
+
+        Retrieves or creates a named logger for a framework component,
+        automatically adding to internal tracking dictionary.
+
+        Args:
+            name: Component name for the logger (e.g., "plugins", "workflows").
+
+        Returns:
+            logging.Logger: Logger instance configured for the named component.
+        """
         if name not in self.loggers:
             logger = logging.getLogger(f"intellicrack.{name}")
             logger.setLevel(logging.DEBUG)
@@ -370,7 +496,17 @@ class LoggingManager:
         return self.loggers[name]
 
     def log_event(self, event: Event) -> None:
-        """Log an event with structured data."""
+        """Log an event with structured data.
+
+        Logs an Event object with all associated data through the events logger
+        with extra context for structured logging.
+
+        Args:
+            event: Event instance to log with full event data.
+
+        Returns:
+            None: Logs event data to configured event logger.
+        """
         logger = self.get_logger("events")
         logger.info(
             "Event: %s",
@@ -382,7 +518,20 @@ class LoggingManager:
         )
 
     def log_plugin_operation(self, plugin_name: str, operation: str, status: str, details: dict[str, Any] | None = None) -> None:
-        """Log plugin operation."""
+        """Log plugin operation.
+
+        Records plugin lifecycle and operational events with context information
+        for plugin management and troubleshooting.
+
+        Args:
+            plugin_name: Name identifier of the plugin.
+            operation: Operation being performed (e.g., "load", "initialize").
+            status: Operation status (e.g., "started", "completed", "failed").
+            details: Optional dictionary of additional operation context data.
+
+        Returns:
+            None: Logs plugin operation to configured plugin logger.
+        """
         logger = self.get_logger("plugins")
         logger.info(
             "Plugin %s: %s -> %s",
@@ -406,7 +555,21 @@ class LoggingManager:
         duration: float | None = None,
         result: object = None,
     ) -> None:
-        """Log workflow step execution."""
+        """Log workflow step execution.
+
+        Records workflow step execution events with timing and result information
+        for workflow monitoring and debugging.
+
+        Args:
+            workflow_id: Identifier of the parent workflow.
+            step_id: Identifier of the specific step within the workflow.
+            status: Step execution status (e.g., "running", "completed", "failed").
+            duration: Optional execution duration in seconds.
+            result: Optional step result object for tracking outputs.
+
+        Returns:
+            None: Logs workflow step execution to configured workflows logger.
+        """
         logger = self.get_logger("workflows")
         logger.info(
             "Workflow %s Step %s: %s",
@@ -426,10 +589,25 @@ class LoggingManager:
 
 @log_all_methods
 class JSONFormatter(logging.Formatter):
-    """JSON formatter for structured logging."""
+    """JSON formatter for structured logging.
+
+    Converts logging records into JSON format for machine-readable log output,
+    including timestamp, level, logger name, message, and extra context fields.
+    """
 
     def format(self, record: logging.LogRecord) -> str:
-        """Format log record as JSON structure."""
+        """Format log record as JSON structure.
+
+        Converts a logging LogRecord into a JSON-formatted string with all
+        standard fields (timestamp, level, logger, message, function, line,
+        thread information) and any extra custom fields.
+
+        Args:
+            record: logging.LogRecord instance to format.
+
+        Returns:
+            str: JSON-formatted log entry as a complete string.
+        """
         log_entry = {
             "timestamp": datetime.fromtimestamp(record.created, tz=UTC).isoformat(),
             "level": record.levelname,
@@ -462,10 +640,19 @@ class JSONFormatter(logging.Formatter):
 
 @log_all_methods
 class ConfigurationManager:
-    """Configuration management with validation and hot reloading."""
+    """Configuration management with validation and hot reloading.
+
+    Manages framework configuration with JSON schema validation, file watching
+    for hot reloading, and callback notification system for configuration changes.
+    """
 
     def __init__(self, config_path: str | None = None) -> None:
-        """Initialize configuration manager with optional config path."""
+        """Initialize configuration manager with optional config path.
+
+        Args:
+            config_path: Optional path to configuration JSON file. Defaults to
+                'config/intellicrack.json' if not provided.
+        """
         self.config_path = Path(config_path) if config_path else Path("config/intellicrack.json")
         self.config: dict[str, Any] = {}
         self.schema: dict[str, Any] = {}
@@ -484,7 +671,15 @@ class ConfigurationManager:
         self._start_file_watcher()
 
     def _load_schema(self) -> None:
-        """Load configuration schema for validation."""
+        """Load configuration schema for validation.
+
+        Initializes JSON schema for validating framework configuration including
+        logging, plugins, engine, tools, and analysis sections with required
+        fields and type constraints.
+
+        Returns:
+            None: Initializes self.schema with JSON schema definition.
+        """
         self.schema = {
             "type": "object",
             "properties": {
@@ -552,7 +747,12 @@ class ConfigurationManager:
         }
 
     def _get_default_config(self) -> dict[str, Any]:
-        """Get default configuration."""
+        """Get default configuration.
+
+        Returns:
+            dict[str, Any]: Default configuration dict with logging, plugins, engine,
+                tools, and analysis settings for framework initialization.
+        """
         return {
             "logging": {
                 "console_level": "INFO",
@@ -597,7 +797,14 @@ class ConfigurationManager:
         }
 
     def reload_config(self) -> None:
-        """Reload configuration from file."""
+        """Reload configuration from file.
+
+        Loads configuration from the configured file path, validates against schema,
+        merges with defaults, and notifies all registered watchers of changes.
+
+        Returns:
+            None: Updates self.config and triggers watcher callbacks.
+        """
         try:
             if self.config_path.exists():
                 with open(self.config_path) as f:
@@ -629,7 +836,18 @@ class ConfigurationManager:
             self.config = self._get_default_config()
 
     def _deep_merge(self, base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
-        """Deep merge two dictionaries."""
+        """Deep merge two dictionaries.
+
+        Recursively merges override dict into base dict, preserving nested structure.
+
+        Args:
+            base: Base configuration dictionary.
+            override: Override configuration dictionary to merge into base.
+
+        Returns:
+            dict[str, Any]: Merged configuration dictionary with all keys from both
+                dictionaries, with override values taking precedence.
+        """
         result = base.copy()
 
         for key, value in override.items():
@@ -641,16 +859,35 @@ class ConfigurationManager:
         return result
 
     def _save_config(self) -> None:
-        """Save current configuration to file."""
+        """Save current configuration to file.
+
+        Writes current configuration dictionary to JSON file with parent
+        directory creation if necessary.
+
+        Returns:
+            None: Saves configuration to JSON file at config_path.
+        """
         self.config_path.parent.mkdir(parents=True, exist_ok=True)
 
         with open(self.config_path, "w") as f:
             json.dump(self.config, f, indent=2)
 
     def _start_file_watcher(self) -> None:
-        """Start file watcher for hot reloading."""
+        """Start file watcher for hot reloading.
+
+        Starts a daemon thread that monitors the configuration file for changes
+        and automatically reloads when file modification timestamp changes.
+
+        Returns:
+            None: Initializes and starts self.file_watcher thread.
+        """
 
         def watch_file() -> None:
+            """Monitor configuration file for changes and reload on modification.
+
+            Continuously polls the configuration file for modifications and triggers
+            a reload when changes are detected. Implements exponential backoff on errors.
+            """
             while True:
                 try:
                     if self.config_path.exists():
@@ -669,7 +906,18 @@ class ConfigurationManager:
         self.file_watcher.start()
 
     def get(self, key: str, default: object = None) -> object:
-        """Get configuration value with dot notation support."""
+        """Get configuration value with dot notation support.
+
+        Retrieves configuration values using dot notation for nested access
+        (e.g., "logging.console_level").
+
+        Args:
+            key: Configuration key with optional dot notation for nested access.
+            default: Default value to return if key not found.
+
+        Returns:
+            object: Configuration value or default if not found.
+        """
         keys = key.split(".")
         value: object = self.config
 
@@ -682,7 +930,18 @@ class ConfigurationManager:
         return value
 
     def set(self, key: str, value: object) -> None:
-        """Set configuration value with dot notation support."""
+        """Set configuration value with dot notation support.
+
+        Sets configuration values using dot notation for nested access, creating
+        intermediate dictionaries as needed, then persists to file.
+
+        Args:
+            key: Configuration key with optional dot notation for nested access.
+            value: Value to set at the specified configuration key.
+
+        Returns:
+            None: Updates configuration dictionary and persists to file.
+        """
         keys = key.split(".")
         config = self.config
 
@@ -695,21 +954,50 @@ class ConfigurationManager:
         self._save_config()
 
     def add_watcher(self, callback: Callable[[dict[str, Any]], None]) -> None:
-        """Add configuration change watcher."""
+        """Add configuration change watcher.
+
+        Registers a callback function to be invoked whenever configuration
+        is reloaded or changed.
+
+        Args:
+            callback: Callable that accepts configuration dict and performs
+                any necessary updates based on new configuration.
+
+        Returns:
+            None: Registers callback in internal watchers list.
+        """
         self.watchers.append(callback)
 
     def remove_watcher(self, callback: Callable[[dict[str, Any]], None]) -> None:
-        """Remove configuration change watcher."""
+        """Remove configuration change watcher.
+
+        Unregisters a previously registered configuration watcher callback.
+
+        Args:
+            callback: The callback function to unregister.
+
+        Returns:
+            None: Removes callback from watchers list if present.
+        """
         if callback in self.watchers:
             self.watchers.remove(callback)
 
 
 @log_all_methods
 class AbstractPlugin(ABC):
-    """Abstract base class for all plugins."""
+    """Abstract base class for all plugins.
+
+    Defines the interface and common functionality for all plugin types
+    (Ghidra, Frida, Python) used for binary analysis and license cracking.
+    """
 
     def __init__(self, name: str, version: str = "1.0.0") -> None:
-        """Initialize abstract plugin with name and version."""
+        """Initialize abstract plugin with name and version.
+
+        Args:
+            name: Plugin identifier name.
+            version: Version string in semantic versioning format.
+        """
         self.name = name
         self.version = version
         self.status = PluginStatus.DISCOVERED
@@ -724,46 +1012,123 @@ class AbstractPlugin(ABC):
 
     @abstractmethod
     def get_metadata(self) -> PluginMetadata:
-        """Get plugin metadata."""
+        """Get plugin metadata.
+
+        Returns:
+            PluginMetadata: Metadata object describing the plugin.
+        """
 
     @abstractmethod
     async def initialize(self, config: dict[str, Any]) -> bool:
-        """Initialize the plugin with configuration."""
+        """Initialize the plugin with configuration.
+
+        Args:
+            config: Configuration dictionary for plugin initialization.
+
+        Returns:
+            bool: True if initialization succeeded, False otherwise.
+        """
 
     @abstractmethod
     async def activate(self) -> bool:
-        """Activate the plugin."""
+        """Activate the plugin.
+
+        Returns:
+            bool: True if activation succeeded, False otherwise.
+        """
 
     @abstractmethod
     async def deactivate(self) -> bool:
-        """Deactivate the plugin."""
+        """Deactivate the plugin.
+
+        Returns:
+            bool: True if deactivation succeeded, False otherwise.
+        """
 
     @abstractmethod
     async def cleanup(self) -> bool:
-        """Cleanup plugin resources."""
+        """Cleanup plugin resources.
+
+        Returns:
+            bool: True if cleanup succeeded, False otherwise.
+        """
 
     @abstractmethod
     def get_supported_operations(self) -> list[str]:
-        """Get list of supported operations."""
+        """Get list of supported operations.
+
+        Returns:
+            list[str]: List of operation names that this plugin can execute.
+        """
 
     @abstractmethod
     async def execute_operation(self, operation: str, parameters: dict[str, object]) -> object:
-        """Execute a specific operation."""
+        """Execute a specific operation.
+
+        Args:
+            operation: Operation name to execute.
+            parameters: Dictionary of operation parameters.
+
+        Returns:
+            object: Operation result as returned by the plugin.
+
+        Raises:
+            ValueError: If operation is not supported.
+        """
 
     def set_logger(self, logger: logging.Logger) -> None:
-        """Set plugin logger."""
+        """Set plugin logger.
+
+        Configures the logger instance for plugin operations and diagnostics.
+
+        Args:
+            logger: Logger instance to use for plugin logging.
+
+        Returns:
+            None: Stores logger in self.logger attribute.
+        """
         self.logger = logger
 
     def set_event_bus(self, event_bus: "EventBus") -> None:
-        """Set event bus for communication."""
+        """Set event bus for communication.
+
+        Configures the event bus instance for inter-component communication
+        and event emission from the plugin.
+
+        Args:
+            event_bus: EventBus instance for inter-component communication.
+
+        Returns:
+            None: Stores event bus in self.event_bus attribute.
+        """
         self.event_bus = event_bus
 
     def update_config(self, config: dict[str, Any]) -> None:
-        """Update plugin configuration."""
+        """Update plugin configuration.
+
+        Merges provided configuration dictionary into the plugin's current config.
+
+        Args:
+            config: Configuration dictionary to merge into plugin config.
+
+        Returns:
+            None: Updates self.config with provided values.
+        """
         self.config.update(config)
 
     def emit_event(self, event_type: str, data: dict[str, Any] | None = None, target: str | None = None) -> None:
-        """Emit an event."""
+        """Emit an event.
+
+        Creates and emits an event through the event bus if available.
+
+        Args:
+            event_type: Type identifier for the event.
+            data: Optional event payload data dictionary.
+            target: Optional target component name for directed events.
+
+        Returns:
+            None: Creates and queues event for emission through event bus.
+        """
         if self.event_bus:
             event = Event(
                 event_type=event_type,
@@ -780,14 +1145,29 @@ class AbstractPlugin(ABC):
             task.add_done_callback(self._event_tasks.discard)
 
     def log_performance_metric(self, metric_name: str, value: object) -> None:
-        """Log performance metric."""
+        """Log performance metric.
+
+        Records a performance metric with timestamp for monitoring and analysis.
+
+        Args:
+            metric_name: Name/identifier of the performance metric.
+            value: Numeric or object value of the metric.
+
+        Returns:
+            None: Stores metric in self.performance_metrics dictionary.
+        """
         self.performance_metrics[metric_name] = {
             "value": value,
             "timestamp": datetime.now(UTC).isoformat(),
         }
 
     def get_status(self) -> dict[str, Any]:
-        """Get plugin status information."""
+        """Get plugin status information.
+
+        Returns:
+            dict[str, Any]: Dictionary containing plugin name, version, status,
+                last error, performance metrics, and configuration.
+        """
         return {
             "name": self.name,
             "version": self.version,
@@ -800,17 +1180,33 @@ class AbstractPlugin(ABC):
 
 @log_all_methods
 class GhidraPlugin(AbstractPlugin):
-    """Base class for Ghidra script plugins."""
+    """Base class for Ghidra script plugins.
+
+    Manages execution of Ghidra analysis scripts for static binary analysis,
+    including function extraction, string finding, cryptography identification,
+    and protection detection for software licensing analysis.
+    """
 
     def __init__(self, name: str, script_path: str, version: str = "1.0.0") -> None:
-        """Initialize Ghidra plugin with name, script path, and version."""
+        """Initialize Ghidra plugin with name, script path, and version.
+
+        Args:
+            name: Plugin identifier name.
+            script_path: Path to the Ghidra script file to execute.
+            version: Version string in semantic versioning format.
+        """
         super().__init__(name, version)
         self.script_path = Path(script_path)
         self.java_process: subprocess.Popen[bytes] | None = None
         self.ghidra_project_path: str | None = None
 
     def get_metadata(self) -> PluginMetadata:
-        """Get Ghidra plugin metadata."""
+        """Get Ghidra plugin metadata.
+
+        Returns:
+            PluginMetadata: Metadata describing the Ghidra plugin capabilities
+                and supported binary formats.
+        """
         return PluginMetadata(
             name=self.name,
             version=self.version,
@@ -822,7 +1218,17 @@ class GhidraPlugin(AbstractPlugin):
         )
 
     async def initialize(self, config: dict[str, Any]) -> bool:
-        """Initialize Ghidra plugin."""
+        """Initialize Ghidra plugin.
+
+        Verifies Ghidra installation and script availability, configures
+        plugin with provided configuration.
+
+        Args:
+            config: Configuration dictionary with ghidra_path and other settings.
+
+        Returns:
+            bool: True if initialization succeeded, False otherwise.
+        """
         try:
             self.status = PluginStatus.INITIALIZING
             self.config.update(config)
@@ -847,12 +1253,26 @@ class GhidraPlugin(AbstractPlugin):
             return False
 
     async def activate(self) -> bool:
-        """Activate Ghidra plugin."""
+        """Activate Ghidra plugin.
+
+        Sets plugin to ACTIVE state, enabling execution of static analysis
+        scripts on target binaries.
+
+        Returns:
+            bool: True if activation succeeded.
+        """
         self.status = PluginStatus.ACTIVE
         return True
 
     async def deactivate(self) -> bool:
-        """Deactivate Ghidra plugin."""
+        """Deactivate Ghidra plugin.
+
+        Terminates any running Java processes and sets plugin to READY state,
+        ensuring all Ghidra analysis sessions are terminated cleanly.
+
+        Returns:
+            bool: True if deactivation succeeded.
+        """
         if self.java_process:
             self.java_process.terminate()
             self.java_process = None
@@ -860,12 +1280,25 @@ class GhidraPlugin(AbstractPlugin):
         return True
 
     async def cleanup(self) -> bool:
-        """Cleanup Ghidra plugin resources."""
+        """Cleanup Ghidra plugin resources.
+
+        Performs cleanup of all Ghidra plugin resources including terminating
+        Java processes and releasing any active analysis sessions.
+
+        Returns:
+            bool: True if cleanup succeeded.
+        """
         await self.deactivate()
         return True
 
     def get_supported_operations(self) -> list[str]:
-        """Get supported Ghidra operations."""
+        """Get supported Ghidra operations.
+
+        Returns:
+            list[str]: List of supported operation names including analyze_binary,
+                extract_functions, find_strings, identify_crypto, generate_keygen,
+                and detect_packers.
+        """
         return [
             "analyze_binary",
             "extract_functions",
@@ -876,7 +1309,21 @@ class GhidraPlugin(AbstractPlugin):
         ]
 
     async def execute_operation(self, operation: str, parameters: dict[str, object]) -> object:
-        """Execute Ghidra operation."""
+        """Execute Ghidra operation.
+
+        Executes a Ghidra analysis operation on a binary file with specified
+        parameters and emits events for operation completion or failure.
+
+        Args:
+            operation: Name of the Ghidra operation to execute.
+            parameters: Operation parameters including binary_path and timeout.
+
+        Returns:
+            object: Operation result dictionary with parsed output.
+
+        Raises:
+            ValueError: If operation not supported or binary path invalid.
+        """
         try:
             if operation not in self.get_supported_operations():
                 raise ValueError(f"Unsupported operation: {operation}")
@@ -919,7 +1366,23 @@ class GhidraPlugin(AbstractPlugin):
             raise
 
     async def _execute_ghidra_script(self, binary_path: str, operation: str, parameters: dict[str, Any]) -> dict[str, Any]:
-        """Execute Ghidra script in subprocess."""
+        """Execute Ghidra script in subprocess.
+
+        Runs Ghidra analyzeHeadless in a subprocess with the specified script
+        and binary file, handling timeouts and errors gracefully.
+
+        Args:
+            binary_path: Path to the binary file to analyze.
+            operation: Operation type for Ghidra analysis.
+            parameters: Operation parameters including timeout setting.
+
+        Returns:
+            dict[str, Any]: Result dictionary with operation output and parsed data.
+
+        Raises:
+            FileNotFoundError: If binary file does not exist.
+            Exception: On Ghidra execution timeout or other errors.
+        """
         ghidra_path = self.config.get("ghidra_path")
         java_path = self.config.get("java_path", "java")
 
@@ -932,6 +1395,14 @@ class GhidraPlugin(AbstractPlugin):
 
         # Calculate hash of binary for tracking
         def _hash_file() -> str:
+            """Compute SHA256 hash of binary file for tracking and deduplication.
+
+            Calculates incremental SHA256 hash of the binary file by reading it
+            in 4KB chunks to minimize memory usage.
+
+            Returns:
+                str: First 16 characters of SHA256 hash for binary identification.
+            """
             with open(binary_path, "rb") as f:
                 for chunk in iter(lambda: f.read(4096), b""):
                     binary_hash.update(chunk)
@@ -1020,7 +1491,18 @@ class GhidraPlugin(AbstractPlugin):
             raise
 
     def _parse_ghidra_output(self, output: str, operation: str) -> dict[str, Any]:
-        """Parse Ghidra script output."""
+        """Parse Ghidra script output.
+
+        Parses Ghidra script output based on operation type, extracting
+        relevant data structures (functions, strings, crypto algorithms, etc.).
+
+        Args:
+            output: Raw output string from Ghidra script execution.
+            operation: Operation type that determines parsing strategy.
+
+        Returns:
+            dict[str, Any]: Parsed result dictionary with operation-specific data.
+        """
         result: dict[str, Any] = {
             "operation": operation,
             "raw_output": output,
@@ -1064,10 +1546,21 @@ class GhidraPlugin(AbstractPlugin):
 
 @log_all_methods
 class FridaPlugin(AbstractPlugin):
-    """Base class for Frida script plugins."""
+    """Base class for Frida script plugins.
+
+    Manages execution of Frida scripts for dynamic binary analysis, runtime
+    manipulation, API hooking, and license protection bypass for software
+    cracking operations.
+    """
 
     def __init__(self, name: str, script_path: str, version: str = "1.0.0") -> None:
-        """Initialize Frida plugin with name, script path, and version."""
+        """Initialize Frida plugin with name, script path, and version.
+
+        Args:
+            name: Plugin identifier name.
+            script_path: Path to the Frida JavaScript script file.
+            version: Version string in semantic versioning format.
+        """
         super().__init__(name, version)
         self.script_path = Path(script_path)
         self.frida_session: Any = None
@@ -1075,7 +1568,12 @@ class FridaPlugin(AbstractPlugin):
         self.target_process: str | int | None = None
 
     def get_metadata(self) -> PluginMetadata:
-        """Get Frida plugin metadata."""
+        """Get Frida plugin metadata.
+
+        Returns:
+            PluginMetadata: Metadata describing the Frida plugin capabilities
+                and supported binary formats.
+        """
         return PluginMetadata(
             name=self.name,
             version=self.version,
@@ -1087,7 +1585,16 @@ class FridaPlugin(AbstractPlugin):
         )
 
     async def initialize(self, config: dict[str, Any]) -> bool:
-        """Initialize Frida plugin."""
+        """Initialize Frida plugin.
+
+        Verifies Frida script and installation, enumerates available devices.
+
+        Args:
+            config: Configuration dictionary for plugin initialization.
+
+        Returns:
+            bool: True if initialization succeeded, False otherwise.
+        """
         try:
             from intellicrack.handlers.frida_handler import HAS_FRIDA, frida
 
@@ -1120,12 +1627,26 @@ class FridaPlugin(AbstractPlugin):
             return False
 
     async def activate(self) -> bool:
-        """Activate Frida plugin."""
+        """Activate Frida plugin.
+
+        Sets plugin to ACTIVE state, making it ready to inject into target processes
+        and execute dynamic instrumentation scripts.
+
+        Returns:
+            bool: True if activation succeeded.
+        """
         self.status = PluginStatus.ACTIVE
         return True
 
     async def deactivate(self) -> bool:
-        """Deactivate Frida plugin."""
+        """Deactivate Frida plugin.
+
+        Unloads Frida script from target process and detaches the session,
+        ensuring clean termination of dynamic instrumentation.
+
+        Returns:
+            bool: True if deactivation succeeded.
+        """
         if self.frida_script:
             self.frida_script.unload()
             self.frida_script = None
@@ -1138,12 +1659,24 @@ class FridaPlugin(AbstractPlugin):
         return True
 
     async def cleanup(self) -> bool:
-        """Cleanup Frida plugin resources."""
+        """Cleanup Frida plugin resources.
+
+        Performs cleanup of all Frida plugin resources by deactivating the plugin.
+
+        Returns:
+            bool: True if cleanup succeeded.
+        """
         await self.deactivate()
         return True
 
     def get_supported_operations(self) -> list[str]:
-        """Get supported Frida operations."""
+        """Get supported Frida operations.
+
+        Returns:
+            list[str]: List of supported operation names including attach_process,
+                hook_functions, trace_calls, modify_memory, bypass_protections,
+                and extract_runtime_data.
+        """
         return [
             "attach_process",
             "hook_functions",
@@ -1154,7 +1687,21 @@ class FridaPlugin(AbstractPlugin):
         ]
 
     async def execute_operation(self, operation: str, parameters: dict[str, object]) -> object:
-        """Execute Frida operation."""
+        """Execute Frida operation.
+
+        Executes a Frida operation on a target process with specified parameters,
+        handling process attachment and operation-specific logic.
+
+        Args:
+            operation: Name of the Frida operation to execute.
+            parameters: Operation parameters including target process identifier.
+
+        Returns:
+            object: Operation result dictionary or data from target process.
+
+        Raises:
+            ValueError: If operation not supported or target not specified.
+        """
         try:
             from intellicrack.handlers.frida_handler import frida
 
@@ -1213,7 +1760,20 @@ class FridaPlugin(AbstractPlugin):
             raise
 
     async def _attach_to_process(self, target: str | int) -> dict[str, Any]:
-        """Attach to target process."""
+        """Attach to target process.
+
+        Attaches to a target process using Frida, loads the script, and
+        registers message handler.
+
+        Args:
+            target: Process name or PID to attach to.
+
+        Returns:
+            dict[str, Any]: Result dictionary with attachment status and session info.
+
+        Raises:
+            Exception: If process attachment fails or script loading fails.
+        """
         try:
             from intellicrack.handlers.frida_handler import frida
 
@@ -1247,7 +1807,17 @@ class FridaPlugin(AbstractPlugin):
             raise Exception(f"Failed to attach to process: {e}") from e
 
     def _on_message(self, message: object, data: object) -> None:
-        """Handle Frida script messages."""
+        """Handle Frida script messages.
+
+        Handles messages sent from Frida script and emits event for logging.
+
+        Args:
+            message: Message object from Frida script.
+            data: Associated data payload from Frida script.
+
+        Returns:
+            None: Logs message and emits event through event bus.
+        """
         if self.logger:
             self.logger.debug("Frida message: %s", message)
 
@@ -1262,7 +1832,20 @@ class FridaPlugin(AbstractPlugin):
         )
 
     async def _hook_functions(self, parameters: dict[str, Any]) -> dict[str, Any]:
-        """Install hooks for functions in target process."""
+        """Install hooks for functions in target process.
+
+        Installs Frida hooks for a list of function names in the target process.
+
+        Args:
+            parameters: Dictionary containing "functions" list.
+
+        Returns:
+            dict[str, Any]: Result dictionary with hooked_functions list showing
+                per-function hook status.
+
+        Raises:
+            ValueError: If no functions specified in parameters.
+        """
         functions = parameters.get("functions", [])
         if not functions:
             raise ValueError("No functions specified for hooking")
@@ -1291,7 +1874,17 @@ class FridaPlugin(AbstractPlugin):
         return {"hooked_functions": results}
 
     async def _trace_calls(self, parameters: dict[str, Any]) -> dict[str, Any]:
-        """Trace function calls."""
+        """Trace function calls.
+
+        Traces function calls in the target process for specified duration.
+
+        Args:
+            parameters: Dictionary containing optional "duration" in seconds.
+
+        Returns:
+            dict[str, Any]: Result dictionary with trace_duration, trace_data,
+                and call_count.
+        """
         duration = parameters.get("duration", 30)
 
         # Start tracing
@@ -1310,7 +1903,19 @@ class FridaPlugin(AbstractPlugin):
         }
 
     async def _modify_memory(self, parameters: dict[str, Any]) -> dict[str, Any]:
-        """Modify process memory."""
+        """Modify process memory.
+
+        Writes data to a specific address in the target process memory.
+
+        Args:
+            parameters: Dictionary containing "address" and "data" keys.
+
+        Returns:
+            dict[str, Any]: Result dictionary with address, data_written, and result.
+
+        Raises:
+            ValueError: If address or data not specified in parameters.
+        """
         address = parameters.get("address")
         data = parameters.get("data")
 
@@ -1326,7 +1931,17 @@ class FridaPlugin(AbstractPlugin):
         }
 
     async def _bypass_protections(self, parameters: dict[str, Any]) -> dict[str, Any]:
-        """Bypass protection mechanisms."""
+        """Bypass protection mechanisms.
+
+        Attempts to bypass protection mechanisms in the target process.
+
+        Args:
+            parameters: Dictionary containing "protections" list.
+
+        Returns:
+            dict[str, Any]: Result dictionary with bypass_results list showing
+                per-protection bypass status.
+        """
         protections = parameters.get("protections", [])
 
         results = []
@@ -1352,7 +1967,18 @@ class FridaPlugin(AbstractPlugin):
         return {"bypass_results": results}
 
     async def _extract_runtime_data(self, parameters: dict[str, Any]) -> dict[str, Any]:
-        """Extract runtime data from process."""
+        """Extract runtime data from process.
+
+        Extracts runtime data (strings, keys, certificates, etc.) from the
+        target process memory.
+
+        Args:
+            parameters: Dictionary with optional "data_types" list.
+
+        Returns:
+            dict[str, Any]: Result dictionary with extracted_data mapping
+                data type names to extracted values.
+        """
         data_types = parameters.get("data_types", ["strings", "keys", "certificates"])
 
         extracted_data = {}
@@ -1368,17 +1994,33 @@ class FridaPlugin(AbstractPlugin):
 
 @log_all_methods
 class PythonPlugin(AbstractPlugin):
-    """Base class for Python module plugins."""
+    """Base class for Python module plugins.
+
+    Loads and manages dynamically imported Python modules as plugins,
+    supporting custom analysis, license bypass, and protection bypass
+    operations for software licensing research.
+    """
 
     def __init__(self, name: str, module_path: str, version: str = "1.0.0") -> None:
-        """Initialize Python plugin with name, module path, and version."""
+        """Initialize Python plugin with name, module path, and version.
+
+        Args:
+            name: Plugin identifier name.
+            module_path: Path to the Python module file to load.
+            version: Version string in semantic versioning format.
+        """
         super().__init__(name, version)
         self.module_path = Path(module_path)
         self.module: ModuleType | None = None
         self.plugin_instance: Any = None
 
     def get_metadata(self) -> PluginMetadata:
-        """Get Python plugin metadata."""
+        """Get Python plugin metadata.
+
+        Returns:
+            PluginMetadata: Metadata describing the Python plugin capabilities
+                and supported binary formats.
+        """
         return PluginMetadata(
             name=self.name,
             version=self.version,
@@ -1390,7 +2032,17 @@ class PythonPlugin(AbstractPlugin):
         )
 
     async def initialize(self, config: dict[str, Any]) -> bool:
-        """Initialize Python plugin."""
+        """Initialize Python plugin.
+
+        Dynamically loads Python module, instantiates plugin class if available,
+        and calls initialize method if defined.
+
+        Args:
+            config: Configuration dictionary for plugin initialization.
+
+        Returns:
+            bool: True if initialization succeeded, False otherwise.
+        """
         try:
             self.status = PluginStatus.INITIALIZING
             self.config.update(config)
@@ -1433,7 +2085,15 @@ class PythonPlugin(AbstractPlugin):
             return False
 
     async def activate(self) -> bool:
-        """Activate Python plugin."""
+        """Activate Python plugin.
+
+        Invokes the activate method on the plugin instance if available,
+        and updates the plugin status to ACTIVE.
+
+        Returns:
+            bool: True if activation succeeded or no activate method exists,
+                False if activation failed.
+        """
         try:
             if hasattr(self.plugin_instance, "activate"):
                 if asyncio.iscoroutinefunction(self.plugin_instance.activate):
@@ -1454,7 +2114,15 @@ class PythonPlugin(AbstractPlugin):
             return False
 
     async def deactivate(self) -> bool:
-        """Deactivate Python plugin."""
+        """Deactivate Python plugin.
+
+        Invokes the deactivate method on the plugin instance if available,
+        and updates the plugin status to READY.
+
+        Returns:
+            bool: True if deactivation succeeded or no deactivate method exists,
+                False if deactivation failed.
+        """
         try:
             if hasattr(self.plugin_instance, "deactivate"):
                 if asyncio.iscoroutinefunction(self.plugin_instance.deactivate):
@@ -1472,7 +2140,15 @@ class PythonPlugin(AbstractPlugin):
             return False
 
     async def cleanup(self) -> bool:
-        """Cleanup Python plugin resources."""
+        """Cleanup Python plugin resources.
+
+        Invokes cleanup method on plugin instance if available, then releases
+        module references and plugin instances to enable garbage collection.
+
+        Returns:
+            bool: True if cleanup succeeded or no cleanup method exists,
+                False if cleanup failed.
+        """
         try:
             if hasattr(self.plugin_instance, "cleanup"):
                 if asyncio.iscoroutinefunction(self.plugin_instance.cleanup):
@@ -1491,7 +2167,13 @@ class PythonPlugin(AbstractPlugin):
             return False
 
     def get_supported_operations(self) -> list[str]:
-        """Get supported Python plugin operations."""
+        """Get supported Python plugin operations.
+
+        Returns:
+            list[str]: List of supported operation names from plugin instance
+                or standard operations (analyze, process, execute, run, bypass,
+                crack, extract, detect) if methods exist.
+        """
         if not self.plugin_instance:
             return []
 
@@ -1521,7 +2203,22 @@ class PythonPlugin(AbstractPlugin):
         return list(set(operations))
 
     async def execute_operation(self, operation: str, parameters: dict[str, object]) -> object:
-        """Execute Python plugin operation."""
+        """Execute Python plugin operation.
+
+        Executes a named operation on the loaded plugin module with specified parameters.
+
+        Args:
+            operation: Operation name to execute.
+            parameters: Keyword arguments for the operation method.
+
+        Returns:
+            object: Operation result from the plugin method.
+
+        Raises:
+            ValueError: If operation not found on plugin instance.
+            TypeError: If operation method not callable.
+            Exception: If plugin not initialized.
+        """
         try:
             if not self.plugin_instance:
                 raise Exception("Plugin not initialized")
@@ -1570,10 +2267,19 @@ class PythonPlugin(AbstractPlugin):
 
 @log_all_methods
 class EventBus:
-    """Async event bus for inter-component communication."""
+    """Async event bus for inter-component communication.
+
+    Provides asynchronous event publishing/subscription infrastructure with
+    handler concurrency management, event history tracking, and TTL support
+    for framework component interaction.
+    """
 
     def __init__(self, max_queue_size: int = 10000) -> None:
-        """Initialize event bus with maximum queue size."""
+        """Initialize event bus with maximum queue size.
+
+        Args:
+            max_queue_size: Maximum events in queue before blocking (default 10000).
+        """
         self.subscribers: dict[str, list[Callable[[Event], Awaitable[None]]]] = {}
         self.event_queue: asyncio.Queue[Event] = asyncio.Queue(maxsize=max_queue_size)
         self.running = False
@@ -1589,11 +2295,27 @@ class EventBus:
         }
 
     def set_logger(self, logger: logging.Logger) -> None:
-        """Set logger for event bus."""
+        """Set logger for event bus.
+
+        Configures the logger instance for event bus diagnostics and monitoring.
+
+        Args:
+            logger: Logger instance for event bus diagnostics.
+
+        Returns:
+            None: Stores logger in self.logger attribute.
+        """
         self.logger = logger
 
     async def start(self) -> None:
-        """Start event processing."""
+        """Start event processing.
+
+        Starts the event processor task that consumes events from the queue
+        and dispatches them to registered handlers.
+
+        Returns:
+            None: Initializes event processing and sets running flag.
+        """
         if self.running:
             return
 
@@ -1604,7 +2326,13 @@ class EventBus:
             self.logger.info("Event bus started")
 
     async def stop(self) -> None:
-        """Stop event processing."""
+        """Stop event processing.
+
+        Stops the event processor task and sets running flag to False.
+
+        Returns:
+            None: Stops event processing and cleans up resources.
+        """
         if not self.running:
             return
 
@@ -1622,7 +2350,17 @@ class EventBus:
             self.logger.info("Event bus stopped")
 
     def subscribe(self, event_type: str, handler: Callable[[Event], Awaitable[None]]) -> None:
-        """Subscribe to events of specific type."""
+        """Subscribe to events of specific type.
+
+        Registers an async handler for a specific event type or wildcard "*".
+
+        Args:
+            event_type: Event type to subscribe to (or "*" for all events).
+            handler: Async callable that accepts an Event and returns None.
+
+        Returns:
+            None: Registers handler in subscribers dictionary.
+        """
         if event_type not in self.subscribers:
             self.subscribers[event_type] = []
 
@@ -1633,7 +2371,17 @@ class EventBus:
             self.logger.debug("New subscriber for event type: %s", event_type)
 
     def unsubscribe(self, event_type: str, handler: Callable[[Event], Awaitable[None]]) -> None:
-        """Unsubscribe from events."""
+        """Unsubscribe from events.
+
+        Unregisters a previously registered event handler.
+
+        Args:
+            event_type: Event type handler was subscribed to.
+            handler: The handler callable to unregister.
+
+        Returns:
+            None: Removes handler from subscribers dictionary if present.
+        """
         if event_type in self.subscribers and handler in self.subscribers[event_type]:
             self.subscribers[event_type].remove(handler)
 
@@ -1646,7 +2394,17 @@ class EventBus:
                 self.logger.debug("Unsubscribed from event type: %s", event_type)
 
     async def emit(self, event: Event) -> None:
-        """Emit an event."""
+        """Emit an event.
+
+        Queues an event for processing, checking TTL if set. Event will be
+        dropped if expired.
+
+        Args:
+            event: Event instance to emit through the bus.
+
+        Returns:
+            None: Adds event to queue for processing.
+        """
         try:
             # Check TTL
             if event.ttl is not None:
@@ -1668,7 +2426,11 @@ class EventBus:
                 self.logger.exception("Event queue full, dropping event: %s", event.event_type)
 
     async def _process_events(self) -> None:
-        """Process events from queue."""
+        """Process events from queue.
+
+        Main event loop that continuously fetches events from the queue,
+        adds them to history, and dispatches to handlers.
+        """
         while self.running:
             try:
                 # Get event from queue with timeout
@@ -1693,7 +2455,13 @@ class EventBus:
                     self.logger.exception("Event processing error: %s", e)
 
     async def _handle_event(self, event: Event) -> None:
-        """Handle individual event."""
+        """Handle individual event.
+
+        Executes registered handlers for the event concurrently with timeout.
+
+        Args:
+            event: Event to dispatch to registered handlers.
+        """
         handlers = []
 
         # Get specific handlers
@@ -1769,12 +2537,31 @@ class EventBus:
                         task.cancel()
 
     async def _run_sync_handler(self, handler: Callable[[Event], None], event: Event) -> None:
-        """Run synchronous handler in executor."""
+        """Run synchronous handler in executor.
+
+        Wraps a synchronous handler to run asynchronously in the event loop executor.
+
+        Args:
+            handler: Synchronous handler callable.
+            event: Event to pass to handler.
+
+        Returns:
+            None: Executes handler in thread pool executor.
+        """
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(None, handler, event)
 
     def _add_to_history(self, event: Event) -> None:
-        """Add event to history."""
+        """Add event to history.
+
+        Appends event to history list and trims if exceeds max size.
+
+        Args:
+            event: Event to add to history.
+
+        Returns:
+            None: Appends event to event_history and trims if needed.
+        """
         self.event_history.append(event)
 
         # Limit history size
@@ -1782,7 +2569,13 @@ class EventBus:
             self.event_history = self.event_history[-self.max_history_size // 2 :]
 
     def get_stats(self) -> dict[str, Any]:
-        """Get event bus statistics."""
+        """Get event bus statistics.
+
+        Returns:
+            dict[str, Any]: Statistics including events_processed, events_failed,
+                subscribers_count, queue_size, history_size, subscriber_types,
+                and running status.
+        """
         return {
             **self.stats,
             "history_size": len(self.event_history),
@@ -1791,16 +2584,37 @@ class EventBus:
         }
 
     def get_recent_events(self, count: int = 100) -> list[Event]:
-        """Get recent events from history."""
+        """Get recent events from history.
+
+        Args:
+            count: Number of recent events to return (default 100).
+
+        Returns:
+            list[Event]: List of the most recent events up to count.
+        """
         return self.event_history[-count:]
 
 
 @log_all_methods
 class PluginManager:
-    """Plugin discovery, loading, and lifecycle management."""
+    """Plugin discovery, loading, and lifecycle management.
+
+    Manages plugin lifecycle including discovery from directories, loading,
+    dependency resolution, and event-based activation/deactivation for the
+    Intellicrack framework.
+    """
 
     def __init__(self, config: dict[str, Any], event_bus: EventBus, logger: logging.Logger) -> None:
-        """Initialize plugin manager with configuration, event bus, and logger."""
+        """Initialize plugin manager with configuration, event bus, and logger.
+
+        Sets up plugin discovery paths, loading configuration, and initializes
+        storage for loaded plugins, metadata, and dependency tracking.
+
+        Args:
+            config: Configuration dict with directories, enabled, disabled lists.
+            event_bus: EventBus instance for plugin lifecycle events.
+            logger: Logger instance for plugin management operations.
+        """
         self.config = config
         self.event_bus = event_bus
         self.logger = logger
@@ -1828,7 +2642,14 @@ class PluginManager:
         }
 
     async def discover_plugins(self) -> list[str]:
-        """Discover available plugins."""
+        """Discover available plugins from configured directories.
+
+        Scans plugin directories for Ghidra scripts, Frida scripts, and Python
+        modules, extracting metadata from each discovered plugin.
+
+        Returns:
+            list[str]: List of discovered plugin names in the format 'type_name'.
+        """
         discovered = []
 
         for directory in self.discovery_paths:
@@ -1849,7 +2670,16 @@ class PluginManager:
         return discovered
 
     async def _discover_ghidra_scripts(self, directory: Path) -> list[str]:
-        """Discover Ghidra script plugins."""
+        """Discover Ghidra script plugins in directory.
+
+        Scans directory for .java files containing Ghidra script metadata.
+
+        Args:
+            directory: Directory path to scan for Ghidra scripts.
+
+        Returns:
+            list[str]: List of discovered Ghidra plugin names in 'ghidra_*' format.
+        """
         scripts = []
 
         for script_file in directory.glob("*.java"):
@@ -1869,7 +2699,16 @@ class PluginManager:
         return scripts
 
     async def _discover_frida_scripts(self, directory: Path) -> list[str]:
-        """Discover Frida script plugins."""
+        """Discover Frida script plugins in directory.
+
+        Scans directory for .js files containing Frida script metadata.
+
+        Args:
+            directory: Directory path to scan for Frida scripts.
+
+        Returns:
+            list[str]: List of discovered Frida plugin names in 'frida_*' format.
+        """
         scripts = []
 
         for script_file in directory.glob("*.js"):
@@ -1889,7 +2728,17 @@ class PluginManager:
         return scripts
 
     async def _discover_python_modules(self, directory: Path) -> list[str]:
-        """Discover Python module plugins."""
+        """Discover Python module plugins in directory.
+
+        Scans directory for .py files containing Python module plugins, excluding
+        __init__.py and private modules.
+
+        Args:
+            directory: Directory path to scan for Python modules.
+
+        Returns:
+            list[str]: List of discovered Python plugin names in 'python_*' format.
+        """
         modules = []
 
         for module_file in directory.glob("*.py"):
@@ -1913,7 +2762,17 @@ class PluginManager:
         return modules
 
     async def _extract_ghidra_metadata(self, script_file: Path) -> PluginMetadata | None:
-        """Extract metadata from Ghidra script."""
+        """Extract metadata from Ghidra script.
+
+        Parses Ghidra script annotations to extract name, version, description,
+        author, and capabilities for plugin registration.
+
+        Args:
+            script_file: Path to the Ghidra script file.
+
+        Returns:
+            PluginMetadata | None: Extracted metadata or None if parsing fails.
+        """
         try:
             content = await asyncio.to_thread(lambda: script_file.read_text(encoding="utf-8"))
 
@@ -1955,7 +2814,17 @@ class PluginManager:
             return None
 
     async def _extract_frida_metadata(self, script_file: Path) -> PluginMetadata | None:
-        """Extract metadata from Frida script."""
+        """Extract metadata from Frida script.
+
+        Parses Frida script comments to extract name, version, description,
+        author, and capabilities for plugin registration.
+
+        Args:
+            script_file: Path to the Frida script file.
+
+        Returns:
+            PluginMetadata | None: Extracted metadata or None if parsing fails.
+        """
         try:
             content = await asyncio.to_thread(lambda: script_file.read_text(encoding="utf-8"))
 
@@ -1998,7 +2867,17 @@ class PluginManager:
             return None
 
     async def _extract_python_metadata(self, module_file: Path) -> PluginMetadata | None:
-        """Extract metadata from Python module."""
+        """Extract metadata from Python module.
+
+        Parses Python module docstring and source code to extract metadata,
+        auto-detecting capabilities from imported modules and content keywords.
+
+        Args:
+            module_file: Path to the Python module file.
+
+        Returns:
+            PluginMetadata | None: Extracted metadata or None if parsing fails.
+        """
         try:
             content = await asyncio.to_thread(lambda: module_file.read_text(encoding="utf-8"))
 
@@ -2048,7 +2927,17 @@ class PluginManager:
             return None
 
     async def load_plugin(self, plugin_name: str) -> bool:
-        """Load a specific plugin."""
+        """Load a specific plugin by name.
+
+        Creates plugin instance, initializes with configuration, sets up logger
+        and event bus, and registers the plugin for operation execution.
+
+        Args:
+            plugin_name: Name of the plugin to load.
+
+        Returns:
+            bool: True if plugin loaded successfully, False otherwise.
+        """
         try:
             if plugin_name in self.plugins:
                 self.logger.debug("Plugin %s already loaded", plugin_name)
@@ -2104,7 +2993,18 @@ class PluginManager:
             return False
 
     async def _create_plugin_instance(self, plugin_name: str, metadata: PluginMetadata) -> AbstractPlugin | None:
-        """Create plugin instance based on type."""
+        """Create plugin instance based on component type.
+
+        Locates plugin file from discovery paths and instantiates the appropriate
+        plugin class (GhidraPlugin, FridaPlugin, or PythonPlugin).
+
+        Args:
+            plugin_name: Name of the plugin to instantiate.
+            metadata: Plugin metadata containing type and configuration.
+
+        Returns:
+            AbstractPlugin | None: Plugin instance or None if file not found or type unsupported.
+        """
         try:
             # Find plugin file
             plugin_file = None
@@ -2143,7 +3043,14 @@ class PluginManager:
             return None
 
     async def load_all_plugins(self) -> int:
-        """Load all discovered plugins."""
+        """Load all discovered plugins with dependency ordering.
+
+        Discovers all plugins if auto_discover is enabled, then loads each plugin
+        in dependency-order to ensure dependencies are loaded first.
+
+        Returns:
+            int: Number of plugins successfully loaded.
+        """
         if self.auto_discover:
             await self.discover_plugins()
 
@@ -2160,13 +3067,29 @@ class PluginManager:
         return loaded_count
 
     def _calculate_load_order(self) -> list[str]:
-        """Calculate plugin load order based on dependencies."""
+        """Calculate plugin load order based on dependencies.
+
+        Performs topological sort using depth-first search to determine the
+        correct loading order that respects all plugin dependencies and
+        detects circular dependencies.
+
+        Returns:
+            list[str]: Plugin names in dependency-respecting load order.
+        """
         # Simple topological sort for dependency resolution
         visited = set()
         temp_visited = set()
         result = []
 
         def visit(plugin_name: str) -> None:
+            """Recursively visit plugin dependencies for topological sort.
+
+            Args:
+                plugin_name: Name of the plugin to visit in the dependency graph.
+
+            Returns:
+                None: Updates result list as side effect.
+            """
             if plugin_name in temp_visited:
                 # Circular dependency detected
                 self.logger.warning("Circular dependency detected involving: %s", plugin_name)
@@ -2195,7 +3118,16 @@ class PluginManager:
         return result
 
     async def activate_plugin(self, plugin_name: str) -> bool:
-        """Activate a loaded plugin."""
+        """Activate a loaded plugin.
+
+        Calls the plugin's activate method and updates plugin status and event bus.
+
+        Args:
+            plugin_name: Name of the plugin to activate.
+
+        Returns:
+            bool: True if activation succeeded, False otherwise.
+        """
         if plugin_name not in self.plugins:
             self.logger.error("Plugin %s not loaded", plugin_name)
             return False
@@ -2225,7 +3157,17 @@ class PluginManager:
             return False
 
     async def deactivate_plugin(self, plugin_name: str) -> bool:
-        """Deactivate an active plugin."""
+        """Deactivate an active plugin.
+
+        Calls the plugin's deactivate method, updates statistics, and emits
+        deactivation event through event bus.
+
+        Args:
+            plugin_name: Name of the plugin to deactivate.
+
+        Returns:
+            bool: True if deactivation succeeded, False otherwise.
+        """
         if plugin_name not in self.plugins:
             self.logger.error("Plugin %s not loaded", plugin_name)
             return False
@@ -2257,7 +3199,17 @@ class PluginManager:
             return False
 
     async def unload_plugin(self, plugin_name: str) -> bool:
-        """Unload a plugin."""
+        """Unload a plugin.
+
+        Deactivates plugin if active, calls cleanup, removes from registry,
+        and emits unload event.
+
+        Args:
+            plugin_name: Name of the plugin to unload.
+
+        Returns:
+            bool: True if unload succeeded or plugin not loaded, False on error.
+        """
         if plugin_name not in self.plugins:
             return True
 
@@ -2292,11 +3244,27 @@ class PluginManager:
             return False
 
     def get_plugin(self, plugin_name: str) -> AbstractPlugin | None:
-        """Get plugin instance."""
+        """Get plugin instance by name.
+
+        Args:
+            plugin_name: Name of the plugin to retrieve.
+
+        Returns:
+            AbstractPlugin | None: Plugin instance or None if not loaded.
+        """
         return self.plugins.get(plugin_name)
 
     def get_plugins_by_capability(self, capability: str) -> list[AbstractPlugin]:
-        """Get plugins with specific capability."""
+        """Get plugins with specific capability.
+
+        Filters loaded plugins by a specific capability (e.g., 'static_analysis').
+
+        Args:
+            capability: Capability identifier to filter plugins by.
+
+        Returns:
+            list[AbstractPlugin]: List of plugins with the specified capability.
+        """
         matching_plugins = []
 
         for plugin_name, plugin in self.plugins.items():
@@ -2308,7 +3276,16 @@ class PluginManager:
         return matching_plugins
 
     def get_plugins_by_type(self, component_type: ComponentType) -> list[AbstractPlugin]:
-        """Get plugins of specific type."""
+        """Get plugins of specific type.
+
+        Filters loaded plugins by component type (e.g., GHIDRA_SCRIPT, FRIDA_SCRIPT).
+
+        Args:
+            component_type: ComponentType to filter plugins by.
+
+        Returns:
+            list[AbstractPlugin]: List of plugins of the specified type.
+        """
         matching_plugins = []
 
         for plugin_name, plugin in self.plugins.items():
@@ -2320,7 +3297,14 @@ class PluginManager:
         return matching_plugins
 
     def get_plugin_stats(self) -> dict[str, Any]:
-        """Get plugin statistics."""
+        """Get plugin statistics.
+
+        Collects and returns statistics about loaded, active, and discovered plugins.
+
+        Returns:
+            dict[str, Any]: Dictionary with discovered count, loaded count, active plugins
+                list, failed count, and type breakdown (ghidra, frida, python).
+        """
         active_plugins = [name for name, plugin in self.plugins.items() if plugin.status == PluginStatus.ACTIVE]
 
         return {
@@ -2340,7 +3324,16 @@ class WorkflowEngine:
     """Configurable workflow execution engine."""
 
     def __init__(self, plugin_manager: PluginManager, event_bus: EventBus, logger: logging.Logger) -> None:
-        """Initialize workflow engine with plugin manager, event bus, and logger."""
+        """Initialize workflow engine with plugin manager, event bus, and logger.
+
+        Sets up workflow execution engine with default workflow templates and
+        configuration for managing multiple concurrent workflow executions.
+
+        Args:
+            plugin_manager: PluginManager instance for accessing plugins.
+            event_bus: EventBus instance for publishing workflow events.
+            logger: Logger instance for workflow diagnostics.
+        """
         self.plugin_manager = plugin_manager
         self.event_bus = event_bus
         self.logger = logger
@@ -2356,7 +3349,14 @@ class WorkflowEngine:
         self._load_default_workflows()
 
     def _load_default_workflows(self) -> None:
-        """Load default workflow templates."""
+        """Load default workflow templates.
+
+        Initializes built-in workflow definitions for binary analysis and license
+        bypass operations that can be executed by the workflow engine.
+
+        Returns:
+            None: Registers default workflow definitions.
+        """
         # Binary Analysis Workflow
         self.register_workflow(
             WorkflowDefinition(
@@ -2444,12 +3444,36 @@ class WorkflowEngine:
         )
 
     def register_workflow(self, workflow: WorkflowDefinition) -> None:
-        """Register a workflow definition."""
+        """Register a workflow definition.
+
+        Adds a workflow definition to the engine's available workflows for execution.
+
+        Args:
+            workflow: WorkflowDefinition object to register.
+
+        Returns:
+            None: Stores workflow in workflows dictionary and logs registration.
+        """
         self.workflows[workflow.workflow_id] = workflow
         self.logger.info("Registered workflow: %s", workflow.name)
 
     async def execute_workflow(self, workflow_id: str, parameters: dict[str, Any]) -> str:
-        """Execute a workflow."""
+        """Execute a workflow.
+
+        Queues and starts async execution of a registered workflow with provided
+        parameters, returning an execution ID for monitoring progress.
+
+        Args:
+            workflow_id: ID of the workflow to execute.
+            parameters: Dictionary of parameters to pass to workflow steps.
+
+        Returns:
+            str: Unique execution ID for tracking workflow progress.
+
+        Raises:
+            ValueError: If workflow ID not found.
+            Exception: If maximum concurrent workflows limit exceeded.
+        """
         if workflow_id not in self.workflows:
             raise ValueError(f"Workflow not found: {workflow_id}")
 
@@ -2491,7 +3515,14 @@ class WorkflowEngine:
         return execution_id
 
     async def _execute_workflow_async(self, context: dict[str, Any]) -> None:
-        """Execute workflow asynchronously."""
+        """Execute workflow asynchronously.
+
+        Main async execution handler that orchestrates sequential or parallel
+        workflow execution, emits events, handles errors, and logs results.
+
+        Args:
+            context: Execution context dictionary with workflow and parameters.
+        """
         execution_id = context["execution_id"]
         workflow = context["workflow"]
 
@@ -2562,7 +3593,17 @@ class WorkflowEngine:
                 del self.running_workflows[execution_id]
 
     async def _execute_sequential_workflow(self, context: dict[str, Any]) -> None:
-        """Execute workflow steps sequentially."""
+        """Execute workflow steps sequentially.
+
+        Executes workflow steps one at a time in order, respecting dependencies
+        and conditions, with error handling based on workflow configuration.
+
+        Args:
+            context: Execution context with workflow definition and results.
+
+        Raises:
+            Exception: If dependencies not met for a step with stop error handling.
+        """
         workflow = context["workflow"]
         total_steps = len(workflow.steps)
 
@@ -2603,7 +3644,17 @@ class WorkflowEngine:
             )
 
     async def _execute_parallel_workflow(self, context: dict[str, Any]) -> None:
-        """Execute workflow steps in parallel where possible."""
+        """Execute workflow steps in parallel where possible.
+
+        Executes workflow steps concurrently based on dependency graph, respecting
+        dependencies while maximizing parallelism for independent steps.
+
+        Args:
+            context: Execution context with workflow definition and tracking data.
+
+        Raises:
+            Exception: If a step fails with stop error handling configured.
+        """
         workflow = context["workflow"]
 
         # Build dependency graph
@@ -2665,15 +3716,46 @@ class WorkflowEngine:
                 task.cancel()
 
     def _build_dependency_graph(self, steps: list[WorkflowStep]) -> dict[str, list[str]]:
-        """Build dependency graph for parallel execution."""
+        """Build dependency graph for parallel execution.
+
+        Constructs a dictionary mapping step IDs to their dependency lists for
+        parallelization analysis.
+
+        Args:
+            steps: List of workflow steps to analyze.
+
+        Returns:
+            dict[str, list[str]]: Mapping of step_id to list of dependency step_ids.
+        """
         return {step.step_id: step.dependencies.copy() for step in steps}
 
     def _check_dependencies(self, step: WorkflowStep, context: dict[str, Any]) -> bool:
-        """Check if step dependencies are satisfied."""
+        """Check if step dependencies are satisfied.
+
+        Verifies that all dependencies for a workflow step have completed execution.
+
+        Args:
+            step: WorkflowStep to check dependencies for.
+            context: Execution context with completed steps list.
+
+        Returns:
+            bool: True if all dependencies completed, False otherwise.
+        """
         return all(dep in context["completed_steps"] for dep in step.dependencies)
 
     def _evaluate_condition(self, condition: str, context: dict[str, Any]) -> bool:
-        """Evaluate step execution condition."""
+        """Evaluate step execution condition.
+
+        Evaluates a conditional expression using step results and parameters to
+        determine if a step should execute. Supports dot notation for property access.
+
+        Args:
+            condition: Condition expression string (e.g., 'step_id.property').
+            context: Execution context with step results and parameters.
+
+        Returns:
+            bool: True if condition evaluates to true, False otherwise.
+        """
         try:
             # Create safe evaluation context
             eval_context = {
@@ -2701,7 +3783,18 @@ class WorkflowEngine:
             return False
 
     async def _execute_step(self, step: WorkflowStep, context: dict[str, Any]) -> None:
-        """Execute individual workflow step."""
+        """Execute individual workflow step.
+
+        Executes a single workflow step using the specified plugin operation with
+        timeout, retry logic, and result storage. Handles errors based on retry config.
+
+        Args:
+            step: WorkflowStep to execute.
+            context: Execution context for storing results and handling errors.
+
+        Raises:
+            Exception: If step execution fails or exceeds timeout after max retries.
+        """
         start_time = datetime.now(UTC)
 
         try:
@@ -2748,7 +3841,17 @@ class WorkflowEngine:
             await self._execute_step(step, context)
 
     def get_workflow_status(self, execution_id: str) -> dict[str, Any] | None:
-        """Get workflow execution status."""
+        """Get workflow execution status.
+
+        Retrieves current or historical status of a workflow execution including
+        progress, completed steps, errors, and timing information.
+
+        Args:
+            execution_id: Unique execution ID to retrieve status for.
+
+        Returns:
+            dict[str, Any] | None: Status dictionary or None if execution not found.
+        """
         if execution_id in self.running_workflows:
             context = self.running_workflows[execution_id]
             return {
@@ -2783,7 +3886,16 @@ class WorkflowEngine:
         )
 
     def cancel_workflow(self, execution_id: str) -> bool:
-        """Cancel running workflow."""
+        """Cancel running workflow.
+
+        Marks a running workflow execution for cancellation and updates its status.
+
+        Args:
+            execution_id: Execution ID of the workflow to cancel.
+
+        Returns:
+            bool: True if workflow was cancelled, False if not running.
+        """
         if execution_id in self.running_workflows:
             context = self.running_workflows[execution_id]
             context["status"] = WorkflowStatus.CANCELLED
@@ -2795,7 +3907,14 @@ class WorkflowEngine:
         return False
 
     def get_available_workflows(self) -> list[dict[str, Any]]:
-        """Get list of available workflows."""
+        """Get list of available workflows.
+
+        Returns metadata for all registered workflows including name, description,
+        step count, and execution mode.
+
+        Returns:
+            list[dict[str, Any]]: List of workflow metadata dictionaries.
+        """
         return [
             {
                 "workflow_id": workflow.workflow_id,
@@ -2820,7 +3939,18 @@ class AnalysisCoordinator:
         event_bus: EventBus,
         logger: logging.Logger,
     ) -> None:
-        """Initialize analysis coordinator with plugin manager, workflow engine, event bus, and logger."""
+        """Initialize analysis coordinator with plugin manager, workflow engine, event bus, and logger.
+
+        Sets up analysis coordinator that orchestrates binary analysis workflows,
+        manages analysis queue, and subscribes to relevant events for integration
+        with the plugin and workflow systems.
+
+        Args:
+            plugin_manager: PluginManager instance for accessing analysis plugins.
+            workflow_engine: WorkflowEngine instance for executing analysis workflows.
+            event_bus: EventBus instance for event-driven coordination.
+            logger: Logger instance for analysis diagnostics.
+        """
         self.plugin_manager = plugin_manager
         self.workflow_engine = workflow_engine
         self.event_bus = event_bus
@@ -2856,7 +3986,11 @@ class AnalysisCoordinator:
         self.event_bus.subscribe("workflow_failed", self._handle_workflow_failed)
 
     async def start(self) -> None:
-        """Start analysis coordinator."""
+        """Start analysis coordinator.
+
+        Starts the analysis coordinator's background coordination loop and makes
+        it ready to process analysis requests and workflow events.
+        """
         if self.running:
             return
 
@@ -2866,7 +4000,11 @@ class AnalysisCoordinator:
         self.logger.info("Analysis coordinator started")
 
     async def stop(self) -> None:
-        """Stop analysis coordinator."""
+        """Stop analysis coordinator.
+
+        Stops the analysis coordinator's background loop and cleanly shuts down
+        any pending analysis operations.
+        """
         if not self.running:
             return
 
@@ -2887,7 +4025,22 @@ class AnalysisCoordinator:
         analysis_type: str = "deep_analysis",
         parameters: dict[str, Any] | None = None,
     ) -> str:
-        """Analyze binary file."""
+        """Analyze binary file.
+
+        Queues a binary analysis request with specified analysis type and parameters,
+        extracts file information, and returns unique analysis ID for tracking.
+
+        Args:
+            binary_path: Path to the binary file to analyze.
+            analysis_type: Type of analysis ('quick_scan', 'deep_analysis', 'license_bypass').
+            parameters: Optional dictionary of additional analysis parameters.
+
+        Returns:
+            str: Unique analysis ID for tracking analysis progress.
+
+        Raises:
+            ValueError: If binary file not found or analysis type unknown.
+        """
         if not Path(binary_path).exists():
             raise ValueError(f"Binary file not found: {binary_path}")
 
@@ -2926,7 +4079,11 @@ class AnalysisCoordinator:
         return analysis_id
 
     async def _coordination_loop(self) -> None:
-        """Run main coordination loop."""
+        """Run main coordination loop.
+
+        Main background loop that continuously processes analysis requests from
+        the queue and delegates them to the workflow engine with error handling.
+        """
         while self.running:
             try:
                 # Process analysis queue
@@ -2944,7 +4101,14 @@ class AnalysisCoordinator:
                 self.logger.exception("Error in coordination loop: %s", e)
 
     async def _start_analysis(self, analysis_context: dict[str, Any]) -> None:
-        """Start individual analysis."""
+        """Start individual analysis.
+
+        Initiates workflow execution for a queued analysis, preparing workflow
+        parameters, starting the workflow, and emitting status events.
+
+        Args:
+            analysis_context: Analysis context dictionary with binary path and parameters.
+        """
         analysis_id = analysis_context["analysis_id"]
 
         try:
@@ -2999,7 +4163,17 @@ class AnalysisCoordinator:
             )
 
     async def _extract_file_info(self, file_path: str) -> dict[str, Any]:
-        """Extract basic file information."""
+        """Extract basic file information.
+
+        Gathers file metadata including size, modification time, file type, and
+        cryptographic hashes (for files under 100MB).
+
+        Args:
+            file_path: Path to the file to analyze.
+
+        Returns:
+            dict[str, Any]: Dictionary with file name, size, hashes, type, and timestamps.
+        """
         try:
             file_path_obj = Path(file_path)
             stat = file_path_obj.stat()
@@ -3019,6 +4193,14 @@ class AnalysisCoordinator:
                 import hashlib
 
                 def _calc_hashes() -> tuple[str, str]:
+                    """Calculate SHA256 hashes of the file content.
+
+                    Reads the file content and computes SHA256 hash for integrity
+                    verification and deduplication purposes.
+
+                    Returns:
+                        tuple[str, str]: Pair of SHA256 hex digests for the file.
+                    """
                     with open(file_path, "rb") as f:
                         content = f.read()
                         hash_val = hashlib.sha256(content).hexdigest()
@@ -3038,7 +4220,16 @@ class AnalysisCoordinator:
             return {"name": Path(file_path).name, "error": str(e)}
 
     def _detect_file_type(self, file_path: str) -> str:
-        """Detect file type."""
+        """Detect file type.
+
+        Identifies binary file format by magic number (PE, ELF, Mach-O, etc.).
+
+        Args:
+            file_path: Path to the binary file to analyze.
+
+        Returns:
+            str: File type identifier ('PE', 'ELF', 'Mach-O', or 'Unknown').
+        """
         try:
             with open(file_path, "rb") as f:
                 magic = f.read(4)
@@ -3063,7 +4254,14 @@ class AnalysisCoordinator:
             return "Unknown"
 
     async def _handle_analysis_request(self, event: Event) -> None:
-        """Handle analysis request event."""
+        """Handle analysis request event.
+
+        Processes incoming analysis requests from event bus, queues the analysis,
+        and sends response event with the analysis ID.
+
+        Args:
+            event: Event object containing analysis_request data with binary_path and type.
+        """
         try:
             data = event.data
             binary_path = data.get("binary_path")
@@ -3087,7 +4285,14 @@ class AnalysisCoordinator:
             self.logger.exception("Error handling analysis request: %s", e)
 
     async def _handle_workflow_completed(self, event: Event) -> None:
-        """Handle workflow completion."""
+        """Handle workflow completion.
+
+        Processes workflow completion events, updates analysis status, stores results,
+        and emits analysis completion event through event bus.
+
+        Args:
+            event: Event object containing execution_id and workflow results.
+        """
         execution_id = event.data.get("execution_id")
         results = event.data.get("results", {})
 
@@ -3116,7 +4321,14 @@ class AnalysisCoordinator:
                 break
 
     async def _handle_workflow_failed(self, event: Event) -> None:
-        """Handle workflow failure."""
+        """Handle workflow failure.
+
+        Processes workflow failure events, updates analysis status to failed,
+        stores error information, and emits analysis failure event.
+
+        Args:
+            event: Event object containing execution_id and error information.
+        """
         execution_id = event.data.get("execution_id")
         error = event.data.get("error")
 
@@ -3143,7 +4355,17 @@ class AnalysisCoordinator:
                 break
 
     def get_analysis_status(self, analysis_id: str) -> dict[str, Any] | None:
-        """Get analysis status."""
+        """Get analysis status.
+
+        Retrieves current status of an analysis execution including progress,
+        workflow status, results, and errors.
+
+        Args:
+            analysis_id: Unique analysis ID to retrieve status for.
+
+        Returns:
+            dict[str, Any] | None: Status dictionary or None if not found.
+        """
         if analysis_id in self.active_analyses:
             context = self.active_analyses[analysis_id]
             return {
@@ -3162,7 +4384,14 @@ class AnalysisCoordinator:
         return None
 
     def get_active_analyses(self) -> list[dict[str, Any]]:
-        """Get all active analyses."""
+        """Get all active analyses.
+
+        Returns status information for all currently active or recently completed
+        analyses.
+
+        Returns:
+            list[dict[str, Any]]: List of analysis status dictionaries.
+        """
         return [status for analysis_id in self.active_analyses if (status := self.get_analysis_status(analysis_id)) is not None]
 
 
@@ -3171,7 +4400,15 @@ class ResourceManager:
     """System resource monitoring and management."""
 
     def __init__(self, config: dict[str, Any], logger: logging.Logger) -> None:
-        """Initialize resource manager with configuration and logger."""
+        """Initialize resource manager with configuration and logger.
+
+        Sets up resource monitoring with process and thread pools, resource tracking,
+        and automatic cleanup configuration for managing system resources.
+
+        Args:
+            config: Configuration dictionary with resource limits and pool settings.
+            logger: Logger instance for resource diagnostics.
+        """
         self.config = config
         self.logger = logger
 
@@ -3202,7 +4439,14 @@ class ResourceManager:
         self.tracked_processes: dict[int, psutil.Process] = {}
 
     async def start(self) -> None:
-        """Start resource manager."""
+        """Start resource manager.
+
+        Initializes process and thread pools and starts background resource
+        monitoring loop if enabled.
+
+        Returns:
+            None: Initializes pools and starts monitoring task.
+        """
         if self.running:
             return
 
@@ -3219,7 +4463,14 @@ class ResourceManager:
         self.logger.info("Resource manager started")
 
     async def stop(self) -> None:
-        """Stop resource manager."""
+        """Stop resource manager.
+
+        Cleanly shuts down process and thread pools, stops monitoring loop,
+        and cleans up tracked processes.
+
+        Returns:
+            None: Stops monitoring and shuts down executor pools.
+        """
         if not self.running:
             return
 
@@ -3246,7 +4497,14 @@ class ResourceManager:
         self.logger.info("Resource manager stopped")
 
     async def _monitoring_loop(self) -> None:
-        """Resource monitoring loop."""
+        """Resource monitoring loop.
+
+        Background loop that continuously monitors system resources, checks limits,
+        and performs automatic cleanup when enabled.
+
+        Returns:
+            None: Runs monitoring loop in background.
+        """
         while self.running:
             try:
                 await self._update_resource_stats()
@@ -3262,7 +4520,14 @@ class ResourceManager:
                 await asyncio.sleep(10)
 
     async def _update_resource_stats(self) -> None:
-        """Update resource statistics."""
+        """Update resource statistics.
+
+        Collects current CPU, memory, disk usage, and process/thread counts
+        and stores in resource_stats dictionary.
+
+        Returns:
+            None: Updates self.resource_stats with current metrics.
+        """
         try:
             # CPU usage
             self.resource_stats["cpu_usage"] = psutil.cpu_percent(interval=1)
@@ -3284,7 +4549,14 @@ class ResourceManager:
             self.logger.exception("Error updating resource stats: %s", e)
 
     async def _check_resource_limits(self) -> None:
-        """Check resource limits and warn if exceeded."""
+        """Check resource limits and warn if exceeded.
+
+        Compares current CPU and memory usage against configured limits and
+        logs warnings if thresholds are exceeded.
+
+        Returns:
+            None: Logs warnings if resource limits exceeded.
+        """
         cpu_usage = self.resource_stats["cpu_usage"]
         memory_usage = self.resource_stats["memory_usage"]
 
@@ -3295,7 +4567,14 @@ class ResourceManager:
             self.logger.warning("High memory usage: %.1f%%", memory_usage)
 
     async def _auto_cleanup(self) -> None:
-        """Automatic cleanup of resources."""
+        """Automatic cleanup of resources.
+
+        Removes tracking for completed processes and performs garbage collection
+        if memory usage exceeds configured maximum.
+
+        Returns:
+            None: Cleans up tracked processes and performs garbage collection.
+        """
         try:
             # Clean up completed processes
             completed_pids = []
@@ -3320,7 +4599,21 @@ class ResourceManager:
             self.logger.exception("Error in auto cleanup: %s", e)
 
     async def execute_in_process(self, func: Callable[..., Any], *args: object, **kwargs: object) -> object:
-        """Execute function in process pool."""
+        """Execute function in process pool.
+
+        Submits a function to the process pool for parallel execution and awaits result.
+
+        Args:
+            func: Callable function to execute.
+            *args: Positional arguments to pass to function.
+            **kwargs: Keyword arguments to pass to function.
+
+        Returns:
+            object: Return value from the executed function.
+
+        Raises:
+            Exception: If process pool not initialized or execution fails.
+        """
         if not self.process_pool:
             raise Exception("Process pool not initialized")
 
@@ -3329,7 +4622,21 @@ class ResourceManager:
         return await loop.run_in_executor(None, future.result)
 
     async def execute_in_thread(self, func: Callable[..., Any], *args: object, **kwargs: object) -> object:
-        """Execute function in thread pool."""
+        """Execute function in thread pool.
+
+        Submits a function to the thread pool for concurrent execution and awaits result.
+
+        Args:
+            func: Callable function to execute.
+            *args: Positional arguments to pass to function.
+            **kwargs: Keyword arguments to pass to function.
+
+        Returns:
+            object: Return value from the executed function.
+
+        Raises:
+            Exception: If thread pool not initialized or execution fails.
+        """
         if not self.thread_pool:
             raise Exception("Thread pool not initialized")
 
@@ -3337,7 +4644,21 @@ class ResourceManager:
         return await loop.run_in_executor(self.thread_pool, func, *args, **kwargs)
 
     async def start_external_process(self, cmd: list[str], cwd: str | None = None) -> asyncio.subprocess.Process:
-        """Start external process with tracking."""
+        """Start external process with tracking.
+
+        Creates and tracks an external process, capturing its stdout/stderr and
+        registering it for resource monitoring and cleanup.
+
+        Args:
+            cmd: List of command and arguments to execute.
+            cwd: Optional working directory for process.
+
+        Returns:
+            asyncio.subprocess.Process: Process handle for interaction and monitoring.
+
+        Raises:
+            Exception: If process creation fails.
+        """
         try:
             process = await asyncio.create_subprocess_exec(
                 *cmd,
@@ -3363,7 +4684,18 @@ class ResourceManager:
             raise
 
     async def kill_process(self, pid: int, force: bool = False) -> None:
-        """Kill tracked process."""
+        """Kill tracked process.
+
+        Terminates a tracked process gracefully or forcefully, unregisters from
+        tracking, and handles cleanup.
+
+        Args:
+            pid: Process ID to kill.
+            force: If True, send SIGKILL; if False, send SIGTERM first.
+
+        Returns:
+            None: Terminates process and removes from tracking dictionary.
+        """
         if pid not in self.tracked_processes:
             return
         try:
@@ -3389,12 +4721,26 @@ class ResourceManager:
             self.logger.exception("Error killing process %d: %s", pid, e)
 
     async def _cleanup_processes(self) -> None:
-        """Cleanup all tracked processes."""
+        """Cleanup all tracked processes.
+
+        Forcefully terminates and unregisters all tracked processes for shutdown.
+
+        Returns:
+            None: Kills all tracked processes with force flag.
+        """
         for pid in list(self.tracked_processes):
             await self.kill_process(pid, force=True)
 
     def get_resource_stats(self) -> dict[str, Any]:
-        """Get current resource statistics."""
+        """Get current resource statistics.
+
+        Returns current resource usage metrics including CPU, memory, disk, and
+        process/thread counts.
+
+        Returns:
+            dict[str, Any]: Dictionary with CPU, memory, disk usage, process counts,
+                and pool configuration.
+        """
         return {
             **self.resource_stats,
             "tracked_processes": len(self.tracked_processes),
@@ -3409,7 +4755,16 @@ class IntellicrackcoreEngine:
     """Run Intellicrack core engine - orchestrates all components."""
 
     def __init__(self, config_path: str | None = None) -> None:
-        """Initialize Intellicrack core engine with optional configuration path."""
+        """Initialize Intellicrack core engine with optional configuration path.
+
+        Initializes all core components (configuration, logging, event bus, plugin
+        manager, workflow engine, analysis coordinator, and resource manager) in
+        proper dependency order.
+
+        Args:
+            config_path: Optional path to configuration JSON file. Defaults to
+                'config/intellicrack.json' if not provided.
+        """
         # Initialize configuration
         self.config_manager = ConfigurationManager(config_path)
         self.config = self.config_manager.config
@@ -3464,7 +4819,18 @@ class IntellicrackcoreEngine:
         self.logger.info("Intellicrack Core Engine initialized")
 
     async def start(self) -> None:
-        """Start the core engine."""
+        """Start the core engine.
+
+        Starts all core components (event bus, resource manager, plugin manager,
+        workflow engine, analysis coordinator) and makes the engine ready to
+        process analysis requests.
+
+        Returns:
+            None: Initializes all components and sets running flag.
+
+        Raises:
+            Exception: If any component fails to start.
+        """
         if self.running:
             self.logger.warning("Engine already running")
             return
@@ -3510,7 +4876,14 @@ class IntellicrackcoreEngine:
             raise
 
     async def stop(self) -> None:
-        """Stop the core engine."""
+        """Stop the core engine.
+
+        Gracefully shuts down all core components (analysis coordinator, plugins,
+        resource manager, event bus) and cleans up resources in reverse startup order.
+
+        Returns:
+            None: Stops all components and cleans up resources.
+        """
         if not self.running:
             return
 
@@ -3534,7 +4907,15 @@ class IntellicrackcoreEngine:
             self.logger.exception("Error stopping engine: %s", e)
 
     async def _activate_core_plugins(self) -> None:
-        """Activate core plugins required for operation."""
+        """Activate core plugins required for operation.
+
+        Activates essential plugins for framework functionality including neural
+        network detection, pattern tracking, license server emulation, and cloud
+        license interception.
+
+        Returns:
+            None: Activates registered core plugins.
+        """
         core_plugins = [
             "python_neural_network_detector",
             "python_pattern_evolution_tracker",
@@ -3547,7 +4928,14 @@ class IntellicrackcoreEngine:
                 await self.plugin_manager.activate_plugin(plugin_name)
 
     async def _deactivate_all_plugins(self) -> None:
-        """Deactivate all active plugins."""
+        """Deactivate all active plugins.
+
+        Deactivates and unloads all currently loaded plugins in a controlled manner,
+        ensuring proper cleanup and resource release before engine shutdown.
+
+        Returns:
+            None: Deactivates and unloads all active plugins.
+        """
         active_plugins = list(self.plugin_manager.plugins.keys())
 
         for plugin_name in active_plugins:
@@ -3557,7 +4945,23 @@ class IntellicrackcoreEngine:
     # API Interface Methods
 
     async def _handle_analyze_binary(self, request: dict[str, Any]) -> dict[str, Any]:
-        """Handle binary analysis request."""
+        """Handle binary analysis API request.
+
+        Processes an API request to analyze a binary file using the analysis
+        coordinator, queuing the analysis with specified type and parameters.
+
+        Args:
+            request: Request dict containing 'binary_path' (required), 'analysis_type'
+                (optional, default 'deep_analysis'), and 'parameters' (optional analysis
+                parameters dictionary).
+
+        Returns:
+            dict[str, Any]: Response dict with analysis_id, status ('queued'),
+                and success message.
+
+        Raises:
+            ValueError: If binary_path is not specified in the request.
+        """
         binary_path = request.get("binary_path")
         analysis_type = request.get("analysis_type", "deep_analysis")
         parameters = request.get("parameters", {})
@@ -3578,7 +4982,21 @@ class IntellicrackcoreEngine:
         }
 
     async def _handle_get_analysis_status(self, request: dict[str, Any]) -> dict[str, Any]:
-        """Handle get analysis status request."""
+        """Handle get analysis status API request.
+
+        Retrieves the current status of a queued or running binary analysis.
+
+        Args:
+            request: Request dict containing 'analysis_id' (required) identifying
+                the analysis to retrieve status for.
+
+        Returns:
+            dict[str, Any]: Status dict with analysis progress, results, and state
+                from the analysis coordinator.
+
+        Raises:
+            ValueError: If analysis_id is not specified or analysis not found.
+        """
         analysis_id = request.get("analysis_id")
 
         if not analysis_id:
@@ -3590,7 +5008,19 @@ class IntellicrackcoreEngine:
             raise ValueError(f"Analysis not found: {analysis_id}")
 
     async def _handle_list_plugins(self, request: dict[str, Any]) -> dict[str, Any]:
-        """Handle list plugins request."""
+        """Handle list plugins API request.
+
+        Lists all loaded plugins with metadata, optionally filtering by component
+        type or capability.
+
+        Args:
+            request: Request dict with optional 'type' (component type to filter by)
+                and 'capability' (capability to filter by) fields.
+
+        Returns:
+            dict[str, Any]: Dict with 'plugins' list containing plugin dicts with
+                name, status, metadata, and supported operations for each plugin.
+        """
         plugin_type = request.get("type")
         capability = request.get("capability")
 
@@ -3620,7 +5050,21 @@ class IntellicrackcoreEngine:
         return {"plugins": plugins}
 
     async def _handle_get_plugin_status(self, request: dict[str, Any]) -> dict[str, Any]:
-        """Handle get plugin status request."""
+        """Handle get plugin status API request.
+
+        Retrieves detailed status information for a specific loaded plugin.
+
+        Args:
+            request: Request dict containing 'plugin_name' (required) identifying
+                the plugin to retrieve status for.
+
+        Returns:
+            dict[str, Any]: Plugin status dict with name, version, status, error info,
+                performance metrics, and configuration from the plugin manager.
+
+        Raises:
+            ValueError: If plugin_name not specified or plugin not found.
+        """
         plugin_name = request.get("plugin_name")
 
         if not plugin_name:
@@ -3632,7 +5076,22 @@ class IntellicrackcoreEngine:
             raise ValueError(f"Plugin not found: {plugin_name}")
 
     async def _handle_execute_workflow(self, request: dict[str, Any]) -> dict[str, Any]:
-        """Handle execute workflow request."""
+        """Handle execute workflow API request.
+
+        Queues and starts async execution of a registered workflow with provided
+        parameters.
+
+        Args:
+            request: Request dict containing 'workflow_id' (required) and optional
+                'parameters' dict with workflow step parameters.
+
+        Returns:
+            dict[str, Any]: Dict with execution_id, status ('started'),
+                and success message for tracking workflow execution.
+
+        Raises:
+            ValueError: If workflow_id not specified or workflow not found.
+        """
         workflow_id = request.get("workflow_id")
         parameters = request.get("parameters", {})
 
@@ -3648,7 +5107,21 @@ class IntellicrackcoreEngine:
         }
 
     async def _handle_get_workflow_status(self, request: dict[str, Any]) -> dict[str, Any]:
-        """Handle get workflow status request."""
+        """Handle get workflow status API request.
+
+        Retrieves the current status and progress of a running workflow execution.
+
+        Args:
+            request: Request dict containing 'execution_id' (required) identifying
+                the workflow execution to retrieve status for.
+
+        Returns:
+            dict[str, Any]: Status dict with execution progress, completed steps,
+                results, errors, and current state from the workflow engine.
+
+        Raises:
+            ValueError: If execution_id not specified or execution not found.
+        """
         execution_id = request.get("execution_id")
 
         if not execution_id:
@@ -3660,7 +5133,19 @@ class IntellicrackcoreEngine:
             raise ValueError(f"Workflow execution not found: {execution_id}")
 
     async def _handle_get_system_status(self, request: dict[str, Any]) -> dict[str, Any]:
-        """Handle get system status request."""
+        """Handle get system status API request.
+
+        Retrieves comprehensive system status including engine state, resource usage,
+        active analyses, running workflows, and component statistics.
+
+        Args:
+            request: Request dict (no parameters required for this request).
+
+        Returns:
+            dict[str, Any]: Status dict containing engine_status, startup_time, uptime,
+                plugin_stats, resource_stats, event_stats, active_analyses count,
+                and running_workflows count.
+        """
         return {
             "engine_status": "running" if self.running else "stopped",
             "startup_time": (self.startup_time.isoformat() if self.startup_time else None),
@@ -3673,7 +5158,23 @@ class IntellicrackcoreEngine:
         }
 
     async def process_api_request(self, method: str, request: dict[str, Any]) -> dict[str, Any]:
-        """Process API request."""
+        """Process an API request through the appropriate handler.
+
+        Routes incoming API requests to registered handler methods based on the
+        method name, with error handling and response formatting.
+
+        Args:
+            method: API method name (e.g., 'analyze_binary', 'list_plugins').
+            request: Request dict to pass to the handler method.
+
+        Returns:
+            dict[str, Any]: Response dict with 'success' (bool), 'result' (if successful),
+                'error' (if failed), and 'timestamp' in ISO format.
+
+        Raises:
+            Exception: If engine is not running.
+            ValueError: If method is unknown/not registered.
+        """
         if not self.running:
             raise Exception("Engine not running")
 
@@ -3711,8 +5212,7 @@ class IntellicrackcoreEngine:
                 'anti_debug', 'memory_patch', 'api_hook').
 
         Returns:
-            Complete Frida JavaScript code ready for injection.
-
+            str: Complete Frida JavaScript code ready for injection.
         """
         target_name = Path(target).name if target else "unknown"
         script_templates = {
@@ -3729,7 +5229,20 @@ class IntellicrackcoreEngine:
         return self._generate_generic_frida(target_name, script_type)
 
     def _generate_license_bypass_frida(self, target_name: str) -> str:
-        """Generate license bypass Frida script."""
+        """Generate license bypass Frida instrumentation script.
+
+        Creates a production-ready Frida script that hooks license validation
+        functions and registration checks, bypassing licensing protection
+        mechanisms in the target binary.
+
+        Args:
+            target_name: Name of the target binary for script generation.
+
+        Returns:
+            str: Complete Frida JavaScript source code implementing license bypass
+                including hooks for ValidateLicense, CheckRegistration, IsLicensed,
+                VerifySerial functions and hardware ID spoofing APIs.
+        """
         return f"""// Frida License Bypass Script for {target_name}
 // Generated by Intellicrack Core Engine
 
@@ -3813,7 +5326,20 @@ log('info', 'License bypass hooks installed');
 """
 
     def _generate_anti_debug_frida(self, target_name: str) -> str:
-        """Generate anti-debug bypass Frida script."""
+        """Generate anti-debug bypass Frida instrumentation script.
+
+        Creates a Frida script that bypasses anti-debugging mechanisms in the
+        target binary by hooking debugger detection APIs and returning false
+        values to disable anti-debug protections.
+
+        Args:
+            target_name: Name of the target binary for script generation.
+
+        Returns:
+            str: Complete Frida JavaScript source code bypassing IsDebuggerPresent,
+                CheckRemoteDebuggerPresent, NtQueryInformationProcess, and other
+                Windows debugger detection mechanisms.
+        """
         return f"""// Frida Anti-Debug Bypass Script for {target_name}
 // Generated by Intellicrack Core Engine
 
@@ -3879,7 +5405,19 @@ console.log('[*] Anti-debug bypass complete');
 """
 
     def _generate_memory_patch_frida(self, target_name: str) -> str:
-        """Generate memory patching Frida script."""
+        """Generate memory patching Frida instrumentation script.
+
+        Creates a Frida script that patches binary memory to modify code execution,
+        bypassing license checks by patching JMP/JNZ instructions and modifying
+        return values in license validation routines.
+
+        Args:
+            target_name: Name of the target binary for script generation.
+
+        Returns:
+            str: Complete Frida JavaScript source code for runtime code patching
+                and memory modification to bypass protection mechanisms.
+        """
         return f"""// Frida Memory Patch Script for {target_name}
 // Generated by Intellicrack Core Engine
 
@@ -3933,7 +5471,20 @@ listPatches();
 """
 
     def _generate_api_hook_frida(self, target_name: str) -> str:
-        """Generate API hooking Frida script."""
+        """Generate API hooking Frida instrumentation script.
+
+        Creates a Frida script that hooks Windows API functions used by licensing
+        systems including registry, file I/O, cryptography, and network APIs to
+        intercept and modify their behavior for license validation bypass.
+
+        Args:
+            target_name: Name of the target binary for script generation.
+
+        Returns:
+            str: Complete Frida JavaScript source code implementing hooks for
+                RegQueryValueExW, RegOpenKeyExW, CreateFileW, CryptDecrypt,
+                InternetOpenW, and other licensing-related APIs.
+        """
         return f"""// Frida API Hook Script for {target_name}
 // Generated by Intellicrack Core Engine
 
@@ -3992,7 +5543,20 @@ console.log(`[*] Hooked ${{hookedAPIs.length}} APIs`);
 """
 
     def _generate_trial_bypass_frida(self, target_name: str) -> str:
-        """Generate trial/time limitation bypass Frida script."""
+        """Generate trial period and time limitation bypass Frida script.
+
+        Creates a Frida script that bypasses time-based trial restrictions by
+        hooking system time APIs and returning spoofed dates/times that keep
+        the trial period valid indefinitely.
+
+        Args:
+            target_name: Name of the target binary for script generation.
+
+        Returns:
+            str: Complete Frida JavaScript source code intercepting GetSystemTime,
+                GetLocalTime, GetFileTime, time(), and QuerySystemTime APIs to
+                spoof trial expiration dates.
+        """
         return f"""// Frida Trial Bypass Script for {target_name}
 // Generated by Intellicrack Core Engine
 
@@ -4060,7 +5624,20 @@ console.log('[*] Trial bypass hooks installed');
 """
 
     def _generate_registration_bypass_frida(self, target_name: str) -> str:
-        """Generate registration bypass Frida script."""
+        """Generate registration/activation bypass Frida instrumentation script.
+
+        Creates a Frida script that bypasses product registration and activation
+        mechanisms by spoofing registration status checks and modifying license
+        file paths to return valid license data.
+
+        Args:
+            target_name: Name of the target binary for script generation.
+
+        Returns:
+            str: Complete Frida JavaScript source code bypassing license file checks,
+                registry registration lookups, and online activation verification
+                to present the application as properly licensed/registered.
+        """
         return f"""// Frida Registration Bypass Script for {target_name}
 // Generated by Intellicrack Core Engine
 
@@ -4132,7 +5709,19 @@ console.log('[*] Registration bypass active');
 """
 
     def _generate_generic_frida(self, target_name: str, script_type: str) -> str:
-        """Generate generic Frida script template."""
+        """Generate generic Frida instrumentation script template.
+
+        Creates a Frida script template for custom analysis and manipulation of
+        the target binary when a specific script type is not pre-defined.
+
+        Args:
+            target_name: Name of the target binary for script generation.
+            script_type: Custom script type/name for documentation in generated code.
+
+        Returns:
+            str: Complete Frida JavaScript source code with basic module enumeration,
+                function hooks, and logging infrastructure for custom scripting.
+        """
         return f"""// Frida Script for {target_name}
 // Type: {script_type}
 // Generated by Intellicrack Core Engine
@@ -4166,8 +5755,7 @@ console.log('[*] Ready for {script_type} operations');
                 'crypto_detection', 'string_extraction').
 
         Returns:
-            Complete Ghidra Python/Java script ready for execution.
-
+            str: Complete Ghidra Python/Java script ready for execution.
         """
         target_name = Path(target).name if target else "unknown"
         script_type_lower = script_type.lower().replace(" ", "_").replace("-", "_")
@@ -4185,7 +5773,18 @@ console.log('[*] Ready for {script_type} operations');
         return self._generate_generic_ghidra(target_name, script_type)
 
     def _generate_license_analysis_ghidra(self, target_name: str) -> str:
-        """Generate license analysis Ghidra script."""
+        """Generate license analysis Ghidra script.
+
+        Creates a Ghidra script for analyzing licensing protection mechanisms,
+        identifying license validation functions, and mapping license check routines.
+
+        Args:
+            target_name: Name of the target binary for script generation.
+
+        Returns:
+            str: Ghidra Python script code analyzing license protection and
+                validation mechanisms in the target binary.
+        """
         return f"""// Ghidra License Analysis Script for {target_name}
 // Generated by Intellicrack Core Engine
 // @category Intellicrack.LicenseAnalysis
@@ -4285,7 +5884,18 @@ public class LicenseAnalyzer extends GhidraScript {{
 """
 
     def _generate_crypto_detection_ghidra(self, target_name: str) -> str:
-        """Generate crypto detection Ghidra script."""
+        """Generate cryptographic algorithm detection Ghidra script.
+
+        Creates a Ghidra script for identifying and analyzing cryptographic
+        algorithms and key operations used in licensing protection mechanisms.
+
+        Args:
+            target_name: Name of the target binary for script generation.
+
+        Returns:
+            str: Ghidra Python script code detecting cryptographic patterns,
+                constants, and operations in the binary.
+        """
         return f"""// Ghidra Crypto Detection Script for {target_name}
 // Generated by Intellicrack Core Engine
 // @category Intellicrack.CryptoAnalysis
@@ -4352,7 +5962,18 @@ public class CryptoDetector extends GhidraScript {{
 """
 
     def _generate_string_extraction_ghidra(self, target_name: str) -> str:
-        """Generate string extraction Ghidra script."""
+        """Generate string extraction Ghidra script.
+
+        Creates a Ghidra script for extracting and analyzing strings from the binary,
+        identifying error messages, activation strings, and licensing-related text.
+
+        Args:
+            target_name: Name of the target binary for script generation.
+
+        Returns:
+            str: Ghidra Python script code extracting and categorizing all strings
+                in the binary for license protection analysis.
+        """
         return f"""// Ghidra String Extraction Script for {target_name}
 // Generated by Intellicrack Core Engine
 // @category Intellicrack.StringAnalysis
@@ -4416,7 +6037,19 @@ public class StringExtractor extends GhidraScript {{
 """
 
     def _generate_function_analysis_ghidra(self, target_name: str) -> str:
-        """Generate function analysis Ghidra script."""
+        """Generate function analysis Ghidra script.
+
+        Creates a Ghidra script for analyzing binary functions including calls,
+        cross-references, stack usage, and parameter analysis for licensing
+        protection function identification.
+
+        Args:
+            target_name: Name of the target binary for script generation.
+
+        Returns:
+            str: Ghidra Python script code analyzing functions, call chains,
+                and control flow related to license validation.
+        """
         return f"""// Ghidra Function Analysis Script for {target_name}
 // Generated by Intellicrack Core Engine
 // @category Intellicrack.FunctionAnalysis
@@ -4483,7 +6116,18 @@ public class FunctionAnalyzer extends GhidraScript {{
 """
 
     def _generate_protection_scan_ghidra(self, target_name: str) -> str:
-        """Generate protection scan Ghidra script."""
+        """Generate protection mechanism scanning Ghidra script.
+
+        Creates a Ghidra script for detecting and analyzing protection mechanisms
+        including packers, anti-debuggers, code obfuscation, and integrity checks.
+
+        Args:
+            target_name: Name of the target binary for script generation.
+
+        Returns:
+            str: Ghidra Python script code identifying protection mechanisms,
+                obfuscation patterns, and anti-analysis techniques.
+        """
         return f"""// Ghidra Protection Scanner Script for {target_name}
 // Generated by Intellicrack Core Engine
 // @category Intellicrack.ProtectionDetection
@@ -4552,7 +6196,19 @@ public class ProtectionScanner extends GhidraScript {{
 """
 
     def _generate_generic_ghidra(self, target_name: str, script_type: str) -> str:
-        """Generate generic Ghidra script template."""
+        """Generate generic Ghidra analysis script template.
+
+        Creates a Ghidra script template for custom binary analysis when a
+        specific script type is not pre-defined.
+
+        Args:
+            target_name: Name of the target binary for script generation.
+            script_type: Custom script type/name for documentation.
+
+        Returns:
+            str: Ghidra Python script code template with basic binary analysis
+                structure ready for extension.
+        """
         return f"""// Ghidra Analysis Script for {target_name}
 // Type: {script_type}
 // Generated by Intellicrack Core Engine
@@ -4596,8 +6252,7 @@ public class GenericAnalyzer extends GhidraScript {{
                 'function_analysis', 'patch_generation').
 
         Returns:
-            Complete Radare2 script ready for execution.
-
+            str: Complete Radare2 script ready for execution.
         """
         target_name = Path(target).name if target else "unknown"
         script_type_lower = script_type.lower().replace(" ", "_").replace("-", "_")
@@ -4615,7 +6270,18 @@ public class GenericAnalyzer extends GhidraScript {{
         return self._generate_generic_r2(target_name, script_type)
 
     def _generate_license_scan_r2(self, target_name: str) -> str:
-        """Generate license scanning R2 script."""
+        """Generate license scanning Radare2 script.
+
+        Creates a Radare2 script for automated scanning of license validation
+        functions, registry checks, and licensing-related strings in the binary.
+
+        Args:
+            target_name: Name of the target binary for script generation.
+
+        Returns:
+            str: Radare2 script source code for analyzing licensing protection
+                mechanisms and identifying license check functions.
+        """
         return f"""# Radare2 License Scan Script for {target_name}
 # Generated by Intellicrack Core Engine
 
@@ -4654,7 +6320,19 @@ echo "[*] License scan complete"
 """
 
     def _generate_function_analysis_r2(self, target_name: str) -> str:
-        """Generate function analysis R2 script."""
+        """Generate function analysis Radare2 script.
+
+        Creates a Radare2 script for analyzing functions, including listing
+        functions, analyzing control flow, and identifying function relationships
+        relevant to licensing protection.
+
+        Args:
+            target_name: Name of the target binary for script generation.
+
+        Returns:
+            str: Radare2 script source code analyzing function structures,
+                calls, and cross-references in the binary.
+        """
         return f"""# Radare2 Function Analysis Script for {target_name}
 # Generated by Intellicrack Core Engine
 
@@ -4685,7 +6363,18 @@ echo "[*] Function analysis complete"
 """
 
     def _generate_patch_generation_r2(self, target_name: str) -> str:
-        """Generate patch generation R2 script."""
+        """Generate patch generation Radare2 script.
+
+        Creates a Radare2 script for generating binary patches to bypass license
+        checks by modifying conditional jumps, return values, and validation calls.
+
+        Args:
+            target_name: Name of the target binary for script generation.
+
+        Returns:
+            str: Radare2 script source code for identifying patchable locations
+                and generating patch commands.
+        """
         return f"""# Radare2 Patch Generation Script for {target_name}
 # Generated by Intellicrack Core Engine
 
@@ -4722,7 +6411,18 @@ echo "[*] Patch analysis complete"
 """
 
     def _generate_string_search_r2(self, target_name: str) -> str:
-        """Generate string search R2 script."""
+        """Generate string search Radare2 script.
+
+        Creates a Radare2 script for searching and extracting strings from the
+        binary including licensing-related strings, error messages, and API names.
+
+        Args:
+            target_name: Name of the target binary for script generation.
+
+        Returns:
+            str: Radare2 script source code for string extraction and analysis
+                with filtering for licensing-related strings.
+        """
         return f"""# Radare2 String Search Script for {target_name}
 # Generated by Intellicrack Core Engine
 
@@ -4761,7 +6461,18 @@ echo "[*] String search complete"
 """
 
     def _generate_crypto_scan_r2(self, target_name: str) -> str:
-        """Generate crypto scanning R2 script."""
+        """Generate cryptographic algorithm scanning Radare2 script.
+
+        Creates a Radare2 script for identifying and analyzing cryptographic
+        algorithms and key operations in the binary used for licensing protection.
+
+        Args:
+            target_name: Name of the target binary for script generation.
+
+        Returns:
+            str: Radare2 script source code detecting cryptographic patterns,
+                S-Box constants, and crypto API calls in the binary.
+        """
         return f"""# Radare2 Crypto Scan Script for {target_name}
 # Generated by Intellicrack Core Engine
 
@@ -4796,7 +6507,19 @@ echo "[*] Crypto scan complete"
 """
 
     def _generate_generic_r2(self, target_name: str, script_type: str) -> str:
-        """Generate generic R2 script template."""
+        """Generate generic Radare2 analysis script template.
+
+        Creates a Radare2 script template for custom binary analysis when a
+        specific script type is not pre-defined.
+
+        Args:
+            target_name: Name of the target binary for script generation.
+            script_type: Custom script type/name for documentation.
+
+        Returns:
+            str: Radare2 script source code template with basic binary analysis
+                structure including sections, imports, functions, and entrypoints.
+        """
         return f"""# Radare2 {script_type} Script for {target_name}
 # Generated by Intellicrack Core Engine
 

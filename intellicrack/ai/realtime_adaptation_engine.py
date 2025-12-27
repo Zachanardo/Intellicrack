@@ -163,7 +163,17 @@ class RuntimeMonitor:
         logger.info("Runtime monitoring stopped")
 
     def _monitoring_loop(self) -> None:
-        """Monitor continuously in the main loop."""
+        """Monitor continuously in the main loop.
+
+        Main loop that continuously collects metrics, processes the metrics
+        buffer, and checks for anomalies at regular intervals.
+
+        Args:
+            None.
+
+        Raises:
+            None.
+        """
         while self.active:
             try:
                 # Collect system metrics
@@ -182,7 +192,21 @@ class RuntimeMonitor:
                 time.sleep(1.0)
 
     def _collect_system_metrics(self) -> None:
-        """Collect system metrics."""
+        """Collect system metrics.
+
+        Gathers CPU usage, memory usage, and process-level memory statistics
+        from the system using psutil. Safely handles cases where psutil is
+        unavailable.
+
+        Args:
+            None.
+
+        Returns:
+            None.
+
+        Raises:
+            None.
+        """
         if not PSUTIL_AVAILABLE:
             logger.debug("psutil not available - skipping system metrics collection")
             return
@@ -214,7 +238,21 @@ class RuntimeMonitor:
         category: str = "general",
         metadata: dict[str, Any] | None = None,
     ) -> None:
-        """Record a runtime metric."""
+        """Record a runtime metric.
+
+        Records a metric with its current value, timestamp, and source for
+        monitoring and analysis. Notifies all subscribers of the new metric.
+
+        Args:
+            metric_name: Name/identifier of the metric being recorded.
+            value: Numeric value of the metric.
+            source: Source component that generated this metric.
+            category: Metric category for organization (default: "general").
+            metadata: Optional metadata dictionary associated with the metric.
+
+        Raises:
+            None.
+        """
         metric = RuntimeMetric(
             metric_name=metric_name,
             value=value,
@@ -235,7 +273,20 @@ class RuntimeMonitor:
                 logger.exception("Error notifying metric subscriber: %s", e)
 
     def _process_metrics_buffer(self) -> None:
-        """Process metrics buffer and update aggregates."""
+        """Process metrics buffer and update aggregates.
+
+        Consumes the metrics buffer, groups metrics by name, and calculates
+        aggregate statistics (count, sum, average, min, max) for each metric.
+
+        Args:
+            None.
+
+        Returns:
+            None.
+
+        Raises:
+            None.
+        """
         if not self.metrics_buffer:
             return
 
@@ -259,7 +310,18 @@ class RuntimeMonitor:
                 }
 
     def _check_anomalies(self) -> None:
-        """Check for anomalies in metrics."""
+        """Check for anomalies in metrics.
+
+        Iterates through registered anomaly detectors and evaluates current
+        metric values against their anomaly detection thresholds. Triggers
+        notification for detected anomalies.
+
+        Args:
+            None.
+
+        Raises:
+            None.
+        """
         for metric_name, detector in self.anomaly_detectors.items():
             if metric_name in self.metric_aggregates:
                 current_value = self.metric_aggregates[metric_name]["last"]
@@ -268,7 +330,18 @@ class RuntimeMonitor:
                     self._notify_anomaly(metric_name, current_value)
 
     def _notify_anomaly(self, metric_name: str, value: float) -> None:
-        """Notify about detected anomaly."""
+        """Notify about detected anomaly.
+
+        Logs detected anomaly, checks for matching adaptation rules, executes
+        applicable rules, and stores anomaly details in history.
+
+        Args:
+            metric_name: Name of the metric with the detected anomaly.
+            value: Value of the metric that triggered the anomaly.
+
+        Raises:
+            None.
+        """
         # Log the anomaly with details
         logger.warning("Anomaly notification: %s = %s", metric_name, value)
 
@@ -299,7 +372,23 @@ class RuntimeMonitor:
         )
 
     def _execute_adaptation_rule(self, rule_id: str, metric_name: str, value: float) -> None:
-        """Execute an adaptation rule in response to an anomaly."""
+        """Execute an adaptation rule in response to an anomaly.
+
+        Retrieves an adaptation rule by ID and executes the associated action,
+        such as adjusting anomaly detection thresholds or signaling component
+        restart.
+
+        Args:
+            rule_id: Identifier of the adaptation rule to execute.
+            metric_name: Name of the metric triggering the rule.
+            value: Value of the metric that triggered the rule.
+
+        Returns:
+            None.
+
+        Raises:
+            None.
+        """
         try:
             rule = self.adaptation_rules.get(rule_id)
             if not rule:
@@ -327,11 +416,37 @@ class RuntimeMonitor:
             logger.exception("Error executing adaptation rule %s: %s", rule_id, e)
 
     def subscribe_to_metrics(self, callback: Callable[[RuntimeMetric], None]) -> None:
-        """Subscribe to real-time metrics."""
+        """Subscribe to real-time metrics.
+
+        Registers a callback function to be invoked whenever a new metric is
+        recorded by the monitoring system.
+
+        Args:
+            callback: Callback function that accepts a RuntimeMetric instance.
+
+        Raises:
+            None.
+        """
         self.subscribers.append(callback)
 
     def get_metric_trend(self, metric_name: str, window_minutes: int = 5) -> dict[str, Any]:
-        """Get trend analysis for metric."""
+        """Get trend analysis for metric.
+
+        Analyzes historical metric data within a time window and determines
+        whether the metric is increasing, decreasing, or stable.
+
+        Args:
+            metric_name: Name of the metric to analyze.
+            window_minutes: Time window in minutes for trend analysis (default: 5).
+
+        Returns:
+            Dictionary containing trend analysis with keys: trend (str),
+            data_points (int), avg_first_half (float), avg_second_half (float),
+            and change_percent (float).
+
+        Raises:
+            None.
+        """
         if metric_name not in self.metric_history:
             return {"trend": "unknown", "data_points": 0}
 
@@ -385,14 +500,37 @@ class AnomalyDetector:
         self.calibrated = False
 
     def add_baseline_value(self, value: float) -> None:
-        """Add value to baseline."""
+        """Add value to baseline.
+
+        Appends a value to the baseline data collection. Automatically
+        recalculates baseline statistics when sufficient data is available.
+
+        Args:
+            value: Metric value to add to the baseline.
+
+        Raises:
+            None.
+        """
         self.baseline_values.append(value)
 
         if len(self.baseline_values) >= 20:
             self._recalculate_baseline()
 
     def _recalculate_baseline(self) -> None:
-        """Recalculate baseline statistics."""
+        """Recalculate baseline statistics.
+
+        Computes mean and standard deviation from collected baseline values
+        to establish normal behavior parameters for anomaly detection.
+
+        Args:
+            None.
+
+        Returns:
+            None.
+
+        Raises:
+            None.
+        """
         if not self.baseline_values:
             return
 
@@ -406,7 +544,21 @@ class AnomalyDetector:
         self.calibrated = len(values) >= 20
 
     def detect_anomaly(self, value: float) -> bool:
-        """Detect if value is anomalous."""
+        """Detect if value is anomalous.
+
+        Performs Z-score based anomaly detection comparing the provided value
+        against baseline statistics. Automatically calibrates the detector
+        during the initial learning phase.
+
+        Args:
+            value: Metric value to evaluate for anomalies.
+
+        Returns:
+            True if value is detected as anomalous, False otherwise.
+
+        Raises:
+            None.
+        """
         if not self.calibrated:
             self.add_baseline_value(value)
             return False
@@ -442,7 +594,19 @@ class DynamicHookManager:
         logger.info("Dynamic hook manager initialized")
 
     def register_hook_point(self, hook_id: str, target_function: Callable[..., Any], hook_type: str = "around") -> None:
-        """Register a hook point."""
+        """Register a hook point.
+
+        Records a hook point definition in the registry for later activation.
+        Hook points define locations where dynamic modifications can be injected.
+
+        Args:
+            hook_id: Unique identifier for the hook point.
+            target_function: The callable function to hook into.
+            hook_type: Type of hook (default: "around"). Determines hook behavior.
+
+        Raises:
+            None.
+        """
         self.hook_registry[hook_id] = {
             "target": target_function,
             "type": hook_type,
@@ -454,7 +618,22 @@ class DynamicHookManager:
         logger.info("Registered hook point: %s", hook_id)
 
     def install_hook(self, hook_id: str, modification: dict[str, Any]) -> bool:
-        """Install a hook modification."""
+        """Install a hook modification.
+
+        Activates a registered hook point by installing the specified modifications.
+        Creates a wrapper function that applies pre-processing, parameter modifications,
+        and post-processing as defined.
+
+        Args:
+            hook_id: Identifier of the hook point to install.
+            modification: Dictionary specifying the modifications to apply.
+
+        Returns:
+            True if hook installation succeeded, False otherwise.
+
+        Raises:
+            None.
+        """
         if hook_id not in self.hook_registry:
             logger.exception("Hook point %s not registered", hook_id)
             return False
@@ -483,7 +662,20 @@ class DynamicHookManager:
         return False
 
     def remove_hook(self, hook_id: str) -> bool:
-        """Remove a hook modification."""
+        """Remove a hook modification.
+
+        Deactivates an installed hook by restoring the original function
+        and clearing associated modifications.
+
+        Args:
+            hook_id: Identifier of the hook to remove.
+
+        Returns:
+            True if hook removal succeeded, False otherwise.
+
+        Raises:
+            None.
+        """
         if hook_id not in self.active_hooks:
             return False
 
@@ -564,7 +756,22 @@ class DynamicHookManager:
     def _apply_parameter_modification(
         self, args: tuple[Any, ...], kwargs: dict[str, Any], modification: dict[str, Any]
     ) -> tuple[tuple[Any, ...], dict[str, Any]]:
-        """Apply parameter modification."""
+        """Apply parameter modification.
+
+        Modifies function arguments based on the specification, supporting
+        value replacement and parameter addition operations.
+
+        Args:
+            args: Positional arguments tuple to potentially modify.
+            kwargs: Keyword arguments dictionary to potentially modify.
+            modification: Modification specification with type, parameter, and value.
+
+        Returns:
+            Tuple of modified (args, kwargs).
+
+        Raises:
+            None.
+        """
         mod_type = modification.get("type", "")
 
         if mod_type == "replace_value":
@@ -618,7 +825,21 @@ class DynamicHookManager:
         return result
 
     def _install_function_hook(self, target_function: Callable[..., Any], modified_function: Callable[..., Any]) -> bool:
-        """Install function hook using monkey patching."""
+        """Install function hook using monkey patching.
+
+        Replaces a target function in its module with a modified version,
+        enabling dynamic runtime modification of function behavior.
+
+        Args:
+            target_function: Original function to replace.
+            modified_function: Replacement function with modifications applied.
+
+        Returns:
+            True if hook installation succeeded, False otherwise.
+
+        Raises:
+            None.
+        """
         try:
             # This is a simplified implementation
             # In practice, you might use more sophisticated hooking mechanisms
@@ -640,7 +861,21 @@ class DynamicHookManager:
         return False
 
     def _restore_original_function(self, target_function: Callable[..., Any], original_function: Callable[..., Any]) -> bool:
-        """Restore original function."""
+        """Restore original function.
+
+        Restores a previously modified function to its original implementation
+        in its module namespace.
+
+        Args:
+            target_function: The hooked function to restore.
+            original_function: The original function implementation to restore.
+
+        Returns:
+            True if restoration succeeded, False otherwise.
+
+        Raises:
+            None.
+        """
         try:
             module = target_function.__module__
             func_name = target_function.__name__
@@ -657,7 +892,21 @@ class DynamicHookManager:
         return False
 
     def get_hook_statistics(self) -> dict[str, dict[str, int]]:
-        """Get hook usage statistics."""
+        """Get hook usage statistics.
+
+        Retrieves a snapshot of hook execution statistics including call counts
+        and modification counts for all installed hooks.
+
+        Args:
+            None.
+
+        Returns:
+            Dictionary mapping hook IDs to statistics dictionaries containing
+            call and modification counts.
+
+        Raises:
+            None.
+        """
         return dict(self.hook_statistics)
 
 
@@ -683,7 +932,22 @@ class LiveDebuggingSystem:
         logger.info("Live debugging system initialized")
 
     def start_debug_session(self, session_id: str, target_component: str, debug_level: str = "info") -> bool:
-        """Start a live debugging session."""
+        """Start a live debugging session.
+
+        Creates and activates a new debugging session for a target component,
+        initializing tracking structures for events, breakpoints, and watches.
+
+        Args:
+            session_id: Unique identifier for the debug session.
+            target_component: Component or subsystem to debug.
+            debug_level: Logging level for debug output (default: "info").
+
+        Returns:
+            True if session creation succeeded, False if session already exists.
+
+        Raises:
+            None.
+        """
         if session_id in self.active_debug_sessions:
             logger.warning("Debug session %s already active", session_id)
             return False
@@ -705,7 +969,20 @@ class LiveDebuggingSystem:
         return True
 
     def stop_debug_session(self, session_id: str) -> bool:
-        """Stop a live debugging session."""
+        """Stop a live debugging session.
+
+        Deactivates an active debug session, archives session history, and cleans
+        up session resources.
+
+        Args:
+            session_id: Identifier of the session to stop.
+
+        Returns:
+            True if session was stopped, False if session not found.
+
+        Raises:
+            None.
+        """
         if session_id not in self.active_debug_sessions:
             return False
 
@@ -721,7 +998,22 @@ class LiveDebuggingSystem:
         return True
 
     def add_breakpoint(self, session_id: str, component: str, condition: str) -> bool:
-        """Add a conditional breakpoint."""
+        """Add a conditional breakpoint.
+
+        Registers a breakpoint with a condition to a debug session, enabling
+        targeted debugging of specific components under specific conditions.
+
+        Args:
+            session_id: Identifier of the debug session.
+            component: Component name or identifier for the breakpoint.
+            condition: Condition string that triggers the breakpoint.
+
+        Returns:
+            True if breakpoint was added successfully, False if session not found.
+
+        Raises:
+            None.
+        """
         if session_id not in self.active_debug_sessions:
             return False
 
@@ -739,7 +1031,22 @@ class LiveDebuggingSystem:
         return True
 
     def add_watch(self, session_id: str, expression: str, alert_condition: str | None = None) -> bool:
-        """Add a watch expression."""
+        """Add a watch expression.
+
+        Registers a watch expression to monitor in a debug session with an optional
+        alert condition that triggers when the condition evaluates to true.
+
+        Args:
+            session_id: Identifier of the debug session.
+            expression: Expression or variable to watch.
+            alert_condition: Optional condition for triggering watch alerts.
+
+        Returns:
+            True if watch was added successfully, False if session not found.
+
+        Raises:
+            None.
+        """
         if session_id not in self.active_debug_sessions:
             return False
 
@@ -758,7 +1065,17 @@ class LiveDebuggingSystem:
         return True
 
     def _analyze_metric_for_debugging(self, metric: RuntimeMetric) -> None:
-        """Analyze metric for debugging insights."""
+        """Analyze metric for debugging insights.
+
+        Examines incoming metrics to identify problematic values that exceed
+        thresholds and triggers automated debugging sessions.
+
+        Args:
+            metric: RuntimeMetric instance to analyze.
+
+        Raises:
+            None.
+        """
         # Check if metric indicates a problem
         problem_indicators = {
             "system.cpu_usage": 90.0,
@@ -772,7 +1089,17 @@ class LiveDebuggingSystem:
             self._trigger_automated_debugging(metric)
 
     def _trigger_automated_debugging(self, metric: RuntimeMetric) -> None:
-        """Trigger automated debugging for problematic metric."""
+        """Trigger automated debugging for problematic metric.
+
+        Automatically creates a debug session and applies registered fixes
+        when a metric exceeds problem thresholds.
+
+        Args:
+            metric: RuntimeMetric instance indicating a problem.
+
+        Raises:
+            None.
+        """
         debug_session_id = f"auto_debug_{metric.metric_name}_{int(datetime.now().timestamp())}"
 
         if self.start_debug_session(debug_session_id, metric.source, "warning"):
@@ -804,7 +1131,19 @@ class LiveDebuggingSystem:
                     )
 
     def _log_debug_event(self, session_id: str, event_type: str, data: dict[str, Any]) -> None:
-        """Log debugging event."""
+        """Log debugging event.
+
+        Records a debugging event with associated metadata in the active session's
+        event history.
+
+        Args:
+            session_id: Identifier of the debug session.
+            event_type: Type of debugging event (e.g., "automated_fix").
+            data: Event data dictionary containing relevant information.
+
+        Raises:
+            None.
+        """
         if session_id in self.active_debug_sessions:
             event = {
                 "timestamp": datetime.now(),
@@ -814,12 +1153,38 @@ class LiveDebuggingSystem:
             self.active_debug_sessions[session_id]["events"].append(event)
 
     def register_automated_fix(self, metric_name: str, fix_function: Callable[[RuntimeMetric], Any]) -> None:
-        """Register automated fix for metric."""
+        """Register automated fix for metric.
+
+        Associates a callable fix function with a specific metric name that will
+        be invoked automatically when that metric triggers debugging.
+
+        Args:
+            metric_name: Name of the metric to associate with the fix.
+            fix_function: Callable that accepts a RuntimeMetric and performs remediation.
+
+        Raises:
+            None.
+        """
         self.automated_fixes[metric_name] = fix_function
         logger.info("Registered automated fix for %s", metric_name)
 
     def get_debug_insights(self, session_id: str) -> dict[str, Any]:
-        """Get debugging insights for session."""
+        """Get debugging insights for session.
+
+        Retrieves comprehensive debugging insights for an active session including
+        session info, recent events, breakpoint hit counts, watch alerts, and
+        recommendations.
+
+        Args:
+            session_id: Identifier of the debug session.
+
+        Returns:
+            Dictionary containing session_info, recent_events, breakpoint_hits,
+            watch_alerts, and recommendations keys.
+
+        Raises:
+            None.
+        """
         if session_id not in self.active_debug_sessions:
             return {"error": "Session not found"}
 
@@ -839,7 +1204,20 @@ class LiveDebuggingSystem:
         }
 
     def _check_watch_alerts(self, session: dict[str, Any]) -> list[dict[str, Any]]:
-        """Check watch expressions for alerts."""
+        """Check watch expressions for alerts.
+
+        Evaluates watch expressions and their alert conditions against current
+        values, returning a list of triggered alerts.
+
+        Args:
+            session: Debug session dictionary containing watches to check.
+
+        Returns:
+            List of alert dictionaries with watch_id, expression, value, and condition.
+
+        Raises:
+            None.
+        """
         alerts = []
 
         for watch in session["watches"]:
@@ -891,7 +1269,20 @@ class LiveDebuggingSystem:
         return alerts
 
     def _generate_debug_recommendations(self, session: dict[str, Any]) -> list[str]:
-        """Generate debugging recommendations."""
+        """Generate debugging recommendations.
+
+        Analyzes session events and patterns to generate actionable debugging
+        recommendations for the user.
+
+        Args:
+            session: Debug session dictionary to analyze.
+
+        Returns:
+            List of recommendation strings.
+
+        Raises:
+            None.
+        """
         recommendations = []
 
         # Analyze events for patterns
@@ -946,17 +1337,47 @@ class RealTimeAdaptationEngine:
         logger.info("Real-time adaptation engine initialized")
 
     def start(self) -> None:
-        """Start the adaptation engine."""
+        """Start the adaptation engine.
+
+        Activates the runtime monitoring system, enabling metric collection,
+        anomaly detection, and adaptation rule evaluation.
+
+        Args:
+            None.
+
+        Raises:
+            None.
+        """
         self.runtime_monitor.start()
         logger.info("Real-time adaptation engine started")
 
     def stop(self) -> None:
-        """Stop the adaptation engine."""
+        """Stop the adaptation engine.
+
+        Deactivates the runtime monitoring system and halts all real-time
+        adaptation activity.
+
+        Args:
+            None.
+
+        Raises:
+            None.
+        """
         self.runtime_monitor.stop()
         logger.info("Real-time adaptation engine stopped")
 
     def _initialize_default_rules(self) -> None:
-        """Initialize default adaptation rules."""
+        """Initialize default adaptation rules.
+
+        Sets up default adaptation rules for common performance issues including
+        high CPU usage, high memory usage, high error rates, and slow response times.
+
+        Args:
+            None.
+
+        Raises:
+            None.
+        """
         default_rules = [
             AdaptationRule(
                 rule_id="high_cpu_usage",
@@ -1003,12 +1424,35 @@ class RealTimeAdaptationEngine:
         self.adaptation_rules.extend(default_rules)
 
     def add_adaptation_rule(self, rule: AdaptationRule) -> None:
-        """Add custom adaptation rule."""
+        """Add custom adaptation rule.
+
+        Registers a new adaptation rule that will be evaluated when metrics
+        are received by the runtime monitor.
+
+        Args:
+            rule: AdaptationRule instance to add.
+
+        Raises:
+            None.
+        """
         self.adaptation_rules.append(rule)
         logger.info("Added adaptation rule: %s", rule.name)
 
     def remove_adaptation_rule(self, rule_id: str) -> bool:
-        """Remove adaptation rule."""
+        """Remove adaptation rule.
+
+        Unregisters an adaptation rule by its identifier, preventing further
+        evaluation of that rule.
+
+        Args:
+            rule_id: Identifier of the rule to remove.
+
+        Returns:
+            True if rule was removed, False if rule not found.
+
+        Raises:
+            None.
+        """
         for i, rule in enumerate(self.adaptation_rules):
             if rule.rule_id == rule_id:
                 del self.adaptation_rules[i]
@@ -1017,7 +1461,17 @@ class RealTimeAdaptationEngine:
         return False
 
     def _check_adaptation_triggers(self, metric: RuntimeMetric) -> None:
-        """Check if metric triggers any adaptation rules."""
+        """Check if metric triggers any adaptation rules.
+
+        Evaluates incoming metrics against all enabled adaptation rules to
+        determine if any rules should be triggered.
+
+        Args:
+            metric: RuntimeMetric instance to check.
+
+        Raises:
+            None.
+        """
         for rule in self.adaptation_rules:
             if not rule.enabled:
                 continue
@@ -1026,7 +1480,21 @@ class RealTimeAdaptationEngine:
                 self._trigger_adaptation(rule, metric)
 
     def _should_trigger_rule(self, rule: AdaptationRule, metric: RuntimeMetric) -> bool:
-        """Check if rule should be triggered by metric."""
+        """Check if rule should be triggered by metric.
+
+        Evaluates whether a rule should be triggered based on cooldown
+        constraints and metric value comparisons.
+
+        Args:
+            rule: AdaptationRule to check.
+            metric: RuntimeMetric to evaluate against the rule.
+
+        Returns:
+            True if rule should be triggered, False otherwise.
+
+        Raises:
+            None.
+        """
         # Check cooldown
         if rule.last_triggered:
             time_since_last = datetime.now() - rule.last_triggered
@@ -1055,7 +1523,19 @@ class RealTimeAdaptationEngine:
 
     @profile_ai_operation("real_time_adaptation")
     def _trigger_adaptation(self, rule: AdaptationRule, trigger_metric: RuntimeMetric) -> None:
-        """Trigger adaptation based on rule."""
+        """Trigger adaptation based on rule.
+
+        Executes an adaptation rule in response to a triggering metric event.
+        Records the adaptation event, updates statistics, and logs the experience
+        for learning.
+
+        Args:
+            rule: AdaptationRule that was triggered.
+            trigger_metric: RuntimeMetric that triggered the rule.
+
+        Raises:
+            None.
+        """
         adaptation_id = f"adapt_{rule.rule_id}_{int(datetime.now().timestamp())}"
 
         start_time = time.time()
@@ -1140,7 +1620,23 @@ class RealTimeAdaptationEngine:
             logger.exception("Adaptation failed: %s - %s", rule.name, e)
 
     def _execute_adaptation_action(self, rule: AdaptationRule, trigger_metric: RuntimeMetric, adaptation_id: str) -> bool:
-        """Execute the adaptation action."""
+        """Execute the adaptation action.
+
+        Executes the specific action associated with a triggered adaptation rule,
+        such as reducing concurrency, triggering garbage collection, or enabling
+        fallback modes.
+
+        Args:
+            rule: AdaptationRule with the action to execute.
+            trigger_metric: RuntimeMetric that triggered the rule.
+            adaptation_id: Unique identifier for this adaptation event.
+
+        Returns:
+            True if action executed successfully, False otherwise.
+
+        Raises:
+            None.
+        """
         action = rule.action
 
         try:
@@ -1177,7 +1673,20 @@ class RealTimeAdaptationEngine:
             return False
 
     def _reduce_system_concurrency(self) -> bool:
-        """Reduce system concurrency to lower resource usage."""
+        """Reduce system concurrency to lower resource usage.
+
+        Reduces the number of concurrent operations to conserve CPU and memory
+        resources in response to performance degradation.
+
+        Args:
+            None.
+
+        Returns:
+            True if concurrency reduction was attempted successfully.
+
+        Raises:
+            None.
+        """
         try:
             # This would integrate with thread pools, async managers, etc.
             # For demonstration, we'll just log the action
@@ -1192,7 +1701,20 @@ class RealTimeAdaptationEngine:
             return False
 
     def _trigger_garbage_collection(self) -> bool:
-        """Trigger garbage collection."""
+        """Trigger garbage collection.
+
+        Invokes Python's garbage collection to immediately reclaim memory from
+        unreachable objects.
+
+        Args:
+            None.
+
+        Returns:
+            True if garbage collection executed successfully.
+
+        Raises:
+            None.
+        """
         try:
             import gc
 
@@ -1204,7 +1726,20 @@ class RealTimeAdaptationEngine:
             return False
 
     def _enable_fallback_mode(self, adaptation_id: str) -> bool:
-        """Enable fallback mode for error recovery."""
+        """Enable fallback mode for error recovery.
+
+        Activates fallback behavior by installing hooks that provide alternative
+        responses when normal operation fails.
+
+        Args:
+            adaptation_id: Unique identifier for this adaptation event.
+
+        Returns:
+            True if fallback mode was enabled successfully.
+
+        Raises:
+            None.
+        """
         try:
             # Install hooks for fallback behavior
             hook_modification = {
@@ -1238,7 +1773,20 @@ class RealTimeAdaptationEngine:
             return False
 
     def _optimize_algorithm_selection(self) -> bool:
-        """Optimize algorithm selection for better performance."""
+        """Optimize algorithm selection for better performance.
+
+        Modifies algorithm selection logic to prefer faster algorithms in
+        response to performance degradation.
+
+        Args:
+            None.
+
+        Returns:
+            True if optimization was applied successfully.
+
+        Raises:
+            None.
+        """
         try:
             # This would modify algorithm selection logic
             logger.info("Optimizing algorithm selection")
@@ -1252,7 +1800,20 @@ class RealTimeAdaptationEngine:
             return False
 
     def _increase_timeout_values(self) -> bool:
-        """Increase timeout values to reduce timeout errors."""
+        """Increase timeout values to reduce timeout errors.
+
+        Modifies timeout configurations across system components to reduce
+        timeout-related failures.
+
+        Args:
+            None.
+
+        Returns:
+            True if timeout values were increased successfully.
+
+        Raises:
+            None.
+        """
         try:
             logger.info("Increasing timeout values")
 
@@ -1265,7 +1826,20 @@ class RealTimeAdaptationEngine:
             return False
 
     def _reduce_cache_size(self) -> bool:
-        """Reduce cache size to free memory."""
+        """Reduce cache size to free memory.
+
+        Reduces cache sizes to free up memory resources in response to memory
+        pressure or memory exhaustion conditions.
+
+        Args:
+            None.
+
+        Returns:
+            True if cache size was reduced successfully.
+
+        Raises:
+            None.
+        """
         try:
             logger.info("Reducing cache size")
 
@@ -1280,7 +1854,21 @@ class RealTimeAdaptationEngine:
             return False
 
     def _measure_adaptation_impact(self, trigger_metric: RuntimeMetric) -> dict[str, float]:
-        """Measure impact of adaptation."""
+        """Measure impact of adaptation.
+
+        Evaluates the immediate impact of an adaptation by comparing current
+        metric values against their pre-adaptation state.
+
+        Args:
+            trigger_metric: The metric that triggered the adaptation.
+
+        Returns:
+            Dictionary containing impact metrics including metric_change,
+            metric_change_percent, system_cpu, and system_memory values.
+
+        Raises:
+            None.
+        """
         # Get current metric value for comparison
         current_aggregates = self.runtime_monitor.metric_aggregates
 
@@ -1298,7 +1886,21 @@ class RealTimeAdaptationEngine:
         return impact
 
     def get_adaptation_status(self) -> dict[str, Any]:
-        """Get current adaptation status."""
+        """Get current adaptation status.
+
+        Retrieves comprehensive status information about the adaptation engine
+        including rules, active adaptations, statistics, and per-rule metrics.
+
+        Args:
+            None.
+
+        Returns:
+            Dictionary containing engine_active, adaptation_rules, active_adaptations,
+            recent_adaptations, statistics, and rule_status.
+
+        Raises:
+            None.
+        """
         return {
             "engine_active": self.runtime_monitor.active,
             "adaptation_rules": len(self.adaptation_rules),
@@ -1321,7 +1923,21 @@ class RealTimeAdaptationEngine:
         }
 
     def get_adaptation_insights(self) -> dict[str, Any]:
-        """Get adaptation insights and recommendations."""
+        """Get adaptation insights and recommendations.
+
+        Analyzes adaptation history to provide insights about adaptation
+        effectiveness, patterns, and recommendations for optimization.
+
+        Args:
+            None.
+
+        Returns:
+            Dictionary containing effectiveness metrics, recommendations, and
+            patterns discovered in the adaptation history.
+
+        Raises:
+            None.
+        """
         insights: dict[str, Any] = {
             "effectiveness": {},
             "recommendations": [],

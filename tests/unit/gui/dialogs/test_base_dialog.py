@@ -6,11 +6,22 @@ NO mocked components - validates actual dialog behavior.
 """
 
 import pytest
-from PyQt6.QtWidgets import QApplication, QDialog
-from intellicrack.ui.dialogs.common_imports import QTest, QThread, Qt
 
+try:
+    from PyQt6.QtWidgets import QApplication, QDialog
+    from intellicrack.ui.dialogs.common_imports import QTest, QThread, Qt
+    from intellicrack.ui.dialogs.base_dialog import BaseDialog
+    GUI_AVAILABLE = True
+except ImportError:
+    QApplication = None
+    QDialog = None
+    QTest = None
+    QThread = None
+    Qt = None
+    BaseDialog = None
+    GUI_AVAILABLE = False
 
-from intellicrack.ui.dialogs.base_dialog import BaseDialog
+pytestmark = pytest.mark.skipif(not GUI_AVAILABLE, reason="GUI modules not available")
 
 
 class TestBaseDialog:

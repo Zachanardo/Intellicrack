@@ -119,7 +119,15 @@ class PerformanceMonitor:
         logger.info("Performance monitor initialized")
 
     def start_monitoring(self, interval: float = 1.0) -> None:
-        """Start background system monitoring."""
+        """Start background system monitoring.
+
+        Args:
+            interval: Time in seconds between monitoring checks. Defaults to 1.0
+
+        Returns:
+            None
+
+        """
         if self._monitoring_active:
             return
 
@@ -141,7 +149,12 @@ class PerformanceMonitor:
             logger.info("Background performance monitoring stopped")
 
     def _monitor_system(self, interval: float) -> None:
-        """Background system monitoring loop."""
+        """Background system monitoring loop.
+
+        Args:
+            interval: Time in seconds between monitoring checks
+
+        """
         while self._monitoring_active:
             try:
                 # System metrics
@@ -167,7 +180,14 @@ class PerformanceMonitor:
                 time.sleep(interval)
 
     def _check_thresholds(self, cpu_usage: float, memory_usage: int, memory_growth: int) -> None:
-        """Check if metrics exceed thresholds."""
+        """Check if metrics exceed thresholds.
+
+        Args:
+            cpu_usage: Current CPU usage percentage
+            memory_usage: Current memory usage in bytes
+            memory_growth: Memory growth since baseline in bytes
+
+        """
         checks: list[tuple[str, float]] = [
             ("cpu_usage", cpu_usage),
             ("memory_usage", float(memory_usage)),
@@ -187,7 +207,14 @@ class PerformanceMonitor:
                 self._trigger_optimization(metric_name, "warning", value)
 
     def _trigger_optimization(self, metric_name: str, level: str, value: float) -> None:
-        """Trigger optimization based on threshold breach."""
+        """Trigger optimization based on threshold breach.
+
+        Args:
+            metric_name: Name of the metric exceeding threshold
+            level: Severity level (warning or critical)
+            value: Current metric value
+
+        """
         if metric_name == "memory_growth" and level in {"warning", "critical"}:
             logger.info("Triggering garbage collection due to memory growth")
             gc.collect()
@@ -207,7 +234,16 @@ class PerformanceMonitor:
         category: str = "general",
         context: dict[str, Any] | None = None,
     ) -> None:
-        """Record a performance metric."""
+        """Record a performance metric.
+
+        Args:
+            name: Name identifier for the metric
+            value: Numeric value of the metric
+            unit: Unit of measurement (e.g., 'bytes', 'seconds', 'percent')
+            category: Category for grouping metrics. Defaults to 'general'
+            context: Optional dictionary with additional context about metric
+
+        """
         metric = PerformanceMetric(
             name=name,
             value=value,
@@ -307,8 +343,9 @@ class PerformanceMonitor:
                       uses module.function name format
 
         Returns:
-            Callable: Decorator function that takes a callable and returns a
-                     wrapped version with profiling enabled
+            Callable[[Callable[..., Any]], Callable[..., Any]]: Decorator function
+                that takes a callable and returns a wrapped version with profiling
+                enabled
 
         """
 
@@ -325,7 +362,16 @@ class PerformanceMonitor:
         return decorator
 
     def get_metrics_summary(self, time_window: timedelta | None = None) -> dict[str, Any]:
-        """Get summary of metrics within time window."""
+        """Get summary of metrics within time window.
+
+        Args:
+            time_window: Time window to summarize. If None, defaults to 1 hour
+
+        Returns:
+            dict[str, Any]: Dictionary containing metrics summary, operation summary,
+                           and system health assessment
+
+        """
         cutoff_time = datetime.now() - (time_window or timedelta(hours=1))
 
         summary: dict[str, Any] = {
@@ -373,7 +419,13 @@ class PerformanceMonitor:
         return summary
 
     def _assess_system_health(self) -> dict[str, Any]:
-        """Assess overall system health."""
+        """Assess overall system health.
+
+        Returns:
+            dict[str, Any]: Health assessment with score, status, issues list,
+                           and memory/CPU metrics
+
+        """
         try:
             if HAS_PSUTIL and self.process:
                 current_memory = self.process.memory_info().rss
@@ -435,11 +487,22 @@ class PerformanceMonitor:
             return {"score": 0, "status": "unknown", "error": str(e)}
 
     def add_optimization_rule(self, rule: Callable[[str, str, float], None]) -> None:
-        """Add optimization rule."""
+        """Add optimization rule.
+
+        Args:
+            rule: Callable that takes metric_name, level, and value arguments
+
+        """
         self.optimization_rules.append(rule)
 
     def get_performance_recommendations(self) -> list[str]:
-        """Get performance optimization recommendations."""
+        """Get performance optimization recommendations.
+
+        Returns:
+            list[str]: List of performance optimization recommendations based on
+                      recent metrics
+
+        """
         recommendations = []
         summary = self.get_metrics_summary(timedelta(minutes=30))
 
@@ -465,7 +528,16 @@ class PerformanceMonitor:
         return recommendations
 
     def export_metrics(self, file_path: Path, format: str = "json") -> None:
-        """Export metrics to file."""
+        """Export metrics to file.
+
+        Args:
+            file_path: Path object for output file
+            format: Export format. Currently only 'json' is supported
+
+        Raises:
+            ValueError: If unsupported format is specified
+
+        """
         try:
             summary = self.get_metrics_summary(timedelta(hours=24))
 
@@ -480,7 +552,7 @@ class PerformanceMonitor:
             logger.exception("Failed to export metrics: %s", e, exc_info=True)
 
     def optimize_cache(self) -> None:
-        """Optimize performance cache."""
+        """Optimize performance cache by removing expired entries."""
         current_time = time.time()
         expired_keys = [key for key, (timestamp, _) in self.performance_cache.items() if current_time - timestamp > self.cache_ttl]
 
@@ -607,7 +679,8 @@ def profile_ai_operation(
                        provided, uses the wrapped function's name
 
     Returns:
-        Callable: Decorator function that profiles wrapped functions
+        Callable[[Callable[..., Any]], Callable[..., Any]]: Decorator function
+            that profiles wrapped functions
 
     """
 
@@ -683,7 +756,7 @@ class AsyncPerformanceMonitor:
             coro: The coroutine to execute and profile
 
         Returns:
-            Any: The return value of the coroutine
+            object: The return value of the coroutine
 
         Raises:
             Exception: Any exception raised by the coroutine is re-raised
@@ -735,7 +808,8 @@ class AsyncPerformanceMonitor:
                            uses the wrapped function's name
 
         Returns:
-            Callable: Decorator function that profiles wrapped async functions
+            Callable[[Callable[..., Any]], Callable[..., Any]]: Decorator function
+                that profiles wrapped async functions
 
         """
 

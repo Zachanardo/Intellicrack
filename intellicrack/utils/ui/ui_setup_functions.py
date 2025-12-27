@@ -19,16 +19,29 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, cast
 
-# Optional imports with graceful fallbacks
 from intellicrack.handlers.pyqt6_handler import HAS_PYQT
+from intellicrack.types.ui import WidgetProtocol
 
 from ..logger import setup_logger
 
 
-if TYPE_CHECKING:
-    from typing import Any
+# Forward declare widget class types for conditional assignment
+# Using 'type' as the annotation allows both PyQt6 classes and fallback classes
+QWidget: type
+QVBoxLayout: type
+QHBoxLayout: type
+QLabel: type
+QComboBox: type
+QPushButton: type
+QGroupBox: type
+QTableWidget: type
+QProgressBar: type
+QSpinBox: type
+QSplitter: type
+QPlainTextEdit: type
+QTimer: type
+Qt: type
 
 
 if HAS_PYQT:
@@ -158,28 +171,28 @@ else:
         LeftButton = 0x1
         RightButton = 0x2
 
-    QWidget = HeadlessWidget  # type: ignore[misc,assignment]
-    QVBoxLayout = HeadlessLayout  # type: ignore[misc,assignment]
-    QHBoxLayout = HeadlessLayout  # type: ignore[misc,assignment]
-    QLabel = HeadlessWidget  # type: ignore[misc,assignment]
-    QComboBox = HeadlessWidget  # type: ignore[misc,assignment]
-    QPushButton = HeadlessWidget  # type: ignore[misc,assignment]
-    QGroupBox = HeadlessWidget  # type: ignore[misc,assignment]
-    QTableWidget = HeadlessWidget  # type: ignore[misc,assignment]
-    QProgressBar = HeadlessWidget  # type: ignore[misc,assignment]
-    QSpinBox = HeadlessWidget  # type: ignore[misc,assignment]
-    QSplitter = HeadlessWidget  # type: ignore[misc,assignment]
-    QPlainTextEdit = HeadlessWidget  # type: ignore[misc,assignment]
-    QTimer = HeadlessTimer  # type: ignore[misc,assignment]
-    Qt = HeadlessQt  # type: ignore[misc,assignment]
+    QWidget = HeadlessWidget
+    QVBoxLayout = HeadlessLayout
+    QHBoxLayout = HeadlessLayout
+    QLabel = HeadlessWidget
+    QComboBox = HeadlessWidget
+    QPushButton = HeadlessWidget
+    QGroupBox = HeadlessWidget
+    QTableWidget = HeadlessWidget
+    QProgressBar = HeadlessWidget
+    QSpinBox = HeadlessWidget
+    QSplitter = HeadlessWidget
+    QPlainTextEdit = HeadlessWidget
+    QTimer = HeadlessTimer
+    Qt = HeadlessQt
 
 
 logger = setup_logger(__name__)
 
 
 HAS_MATPLOTLIB = False
-Figure: type[Any] | None = None
-FigureCanvas: type[Any] | None = None
+Figure: type | None = None
+FigureCanvas: type | None = None
 
 try:
     from intellicrack.handlers.matplotlib_handler import (
@@ -191,7 +204,7 @@ except ImportError as e:
     logger.exception("Import error in ui_setup_functions: %s", e)
 
 
-def setup_dataset_tab(parent: object) -> object | None:
+def setup_dataset_tab(parent: object) -> WidgetProtocol | None:
     """Set up the dataset management tab.
 
     Configure and initialize a dataset management tab widget with controls for
@@ -209,7 +222,7 @@ def setup_dataset_tab(parent: object) -> object | None:
         return None
 
     parent_widget = parent if hasattr(parent, "setLayout") else None
-    tab = QWidget(cast("QWidget | None", parent_widget))
+    tab: WidgetProtocol = QWidget(parent_widget)
     layout = QVBoxLayout()
 
     # Dataset controls
@@ -308,10 +321,10 @@ def setup_dataset_tab(parent: object) -> object | None:
     layout.addStretch()
     tab.setLayout(layout)
 
-    return cast("object", tab)
+    return tab
 
 
-def setup_memory_monitor(parent: object) -> object | None:
+def setup_memory_monitor(parent: object) -> WidgetProtocol | None:
     """Set up memory monitoring widget.
 
     Create a memory monitoring widget with statistics display, usage bar,
@@ -329,7 +342,7 @@ def setup_memory_monitor(parent: object) -> object | None:
         return None
 
     parent_widget = parent if hasattr(parent, "setLayout") else None
-    widget = QWidget(cast("QWidget | None", parent_widget))
+    widget: WidgetProtocol = QWidget(parent_widget)
     layout = QVBoxLayout()
 
     # Memory stats
@@ -418,10 +431,10 @@ def setup_memory_monitor(parent: object) -> object | None:
     timer.setObjectName("memory_refresh_timer")
     timer.setInterval(1000)
 
-    return cast("object", widget)
+    return widget
 
 
-def setup_training_tab(parent: object) -> object | None:
+def setup_training_tab(parent: object) -> WidgetProtocol | None:
     """Set up the model training tab.
 
     Initialize a comprehensive model training interface with configuration,
@@ -439,7 +452,7 @@ def setup_training_tab(parent: object) -> object | None:
         return None
 
     parent_widget = parent if hasattr(parent, "setLayout") else None
-    tab = QWidget(cast("QWidget | None", parent_widget))
+    tab: WidgetProtocol = QWidget(parent_widget)
     layout = QVBoxLayout()
 
     # Model selection
@@ -581,7 +594,8 @@ def setup_training_tab(parent: object) -> object | None:
 
     # Loss/accuracy graphs
     if HAS_MATPLOTLIB and Figure is not None and FigureCanvas is not None:
-        graphs_splitter = QSplitter(Qt.Horizontal)  # type: ignore[attr-defined]
+        horizontal_orientation = getattr(Qt, "Horizontal", 0x1)
+        graphs_splitter = QSplitter(horizontal_orientation)
 
         # Loss graph
         loss_figure = Figure(figsize=(4, 3))
@@ -615,7 +629,7 @@ def setup_training_tab(parent: object) -> object | None:
 
     tab.setLayout(layout)
 
-    return cast("object", tab)
+    return tab
 
 
 __all__ = [

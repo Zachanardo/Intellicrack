@@ -7,12 +7,28 @@ NO mocked components - validates actual console behavior.
 
 import pytest
 import time
-from PyQt6.QtWidgets import QApplication, QWidget, QTextEdit, QPushButton, QLineEdit, QCheckBox
-from intellicrack.ui.dialogs.common_imports import QTest, QTextCursor, QThread, Qt
+from unittest.mock import patch
 
+try:
+    from PyQt6.QtWidgets import QApplication, QWidget, QTextEdit, QPushButton, QLineEdit, QCheckBox
+    from intellicrack.ui.dialogs.common_imports import QTest, QTextCursor, QThread, Qt
+    from intellicrack.ui.widgets.console_widget import ConsoleWidget
+    GUI_AVAILABLE = True
+except ImportError:
+    QApplication = None
+    QWidget = None
+    QTextEdit = None
+    QPushButton = None
+    QLineEdit = None
+    QCheckBox = None
+    QTest = None
+    QTextCursor = None
+    QThread = None
+    Qt = None
+    ConsoleWidget = None
+    GUI_AVAILABLE = False
 
-
-from intellicrack.ui.widgets.console_widget import ConsoleWidget
+pytestmark = pytest.mark.skipif(not GUI_AVAILABLE, reason="GUI modules not available")
 
 
 class TestConsoleWidget:
@@ -305,6 +321,9 @@ class TestConsoleWidget:
 
     def test_export_functionality_real_file_output(self, qtbot):
         """Test REAL export functionality for console logs."""
+        import tempfile
+        import os
+
         if hasattr(self.widget, 'append_output'):
             # Add content to export
             export_content = [
@@ -328,7 +347,6 @@ class TestConsoleWidget:
         if export_buttons:
             export_button = export_buttons[0]
 
-            import tempfile
             with tempfile.NamedTemporaryFile(suffix='.txt', delete=False) as temp_file:
                 export_path = temp_file.name
 
@@ -341,14 +359,11 @@ class TestConsoleWidget:
                         qtbot.wait(100)
 
             finally:
-                import os
                 if os.path.exists(export_path):
                     os.unlink(export_path)
 
     def test_performance_real_large_output(self, qtbot):
         """Test REAL performance with large amounts of console output."""
-        import time
-
         start_time = time.time()
 
         # Add large amount of output

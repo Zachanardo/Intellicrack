@@ -8,11 +8,23 @@ NO mocked components - validates actual hex display and navigation.
 import pytest
 import tempfile
 import os
-from PyQt6.QtWidgets import QApplication, QWidget, QTextEdit, QTableWidget
-from intellicrack.ui.dialogs.common_imports import QTest, Qt
 
+try:
+    from PyQt6.QtWidgets import QApplication, QWidget, QTextEdit, QTableWidget
+    from intellicrack.ui.dialogs.common_imports import QTest, Qt
+    from intellicrack.ui.widgets.hex_viewer_widget import HexViewerWidget
+    GUI_AVAILABLE = True
+except ImportError:
+    QApplication = None
+    QWidget = None
+    QTextEdit = None
+    QTableWidget = None
+    QTest = None
+    Qt = None
+    HexViewerWidget = None
+    GUI_AVAILABLE = False
 
-from intellicrack.ui.widgets.hex_viewer_widget import HexViewerWidget
+pytestmark = pytest.mark.skipif(not GUI_AVAILABLE, reason="GUI modules not available")
 
 
 class TestHexViewerWidget:
@@ -403,28 +415,28 @@ class TestHexViewerWidget:
             large_file_path = temp_file.name
 
         try:
-            import psutil
-            import os
+            try:
+                import psutil
 
-            # Get initial memory usage
-            process = psutil.Process(os.getpid())
-            initial_memory = process.memory_info().rss
+                # Get initial memory usage
+                process = psutil.Process(os.getpid())
+                initial_memory = process.memory_info().rss
 
-            # Load large file
-            if hasattr(self.widget, 'load_file'):
-                self.widget.load_file(large_file_path)
-                qtbot.wait(2000)  # Allow time for loading
+                # Load large file
+                if hasattr(self.widget, 'load_file'):
+                    self.widget.load_file(large_file_path)
+                    qtbot.wait(2000)  # Allow time for loading
 
-                # Memory should not increase excessively
-                final_memory = process.memory_info().rss
-                memory_increase = final_memory - initial_memory
+                    # Memory should not increase excessively
+                    final_memory = process.memory_info().rss
+                    memory_increase = final_memory - initial_memory
 
-                # Should not use more than 10MB additional memory for 1MB file
-                assert memory_increase < 10 * 1024 * 1024, f"Memory increase too large: {memory_increase}"
+                    # Should not use more than 10MB additional memory for 1MB file
+                    assert memory_increase < 10 * 1024 * 1024, f"Memory increase too large: {memory_increase}"
 
-        except ImportError:
-            # psutil not available, skip memory test
-            pass
+            except ImportError:
+                # psutil not available, skip memory test
+                pass
         finally:
             if os.path.exists(large_file_path):
                 os.unlink(large_file_path)

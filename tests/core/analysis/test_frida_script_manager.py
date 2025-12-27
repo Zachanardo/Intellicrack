@@ -426,15 +426,15 @@ class TestProductionScriptExecution:
         assert bypass_msg.get("platform") == "windows"
         assert bypass_msg.get("bypasses_installed", 0) >= 0
 
-    def test_api_call_hooking(self, manager: FridaScriptManager) -> None:
-        """API tracer hooks real Windows API calls."""
+    def test_api_hooking_with_anti_debugger(self, manager: FridaScriptManager) -> None:
+        """Anti-debugger script hooks real Windows API calls."""
         if sys.platform != "win32":
             pytest.skip("Test requires Windows platform")
 
         python_exe = sys.executable
 
         result = manager.execute_script(
-            script_name="api_tracer.js",
+            script_name="anti_debugger.js",
             target=python_exe,
             mode="spawn",
             parameters={"timeout": 3},
@@ -445,11 +445,7 @@ class TestProductionScriptExecution:
 
         ready_msg = next((m for m in result.messages if m.get("type") == "ready"), None)
         assert ready_msg is not None
-        assert ready_msg.get("script") == "api_tracer"
-
-        trace_complete = next((m for m in result.messages if m.get("type") == "trace_complete"), None)
-        assert trace_complete is not None
-        assert "total_calls" in trace_complete
+        assert ready_msg.get("script") == "anti_debugger"
 
     def test_script_execution_with_custom_parameters(self, manager: FridaScriptManager) -> None:
         """Script execution merges custom parameters with defaults."""

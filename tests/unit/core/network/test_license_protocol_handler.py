@@ -15,12 +15,9 @@ from typing import Any, Dict, List, Tuple
 
 import pytest
 
+
 try:
-    from intellicrack.core.network.license_protocol_handler import (
-        FlexLMProtocolHandler,
-        HASPProtocolHandler,
-        LicenseProtocolHandler,
-    )
+    from intellicrack.core.network.license_protocol_handler import FlexLMProtocolHandler, HASPProtocolHandler, LicenseProtocolHandler
     MODULE_AVAILABLE = True
 except ImportError:
     FlexLMProtocolHandler = None
@@ -34,7 +31,7 @@ pytestmark = pytest.mark.skipif(not MODULE_AVAILABLE, reason="Module not availab
 class TestLicenseProtocolHandlerBase:
     """Test base LicenseProtocolHandler functionality."""
 
-    def test_base_handler_initialization(self):
+    def test_base_handler_initialization(self) -> None:
         """Test base handler initializes with default configuration."""
 
         class ConcreteHandler(LicenseProtocolHandler):
@@ -55,7 +52,7 @@ class TestLicenseProtocolHandlerBase:
         assert handler.host == "localhost"  # Default host for security
         assert handler.timeout == 30
 
-    def test_base_handler_custom_configuration(self):
+    def test_base_handler_custom_configuration(self) -> None:
         """Test base handler with custom configuration."""
 
         class ConcreteHandler(LicenseProtocolHandler):
@@ -81,7 +78,7 @@ class TestLicenseProtocolHandlerBase:
         assert handler.bind_host == "127.0.0.1"
         assert handler.timeout == 60
 
-    def test_base_handler_environment_variables(self):
+    def test_base_handler_environment_variables(self) -> None:
         """Test base handler reads from environment variables."""
         original_port = os.environ.get("LICENSE_PROTOCOL_PORT")
         original_host = os.environ.get("LICENSE_PROTOCOL_HOST")
@@ -124,7 +121,7 @@ class TestLicenseProtocolHandlerBase:
             elif "LICENSE_PROTOCOL_TIMEOUT" in os.environ:
                 del os.environ["LICENSE_PROTOCOL_TIMEOUT"]
 
-    def test_clear_data_functionality(self):
+    def test_clear_data_functionality(self) -> None:
         """Test clear_data method functionality."""
 
         class ConcreteHandler(LicenseProtocolHandler):
@@ -161,7 +158,7 @@ class TestLicenseProtocolHandlerBase:
         assert len(handler.session_data) == 0
         assert len(handler.client_connections) == 0
 
-    def test_status_information(self):
+    def test_status_information(self) -> None:
         """Test get_status method returns correct information."""
 
         class ConcreteHandler(LicenseProtocolHandler):
@@ -183,7 +180,7 @@ class TestLicenseProtocolHandlerBase:
         assert status["host"] == "test.example.com"
         assert status["thread_active"] is False
 
-    def test_logging_methods(self):
+    def test_logging_methods(self) -> None:
         """Test request and response logging functionality."""
 
         class ConcreteHandler(LicenseProtocolHandler):
@@ -213,7 +210,7 @@ class TestLicenseProtocolHandlerBase:
 class TestFlexLMProtocolHandler:
     """Test FlexLM license protocol handler."""
 
-    def test_flexlm_initialization(self):
+    def test_flexlm_initialization(self) -> None:
         """Test FlexLM handler initialization with defaults."""
         handler = FlexLMProtocolHandler()
 
@@ -229,7 +226,7 @@ class TestFlexLMProtocolHandler:
         assert isinstance(handler.session_data, dict)
         assert isinstance(handler.client_connections, dict)
 
-    def test_flexlm_custom_configuration(self):
+    def test_flexlm_custom_configuration(self) -> None:
         """Test FlexLM handler with custom configuration."""
         config = {
             "flexlm_port": 28000,
@@ -250,7 +247,7 @@ class TestFlexLMProtocolHandler:
         assert handler.feature_version == "3.0"
         assert handler.server_status == "DOWN"
 
-    def test_flexlm_hello_response(self):
+    def test_flexlm_hello_response(self) -> None:
         """Test FlexLM HELLO command response generation."""
         handler = FlexLMProtocolHandler()
 
@@ -264,7 +261,7 @@ class TestFlexLMProtocolHandler:
         assert "16" in response_str  # Minor version
         assert "27001" in response_str  # Vendor daemon port
 
-    def test_flexlm_getlic_response(self):
+    def test_flexlm_getlic_response(self) -> None:
         """Test FlexLM license checkout (GETLIC) response."""
         handler = FlexLMProtocolHandler()
 
@@ -278,7 +275,7 @@ class TestFlexLMProtocolHandler:
         assert "permanent" in response_str
         assert "HOSTID=ANY" in response_str
 
-    def test_flexlm_getlic_floating_license(self):
+    def test_flexlm_getlic_floating_license(self) -> None:
         """Test FlexLM floating license response."""
         config = {"license_type": "floating", "feature_version": "1.5"}
         handler = FlexLMProtocolHandler(config)
@@ -292,7 +289,7 @@ class TestFlexLMProtocolHandler:
         assert "1.5" in response_str
         assert "floating" in response_str
 
-    def test_flexlm_checkin_response(self):
+    def test_flexlm_checkin_response(self) -> None:
         """Test FlexLM license checkin response."""
         handler = FlexLMProtocolHandler()
 
@@ -301,7 +298,7 @@ class TestFlexLMProtocolHandler:
 
         assert response == b"CHECKIN_OK\n"
 
-    def test_flexlm_heartbeat_response(self):
+    def test_flexlm_heartbeat_response(self) -> None:
         """Test FlexLM heartbeat response."""
         handler = FlexLMProtocolHandler()
 
@@ -310,7 +307,7 @@ class TestFlexLMProtocolHandler:
 
         assert response == b"HEARTBEAT_OK\n"
 
-    def test_flexlm_status_response(self):
+    def test_flexlm_status_response(self) -> None:
         """Test FlexLM status query response."""
         config = {"server_status": "UP", "license_count": 5000}
         handler = FlexLMProtocolHandler(config)
@@ -323,7 +320,7 @@ class TestFlexLMProtocolHandler:
         assert "SERVER UP" in response_str
         assert "LICENSES AVAILABLE: 5000" in response_str
 
-    def test_flexlm_unknown_command(self):
+    def test_flexlm_unknown_command(self) -> None:
         """Test FlexLM unknown command handling."""
         handler = FlexLMProtocolHandler()
 
@@ -332,7 +329,7 @@ class TestFlexLMProtocolHandler:
 
         assert response == b"OK\n"
 
-    def test_flexlm_invalid_request(self):
+    def test_flexlm_invalid_request(self) -> None:
         """Test FlexLM invalid/malformed request handling."""
         handler = FlexLMProtocolHandler()
 
@@ -342,7 +339,7 @@ class TestFlexLMProtocolHandler:
 
         assert b"ERROR" in response
 
-    def test_flexlm_request_capture(self):
+    def test_flexlm_request_capture(self) -> None:
         """Test FlexLM request capture functionality."""
         handler = FlexLMProtocolHandler()
 
@@ -370,7 +367,7 @@ class TestFlexLMProtocolHandler:
 class TestHASPProtocolHandler:
     """Test HASP/Sentinel license protocol handler."""
 
-    def test_hasp_initialization(self):
+    def test_hasp_initialization(self) -> None:
         """Test HASP handler initialization with defaults."""
         handler = HASPProtocolHandler()
 
@@ -385,7 +382,7 @@ class TestHASPProtocolHandler:
         assert isinstance(handler.session_data, dict)
         assert isinstance(handler.client_connections, dict)
 
-    def test_hasp_custom_configuration(self):
+    def test_hasp_custom_configuration(self) -> None:
         """Test HASP handler with custom configuration."""
         config = {
             "hasp_port": 1948,
@@ -404,7 +401,7 @@ class TestHASPProtocolHandler:
         assert handler.license_features == ["CUSTOM_FEATURE"]
         assert handler.hasp_emulator_version == "HASP_EMU_v3.0"
 
-    def test_hasp_login_response(self):
+    def test_hasp_login_response(self) -> None:
         """Test HASP login command response."""
         handler = HASPProtocolHandler()
 
@@ -423,7 +420,7 @@ class TestHASPProtocolHandler:
         assert "handle" in handler.session_data
         assert handler.session_data["handle"] == handle
 
-    def test_hasp_logout_response(self):
+    def test_hasp_logout_response(self) -> None:
         """Test HASP logout command response."""
         handler = HASPProtocolHandler()
 
@@ -436,7 +433,7 @@ class TestHASPProtocolHandler:
         status = struct.unpack("<I", response)[0]
         assert status == 0x00000000  # Success
 
-    def test_hasp_encrypt_response(self):
+    def test_hasp_encrypt_response(self) -> None:
         """Test HASP encryption command response."""
         handler = HASPProtocolHandler()
 
@@ -456,7 +453,7 @@ class TestHASPProtocolHandler:
         assert len(encrypted_data) == len(test_data)
         assert encrypted_data != test_data  # Should be different (encrypted)
 
-    def test_hasp_decrypt_response(self):
+    def test_hasp_decrypt_response(self) -> None:
         """Test HASP decryption command response."""
         handler = HASPProtocolHandler()
 
@@ -478,7 +475,7 @@ class TestHASPProtocolHandler:
         decrypted_data = response[4:]
         assert decrypted_data == test_data  # Should match original
 
-    def test_hasp_get_size_response(self):
+    def test_hasp_get_size_response(self) -> None:
         """Test HASP get memory size command response."""
         config = {"hasp_memory_size": 0x8000}  # 32KB
         handler = HASPProtocolHandler(config)
@@ -493,7 +490,7 @@ class TestHASPProtocolHandler:
         assert status == 0x00000000  # Success
         assert size == 0x8000  # Configured size
 
-    def test_hasp_read_memory_response(self):
+    def test_hasp_read_memory_response(self) -> None:
         """Test HASP read memory command response."""
         handler = HASPProtocolHandler()
 
@@ -514,7 +511,7 @@ class TestHASPProtocolHandler:
         # Should contain license signature
         assert b"HASP_LIC_" in memory_data
 
-    def test_hasp_read_feature_area(self):
+    def test_hasp_read_feature_area(self) -> None:
         """Test HASP read from feature area."""
         config = {"license_features": ["CUSTOM", "SPECIAL", "ADVANCED"]}
         handler = HASPProtocolHandler(config)
@@ -536,7 +533,7 @@ class TestHASPProtocolHandler:
         assert "SPECIAL" in memory_str
         assert "ADVANCED" in memory_str
 
-    def test_hasp_read_data_area(self):
+    def test_hasp_read_data_area(self) -> None:
         """Test HASP read from general data area."""
         handler = HASPProtocolHandler()
 
@@ -556,7 +553,7 @@ class TestHASPProtocolHandler:
         expected_data = bytes((i + offset) % 256 for i in range(size))
         assert memory_data == expected_data
 
-    def test_hasp_write_memory_response(self):
+    def test_hasp_write_memory_response(self) -> None:
         """Test HASP write memory command response."""
         handler = HASPProtocolHandler()
 
@@ -570,7 +567,7 @@ class TestHASPProtocolHandler:
         status = struct.unpack("<I", response)[0]
         assert status == 0x00000000  # Success
 
-    def test_hasp_get_rtc_response(self):
+    def test_hasp_get_rtc_response(self) -> None:
         """Test HASP get real-time clock command response."""
         handler = HASPProtocolHandler()
 
@@ -588,7 +585,7 @@ class TestHASPProtocolHandler:
         assert status == 0x00000000  # Success
         assert before_time <= timestamp <= after_time
 
-    def test_hasp_get_info_response(self):
+    def test_hasp_get_info_response(self) -> None:
         """Test HASP get info command response."""
         config = {"hasp_emulator_version": "HASP_CUSTOM_v4.2"}
         handler = HASPProtocolHandler(config)
@@ -606,7 +603,7 @@ class TestHASPProtocolHandler:
         info_str = info_data.decode("utf-8", errors="ignore")
         assert "HASP_CUSTOM_v4.2" in info_str
 
-    def test_hasp_unknown_command(self):
+    def test_hasp_unknown_command(self) -> None:
         """Test HASP unknown command handling."""
         handler = HASPProtocolHandler()
 
@@ -619,7 +616,7 @@ class TestHASPProtocolHandler:
         status = struct.unpack("<I", response)[0]
         assert status == 0x00000000  # Generic success
 
-    def test_hasp_malformed_request(self):
+    def test_hasp_malformed_request(self) -> None:
         """Test HASP malformed request handling."""
         handler = HASPProtocolHandler()
 
@@ -630,7 +627,7 @@ class TestHASPProtocolHandler:
         # Should return error response
         assert response == b"\xff\xff\xff\xff"
 
-    def test_hasp_request_capture(self):
+    def test_hasp_request_capture(self) -> None:
         """Test HASP request capture functionality."""
         handler = HASPProtocolHandler()
 
@@ -655,7 +652,7 @@ class TestHASPProtocolHandler:
 class TestLicenseProtocolIntegration:
     """Integration tests for license protocol handlers."""
 
-    def test_flexlm_concurrent_connections(self):
+    def test_flexlm_concurrent_connections(self) -> None:
         """Test FlexLM handler with concurrent client connections."""
         handler = FlexLMProtocolHandler()
 
@@ -697,7 +694,7 @@ class TestLicenseProtocolIntegration:
         assert responses[b"CHECKIN AUTOCAD user1 host1 handle1\n"] == b"CHECKIN_OK\n"
         assert responses[b"HEARTBEAT\n"] == b"HEARTBEAT_OK\n"
 
-    def test_hasp_concurrent_connections(self):
+    def test_hasp_concurrent_connections(self) -> None:
         """Test HASP handler with concurrent client connections."""
         handler = HASPProtocolHandler()
 
@@ -743,7 +740,7 @@ class TestLicenseProtocolIntegration:
                 status = struct.unpack("<I", response[:4])[0]
                 assert status == 0x00000000
 
-    def test_protocol_handler_performance(self):
+    def test_protocol_handler_performance(self) -> None:
         """Test protocol handler performance under load."""
         flexlm_handler = FlexLMProtocolHandler()
         hasp_handler = HASPProtocolHandler()
@@ -774,7 +771,7 @@ class TestLicenseProtocolIntegration:
         hasp_avg_time = hasp_total_time / num_requests
         assert hasp_avg_time < max_response_time, f"HASP avg response time {hasp_avg_time:.4f}s exceeds {max_response_time}s"
 
-    def test_protocol_handler_memory_usage(self):
+    def test_protocol_handler_memory_usage(self) -> None:
         """Test protocol handler memory usage with large requests."""
         handler = HASPProtocolHandler()
 
@@ -793,7 +790,7 @@ class TestLicenseProtocolIntegration:
         expected_data = bytes((i + 1024) % 256 for i in range(large_size))
         assert memory_data == expected_data
 
-    def test_protocol_data_validation(self):
+    def test_protocol_data_validation(self) -> None:
         """Test protocol handlers validate and process real license data structures."""
         # FlexLM real-world feature request
         flexlm_handler = FlexLMProtocolHandler()
@@ -818,7 +815,7 @@ class TestLicenseProtocolIntegration:
         assert status == 0x00000000
         assert 0x10000000 <= handle <= 0x7FFFFFFF  # Valid handle range
 
-    def test_protocol_error_recovery(self):
+    def test_protocol_error_recovery(self) -> None:
         """Test protocol handlers recover gracefully from malformed requests."""
         flexlm_handler = FlexLMProtocolHandler()
         hasp_handler = HASPProtocolHandler()
@@ -857,7 +854,7 @@ class TestLicenseProtocolIntegration:
                 status = struct.unpack("<I", response[:4])[0]
                 assert status in [0x00000000, 0xFFFFFFFF]  # Valid status codes
 
-    def test_thread_safety(self):
+    def test_thread_safety(self) -> None:
         """Test protocol handlers are thread-safe."""
         handler = FlexLMProtocolHandler()
         results = []

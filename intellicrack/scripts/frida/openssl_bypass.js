@@ -65,7 +65,9 @@ function findOpenSSLModule() {
 
                 return module;
             }
-        } catch {}
+        } catch {
+            continue;
+        }
     }
 
     return null;
@@ -237,13 +239,17 @@ if (openssl_module) {
                     if (!CAfile.isNull()) {
                         try {
                             cafile_str = CAfile.readCString();
-                        } catch {}
+                        } catch {
+                            cafile_str = '<unreadable>';
+                        }
                     }
 
                     if (!CApath.isNull()) {
                         try {
                             capath_str = CApath.readCString();
-                        } catch {}
+                        } catch {
+                            capath_str = '<unreadable>';
+                        }
                     }
 
                     log(

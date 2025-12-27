@@ -388,11 +388,10 @@ const DrmBypass = {
                                     = argAnalysis.crypto_strength_indicators[0];
                             }
 
-                            // Collect security-relevant patterns
-                            hdcpAnalysis.security_indicators
-                                = hdcpAnalysis.security_indicators.concat(
-                                    argAnalysis.security_patterns
-                                );
+                            hdcpAnalysis.security_indicators = [
+                                ...hdcpAnalysis.security_indicators,
+                                ...argAnalysis.security_patterns,
+                            ];
                         }
 
                         // Perform HDCP bypass opportunity assessment
@@ -481,20 +480,18 @@ const DrmBypass = {
                             requestAnalysis.extracted_body = argDetails.body_data;
                         }
 
-                        // Identify license-related indicators
                         if (argDetails.license_indicators.length > 0) {
-                            requestAnalysis.license_indicators
-                                = requestAnalysis.license_indicators.concat(
-                                    argDetails.license_indicators
-                                );
+                            requestAnalysis.license_indicators = [
+                                ...requestAnalysis.license_indicators,
+                                ...argDetails.license_indicators,
+                            ];
                         }
 
-                        // Extract authentication tokens
                         if (argDetails.auth_tokens.length > 0) {
-                            requestAnalysis.authentication_tokens
-                                = requestAnalysis.authentication_tokens.concat(
-                                    argDetails.auth_tokens
-                                );
+                            requestAnalysis.authentication_tokens = [
+                                ...requestAnalysis.authentication_tokens,
+                                ...argDetails.auth_tokens,
+                            ];
                         }
                     }
 
@@ -716,12 +713,11 @@ const DrmBypass = {
                                 );
                             }
 
-                            // Identify security level indicators
                             if (argAnalysis.security_level_indicators.length > 0) {
-                                licenseAnalysis.security_level_indicators
-                                    = licenseAnalysis.security_level_indicators.concat(
-                                        argAnalysis.security_level_indicators
-                                    );
+                                licenseAnalysis.security_level_indicators = [
+                                    ...licenseAnalysis.security_level_indicators,
+                                    ...argAnalysis.security_level_indicators,
+                                ];
                             }
 
                             // Extract content protection metadata
@@ -1387,12 +1383,11 @@ const DrmBypass = {
                                 licenseRequestAnalysis.pssh_data = argAnalysis.pssh_data;
                             }
 
-                            // Extract content keys information
                             if (argAnalysis.content_keys.length > 0) {
-                                licenseRequestAnalysis.content_keys_info
-                                    = licenseRequestAnalysis.content_keys_info.concat(
-                                        argAnalysis.content_keys
-                                    );
+                                licenseRequestAnalysis.content_keys_info = [
+                                    ...licenseRequestAnalysis.content_keys_info,
+                                    ...argAnalysis.content_keys,
+                                ];
                             }
 
                             // Extract session context
@@ -1807,12 +1802,11 @@ const DrmBypass = {
                             );
                         }
 
-                        // Identify domain restrictions
                         if (argAnalysis.domain_restrictions.length > 0) {
-                            domainRequestAnalysis.domain_restrictions
-                                = domainRequestAnalysis.domain_restrictions.concat(
-                                    argAnalysis.domain_restrictions
-                                );
+                            domainRequestAnalysis.domain_restrictions = [
+                                ...domainRequestAnalysis.domain_restrictions,
+                                ...argAnalysis.domain_restrictions,
+                            ];
                         }
 
                         // Extract origin validation data
@@ -1967,36 +1961,32 @@ const DrmBypass = {
                         );
                         telemetryAnalysis.function_arguments.push(argAnalysis);
 
-                        // Collect telemetry indicators found in arguments
                         if (argAnalysis.telemetry_indicators.length > 0) {
-                            telemetryAnalysis.telemetry_indicators_detected
-                                = telemetryAnalysis.telemetry_indicators_detected.concat(
-                                    argAnalysis.telemetry_indicators
-                                );
+                            telemetryAnalysis.telemetry_indicators_detected = [
+                                ...telemetryAnalysis.telemetry_indicators_detected,
+                                ...argAnalysis.telemetry_indicators,
+                            ];
                         }
 
-                        // Identify data collection vectors
                         if (argAnalysis.data_collection_vectors.length > 0) {
-                            telemetryAnalysis.data_collection_vectors
-                                = telemetryAnalysis.data_collection_vectors.concat(
-                                    argAnalysis.data_collection_vectors
-                                );
+                            telemetryAnalysis.data_collection_vectors = [
+                                ...telemetryAnalysis.data_collection_vectors,
+                                ...argAnalysis.data_collection_vectors,
+                            ];
                         }
 
-                        // Assess privacy implications
                         if (argAnalysis.privacy_implications.length > 0) {
-                            telemetryAnalysis.privacy_implications
-                                = telemetryAnalysis.privacy_implications.concat(
-                                    argAnalysis.privacy_implications
-                                );
+                            telemetryAnalysis.privacy_implications = [
+                                ...telemetryAnalysis.privacy_implications,
+                                ...argAnalysis.privacy_implications,
+                            ];
                         }
 
-                        // Identify tracking mechanisms
                         if (argAnalysis.tracking_mechanisms.length > 0) {
-                            telemetryAnalysis.tracking_mechanisms
-                                = telemetryAnalysis.tracking_mechanisms.concat(
-                                    argAnalysis.tracking_mechanisms
-                                );
+                            telemetryAnalysis.tracking_mechanisms = [
+                                ...telemetryAnalysis.tracking_mechanisms,
+                                ...argAnalysis.tracking_mechanisms,
+                            ];
                         }
                     }
 
@@ -2023,12 +2013,9 @@ const DrmBypass = {
                         indicators_count: telemetryAnalysis.telemetry_indicators_detected.length,
                         bypass_methods: telemetryAnalysis.bypass_methods,
                         blocking_strategies: telemetryAnalysis.blocking_strategies,
-                        privacy_risk_level:
-                            telemetryAnalysis.privacy_implications.length > 2
-                                ? 'high'
-                                : (telemetryAnalysis.privacy_implications.length > 0
-                                    ? 'medium'
-                                    : 'low'),
+                        privacy_risk_level: this.calculatePrivacyRiskLevel(
+                            telemetryAnalysis.privacy_implications.length
+                        ),
                     };
                 },
             });
@@ -2637,28 +2624,25 @@ const DrmBypass = {
                             const argAnalysis = this.analyzeDrmDecryptionArgument(arg, i);
                             decryptionAnalysis.function_arguments.push(argAnalysis);
 
-                            // Detect encryption algorithms in use
                             if (argAnalysis.encryption_algorithms.length > 0) {
-                                decryptionAnalysis.encryption_algorithms_detected
-                                    = decryptionAnalysis.encryption_algorithms_detected.concat(
-                                        argAnalysis.encryption_algorithms
-                                    );
+                                decryptionAnalysis.encryption_algorithms_detected = [
+                                    ...decryptionAnalysis.encryption_algorithms_detected,
+                                    ...argAnalysis.encryption_algorithms,
+                                ];
                             }
 
-                            // Identify key material (encrypted keys, IVs, etc.)
                             if (argAnalysis.key_material.length > 0) {
-                                decryptionAnalysis.key_material_identified
-                                    = decryptionAnalysis.key_material_identified.concat(
-                                        argAnalysis.key_material
-                                    );
+                                decryptionAnalysis.key_material_identified = [
+                                    ...decryptionAnalysis.key_material_identified,
+                                    ...argAnalysis.key_material,
+                                ];
                             }
 
-                            // Detect content protection indicators
                             if (argAnalysis.protection_indicators.length > 0) {
-                                decryptionAnalysis.content_protection_indicators
-                                    = decryptionAnalysis.content_protection_indicators.concat(
-                                        argAnalysis.protection_indicators
-                                    );
+                                decryptionAnalysis.content_protection_indicators = [
+                                    ...decryptionAnalysis.content_protection_indicators,
+                                    ...argAnalysis.protection_indicators,
+                                ];
                             }
 
                             // Extract decryption context information
@@ -2806,26 +2790,26 @@ const DrmBypass = {
 
                             // Extract key handles
                             if (argAnalysis.key_handles.length > 0) {
-                                keySessionAnalysis.key_handles_detected
-                                    = keySessionAnalysis.key_handles_detected.concat(
-                                        argAnalysis.key_handles
-                                    );
+                                keySessionAnalysis.key_handles_detected = [
+                                    ...keySessionAnalysis.key_handles_detected,
+                                    ...argAnalysis.key_handles,
+                                ];
                             }
 
                             // Identify crypto providers
                             if (argAnalysis.crypto_providers.length > 0) {
-                                keySessionAnalysis.crypto_providers_identified
-                                    = keySessionAnalysis.crypto_providers_identified.concat(
-                                        argAnalysis.crypto_providers
-                                    );
+                                keySessionAnalysis.crypto_providers_identified = [
+                                    ...keySessionAnalysis.crypto_providers_identified,
+                                    ...argAnalysis.crypto_providers,
+                                ];
                             }
 
                             // Analyze key operations
                             if (argAnalysis.key_operations.length > 0) {
-                                keySessionAnalysis.key_operations_analyzed
-                                    = keySessionAnalysis.key_operations_analyzed.concat(
-                                        argAnalysis.key_operations
-                                    );
+                                keySessionAnalysis.key_operations_analyzed = [
+                                    ...keySessionAnalysis.key_operations_analyzed,
+                                    ...argAnalysis.key_operations,
+                                ];
                             }
 
                             // Extract security attributes
@@ -2838,10 +2822,10 @@ const DrmBypass = {
 
                             // Identify access permissions
                             if (argAnalysis.access_permissions.length > 0) {
-                                keySessionAnalysis.access_permissions
-                                    = keySessionAnalysis.access_permissions.concat(
-                                        argAnalysis.access_permissions
-                                    );
+                                keySessionAnalysis.access_permissions = [
+                                    ...keySessionAnalysis.access_permissions,
+                                    ...argAnalysis.access_permissions,
+                                ];
                             }
                         }
 
@@ -2977,10 +2961,10 @@ const DrmBypass = {
 
                         // Identify DRM service indicators
                         if (argAnalysis.drm_indicators.length > 0) {
-                            requestAnalysis.drm_service_indicators
-                                = requestAnalysis.drm_service_indicators.concat(
-                                    argAnalysis.drm_indicators
-                                );
+                            requestAnalysis.drm_service_indicators = [
+                                ...requestAnalysis.drm_service_indicators,
+                                ...argAnalysis.drm_indicators,
+                            ];
                         }
 
                         // Extract content protection metadata
@@ -3479,7 +3463,13 @@ const DrmBypass = {
             }
 
             const activeSystems = [];
-            const { config } = this;
+            const {
+                config,
+                interceptedRequests,
+                bypassedChecks,
+                spoofedLicenses,
+                hooksInstalled,
+            } = this;
             if (config.hdcp.enabled) {
                 activeSystems.push({
                     name: 'HDCP Bypass',
@@ -3518,10 +3508,10 @@ const DrmBypass = {
                 hook_categories: categories,
                 active_protection_systems: activeSystems,
                 runtime_statistics: {
-                    intercepted_requests: this.interceptedRequests,
-                    bypassed_checks: this.bypassedChecks,
-                    spoofed_licenses: this.spoofedLicenses,
-                    total_hooks_installed: Object.keys(this.hooksInstalled).length,
+                    intercepted_requests: interceptedRequests,
+                    bypassed_checks: bypassedChecks,
+                    spoofed_licenses: spoofedLicenses,
+                    total_hooks_installed: Object.keys(hooksInstalled).length,
                 },
                 status: 'ACTIVE',
                 description: 'Advanced DRM bypass system is now active and operational',
@@ -3928,6 +3918,9 @@ const DrmBypass = {
         };
 
         for (const platform in cloudPlatforms) {
+            if (!Object.hasOwn(cloudPlatforms, platform)) {
+                continue;
+            }
             this.hookStreamingAPIs(platform, cloudPlatforms[platform]);
         }
 
@@ -4002,6 +3995,16 @@ const DrmBypass = {
         this.bypassedChecks += 35;
     },
 
+    calculatePrivacyRiskLevel(implicationsCount) {
+        if (implicationsCount > 2) {
+            return 'high';
+        }
+        if (implicationsCount > 0) {
+            return 'medium';
+        }
+        return 'low';
+    },
+
     generateAdversarialExamples: () => ({
         imageAdversarial: Array.from({ length: 100 })
             .fill(0)
@@ -4011,7 +4014,7 @@ const DrmBypass = {
             .map(() => Math.random()),
         textAdversarial: Array.from({ length: 50 })
             .fill('')
-            .map(() => String.fromCharCode(65 + Math.floor(Math.random() * 26))),
+            .map(() => String.fromCodePoint(65 + Math.floor(Math.random() * 26))),
     }),
 
     initializeBehavioralSpoofer: () => ({

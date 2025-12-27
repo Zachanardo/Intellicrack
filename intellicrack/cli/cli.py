@@ -114,12 +114,33 @@ except ImportError as e:
 
 
 def _typed_decorator[F: Callable[..., Any]](func: F) -> F:
-    """Preserve function type through untyped click decorators."""
+    """Preserve function type through untyped click decorators.
+
+    This decorator is used to preserve type information for functions that are
+    wrapped by untyped click decorators. It acts as a no-op but helps the type
+    checker understand the function's true type.
+
+    Args:
+        func: The function to preserve type information for.
+
+    Returns:
+        The same function unchanged, with preserved type information.
+    """
     return func
 
 
 def typed_group(*args: Any, **kwargs: Any) -> Callable[[F], F]:
-    """Typed wrapper for click.group()."""
+    """Create a typed Click group decorator.
+
+    Wraps click.group() to preserve type information of the decorated function.
+
+    Args:
+        *args: Positional arguments to pass to click.group().
+        **kwargs: Keyword arguments to pass to click.group().
+
+    Returns:
+        A decorator function that applies click.group() while preserving types.
+    """
 
     def decorator(f: F) -> F:
         return cast("F", click.group(*args, **kwargs)(f))
@@ -128,7 +149,18 @@ def typed_group(*args: Any, **kwargs: Any) -> Callable[[F], F]:
 
 
 def typed_command(group: Any, name: str | None = None, **kwargs: Any) -> Callable[[F], F]:
-    """Typed wrapper for group.command()."""
+    """Create a typed Click command decorator for a group.
+
+    Wraps group.command() to preserve type information of the decorated function.
+
+    Args:
+        group: Click group instance to add command to.
+        name: Optional name for the command; defaults to function name if not provided.
+        **kwargs: Keyword arguments to pass to group.command().
+
+    Returns:
+        A decorator function that applies group.command() while preserving types.
+    """
 
     def decorator(f: F) -> F:
         return cast("F", group.command(name, **kwargs)(f))
@@ -137,7 +169,17 @@ def typed_command(group: Any, name: str | None = None, **kwargs: Any) -> Callabl
 
 
 def typed_option(*args: Any, **kwargs: Any) -> Callable[[F], F]:
-    """Typed wrapper for click.option()."""
+    """Create a typed Click option decorator.
+
+    Wraps click.option() to preserve type information of the decorated function.
+
+    Args:
+        *args: Positional arguments to pass to click.option().
+        **kwargs: Keyword arguments to pass to click.option().
+
+    Returns:
+        A decorator function that applies click.option() while preserving types.
+    """
 
     def decorator(f: F) -> F:
         wrapped: F = click.option(*args, **kwargs)(f)
@@ -147,7 +189,17 @@ def typed_option(*args: Any, **kwargs: Any) -> Callable[[F], F]:
 
 
 def typed_argument(*args: Any, **kwargs: Any) -> Callable[[F], F]:
-    """Typed wrapper for click.argument()."""
+    """Create a typed Click argument decorator.
+
+    Wraps click.argument() to preserve type information of the decorated function.
+
+    Args:
+        *args: Positional arguments to pass to click.argument().
+        **kwargs: Keyword arguments to pass to click.argument().
+
+    Returns:
+        A decorator function that applies click.argument() while preserving types.
+    """
 
     def decorator(f: F) -> F:
         wrapped: F = click.argument(*args, **kwargs)(f)
@@ -161,7 +213,16 @@ def typed_argument(*args: Any, **kwargs: Any) -> Callable[[F], F]:
 @click.option("--verbose", "-v", is_flag=True, help="Enable verbose output", envvar="INTELLICRACK_VERBOSE")
 @click.option("--quiet", "-q", is_flag=True, help="Suppress non-essential output", envvar="INTELLICRACK_QUIET")
 def cli(*, verbose: bool, quiet: bool) -> None:
-    """Intellicrack - Advanced Binary Analysis and Exploitation Framework."""
+    """Initialize the Intellicrack command-line interface.
+
+    This is the main entry point for the Intellicrack CLI. It configures
+    logging levels based on user preferences and initializes the configuration
+    system if available. All subcommands are accessed through this main group.
+
+    Args:
+        verbose: Enable debug-level logging output for detailed diagnostics.
+        quiet: Suppress non-essential output, showing only errors and warnings.
+    """
     # Configure logging
     if verbose:
         logging.basicConfig(level=logging.DEBUG)
@@ -186,7 +247,19 @@ def cli(*, verbose: bool, quiet: bool) -> None:
 @click.option("--output", "-o", help="Save scan results")
 @click.option("--verbose", "-v", is_flag=True, help="Verbose output")
 def scan(binary_path: str, *, vulns: bool, output: str | None, verbose: bool) -> None:
-    """Scan binary for vulnerabilities and security issues."""
+    """Scan a binary file for vulnerabilities and security issues.
+
+    Performs either a vulnerability scan or basic security analysis on the
+    specified binary. Results can optionally be saved to a JSON file. Scans
+    analyze the binary for protection mechanisms, exploit mitigations, and
+    potential security weaknesses in licensing protection implementations.
+
+    Args:
+        binary_path: Path to the binary file to scan.
+        vulns: If True, perform a detailed vulnerability scan; otherwise perform basic security analysis.
+        output: Optional file path where scan results will be saved as JSON.
+        verbose: If True, display detailed output during scanning process.
+    """
     try:
         click.echo(f"Scanning binary: {binary_path}")
         scan_results: dict[str, Any] = {
@@ -218,7 +291,19 @@ def scan(binary_path: str, *, vulns: bool, output: str | None, verbose: bool) ->
 
 
 def _compute_severity_summary(vulnerabilities: list[dict[str, Any]]) -> dict[str, int]:
-    """Compute severity counts from vulnerability list."""
+    """Count vulnerabilities by severity level.
+
+    Analyzes a list of vulnerabilities and aggregates them into counts
+    organized by severity level. This provides a high-level summary of
+    the vulnerability distribution in a binary.
+
+    Args:
+        vulnerabilities: List of vulnerability dictionaries, each containing a 'severity' key.
+
+    Returns:
+        Dictionary with severity levels as keys ('critical', 'high', 'medium', 'low', 'info')
+        and integer counts as values representing the number of vulnerabilities at each level.
+    """
     return {
         "critical": sum(1 for v in vulnerabilities if v.get("severity") == "critical"),
         "high": sum(1 for v in vulnerabilities if v.get("severity") == "high"),
@@ -255,7 +340,18 @@ def _perform_vulnerability_scan_cli(binary_path: str, verbose: bool) -> dict[str
 
 
 def _display_vulnerability_summary_cli(vulnerabilities: list[dict[str, Any]], verbose: bool) -> None:
-    """Helper to display categorized vulnerability summary."""
+    """Display a categorized summary of vulnerabilities by severity level.
+
+    Prints formatted vulnerability information organized by severity level to the
+    console. Each severity level shows a count and a sample of vulnerabilities
+    (limited to first 3 of each level). Verbose mode includes low and medium
+    severity details which are otherwise hidden.
+
+    Args:
+        vulnerabilities: List of vulnerability dictionaries containing 'severity', 'type', and 'description' keys.
+        verbose: If True, display additional details for lower severity vulnerabilities.
+
+    """
     critical = [v for v in vulnerabilities if v.get("severity") == "critical"]
     high = [v for v in vulnerabilities if v.get("severity") == "high"]
     medium = [v for v in vulnerabilities if v.get("severity") == "medium"]
@@ -285,14 +381,21 @@ def _display_vulnerability_summary_cli(vulnerabilities: list[dict[str, Any]], ve
 
 
 def _perform_basic_security_scan_cli(binary_path: str, verbose: bool) -> dict[str, Any]:
-    """Perform and display basic security scan results.
+    """Perform basic security analysis and display results.
+
+    Executes a basic security scan on a binary file using the binary analysis
+    module. Displays the file type, architecture, and security features
+    (protections). This scan identifies licensing protection mechanisms,
+    anti-debugging features, and other security mechanisms relevant to
+    license enforcement.
 
     Args:
-        binary_path: Path to binary file to scan.
-        verbose: Whether to show detailed output.
+        binary_path: Path to the binary file to analyze.
+        verbose: If True, retrieve detailed analysis results with full protection data.
 
     Returns:
-        Dictionary containing security analysis results.
+        Dictionary containing security analysis results with keys including 'file_type',
+        'architecture', and 'protections' (dict mapping protection names to boolean enabled state).
     """
     click.echo("Performing basic security scan...")
     from intellicrack.utils.analysis.binary_analysis import analyze_binary
@@ -325,7 +428,19 @@ def _perform_basic_security_scan_cli(binary_path: str, verbose: bool) -> dict[st
 @click.option("--output", "-o", help="Save strings to file")
 @click.option("--filter", "-f", help="Filter strings by pattern")
 def strings(binary_path: str, min_length: int, output: str | None, filter_pattern: str | None) -> None:
-    """Extract strings from binary file."""
+    """Extract and display strings from a binary file.
+
+    Extracts all string literals from a binary file, with options to filter by
+    minimum length and search pattern. Useful for identifying licensing strings,
+    registration messages, or other embedded text in protected binaries. Results
+    can be saved to a file or displayed on console.
+
+    Args:
+        binary_path: Path to the binary file to extract strings from.
+        min_length: Minimum length of strings to extract (default 4 characters).
+        output: Optional file path where extracted strings will be saved (one per line).
+        filter_pattern: Optional regex pattern to filter strings; only matching strings are returned.
+    """
     try:
         click.echo(f"Extracting strings from: {binary_path}")
 
@@ -366,7 +481,14 @@ def strings(binary_path: str, min_length: int, output: str | None, filter_patter
 @_typed_decorator
 @cli.group()
 def payload() -> None:
-    """Payload generation commands."""
+    """Access payload generation and management commands.
+
+    This command group provides subcommands for generating custom payloads,
+    listing available payload templates, and creating payloads from predefined
+    templates. Payloads are used for testing exploitation techniques and
+    license protection bypass mechanisms.
+
+    """
 
 
 @_typed_decorator
@@ -413,7 +535,23 @@ def generate(
     output: str | None,
     output_format: str,
 ) -> None:
-    """Generate a custom payload with various options."""
+    """Generate a custom payload for licensing protection analysis and exploitation.
+
+    Creates a custom payload with specified characteristics including type,
+    target architecture, connection parameters, and output format. Payloads can
+    be encoded using multiple schemes and output in various formats (raw binary,
+    executable, DLL, scripting language code, or C source). This is used for
+    testing protection mechanisms against various payload delivery methods.
+
+    Args:
+        payload_type: Type of payload to generate ('reverse_shell', 'bind_shell', 'meterpreter', or 'custom').
+        architecture: Target processor architecture ('x86', 'x64', 'arm', or 'arm64').
+        lhost: Listener host for reverse shell connections (required for reverse shells).
+        lport: Listener port for reverse shell connections (required for reverse shells).
+        encoding: Tuple of encoding scheme names to apply to payload (can be multiple).
+        output: Optional file path where the generated payload will be saved.
+        output_format: Output format for payload ('raw', 'exe', 'dll', 'powershell', 'python', or 'c').
+    """
     try:
         engine = PayloadEngine()
 
@@ -507,7 +645,16 @@ def generate(
     help="Template category",
 )
 def list_templates(category: str | None) -> None:
-    """List available payload templates."""
+    """Display all available payload templates, optionally filtered by category.
+
+    Lists predefined payload templates available for generation, organized by
+    category. Templates provide pre-configured payload specifications that can
+    be customized for specific licensing protection testing scenarios.
+
+    Args:
+        category: Optional category name to filter templates ('shell', 'steganography', 'anti_analysis').
+                  If None, templates from all categories are displayed.
+    """
     try:
         templates = PayloadTemplates()
         available = templates.list_templates(category)
@@ -547,7 +694,19 @@ def list_templates(category: str | None) -> None:
 @click.option("--param", "-p", multiple=True, help="Template parameters (key=value)")
 @click.option("--output", "-o", help="Output file path")
 def from_template(category: str, template_name: str, architecture: str, param: tuple[str, ...], output: str | None) -> None:
-    """Generate payload from template."""
+    """Generate a payload from a predefined template with custom parameters.
+
+    Creates a payload by loading and customizing a predefined template from
+    the template library. Templates provide convenient presets for common
+    exploitation scenarios. Custom parameters can override template defaults.
+
+    Args:
+        category: Template category name (e.g., 'shell', 'steganography', 'anti_analysis').
+        template_name: Name of the specific template within the category to use.
+        architecture: Target processor architecture ('x86', 'x64', 'arm', or 'arm64').
+        param: Tuple of template parameter overrides in 'key=value' format (can be multiple).
+        output: Optional file path where the generated payload will be saved.
+    """
     try:
         engine = PayloadEngine()
         templates = PayloadTemplates()
@@ -638,7 +797,20 @@ def from_template(category: str, template_name: str, architecture: str, param: t
 @click.option("--payload", "-p", "payload_data", help="Custom payload or payload file")
 @click.option("--output", "-o", help="Output exploit to file")
 def exploit_target(target: str, exploit_type: str, payload_data: str | None, output: str | None) -> None:
-    """Exploit a target binary or service."""
+    """Exploit a target binary or service to test protection mechanisms.
+
+    Executes an exploitation attempt against a specified target using the
+    selected exploit type. This is used for testing how licensing protections
+    and security mechanisms respond to various exploit techniques. Custom
+    payloads can be injected to test specific scenarios.
+
+    Args:
+        target: Path to the target binary or network service endpoint to exploit.
+        exploit_type: Type of exploit to attempt ('auto', 'buffer_overflow', 'format_string',
+                     'heap_overflow', or 'use_after_free').
+        payload_data: Optional custom payload or path to payload file; if None, a default payload is generated.
+        output: Optional file path where the generated exploit code will be saved.
+    """
     try:
         click.echo(f"Exploiting target: {target}")
         click.echo(f"Exploit type: {exploit_type}")
@@ -687,7 +859,23 @@ def _get_analysis_types(
     symbolic_execution: bool,
     concolic_execution: bool,
 ) -> list[str]:
-    """Determine analysis types based on mode and options."""
+    """Determine which analysis types to perform based on mode and options.
+
+    Builds a list of analysis types that will be executed based on the selected
+    analysis mode and any additional processing options (GPU, distributed, symbolic).
+    This is used for user feedback about what analyses will be performed.
+
+    Args:
+        mode: Analysis mode determining base analysis types ('comprehensive', 'vulnerability',
+              'protection', or 'basic').
+        gpu_accelerate: If True, add GPU acceleration to analysis types.
+        distributed: If True, add distributed processing to analysis types.
+        symbolic_execution: If True, add symbolic execution to analysis types.
+        concolic_execution: If True, add concolic execution to analysis types.
+
+    Returns:
+        List of analysis type names that will be performed.
+    """
     if mode == "comprehensive":
         analysis_types = [
             "Basic Analysis",
@@ -715,7 +903,16 @@ def _get_analysis_types(
 
 
 def _handle_gpu_acceleration(binary_path: str) -> None:
-    """Handle GPU acceleration if enabled."""
+    """Execute GPU-accelerated binary analysis for performance improvement.
+
+    Attempts to run GPU-accelerated analysis on the target binary to improve
+    execution speed for computationally intensive analysis operations. Falls
+    back to CPU-based analysis if GPU support is unavailable.
+
+    Args:
+        binary_path: Path to the binary file to analyze with GPU acceleration.
+
+    """
     click.echo("GPU acceleration enabled")
     try:
         from intellicrack.utils.gpu_benchmark import run_gpu_accelerated_analysis
@@ -732,7 +929,16 @@ def _handle_gpu_acceleration(binary_path: str) -> None:
 
 
 def _handle_distributed_processing(binary_path: str) -> None:
-    """Handle distributed processing if enabled."""
+    """Execute distributed analysis across multiple nodes for scalability.
+
+    Runs binary analysis using distributed processing to leverage multiple
+    compute nodes for faster parallel analysis. Falls back gracefully if
+    distributed processing is unavailable.
+
+    Args:
+        binary_path: Path to the binary file to analyze in distributed mode.
+
+    """
     click.echo("Distributed processing enabled")
     try:
         from intellicrack.utils.runtime.distributed_processing import run_distributed_analysis
@@ -745,7 +951,18 @@ def _handle_distributed_processing(binary_path: str) -> None:
 
 
 def _handle_symbolic_execution(binary_path: str, *, symbolic_execution: bool) -> None:
-    """Handle symbolic/concolic execution if enabled."""
+    """Execute symbolic or concolic analysis to discover vulnerabilities.
+
+    Runs symbolic or concolic execution engine on the binary to discover
+    potential vulnerabilities and execution paths. Symbolic execution
+    explores program behavior through abstract interpretation without
+    concrete values, while concolic execution combines concrete and symbolic.
+
+    Args:
+        binary_path: Path to the binary file to analyze with symbolic/concolic execution.
+        symbolic_execution: If True, use symbolic execution; otherwise use concolic execution.
+
+    """
     execution_type = "symbolic" if symbolic_execution else "concolic"
     click.echo(f"Using {execution_type} execution")
     try:
@@ -761,7 +978,24 @@ def _handle_symbolic_execution(binary_path: str, *, symbolic_execution: bool) ->
 
 
 def _perform_analysis(mode: str, binary_path: str, output: str | None, *, verbose: bool, no_ai: bool, deep: bool) -> dict[str, Any]:
-    """Perform the main analysis based on mode."""
+    """Execute binary analysis using the specified mode and options.
+
+    Performs binary analysis on a target file using the selected analysis mode.
+    Different modes provide different analysis depth and focus. Can optionally
+    integrate AI-powered script suggestions and save results to an output file.
+
+    Args:
+        mode: Analysis mode ('comprehensive', 'vulnerability', 'protection', or 'basic').
+        binary_path: Path to the binary file to analyze.
+        output: Optional directory path where analysis results will be saved.
+        verbose: If True, enable verbose output with additional details.
+        no_ai: If True, disable AI-based script generation suggestions.
+        deep: If True, perform deep analysis with detailed examination.
+
+    Returns:
+        Dictionary containing analysis results with keys varying by mode, typically including
+        'success' (bool), 'vulnerabilities' (list), 'protections' (dict), and 'ai_integration' (dict).
+    """
     if mode == "comprehensive":
         from intellicrack.utils.runtime.runner_functions import run_comprehensive_analysis
 
@@ -782,7 +1016,17 @@ def _perform_analysis(mode: str, binary_path: str, output: str | None, *, verbos
 
 
 def _display_basic_results(result: dict[str, Any]) -> None:
-    """Display basic analysis results."""
+    """Display fundamental analysis results including binary metadata and protections.
+
+    Formats and prints basic analysis information such as binary type, architecture,
+    file size, detected protections, and any potential vulnerabilities. This is
+    the standard output format for all analysis modes.
+
+    Args:
+        result: Dictionary containing analysis results with keys like 'format',
+                'file_type', 'architecture', 'size', 'protections', 'vulnerabilities', and 'error'.
+
+    """
     click.echo(f"\nBinary Type: {result.get('format', result.get('file_type', 'Unknown'))}")
     click.echo(f"Architecture: {result.get('architecture', 'Unknown')}")
 
@@ -807,7 +1051,17 @@ def _display_basic_results(result: dict[str, Any]) -> None:
 
 
 def _display_ai_integration_results(result: dict[str, Any]) -> None:
-    """Display AI integration results."""
+    """Display AI-powered script generation suggestions and recommendations.
+
+    Shows AI-derived insights about the analyzed binary, including recommended
+    Frida scripts, Ghidra scripts, and exploitation actions. Also indicates
+    confidence levels and whether autonomous script generation has been triggered.
+
+    Args:
+        result: Dictionary containing analysis results with 'ai_integration' key
+                holding AI suggestions, recommendations, and autonomous generation status.
+
+    """
     if "ai_integration" not in result:
         return
     if result["ai_integration"].get("enabled"):
@@ -876,7 +1130,25 @@ def analyze(
     symbolic_execution: bool,
     concolic_execution: bool,
 ) -> None:
-    """Comprehensive binary analysis with multiple modes and options."""
+    """Perform comprehensive binary analysis with multiple execution modes and accelerators.
+
+    Executes in-depth analysis of a binary file using the selected mode and options.
+    Supports GPU acceleration, distributed processing, and symbolic/concolic execution
+    for advanced vulnerability discovery. AI integration can provide script generation
+    suggestions. Progress is tracked and displayed throughout the analysis.
+
+    Args:
+        binary_path: Path to the binary file to analyze.
+        deep: If True, perform deep analysis with thorough examination.
+        output: Optional file path where analysis results will be saved as JSON.
+        no_ai: If True, disable AI-based script generation suggestions.
+        mode: Analysis mode ('basic', 'comprehensive', 'vulnerability', or 'protection').
+        verbose: If True, enable debug-level verbose output.
+        gpu_accelerate: If True, use GPU acceleration for computationally intensive analysis.
+        distributed: If True, distribute analysis across multiple processing nodes.
+        symbolic_execution: If True, use symbolic execution for path discovery.
+        concolic_execution: If True, use concolic (hybrid concrete/symbolic) execution.
+    """
     from intellicrack.cli.progress_manager import ProgressManager
 
     progress_manager = ProgressManager()
@@ -947,7 +1219,19 @@ def analyze(
 
 
 def _update_progress(progress_manager: Any, step: str, progress: float, message: str = "") -> None:
-    """Helper to update analysis progress."""
+    """Update analysis progress display with current step and completion percentage.
+
+    Updates the progress bar for the specified analysis step with new completion
+    percentage and optional status message. Used to provide real-time feedback
+    to the user during long-running analysis operations.
+
+    Args:
+        progress_manager: ProgressManager instance managing the progress display.
+        step: Name of the analysis step being updated.
+        progress: Completion percentage as float between 0.0 and 1.0.
+        message: Optional status message to display with the progress update.
+
+    """
     if step in progress_manager.task_ids:
         task_id = progress_manager.task_ids[step]
         prog = getattr(progress_manager, "progress", None)
@@ -960,14 +1244,32 @@ def _update_progress(progress_manager: Any, step: str, progress: float, message:
 
 
 def _handle_gpu_acceleration_progress(progress_manager: Any, binary_path: str) -> None:
-    """Helper to handle GPU acceleration and update progress."""
+    """Execute GPU-accelerated analysis with progress tracking.
+
+    Runs GPU-accelerated binary analysis while updating the progress manager
+    with completion status. Handles graceful fallback if GPU acceleration is unavailable.
+
+    Args:
+        progress_manager: ProgressManager instance for progress display updates.
+        binary_path: Path to the binary file to analyze with GPU acceleration.
+
+    """
     _update_progress(progress_manager, "GPU Processing", 0.0, "Starting GPU acceleration")
     _handle_gpu_acceleration(binary_path)
     _update_progress(progress_manager, "GPU Processing", 1.0, "GPU processing complete")
 
 
 def _handle_distributed_processing_progress(progress_manager: Any, binary_path: str) -> None:
-    """Helper to handle distributed processing and update progress."""
+    """Execute distributed analysis with progress tracking.
+
+    Runs distributed binary analysis across multiple nodes while updating the
+    progress manager. Handles graceful fallback if distributed processing is unavailable.
+
+    Args:
+        progress_manager: ProgressManager instance for progress display updates.
+        binary_path: Path to the binary file to analyze in distributed mode.
+
+    """
     _update_progress(progress_manager, "Distributed Analysis", 0.0, "Starting distributed processing")
     _handle_distributed_processing(binary_path)
     _update_progress(progress_manager, "Distributed Analysis", 1.0, "Distributed processing complete")
@@ -976,7 +1278,18 @@ def _handle_distributed_processing_progress(progress_manager: Any, binary_path: 
 def _handle_symbolic_execution_progress(
     progress_manager: Any, binary_path: str, symbolic_execution: bool, concolic_execution: bool
 ) -> None:
-    """Helper to handle symbolic/concolic execution and update progress."""
+    """Execute symbolic/concolic analysis with progress tracking.
+
+    Runs symbolic or concolic execution on the binary while updating the progress
+    manager with completion status. Handles graceful fallback if execution engine is unavailable.
+
+    Args:
+        progress_manager: ProgressManager instance for progress display updates.
+        binary_path: Path to the binary file to analyze.
+        symbolic_execution: If True, use symbolic execution; otherwise use concolic execution.
+        concolic_execution: If True, use concolic execution (parameter may be unused).
+
+    """
     _update_progress(progress_manager, "Symbolic Analysis", 0.0, "Starting symbolic execution")
     _handle_symbolic_execution(binary_path, symbolic_execution=symbolic_execution)  # concolic_execution removed
     _update_progress(progress_manager, "Symbolic Analysis", 1.0, "Symbolic execution complete")
@@ -989,7 +1302,18 @@ def _handle_symbolic_execution_progress(
 @click.option("--output", "-o", help="Save analysis report")
 @click.option("--no-ai", is_flag=True, help="Disable AI integration")
 def basic_analyze(binary_path: str, *, deep: bool, output: str | None, no_ai: bool) -> None:
-    """Analyze a binary file with AI integration."""
+    """Perform basic binary analysis with optional AI integration and deep examination.
+
+    Executes fundamental binary analysis on a target file. Optionally performs
+    deep analysis for more thorough examination and AI-powered script generation
+    suggestions. Results can be saved to a file for later review.
+
+    Args:
+        binary_path: Path to the binary file to analyze.
+        deep: If True, perform deep analysis with thorough examination.
+        output: Optional file path where analysis results will be saved as JSON.
+        no_ai: If True, disable AI-based script generation suggestions.
+    """
     try:
         click.echo(f"Analyzing binary: {binary_path}")
         if deep:
@@ -1098,7 +1422,19 @@ def patch(
     nop_range: str | None,
     output: str | None,
 ) -> None:
-    """Patch a binary file."""
+    """Patch a binary file by overwriting bytes or filling ranges with NOP instructions.
+
+    Applies binary patches to a target file. Supports byte-level patching at specific
+    offsets and NOP-filling of address ranges. Useful for disabling license checks,
+    anti-debugging code, and protection mechanism verification routines.
+
+    Args:
+        binary_path: Path to the binary file to patch.
+        offset: Hexadecimal offset where patching begins (e.g., '0x1000').
+        data: Hexadecimal bytes to write at offset (e.g., '4889E5' or '48 89 E5').
+        nop_range: Address range to fill with NOP instructions in format 'start:end' (hex, e.g., '0x1000:0x1010').
+        output: Optional file path for the patched binary; if None, patches are applied in-place.
+    """
     try:
         patches = []
 
@@ -1162,7 +1498,12 @@ def patch(
 @_typed_decorator
 @cli.group()
 def advanced() -> None:
-    """Advanced exploitation commands."""
+    """Access advanced exploitation and research commands.
+
+    This command group provides advanced functionality for exploitation testing
+    and vulnerability research. Requires advanced modules to be installed and available.
+
+    """
     if not ADVANCED_MODULES_AVAILABLE:
         click.echo("Advanced modules not available. Please check installation.", err=True)
         sys.exit(1)
@@ -1171,7 +1512,12 @@ def advanced() -> None:
 @_typed_decorator
 @advanced.group()
 def advanced_payload() -> None:
-    """Advanced payload generation commands."""
+    """Access advanced payload generation commands with evasion techniques.
+
+    This subgroup provides advanced payload generation with anti-analysis
+    evasion, polymorphic encoding, and metamorphic transformations.
+
+    """
 
 
 @_typed_decorator
@@ -1214,7 +1560,13 @@ def advanced_payload() -> None:
     help="Output format",
 )
 def advanced_generate() -> None:
-    """Generate advanced payload with evasion techniques."""
+    """Generate advanced payload with evasion techniques (currently disabled).
+
+    This command previously generated advanced payloads with anti-analysis
+    evasion, polymorphic encoding, and metamorphic transformations. This
+    functionality has been removed from the current version as Intellicrack
+    now focuses on binary analysis and security research capabilities.
+    """
     try:
         # This functionality has been removed as it was part of out-of-scope exploitation code.
         click.echo("Advanced payload generation has been removed from this version.")
@@ -1240,7 +1592,12 @@ def advanced_generate() -> None:
 @_typed_decorator
 @advanced.group()
 def research() -> None:
-    """Vulnerability research commands."""
+    """Access vulnerability research and analysis commands.
+
+    This subgroup provides vulnerability research capabilities including
+    fuzzing, vulnerability assessment, patch analysis, and hybrid research approaches.
+
+    """
 
 
 @_typed_decorator
@@ -1266,7 +1623,22 @@ def research() -> None:
 @click.option("--timeout", type=int, default=3600, help="Analysis timeout (seconds)")
 @click.option("--use-ai", is_flag=True, help="Use AI-guided analysis")
 def run(target_path: str, output: str | None, timeout: int, *, use_ai: bool) -> None:
-    """Run vulnerability research analysis."""
+    """Execute vulnerability research campaign on a target binary.
+
+    Performs comprehensive licensing protection analysis and vulnerability research
+    on a target binary. Can use AI-guided analysis for intelligent recommendations
+    or standard binary analysis. Supports timeout for long-running analysis and
+    can save results to a file.
+
+    Args:
+        target_path: Path to the target binary file to analyze.
+        output: Optional directory path where research results will be saved as JSON.
+        timeout: Analysis timeout in seconds (default 3600).
+        use_ai: If True, use AI-guided analysis; otherwise use standard binary analysis.
+
+    Raises:
+        RuntimeError: If analysis fails in the background thread during AI-guided analysis.
+    """
     try:
         if not os.path.exists(target_path):
             click.echo(f"Target file not found: {target_path}", err=True)
@@ -1452,7 +1824,11 @@ def run(target_path: str, output: str | None, timeout: int, *, use_ai: bool) -> 
 
 @advanced.group()
 def post_exploit() -> None:
-    """Post-exploitation commands."""
+    """Access post-exploitation and automated exploitation commands.
+
+    This command group provides post-exploitation functionality for testing
+    protection mechanism behavior after successful bypass attempts.
+    """
 
 
 @post_exploit.command()
@@ -1464,7 +1840,20 @@ def post_exploit() -> None:
 )
 @click.option("--output", "-o", help="Save detailed results to file")
 def auto_exploit(target_path: str, lhost: str, lport: int, target_platform: str, output: str | None) -> None:
-    """Run full automated exploitation workflow."""
+    """Execute full automated licensing protection analysis and exploitation workflow.
+
+    Performs comprehensive automated analysis of licensing protection mechanisms
+    with AI guidance. Analyzes the target binary to identify protection methods,
+    generates recommendations for bypass techniques, and suggests exploitation
+    strategies. Results can be saved for review and further analysis.
+
+    Args:
+        target_path: Path to the target binary file to analyze.
+        lhost: Listener host for network callbacks or reverse connections.
+        lport: Listener port for network callbacks or reverse connections.
+        target_platform: Target operating system platform ('windows', 'linux', or 'macos').
+        output: Optional file path where detailed analysis results will be saved as JSON.
+    """
     try:
         if not os.path.exists(target_path):
             click.echo(f"Target file not found: {target_path}", err=True)
@@ -1536,7 +1925,12 @@ def auto_exploit(target_path: str, lhost: str, lport: int, target_platform: str,
 
 @cli.group()
 def ai() -> None:
-    """AI-powered script generation and analysis commands."""
+    """Access AI-powered script generation and analysis commands.
+
+    This command group provides AI-driven capabilities for automatic script
+    generation, binary analysis, task automation, and autonomous exploitation workflows.
+
+    """
 
 
 @ai.command("generate")
@@ -1572,7 +1966,22 @@ def ai_generate(
     autonomous_mode: bool,
     preview: bool,
 ) -> None:
-    """Generate AI scripts for binary protection bypass."""
+    """Generate AI-driven scripts for automating licensing protection bypass.
+
+    Creates Frida and/or Ghidra scripts automatically using AI analysis of the
+    target binary. Analyzes protection mechanisms and generates scripts targeting
+    specific protection types (license checks, trial validation, network checks, etc.).
+    Supports autonomous mode for testing and script refinement.
+
+    Args:
+        binary_path: Path to the binary file to analyze for script generation.
+        script_type: Type of scripts to generate ('frida', 'ghidra', or 'both').
+        complexity: Script complexity level ('basic' or 'advanced').
+        focus: Protection focus ('auto', 'license', 'trial', 'network', 'anti-debug', or 'vm').
+        output: Optional directory path where generated scripts will be saved.
+        autonomous_mode: If True, AI will test and refine scripts automatically.
+        preview: If True, display script content before saving to file.
+    """
     try:
         if not os.path.exists(binary_path):
             click.echo(f"Binary file not found: {binary_path}", err=True)
@@ -1721,7 +2130,19 @@ def ai_generate(
 @click.option("--timeout", default=60, help="Test timeout in seconds")
 @click.option("--verbose", "-v", is_flag=True, help="Verbose output")
 def test(script_path: str, binary: str | None, environment: str, timeout: int, verbose: bool) -> None:
-    """Test AI-generated scripts in safe environments."""
+    """Execute AI-generated scripts in isolated test environments for validation.
+
+    Tests Frida or Ghidra scripts in safe, sandboxed environments before deployment.
+    Supports QEMU-based virtualization for safe script testing without affecting
+    the host system. Provides detailed output and error reporting for debugging.
+
+    Args:
+        script_path: Path to the script file to test (.js for Frida, .py for Ghidra).
+        binary: Optional path to target binary for script testing.
+        environment: Testing environment type ('qemu', 'sandbox', or 'direct').
+        timeout: Test execution timeout in seconds (default 60).
+        verbose: If True, display detailed script output and debug information.
+    """
     try:
         if not os.path.exists(script_path):
             click.echo(f"Script file not found: {script_path}", err=True)
@@ -1810,7 +2231,19 @@ def test(script_path: str, binary: str | None, environment: str, timeout: int, v
 @click.option("--format", type=click.Choice(["text", "json", "html"]), default="text", help="Output format")
 @click.option("--deep", is_flag=True, help="Enable deep AI analysis")
 def ai_analyze(binary_path: str, output: str | None, output_format: str, deep: bool) -> None:
-    """Analyze binary for protection mechanisms using AI."""
+    """Analyze binary for protection mechanisms using AI orchestration framework.
+
+    Performs comprehensive AI-driven analysis of a binary's licensing protection
+    mechanisms. Submits analysis task to the AI orchestration system with
+    configurable complexity levels and tracks progress. Results can be saved
+    in multiple formats (text, JSON, HTML).
+
+    Args:
+        binary_path: Path to the binary file to analyze.
+        output: Optional file path where analysis results will be saved.
+        output_format: Output format for results ('text', 'json', or 'html').
+        deep: If True, perform deep AI analysis with higher complexity and detail.
+    """
     try:
         if not os.path.exists(binary_path):
             click.echo(f"Binary file not found: {binary_path}", err=True)
@@ -1971,7 +2404,21 @@ def autonomous(
     save_all: bool,
     verbose: bool,
 ) -> None:
-    """Run autonomous AI workflow for complex tasks."""
+    """Execute autonomous AI workflow with iterative refinement and testing.
+
+    Runs an autonomous AI agent that processes complex requests with automatic
+    script generation, testing, and refinement. The agent iteratively improves
+    scripts based on test results until success criteria are met or iteration
+    limit is reached. Supports saving intermediate scripts for analysis.
+
+    Args:
+        request: Natural language description of the task to accomplish.
+        binary: Optional path to target binary for the autonomous workflow.
+        max_iterations: Maximum number of refinement iterations (default 10).
+        test_environment: Testing environment for script validation ('qemu' or 'sandbox').
+        save_all: If True, save all intermediate scripts generated during refinement.
+        verbose: If True, display detailed analysis and intermediate results.
+    """
     try:
         from intellicrack.ai.orchestrator import get_orchestrator
         from intellicrack.ai.script_generation_agent import AIAgent
@@ -2068,7 +2515,18 @@ def autonomous(
 @click.option("--output", "-o", help="Output file for session data")
 @click.option("--include-ui", is_flag=True, help="Include UI conversation history")
 def save_session(binary_path: str, output: str | None, include_ui: bool) -> None:
-    """Save AI session data including conversation history."""
+    """Save the current analysis session for later review or resumption.
+
+    Exports the complete state of the current analysis session including binary
+    metadata, protection mechanisms discovered, generated scripts, and analysis
+    results. Optionally includes UI conversation history for full session replay.
+    Useful for collaborative analysis and documentation of findings.
+
+    Args:
+        binary_path: Path to the binary file being analyzed (must exist).
+        output: Optional file path where session data will be saved; uses default if not provided.
+        include_ui: If True, include full UI conversation history in the saved session.
+    """
     try:
         from intellicrack.ai.script_generation_agent import AIAgent
 
@@ -2152,7 +2610,15 @@ def save_session(binary_path: str, output: str | None, include_ui: bool) -> None
 @ai.command()
 @click.option("--confirm", is_flag=True, help="Confirm reset without prompt")
 def reset(confirm: bool) -> None:
-    """Reset AI agent state for new analysis."""
+    """Clear AI agent state and conversation history for fresh analysis start.
+
+    Resets the AI agent to its initial state, clearing all conversation history,
+    generated scripts, test results, and internal caches. Useful before starting
+    analysis of a new binary or when the agent needs to be reinitialized.
+
+    Args:
+        confirm: If True, skip confirmation prompt and perform reset immediately.
+    """
     try:
         from intellicrack.ai.script_generation_agent import AIAgent
 
@@ -2209,7 +2675,20 @@ def task(
     output: str | None,
     verbose: bool,
 ) -> None:
-    """Execute specific autonomous AI task."""
+    """Execute a specific autonomous AI task for protection analysis or script testing.
+
+    Runs a targeted AI task such as script generation, vulnerability analysis,
+    or script testing. Each task type has specific inputs and outputs. Tasks
+    can be customized with requests or scripts and results can be saved to file.
+
+    Args:
+        task_type: Type of task ('script_generation', 'vulnerability_analysis', or 'script_testing').
+        binary_path: Path to the target binary file (must exist).
+        request: Custom request description for the task (optional).
+        script: Script content for testing tasks (script_testing only).
+        output: Optional file path where task results will be saved as JSON.
+        verbose: If True, display full task results to console.
+    """
     try:
         from intellicrack.ai.script_generation_agent import AIAgent
 
@@ -2289,7 +2768,12 @@ def task(
 
 @cli.group()
 def frida() -> None:
-    """Frida script management and execution commands."""
+    """Access Frida script management and execution commands.
+
+    This command group provides functions for managing and running Frida scripts
+    for runtime binary manipulation, API hooking, and protection mechanism analysis.
+
+    """
 
 
 @frida.command("list")
@@ -2305,7 +2789,16 @@ def frida() -> None:
     help="Show detailed information about each script",
 )
 def frida_list(category: str | None, verbose: bool) -> None:
-    """List available Frida scripts from the library."""
+    """Display all available Frida scripts, optionally filtered by category.
+
+    Lists all Frida scripts available in the script library. Scripts can be filtered
+    by category to find scripts for specific protection analysis tasks. Verbose mode
+    shows detailed information including descriptions and parameters.
+
+    Args:
+        category: Optional category name to filter scripts (e.g., 'protection_bypass', 'memory_analysis').
+        verbose: If True, display detailed information about each script including description and parameters.
+    """
     try:
         from pathlib import Path
 
@@ -2353,7 +2846,15 @@ def frida_list(category: str | None, verbose: bool) -> None:
 @frida.command("info")
 @click.argument("script_name")
 def frida_info(script_name: str) -> None:
-    """Show detailed information about a specific Frida script."""
+    """Display detailed information about a specific Frida script from the library.
+
+    Shows comprehensive information about a named Frida script including its
+    category, description, parameters, file size, and location. Useful for
+    understanding what a script does before executing it.
+
+    Args:
+        script_name: Name of the Frida script to display information for.
+    """
     try:
         from pathlib import Path
 
@@ -2411,7 +2912,19 @@ def frida_info(script_name: str) -> None:
     help="Save results to file",
 )
 def frida_run(script_name: str, binary_path: str, mode: str, params: str | None, output: str | None) -> None:
-    """Execute a Frida script from the library against a target binary."""
+    """Execute a Frida script from the library against a target binary.
+
+    Runs a named Frida script from the library against a specified binary. Supports
+    both spawn mode (launch new process) and attach mode (attach to running process).
+    Scripts can be passed custom parameters in JSON format and results can be saved to file.
+
+    Args:
+        script_name: Name of the Frida script from the library to execute.
+        binary_path: Path to the target binary file or process to attach to.
+        mode: Execution mode ('spawn' to launch new process or 'attach' to attach to existing).
+        params: Optional JSON string containing script parameters (e.g., '{"key": "value"}').
+        output: Optional file path where script execution results will be saved.
+    """
     try:
         import json
         from pathlib import Path
@@ -2516,15 +3029,18 @@ def frida_run(script_name: str, binary_path: str, mode: str, params: str | None,
 @click.option("--verbose", "-v", is_flag=True, help="Display detailed detection information")
 @click.option("--min-confidence", "-c", type=float, default=0.3, help="Minimum confidence threshold (0.0-1.0)")
 def cert_detect(target: str, report: str | None, verbose: bool, min_confidence: float) -> None:
-    """Detect certificate validation in binary or process.
+    """Detect certificate validation mechanisms in a binary or running process.
 
-    TARGET can be a file path or process name/PID.
+    Analyzes a target binary or process to identify and locate certificate
+    validation functions. Detects SSL/TLS validation libraries, validation
+    function locations, and confidence levels. Results can be exported to JSON
+    for further analysis.
 
-    Examples:
-        intellicrack cert-detect target.exe
-        intellicrack cert-detect /path/to/app --report detection.json
-        intellicrack cert-detect 1234 --min-confidence 0.5
-
+    Args:
+        target: Target binary file path, process name, or process ID (PID).
+        report: Optional file path where detection report will be saved as JSON.
+        verbose: If True, display detailed detection context and call references.
+        min_confidence: Minimum confidence threshold (0.0-1.0) for detection reporting.
     """
     if not CERT_BYPASS_AVAILABLE:
         click.echo("Error: Certificate bypass modules not available", err=True)
@@ -2604,22 +3120,18 @@ def cert_detect(target: str, report: str | None, verbose: bool, min_confidence: 
 @click.option("--report", "-r", help="Export bypass report to file (JSON format)")
 @click.option("--force", "-f", is_flag=True, help="Force bypass even on high-risk targets")
 def cert_bypass(target: str, method: str, verify: bool, report: str | None, force: bool) -> None:
-    """Execute certificate validation bypass on target.
+    """Bypass certificate validation mechanisms in a binary or running process.
 
-    TARGET can be a file path or process name/PID.
+    Disables SSL/TLS certificate validation to test application behavior without
+    valid certificates. Supports multiple bypass techniques (patching, hooking,
+    MITM) optimized for different scenarios. Can verify success after bypass.
 
-    Methods:
-        auto   - Automatically select optimal method (default)
-        patch  - Binary patching (permanent, requires file access)
-        frida  - Runtime hooking (temporary, requires running process)
-        hybrid - Combination of patch and frida
-        mitm   - MITM proxy with certificate injection
-
-    Examples:
-        intellicrack cert-bypass target.exe
-        intellicrack cert-bypass app.exe --method frida --verify
-        intellicrack cert-bypass 1234 --method patch --report bypass.json
-
+    Args:
+        target: Target binary file path, process name, or process ID (PID).
+        method: Bypass method ('auto', 'patch', 'frida', 'hybrid', or 'mitm').
+        verify: If True, run verification after bypass to confirm success.
+        report: Optional file path where bypass report will be saved as JSON.
+        force: If True, bypass risk warnings and proceed with bypass attempt.
     """
     if not CERT_BYPASS_AVAILABLE:
         click.echo("Error: Certificate bypass modules not available", err=True)
@@ -2721,18 +3233,16 @@ def cert_bypass(target: str, method: str, verify: bool, report: str | None, forc
 @click.option("--url", "-u", default="https://www.google.com", help="HTTPS URL to test")
 @click.option("--timeout", "-t", type=int, default=10, help="Connection timeout in seconds")
 def cert_test(target: str, url: str, timeout: int) -> None:
-    """Test if certificate bypass is working for target.
+    """Test if certificate validation bypass is working for the target.
 
-    TARGET can be a file path or process name/PID.
+    Verifies that certificate validation has been successfully bypassed by
+    attempting an HTTPS connection with an invalid certificate. Useful for
+    confirming bypass effectiveness after applying bypass techniques.
 
-    This command attempts an HTTPS connection to verify that
-    certificate validation has been successfully bypassed.
-
-    Examples:
-        intellicrack cert-test target.exe
-        intellicrack cert-test app.exe --url https://example.com
-        intellicrack cert-test 1234 --timeout 30
-
+    Args:
+        target: Target binary file path, process name, or process ID (PID).
+        url: HTTPS URL to test the bypass against (default: https://www.google.com).
+        timeout: Connection timeout in seconds (default 10).
     """
     if not CERT_BYPASS_AVAILABLE:
         click.echo("Error: Certificate bypass modules not available", err=True)
@@ -2822,21 +3332,15 @@ def cert_test(target: str, url: str, timeout: int) -> None:
 @click.argument("target")
 @click.option("--force", "-f", is_flag=True, help="Force rollback even if no backup found")
 def cert_rollback(target: str, force: bool) -> None:
-    """Rollback certificate bypass and restore original state.
+    """Rollback certificate bypass and restore target to original state.
 
-    TARGET can be a file path or process name/PID.
+    Removes all certificate bypass modifications including restored binaries from
+    backup, removes Frida hooks, removes injected certificates, and restores
+    system state. Useful for cleaning up after testing.
 
-    This command will:
-    - Restore original binary from backup (if patched)
-    - Detach Frida hooks (if using runtime hooking)
-    - Remove injected certificates
-    - Restore system state
-
-    Examples:
-        intellicrack cert-rollback target.exe
-        intellicrack cert-rollback app.exe --force
-        intellicrack cert-rollback 1234
-
+    Args:
+        target: Target binary file path, process name, or process ID (PID).
+        force: If True, proceed with rollback even if no backup is found.
     """
     if not CERT_BYPASS_AVAILABLE:
         click.echo("Error: Certificate bypass modules not available", err=True)
@@ -2964,7 +3468,16 @@ cli.add_command(cert_rollback, name="cr")
 
 
 def main() -> int:
-    """Run main entry point for CLI."""
+    """Run the main entry point for Intellicrack CLI or GUI application.
+
+    Checks command-line arguments for the --gui flag to determine whether to
+    launch the graphical user interface or the command-line interface. If --gui
+    is specified, loads and runs the GUI application. Otherwise, invokes the
+    Click-based CLI.
+
+    Returns:
+        Integer exit code (0 for success, 1 for failure).
+    """
     # Check for --gui flag in command line arguments
     if "--gui" in sys.argv:
         # Remove --gui from argv before passing to click

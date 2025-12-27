@@ -270,19 +270,18 @@ const HookEffectivenessMonitor = {
 
         Interceptor.attach = function (target, callbacks) {
             const installStart = Date.now();
+            let installTime;
 
             try {
                 const result = originalInterceptorAttach.call(this, target, callbacks);
-                var installTime = Date.now() - installStart;
+                installTime = Date.now() - installStart;
 
-                // Record successful hook installation
                 self.recordHookInstallation(target, true, installTime, callbacks);
 
                 return result;
             } catch (error) {
-                var installTime = Date.now() - installStart;
+                installTime = Date.now() - installStart;
 
-                // Record failed hook installation
                 self.recordHookInstallation(target, false, installTime, callbacks, error);
 
                 throw error;
@@ -294,19 +293,18 @@ const HookEffectivenessMonitor = {
 
         Interceptor.replace = function (target, replacement) {
             const replaceStart = Date.now();
+            let replaceTime;
 
             try {
                 const result = originalInterceptorReplace.call(this, target, replacement);
-                var replaceTime = Date.now() - replaceStart;
+                replaceTime = Date.now() - replaceStart;
 
-                // Record successful hook replacement
                 self.recordHookReplacement(target, true, replaceTime, replacement);
 
                 return result;
             } catch (error) {
-                var replaceTime = Date.now() - replaceStart;
+                replaceTime = Date.now() - replaceStart;
 
-                // Record failed hook replacement
                 self.recordHookReplacement(target, false, replaceTime, replacement, error);
 
                 throw error;
@@ -1257,7 +1255,7 @@ const HookEffectivenessMonitor = {
             const targetStr = target.toString();
             let hash = 0;
             for (let i = 0; i < targetStr.length; i++) {
-                const char = targetStr.charCodeAt(i);
+                const char = targetStr.codePointAt(i);
                 hash = (hash << 5) - hash + char;
                 hash &= hash; // Convert to 32-bit integer
             }
@@ -1731,8 +1729,8 @@ const HookEffectivenessMonitor = {
         });
 
         if (report.alerts.length > 0) {
-            for (var i = 0; i < report.alerts.length; i++) {
-                const alert = report.alerts[i];
+            for (let alertIdx = 0; alertIdx < report.alerts.length; alertIdx++) {
+                const alert = report.alerts[alertIdx];
                 send({
                     type: alert.level === 'critical' ? 'error' : 'warning',
                     target: 'hook_effectiveness_monitor',
@@ -1744,12 +1742,12 @@ const HookEffectivenessMonitor = {
         }
 
         if (report.recommendations.length > 0) {
-            for (var i = 0; i < report.recommendations.length; i++) {
+            for (let recIdx = 0; recIdx < report.recommendations.length; recIdx++) {
                 send({
                     type: 'info',
                     target: 'hook_effectiveness_monitor',
                     action: 'recommendation',
-                    recommendation: report.recommendations[i],
+                    recommendation: report.recommendations[recIdx],
                 });
             }
         }
@@ -2559,7 +2557,7 @@ const HookEffectivenessMonitor = {
         // This is a simplified implementation
         let hash = 0;
         for (let i = 0; i < data.length; i++) {
-            hash = ((hash << 5) - hash + data.charCodeAt(i)) & 0xFF_FF_FF_FF;
+            hash = ((hash << 5) - hash + data.codePointAt(i)) & 0xFF_FF_FF_FF;
         }
         return hash;
     },
@@ -2775,7 +2773,7 @@ const HookEffectivenessMonitor = {
     },
 
     analyzeBitcoinNetwork() {
-        const bitcoinApis = [
+        const _bitcoinApis = [
             'https://blockchain.info/latestblock',
             'https://blockstream.info/api/blocks/tip/height',
         ];
@@ -4465,8 +4463,14 @@ const HookEffectivenessMonitor = {
             selectedAction = bestAction;
         }
 
-        // Calculate reward based on improvement
-        const reward = effectiveness > 0.8 ? 10 : (effectiveness > 0.6 ? 5 : -5);
+        let reward;
+        if (effectiveness > 0.8) {
+            reward = 10;
+        } else if (effectiveness > 0.6) {
+            reward = 5;
+        } else {
+            reward = -5;
+        }
 
         // Update Q-value
         const currentQ = rlConfig.qTable.get(`${currentState}_${selectedAction}`);

@@ -37,7 +37,7 @@ pytestmark = pytest.mark.skipif(not MODULE_AVAILABLE or not FRAMEWORK_AVAILABLE,
 class TestAdvancedProtocolAnalysis:
     """Test advanced protocol analysis capabilities that must exist in production tool"""
 
-    def test_http_vulnerability_detection_engine(self):
+    def test_http_vulnerability_detection_engine(self) -> None:
         """Validate sophisticated HTTP vulnerability detection capabilities"""
         # Create real-world vulnerable HTTP requests
         vulnerable_patterns = {
@@ -88,7 +88,7 @@ class TestAdvancedProtocolAnalysis:
         signatures = vulnerability_signatures.get(expected_vuln, [])
         return any(sig in http_request for sig in signatures)
 
-    def test_ssl_tls_security_analysis_engine(self):
+    def test_ssl_tls_security_analysis_engine(self) -> None:
         """Validate comprehensive SSL/TLS security analysis capabilities"""
         # SSL/TLS analysis scenarios that must be detected
         ssl_vulnerability_scenarios = {
@@ -137,7 +137,7 @@ class TestAdvancedProtocolAnalysis:
             'technical_details': data,
         }
 
-    def test_ftp_protocol_security_assessment(self):
+    def test_ftp_protocol_security_assessment(self) -> None:
         """Validate FTP protocol security analysis capabilities"""
         ftp_security_tests = {
             'anonymous_login': {
@@ -192,7 +192,7 @@ class TestAdvancedProtocolAnalysis:
             ] if detected_vuln else []
         }
 
-    def test_smtp_email_security_analysis(self):
+    def test_smtp_email_security_analysis(self) -> None:
         """Validate SMTP protocol security analysis capabilities"""
         smtp_attack_vectors = {
             'open_relay_test': {
@@ -258,7 +258,7 @@ class TestAdvancedProtocolAnalysis:
             ]
         }
 
-    def test_dns_security_analysis_engine(self):
+    def test_dns_security_analysis_engine(self) -> None:
         """Validate DNS protocol security analysis capabilities"""
         dns_security_tests = [
             {
@@ -348,7 +348,7 @@ class TestAdvancedProtocolAnalysis:
 class TestProtocolParsingEngine:
     """Test advanced protocol parsing and deep packet inspection capabilities"""
 
-    def test_http_header_parsing_accuracy(self):
+    def test_http_header_parsing_accuracy(self) -> None:
         """Validate precise HTTP header parsing for security analysis"""
         complex_http_request = """POST /api/v2/user/authenticate HTTP/1.1\r
 Host: api.vulnerable-app.com:8443\r
@@ -424,7 +424,7 @@ Connection: keep-alive\r
 
         return security_findings
 
-    def test_binary_protocol_parsing_capabilities(self):
+    def test_binary_protocol_parsing_capabilities(self) -> None:
         """Validate binary protocol parsing for network protocols"""
         # Test various binary protocol parsing scenarios
         protocol_samples = {

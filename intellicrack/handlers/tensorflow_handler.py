@@ -21,8 +21,40 @@ import math
 import os
 import random
 import threading
+from collections.abc import Generator, Iterable, Sequence, Sized
+from typing import SupportsFloat, SupportsIndex
 
 from intellicrack.utils.logger import logger
+
+
+def _to_float(value: object) -> float:
+    """Safely convert an object to float.
+
+    Args:
+        value: Any object that may be convertible to float.
+
+    Returns:
+        Float value of the input.
+
+    Raises:
+        TypeError: If the value cannot be converted to float.
+        ValueError: If the value cannot be converted to float.
+
+    """
+    if isinstance(value, float):
+        return value
+    if isinstance(value, int):
+        return float(value)
+    if isinstance(value, SupportsFloat):
+        return float(value)
+    if isinstance(value, SupportsIndex):
+        return float(value)
+    if isinstance(value, str):
+        return float(value)
+    if isinstance(value, (bytes, bytearray)):
+        return float(value)
+    error_msg: str = f"Cannot convert {type(value).__name__} to float"
+    raise TypeError(error_msg)
 
 
 """
@@ -169,9 +201,8 @@ class FallbackTensor:
             dtype: Data type string, defaults to 'float32'.
 
         """
-        if hasattr(data, "__iter__") and not isinstance(data, str):
-            flattened_gen: object = self._flatten(data)
-            self.data: list[object] = list(flattened_gen)  # type: ignore[call-overload]
+        if isinstance(data, Iterable) and not isinstance(data, str):
+            self.data: list[object] = list(self._flatten(data))
         else:
             self.data = [data]
         self.shape: tuple[int, ...] = self._infer_shape(data) if shape is None else tuple(shape)
@@ -179,7 +210,7 @@ class FallbackTensor:
         self.ndim: int = len(self.shape)
         self.size: int = self._calculate_size()
 
-    def _flatten(self, data: object) -> object:
+    def _flatten(self, data: Iterable[object]) -> Generator[object, None, None]:
         """Flatten nested data structure.
 
         Args:
@@ -189,12 +220,9 @@ class FallbackTensor:
             Individual elements from the nested structure.
 
         """
-        if not hasattr(data, "__iter__"):
-            yield data
-            return
         for item in data:
-            if hasattr(item, "__iter__") and not isinstance(item, str):
-                yield from self._flatten(item)  # type: ignore[misc]
+            if isinstance(item, Iterable) and not isinstance(item, str):
+                yield from self._flatten(item)
             else:
                 yield item
 
@@ -208,18 +236,29 @@ class FallbackTensor:
             Tuple representing the inferred shape dimensions.
 
         """
-        if not hasattr(data, "__iter__") or isinstance(data, str):
+        if not isinstance(data, Iterable) or isinstance(data, str):
             return ()
 
         shape: list[int] = []
         current: object = data
-        while hasattr(current, "__iter__") and not isinstance(current, str):
-            if hasattr(current, "__len__"):
+        while isinstance(current, Iterable) and not isinstance(current, str):
+            if isinstance(current, Sequence):
                 current_len: int = len(current)
                 shape.append(current_len)
                 if current_len > 0:
-                    current = current[0]  # type: ignore[index]
+                    current = current[0]
                 else:
+                    break
+            elif isinstance(current, Sized):
+                try:
+                    current_len = len(current)
+                    shape.append(current_len)
+                    current_as_seq: Sequence[object] = list(current)
+                    if current_len > 0:
+                        current = current_as_seq[0]
+                    else:
+                        break
+                except (TypeError, IndexError):
                     break
             else:
                 break
@@ -299,9 +338,10 @@ class FallbackTensor:
 
         """
         if isinstance(other, FallbackTensor):
-            result: list[object] = [float(a) + float(b) for a, b in zip(self.data, other.data, strict=False)]  # type: ignore[arg-type]
+            result: list[float] = [_to_float(a) + _to_float(b) for a, b in zip(self.data, other.data, strict=False)]
         else:
-            result = [float(a) + float(other) for a in self.data]  # type: ignore[arg-type]
+            other_float: float = _to_float(other)
+            result = [_to_float(a) + other_float for a in self.data]
         return FallbackTensor(result, self.shape, self.dtype)
 
     def __mul__(self, other: object) -> "FallbackTensor":
@@ -315,9 +355,10 @@ class FallbackTensor:
 
         """
         if isinstance(other, FallbackTensor):
-            result: list[object] = [float(a) * float(b) for a, b in zip(self.data, other.data, strict=False)]  # type: ignore[arg-type]
+            result: list[float] = [_to_float(a) * _to_float(b) for a, b in zip(self.data, other.data, strict=False)]
         else:
-            result = [float(a) * float(other) for a in self.data]  # type: ignore[arg-type]
+            other_float: float = _to_float(other)
+            result = [_to_float(a) * other_float for a in self.data]
         return FallbackTensor(result, self.shape, self.dtype)
 
     def __repr__(self) -> str:
@@ -445,11 +486,11 @@ class FallbackDenseLayer:
             for j, input_val in enumerate(inputs.data):
                 weight_idx: int = j * self.units + i
                 weight_val: object = self.weights.value.data[weight_idx]
-                sum_val += float(input_val) * float(weight_val)  # type: ignore[arg-type]
+                sum_val += _to_float(input_val) * _to_float(weight_val)
 
             if self.use_bias and self.bias is not None:
                 bias_val: object = self.bias.value.data[i]
-                sum_val += float(bias_val)  # type: ignore[arg-type]
+                sum_val += _to_float(bias_val)
 
             if self.activation == "relu":
                 sum_val = max(0, sum_val)
@@ -589,8 +630,8 @@ class FallbackConv2DLayer:
                                             kernel_idx: int = f * self.kernel_size[0] * self.kernel_size[1] + kh * self.kernel_size[1] + kw
                                             kernel_data_val: object = self.kernel.value.data[kernel_idx]
                                             input_data_val: object = inputs.data[input_idx]
-                                            kernel_val: float = float(kernel_data_val)  # type: ignore[arg-type]
-                                            input_val: float = float(input_data_val)  # type: ignore[arg-type]
+                                            kernel_val: float = _to_float(kernel_data_val)
+                                            input_val: float = _to_float(input_data_val)
                                             conv_sum += input_val * kernel_val
                                         kernel_positions += 1
 
@@ -603,7 +644,7 @@ class FallbackConv2DLayer:
                         bias_val: float = 0.0
                         if self.bias is not None:
                             bias_data_val: object = self.bias.value.data[f]
-                            bias_val = float(bias_data_val)  # type: ignore[arg-type]
+                            bias_val = _to_float(bias_data_val)
                         result: float = normalized_sum + bias_val
                         if self.activation == "relu":
                             result = max(0, result)
@@ -742,8 +783,8 @@ class FallbackModel:
 
                     target_len: int = len(target_data) if hasattr(target_data, "__len__") else 1
                     for pred, target in zip(pred_data[:target_len], target_data, strict=False):
-                        pred_float: float = float(pred)  # type: ignore[arg-type]
-                        target_float: float = float(target)  # type: ignore[arg-type]
+                        pred_float: float = _to_float(pred)
+                        target_float: float = _to_float(target)
                         diff: float = abs(pred_float - target_float)
                         batch_loss += diff**2
 
@@ -850,8 +891,8 @@ class FallbackModel:
                 for i in range(batch_size_actual):
                     pred_i: object = pred_data[i]
                     target_i: object = target_data[i]
-                    pred_float: float = float(pred_i)  # type: ignore[arg-type]
-                    target_float: float = float(target_i)  # type: ignore[arg-type]
+                    pred_float: float = _to_float(pred_i)
+                    target_float: float = _to_float(target_i)
                     diff: float = abs(pred_float - target_float)
                     batch_loss += diff**2
 
@@ -999,7 +1040,7 @@ class FallbackKerasLayers:
             output_data: list[float] = []
             for val in inputs.data:
                 if random.random() > self.rate:  # noqa: S311
-                    val_float: float = float(val)  # type: ignore[arg-type]
+                    val_float: float = _to_float(val)
                     output_data.append(val_float / (1 - self.rate))
                 else:
                     output_data.append(0.0)
@@ -1095,15 +1136,8 @@ class FallbackKerasLayers:
                 Downsampled tensor after max pooling operation.
 
             """
-            input_data: list[object]
-            input_shape: tuple[int, ...]
-            if hasattr(inputs, "data") and hasattr(inputs, "shape"):
-                input_data_raw: object = inputs.data
-                input_data = input_data_raw if isinstance(input_data_raw, list) else [input_data_raw]
-                input_shape = inputs.shape
-            else:
-                input_data = inputs if isinstance(inputs, list) else [inputs]  # type: ignore[unreachable]
-                input_shape = (1, 28, 28, 1)
+            input_data: list[object] = inputs.data if isinstance(inputs.data, list) else [inputs.data]
+            input_shape: tuple[int, ...] = inputs.shape
 
             batch: int = input_shape[0] if len(input_shape) > 3 else 1
             height: int = input_shape[1] if len(input_shape) > 2 else 28
@@ -1558,7 +1592,7 @@ class FallbackTensorFlow:
                 logger.error(error_msg)
                 raise TypeError(error_msg)
 
-        numeric_data: list[float] = [float(x) for x in tensor.data]  # type: ignore[arg-type]
+        numeric_data: list[float] = [_to_float(x) for x in tensor.data]
         total_sum: float = sum(numeric_data)
 
         return FallbackTensor(total_sum, shape=())

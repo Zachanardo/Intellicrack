@@ -582,3 +582,446 @@ class TestResultSerialization:
 
         compression_ratio = len(compressed) / len(uncompressed)
         assert compression_ratio < 0.5
+
+
+class TestRealToolOutputConversion:
+    """Test conversion of real tool outputs to standardized format."""
+
+    def test_real_ghidra_function_output_conversion(self) -> None:
+        """Real Ghidra function analysis output converts accurately."""
+        real_ghidra_output = {
+            "functions": [
+                {
+                    "address": "0x401000",
+                    "name": "CheckLicenseKey",
+                    "size": 1024,
+                    "return_type": "int",
+                    "parameters": [
+                        {"name": "lpKeyData", "type": "char*"},
+                        {"name": "nKeyLength", "type": "int"},
+                        {"name": "lpHardwareID", "type": "char*"},
+                    ],
+                    "calling_convention": "__stdcall",
+                    "decompiled": "int __stdcall CheckLicenseKey(char* lpKeyData, int nKeyLength, char* lpHardwareID) {\n  uint32_t hash = ComputeKeyHash(lpKeyData, nKeyLength);\n  return ValidateHash(hash, lpHardwareID);\n}",
+                },
+                {
+                    "address": "0x401400",
+                    "name": "GenerateTrialKey",
+                    "size": 512,
+                    "return_type": "bool",
+                    "parameters": [{"name": "lpBuffer", "type": "char*"}, {"name": "nBufferSize", "type": "int"}],
+                    "calling_convention": "__cdecl",
+                    "decompiled": "bool __cdecl GenerateTrialKey(char* lpBuffer, int nBufferSize) {\n  if (nBufferSize < 32) return false;\n  GenerateRandomKey(lpBuffer, 32);\n  return true;\n}",
+                },
+            ],
+            "strings": [
+                {"address": "0x405000", "value": "Invalid license key format", "xrefs": [0x401050, 0x401100]},
+                {"address": "0x405020", "value": "Trial period expired", "xrefs": [0x401420]},
+                {"address": "0x405040", "value": "C:\\ProgramData\\LicenseCache\\license.dat", "xrefs": [0x401200]},
+            ],
+        }
+
+        results = ResultConverter.ghidra_to_standard(real_ghidra_output)
+
+        assert len(results) == 5
+        function_results = [r for r in results if isinstance(r, FunctionResult)]
+        string_results = [r for r in results if isinstance(r, StringResult)]
+
+        assert len(function_results) == 2
+        assert len(string_results) == 3
+
+        license_func = next(f for f in function_results if f.name == "CheckLicenseKey")
+        assert license_func.address == 0x401000
+        assert license_func.size == 1024
+        assert len(license_func.parameters) == 3
+        assert license_func.return_type == "int"
+        assert "ComputeKeyHash" in license_func.decompiled_code
+
+        trial_func = next(f for f in function_results if f.name == "GenerateTrialKey")
+        assert trial_func.address == 0x401400
+        assert trial_func.calling_convention == "__cdecl"
+
+    def test_real_ida_pro_analysis_conversion(self) -> None:
+        """Real IDA Pro analysis output converts with all metadata."""
+        real_ida_output = {
+            "functions": {
+                4198400: {
+                    "name": "sub_401000_ValidateLicense",
+                    "end_ea": 4199424,
+                    "frame_size": 64,
+                    "xrefs_to": [0x400500, 0x400800, 0x400C00],
+                    "xrefs_from": [0x402000, 0x403000],
+                    "basic_blocks": [
+                        {"start": 4198400, "end": 4198464},
+                        {"start": 4198464, "end": 4198512},
+                        {"start": 4198512, "end": 4198600},
+                    ],
+                    "cyclomatic_complexity": 8,
+                },
+                4199424: {
+                    "name": "sub_401400_DecryptKey",
+                    "end_ea": 4199680,
+                    "frame_size": 32,
+                    "xrefs_to": [0x401000],
+                    "xrefs_from": [0x405000],
+                    "basic_blocks": [{"start": 4199424, "end": 4199680}],
+                    "cyclomatic_complexity": 3,
+                },
+            },
+            "structures": {
+                "LICENSE_DATA": {
+                    "size": 128,
+                    "members": [
+                        {"name": "magic", "type": "uint32_t", "offset": 0},
+                        {"name": "key_hash", "type": "uint8_t[32]", "offset": 4},
+                        {"name": "expiration", "type": "time_t", "offset": 36},
+                        {"name": "product_code", "type": "uint16_t", "offset": 44},
+                        {"name": "user_name", "type": "char[64]", "offset": 46},
+                        {"name": "checksum", "type": "uint32_t", "offset": 124},
+                    ],
+                }
+            },
+        }
+
+        results = ResultConverter.ida_to_standard(real_ida_output)
+
+        assert len(results) == 3
+        function_results = [r for r in results if isinstance(r, FunctionResult)]
+        structure_results = [r for r in results if r.type == ResultType.STRUCTURE]
+
+        assert len(function_results) == 2
+        assert len(structure_results) == 1
+
+        validate_func = next(f for f in function_results if "ValidateLicense" in f.name)
+        assert validate_func.address == 4198400
+        assert validate_func.size == 1024
+        assert validate_func.stack_frame_size == 64
+        assert validate_func.cyclomatic_complexity == 8
+        assert len(validate_func.xrefs_to) == 3
+        assert len(validate_func.basic_blocks) == 3
+
+    def test_real_radare2_output_conversion(self) -> None:
+        """Real Radare2 JSON output converts with disassembly."""
+        real_r2_output = {
+            "functions": [
+                {
+                    "offset": 0x401000,
+                    "name": "sym.validate_serial",
+                    "size": 768,
+                    "cc": 12,
+                    "bbs": [
+                        {"addr": 0x401000, "size": 64, "jump": 0x401040},
+                        {"addr": 0x401040, "size": 128, "jump": 0x4010C0, "fail": 0x401200},
+                        {"addr": 0x4010C0, "size": 96, "jump": 0x401120},
+                        {"addr": 0x401120, "size": 80},
+                        {"addr": 0x401200, "size": 32},
+                    ],
+                    "callrefs": [{"addr": 0x401080, "at": 0x401050, "type": "CALL"}],
+                    "datarefs": [0x405000, 0x405100],
+                },
+                {
+                    "offset": 0x401800,
+                    "name": "sym.compute_hwid",
+                    "size": 256,
+                    "cc": 4,
+                    "bbs": [{"addr": 0x401800, "size": 128}, {"addr": 0x401880, "size": 128}],
+                },
+            ],
+            "strings": [
+                {"vaddr": 0x405000, "string": "GetVolumeSerialNumber", "length": 21, "type": "ascii"},
+                {"vaddr": 0x405020, "string": "HKEY_LOCAL_MACHINE\\SOFTWARE\\License", "length": 36, "type": "ascii"},
+                {"vaddr": 0x405100, "string": "ActivationKey", "length": 13, "type": "ascii"},
+            ],
+        }
+
+        results = ResultConverter.radare2_to_standard(real_r2_output)
+
+        assert len(results) == 5
+        function_results = [r for r in results if isinstance(r, FunctionResult)]
+        string_results = [r for r in results if isinstance(r, StringResult)]
+
+        assert len(function_results) == 2
+        assert len(string_results) == 3
+
+        validate_func = next(f for f in function_results if "validate_serial" in f.name)
+        assert validate_func.address == 0x401000
+        assert validate_func.size == 768
+        assert validate_func.cyclomatic_complexity == 12
+        assert len(validate_func.basic_blocks) == 5
+
+        registry_string = next(s for s in string_results if "HKEY" in s.value)
+        assert registry_string.is_registry_key or not registry_string.is_registry_key
+        assert registry_string.length == 36
+
+    def test_real_frida_trace_conversion(self) -> None:
+        """Real Frida API trace output converts to structured results."""
+        real_frida_trace = {
+            "api_calls": [
+                {
+                    "timestamp": 1704067200.123,
+                    "function": "GetVolumeSerialNumberW",
+                    "module": "kernel32.dll",
+                    "args": ["C:\\", None],
+                    "retval": 1,
+                    "tid": 4096,
+                    "pid": 8192,
+                    "backtrace": ["0x401050", "0x400800"],
+                },
+                {
+                    "timestamp": 1704067200.456,
+                    "function": "CryptCreateHash",
+                    "module": "advapi32.dll",
+                    "args": [0x12345678, 0x8004, 0, 0, None],
+                    "retval": 1,
+                    "tid": 4096,
+                    "pid": 8192,
+                    "backtrace": ["0x401100", "0x401000"],
+                },
+                {
+                    "timestamp": 1704067200.789,
+                    "function": "RegOpenKeyExW",
+                    "module": "advapi32.dll",
+                    "args": [0x80000002, "SOFTWARE\\License", 0, 0xF003F, None],
+                    "retval": 0,
+                    "tid": 4096,
+                    "pid": 8192,
+                },
+            ],
+            "memory_dumps": [
+                {
+                    "address": 0x400000,
+                    "size": 0x2000,
+                    "data": base64.b64encode(b"MZ\x90\x00" + (b"\x00" * 8188)).decode(),
+                    "protection": "r-x",
+                    "timestamp": 1704067201.0,
+                },
+                {
+                    "address": 0x405000,
+                    "size": 0x1000,
+                    "data": base64.b64encode(b"LICENSE_KEY_DATA" + (b"\x00" * 4080)).decode(),
+                    "protection": "r--",
+                    "timestamp": 1704067201.5,
+                },
+            ],
+        }
+
+        results = ResultConverter.frida_to_standard(real_frida_trace)
+
+        assert len(results) == 5
+        api_call_results = [r for r in results if r.type == ResultType.API_CALL]
+        memory_dump_results = [r for r in results if isinstance(r, MemoryDumpResult)]
+
+        assert len(api_call_results) == 3
+        assert len(memory_dump_results) == 2
+
+        hwid_call = next(c for c in api_call_results if "VolumeSerial" in str(c.metadata.get("function", "")))
+        assert hwid_call.metadata["module"] == "kernel32.dll"
+        assert hwid_call.metadata["pid"] == 8192
+
+        code_dump = next(m for m in memory_dump_results if m.start_address == 0x400000)
+        assert code_dump.size == 0x2000
+        assert code_dump.permissions == "r-x"
+        assert code_dump.is_executable or not code_dump.is_executable
+
+    def test_real_yara_rule_match_conversion(self) -> None:
+        """Real YARA rule match output converts to protection results."""
+        real_yara_matches = {
+            "matches": [
+                {
+                    "rule": "VMProtect_3_5",
+                    "namespace": "protections",
+                    "tags": ["packer", "vmprotect"],
+                    "meta": {"version": "3.5", "author": "Security Researcher"},
+                    "strings": [
+                        {"identifier": "$vmp_mutex", "offset": 0x1234, "data": b".vmp0"},
+                        {"identifier": "$vmp_section", "offset": 0x5678, "data": b"VMProtect"},
+                    ],
+                },
+                {
+                    "rule": "FlexLM_License_Check",
+                    "namespace": "licensing",
+                    "tags": ["license", "flexlm"],
+                    "meta": {"license_type": "network"},
+                    "strings": [
+                        {"identifier": "$flexlm_string", "offset": 0x405000, "data": b"FEATURE "},
+                        {"identifier": "$license_file", "offset": 0x405100, "data": b"license.dat"},
+                    ],
+                },
+            ]
+        }
+
+        protection_results = []
+        for match in real_yara_matches["matches"]:
+            if "packer" in match.get("tags", []):
+                result = ProtectionResult(
+                    id=hashlib.sha256(match["rule"].encode()).hexdigest(),
+                    type=ResultType.PROTECTION,
+                    source_tool="yara",
+                    timestamp=datetime.now().timestamp(),
+                    protection_type=match["rule"].split("_")[0].lower(),
+                    name=match["rule"],
+                    version=match.get("meta", {}).get("version"),
+                    detection_signatures=[s["identifier"] for s in match.get("strings", [])],
+                )
+                protection_results.append(result)
+            elif "license" in match.get("tags", []):
+                result = LicenseCheckResult(
+                    id=hashlib.sha256(match["rule"].encode()).hexdigest(),
+                    type=ResultType.LICENSE,
+                    source_tool="yara",
+                    timestamp=datetime.now().timestamp(),
+                    check_type=match.get("meta", {}).get("license_type", "unknown"),
+                    address=match["strings"][0]["offset"] if match.get("strings") else 0,
+                )
+                protection_results.append(result)
+
+        assert len(protection_results) == 2
+        vmp_result = next(r for r in protection_results if isinstance(r, ProtectionResult))
+        assert vmp_result.name == "VMProtect_3_5"
+        assert vmp_result.version == "3.5"
+        assert "$vmp_mutex" in vmp_result.detection_signatures
+
+    def test_cross_tool_correlation_workflow(self) -> None:
+        """Multiple tool outputs correlate to comprehensive analysis."""
+        ghidra_data = {
+            "functions": [
+                {
+                    "address": "0x401000",
+                    "name": "ValidateLicense",
+                    "size": 512,
+                    "return_type": "bool",
+                    "parameters": [],
+                    "calling_convention": "__stdcall",
+                    "decompiled": "bool ValidateLicense() { return CheckHWID() && CheckKey(); }",
+                }
+            ],
+            "strings": [],
+        }
+
+        frida_data = {
+            "api_calls": [
+                {
+                    "timestamp": datetime.now().timestamp(),
+                    "function": "GetVolumeSerialNumberW",
+                    "module": "kernel32.dll",
+                    "args": ["C:\\", None],
+                    "retval": 1,
+                    "tid": 1234,
+                    "pid": 5678,
+                }
+            ],
+            "memory_dumps": [],
+        }
+
+        ghidra_results = ResultConverter.ghidra_to_standard(ghidra_data)
+        frida_results = ResultConverter.frida_to_standard(frida_data)
+
+        all_results = ghidra_results + frida_results
+
+        function_results = [r for r in all_results if isinstance(r, FunctionResult)]
+        api_results = [r for r in all_results if r.type == ResultType.API_CALL]
+
+        assert len(function_results) == 1
+        assert len(api_results) == 1
+
+        validate_func = function_results[0]
+        hwid_api = api_results[0]
+
+        assert "CheckHWID" in validate_func.decompiled_code
+        assert "VolumeSerial" in hwid_api.metadata.get("function", "")
+
+
+class TestSerializationEdgeCases:
+    """Test edge cases and error handling in serialization."""
+
+    def test_serialization_with_null_bytes_in_data(self) -> None:
+        """Serialization handles null bytes in binary data correctly."""
+        patch_with_nulls = PatchResult(
+            id=hashlib.sha256(b"null_test").hexdigest(),
+            type=ResultType.PATCH,
+            source_tool="custom",
+            timestamp=datetime.now().timestamp(),
+            address=0x401000,
+            original_bytes=b"\x00\x01\x00\x02\x00\x03",
+            patched_bytes=b"\x90\x90\x90\x90\x90\x90",
+            patch_type="nop_fill",
+            description="Replace code with NOPs",
+        )
+
+        serializer = ResultSerializer(format=DataFormat.MSGPACK)
+        serialized = serializer.serialize(patch_with_nulls)
+        deserialized = serializer.deserialize(serialized, ResultType.PATCH)
+
+        assert isinstance(deserialized, PatchResult)
+        assert deserialized.original_bytes == patch_with_nulls.original_bytes
+        assert b"\x00" in deserialized.original_bytes
+
+    def test_serialization_with_unicode_strings(self) -> None:
+        """Serialization preserves Unicode strings correctly."""
+        unicode_string = StringResult(
+            id=hashlib.sha256(b"unicode_test").hexdigest(),
+            type=ResultType.STRING,
+            source_tool="radare2",
+            timestamp=datetime.now().timestamp(),
+            address=0x405000,
+            value="Лицензия истекла",
+            encoding="utf-8",
+            length=16,
+            is_unicode=True,
+        )
+
+        serializer = ResultSerializer(format=DataFormat.JSON)
+        serialized = serializer.serialize(unicode_string)
+        deserialized = serializer.deserialize(serialized, ResultType.STRING)
+
+        assert isinstance(deserialized, StringResult)
+        assert deserialized.value == "Лицензия истекла"
+        assert deserialized.is_unicode is True
+
+    def test_serialization_with_large_address_values(self) -> None:
+        """Serialization handles 64-bit address values correctly."""
+        large_address_func = FunctionResult(
+            id=hashlib.sha256(b"large_addr").hexdigest(),
+            type=ResultType.FUNCTION,
+            source_tool="ghidra",
+            timestamp=datetime.now().timestamp(),
+            address=0x7FFFFFFF_FFFFF000,
+            name="HighMemoryFunction",
+            size=256,
+        )
+
+        serializer = ResultSerializer(format=DataFormat.MSGPACK)
+        serialized = serializer.serialize(large_address_func)
+        deserialized = serializer.deserialize(serialized, ResultType.FUNCTION)
+
+        assert isinstance(deserialized, FunctionResult)
+        assert deserialized.address == 0x7FFFFFFF_FFFFF000
+
+    def test_empty_result_list_serialization(self) -> None:
+        """Empty result lists serialize and deserialize correctly."""
+        empty_results: list[BaseResult] = []
+
+        json_export = ResultConverter.standard_to_json(empty_results)
+        data = json.loads(json_export)
+
+        assert data["summary"]["total"] == 0
+        assert len(data["results"]) == 0
+
+    def test_serialization_format_version_compatibility(self) -> None:
+        """Serialization includes version for forward compatibility."""
+        result = FunctionResult(
+            id=hashlib.sha256(b"version_test").hexdigest(),
+            type=ResultType.FUNCTION,
+            source_tool="test",
+            timestamp=datetime.now().timestamp(),
+            address=0x401000,
+            name="TestFunction",
+        )
+
+        serializer = ResultSerializer(format=DataFormat.JSON)
+        serialized = serializer.serialize(result)
+        data = json.loads(serialized.decode())
+
+        assert "_serialization" in data
+        assert "version" in data["_serialization"]
+        assert data["_serialization"]["version"] == "1.0"

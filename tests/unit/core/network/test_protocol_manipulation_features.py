@@ -23,7 +23,7 @@ from tests.framework.real_world_testing_framework import RealWorldTestingFramewo
 class TestProtocolManipulation:
     """Test comprehensive protocol manipulation capabilities"""
 
-    def test_http_request_modification_engine(self):
+    def test_http_request_modification_engine(self) -> None:
         """Validate sophisticated HTTP request manipulation capabilities"""
         original_request = """GET /api/user/profile HTTP/1.1\r
 Host: api.target.com\r
@@ -116,7 +116,7 @@ Content-Type: application/json\r
         check_function = verification_checks.get(expected_outcome)
         return check_function(manipulated_request) if check_function else False
 
-    def test_payload_generation_for_protocol_exploitation(self):
+    def test_payload_generation_for_protocol_exploitation(self) -> None:
         """Validate sophisticated payload generation for protocol exploitation"""
         payload_generation_scenarios = {
             'sql_injection_payloads': {
@@ -230,7 +230,7 @@ Content-Type: application/json\r
         criteria = effectiveness_criteria.get(vuln_type, [lambda p: True])
         return all(criterion(payload) for criterion in criteria)
 
-    def test_protocol_packet_crafting_capabilities(self):
+    def test_protocol_packet_crafting_capabilities(self) -> None:
         """Validate sophisticated protocol packet crafting for network exploitation"""
         packet_crafting_scenarios = {
             'tcp_syn_flood': {
@@ -370,7 +370,7 @@ Content-Type: application/json\r
             for feature in expected_features
         )
 
-    def test_protocol_encoding_and_obfuscation(self):
+    def test_protocol_encoding_and_obfuscation(self) -> None:
         """Validate protocol encoding and obfuscation capabilities for evasion"""
         encoding_scenarios = {
             'url_encoding_evasion': {
@@ -445,7 +445,7 @@ Content-Type: application/json\r
 class TestAdvancedProtocolManipulation:
     """Test advanced protocol manipulation and exploitation techniques"""
 
-    def test_protocol_chaining_for_complex_attacks(self):
+    def test_protocol_chaining_for_complex_attacks(self) -> None:
         """Validate protocol chaining for multi-stage exploitation"""
         attack_chain_scenarios = {
             'dns_to_http_chain': {

@@ -27,6 +27,25 @@
  * License: GPL v3
  */
 
+function parseVersionString(v) {
+    const parts = v.split('.').map(n => Number.parseInt(n, 10) || 0);
+    return parts[0] * 10_000 + parts[1] * 100 + parts[2];
+}
+
+function matchFourPartVersion(str) {
+    const match = str.match(/\d{1,3}/g);
+    if (!match || match.length < 4) {
+        return null;
+    }
+    for (let i = 0; i <= match.length - 4; i++) {
+        const candidate = match.slice(i, i + 4).join('.');
+        if (str.includes(candidate)) {
+            return [candidate, candidate];
+        }
+    }
+    return null;
+}
+
 const BinaryPatcherAdvanced = {
     name: 'Binary Patcher Advanced Extensions',
     description: 'Extended capabilities for advanced binary patching scenarios',
@@ -272,9 +291,8 @@ const BinaryPatcherAdvanced = {
                 encrypt: data => {
                     // Simple XOR encryption for demo
                     const key = 0xDE_AD_BE_EF;
-                    return data
-                        .split('')
-                        .map(c => String.fromCharCode(c.charCodeAt(0) ^ key))
+                    return [...data]
+                        .map(c => String.fromCodePoint(c.codePointAt(0) ^ key))
                         .join('');
                 },
 
@@ -338,7 +356,6 @@ const BinaryPatcherAdvanced = {
             const versionPatterns = [
                 /version\s+(\d+\.\d+\.\d+)/i,
                 /v(\d+\.\d+\.\d+)/i,
-                /((?:\d+\.){3}\d+)/,
             ];
 
             const moduleSize = module.size;
@@ -351,6 +368,12 @@ const BinaryPatcherAdvanced = {
                 if (match) {
                     return match[1];
                 }
+            }
+
+            // Check for 4-part version using function matcher
+            const fourPartMatch = matchFourPartVersion(moduleString);
+            if (fourPartMatch) {
+                return fourPartMatch[1];
             }
 
             // 3. Check known offsets for version markers
@@ -399,7 +422,7 @@ const BinaryPatcherAdvanced = {
             let str = '';
             for (const byte of bytes) {
                 if (byte >= 32 && byte < 127) {
-                    str += String.fromCharCode(byte);
+                    str += String.fromCodePoint(byte);
                 } else {
                     str += '.';
                 }
@@ -431,8 +454,10 @@ const BinaryPatcherAdvanced = {
             const chain = [];
             let currentVersion = fromVersion;
 
+            const findPatchForVersion = version => patches.find(p => p.fromVersion === version);
+
             while (currentVersion !== toVersion) {
-                const nextPatch = patches.find(p => p.fromVersion === currentVersion);
+                const nextPatch = findPatchForVersion(currentVersion);
 
                 if (!nextPatch) {
                     return null; // No path found
@@ -807,7 +832,7 @@ const BinaryPatcherAdvanced = {
                 // CRC32 implementation for patch verification
                 let crc = 0xFF_FF_FF_FF;
                 for (let i = 0; i < data.length; i++) {
-                    const byte = typeof data === 'string' ? data.charCodeAt(i) : data[i];
+                    const byte = typeof data === 'string' ? data.codePointAt(i) : data[i];
                     crc ^= byte;
                     for (let j = 0; j < 8; j++) {
                         crc = (crc >>> 1) ^ (0xED_B8_83_20 & -(crc & 1));
@@ -987,6 +1012,7 @@ const BinaryPatcherAdvanced = {
                                 // Scan /proc for matching process
                                 return Process.id; // Simplified - would scan for actual target
                             }
+                            return null;
                         } catch {
                             return null;
                         }
@@ -1047,6 +1073,27 @@ const BinaryPatcherAdvanced = {
                     },
                 }),
 
+            executePatchHandler(handlerId, context) {
+                // Execute registered patch handlers by ID
+                const registeredHandlers = this.patchHandlers || new Map();
+                const handler = registeredHandlers.get(handlerId);
+                if (handler && typeof handler === 'function') {
+                    try {
+                        handler(context);
+                    } catch (error) {
+                        console.error(`[Patch] Handler ${handlerId} failed:`, error.message);
+                    }
+                } else {
+                    console.warn(`[Patch] No handler registered for: ${handlerId}`);
+                }
+            },
+
+            registerPatchHandler(handlerId, handler) {
+                this.patchHandlers = this.patchHandlers || new Map();
+                this.patchHandlers.set(handlerId, handler);
+                console.log(`[Patch] Registered handler: ${handlerId}`);
+            },
+
             // Handle serverless function patching
             patchServerlessFunction(functionName, provider, patchData) {
                 console.log(`[Serverless] Patching function: ${functionName}`);
@@ -1099,19 +1146,23 @@ const BinaryPatcherAdvanced = {
                         try {
                             const originalExports = require(handler);
                             const patchedHandler = (event, context, callback) => {
-                                // Apply pre-execution patches
+                                // Apply pre-execution patches using registered handlers
                                 if (patchData.preExecute) {
                                     console.log('[Lambda] Applying pre-execution patch');
-                                    eval(patchData.preExecute);
+                                    this.executePatchHandler(patchData.preExecute, {
+                                        event, context, callback, phase: 'pre',
+                                    });
                                 }
 
                                 // Call original handler
                                 const result = originalExports.handler(event, context, callback);
 
-                                // Apply post-execution patches
+                                // Apply post-execution patches using registered handlers
                                 if (patchData.postExecute) {
                                     console.log('[Lambda] Applying post-execution patch');
-                                    eval(patchData.postExecute);
+                                    this.executePatchHandler(patchData.postExecute, {
+                                        event, context, callback, result, phase: 'post',
+                                    });
                                 }
 
                                 return result;
@@ -1365,24 +1416,17 @@ const BinaryPatcherAdvanced = {
 
             detectIoTEnvironment() {
                 // Check for common IoT platforms
-
-                // AWS IoT
                 if (Process.env.AWS_IOT_THING_NAME) {
+                    // AWS IoT
                     this.platform = 'aws-iot';
-                }
-
-                // Azure IoT
-                else if (Process.env.IOTEDGE_MODULEID) {
+                } else if (Process.env.IOTEDGE_MODULEID) {
+                    // Azure IoT
                     this.platform = 'azure-iot';
-                }
-
-                // Google Cloud IoT
-                else if (Process.env.GOOGLE_CLOUD_PROJECT) {
+                } else if (Process.env.GOOGLE_CLOUD_PROJECT) {
+                    // Google Cloud IoT
                     this.platform = 'gcp-iot';
-                }
-
-                // Generic embedded Linux
-                else if (File.exists('/proc/device-tree/model')) {
+                } else if (File.exists('/proc/device-tree/model')) {
+                    // Generic embedded Linux
                     const model = File.readAllText('/proc/device-tree/model');
                     this.platform = 'embedded-linux';
                     this.deviceModel = model;
@@ -1526,11 +1570,22 @@ const BinaryPatcherAdvanced = {
                         timestamp: Date.now(),
                     });
 
-                    // Send flash command
+                    // Build complete ESP32 flash sequence using all protocol commands
+                    const flashSequence = [
+                        { cmd: ESP_COMMANDS.SYNC, desc: 'synchronize' },
+                        { cmd: ESP_COMMANDS.READ_REG, desc: 'read chip info' },
+                        { cmd: ESP_COMMANDS.WRITE_REG, desc: 'configure flash' },
+                        { cmd: ESP_COMMANDS.FLASH_BEGIN, desc: 'begin flash' },
+                        { cmd: ESP_COMMANDS.FLASH_DATA, desc: 'write data' },
+                        { cmd: ESP_COMMANDS.FLASH_END, desc: 'finalize flash' },
+                    ];
+
+                    // Send flash command sequence
                     send({
                         type: 'esp32-flash',
                         device: device.id,
-                        command: ESP_COMMANDS.FLASH_BEGIN,
+                        sequence: flashSequence,
+                        address: flashAddress,
                         data: patchData.firmware,
                     });
                 }
@@ -1570,12 +1625,24 @@ const BinaryPatcherAdvanced = {
                         timestamp: Date.now(),
                     });
 
+                    // Build complete STK500 programming sequence
+                    const programmingSequence = [
+                        { cmd: STK500.SYNC, desc: 'sync communication' },
+                        { cmd: STK500.GET_SYNC, desc: 'verify sync' },
+                        { cmd: STK500.SET_DEVICE, desc: 'configure target device' },
+                        { cmd: STK500.ENTER_PROGMODE, desc: 'enter programming mode' },
+                        { cmd: STK500.LOAD_ADDRESS, desc: 'set start address' },
+                        { cmd: STK500.PROG_PAGE, desc: 'program flash pages' },
+                        { cmd: STK500.LEAVE_PROGMODE, desc: 'exit programming mode' },
+                    ];
+
                     // Send programming commands
                     send({
                         type: 'arduino-upload',
                         device: device.id,
                         protocol: 'STK500',
-                        commands: [STK500.ENTER_PROGMODE, STK500.PROG_PAGE, STK500.LEAVE_PROGMODE],
+                        sequence: programmingSequence,
+                        sketchSize: patchData.sketch.length,
                     });
                 }
 
@@ -1673,10 +1740,22 @@ const BinaryPatcherAdvanced = {
                     protocol: this.detectProtocol(networkId),
                 };
 
-                // Apply patches to all sensors
+                console.log(`[SensorNet] Patching network ${network.id} using ${network.protocol} protocol`);
+                console.log(`[SensorNet] Found ${network.sensors.length} sensors to patch`);
+
+                // Apply patches to all sensors with network context
                 const results = [];
-                network.sensors.forEach(sensor => {
-                    results.push(this.patchSensor(sensor, patchData));
+                for (const sensor of network.sensors) {
+                    const patchResult = this.patchSensor(sensor, patchData);
+                    results.push(patchResult);
+                }
+
+                // Report network-wide patch status
+                send({
+                    type: 'sensor-network-patch',
+                    networkId: network.id,
+                    protocol: network.protocol,
+                    sensorCount: network.sensors.length,
                 });
 
                 return Promise.all(results);
@@ -1936,13 +2015,8 @@ const BinaryPatcherAdvanced = {
                 );
 
                 // Parse version strings for comparison
-                const parseVersion = v => {
-                    const parts = v.split('.').map(n => Number.parseInt(n, 10) || 0);
-                    return parts[0] * 10_000 + parts[1] * 100 + parts[2];
-                };
-
-                const currentVer = parseVersion(moduleVersion);
-                const requiredVer = parseVersion(minVersion);
+                const currentVer = parseVersionString(moduleVersion);
+                const requiredVer = parseVersionString(minVersion);
 
                 const versionOk = currentVer >= requiredVer;
                 if (!versionOk) {

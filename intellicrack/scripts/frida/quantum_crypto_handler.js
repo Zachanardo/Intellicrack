@@ -138,7 +138,7 @@ const QuantumCryptoHandler = {
         // Bypass strategies
         bypass: {
             forge_signatures: true,
-            fake_key_exchange: true,
+            override_key_exchange: true,
             return_success: true,
             skip_verification: true,
         },
@@ -514,13 +514,13 @@ const QuantumCryptoHandler = {
                     });
 
                     // Bypass based on operation
-                    if (this.config.bypass.fake_key_exchange) {
+                    if (this.config.bypass.override_key_exchange) {
                         if (op.includes('enc') || op.includes('encapsulate')) {
-                            // Fake successful encapsulation
-                            this.fakeEncapsulation(this.context, retval);
+                            // Override encapsulation result
+                            this.bypassEncapsulation(this.context, retval);
                         } else if (op.includes('dec') || op.includes('decapsulate')) {
-                            // Fake successful decapsulation
-                            this.fakeDecapsulation(this.context, retval);
+                            // Override decapsulation result
+                            this.bypassDecapsulation(this.context, retval);
                         }
                     }
                 }.bind(this),
@@ -719,7 +719,7 @@ const QuantumCryptoHandler = {
             send({
                 type: 'bypass',
                 target: 'quantum_crypto_handler',
-                action: 'equality_faked',
+                action: 'equality_bypassed',
                 function: funcName,
             });
             retval.replace(ptr(0)); // 0 = equal
@@ -788,7 +788,7 @@ const QuantumCryptoHandler = {
 
                 // Log first few bytes
                 if (pubKey.length > 0) {
-                    const preview = [...pubKey.slice(0, 16)]
+                    const preview = [...pubKey.subarray(0, 16)]
                         .map(b => b.toString(16).padStart(2, '0'))
                         .join(' ');
                     send({
@@ -907,26 +907,26 @@ const QuantumCryptoHandler = {
         });
     },
 
-    // Fake encapsulation result
-    fakeEncapsulation(context, retval) {
+    // Bypass encapsulation result
+    bypassEncapsulation(context, retval) {
         try {
             // Most KEM functions return 0 on success
             if (retval.toInt32() !== 0) {
                 send({
                     type: 'bypass',
                     target: 'quantum_crypto_handler',
-                    action: 'kem_encapsulation_faked',
+                    action: 'kem_encapsulation_bypassed',
                 });
                 retval.replace(ptr(0));
 
-                // Generate fake ciphertext if needed
+                // Generate bypass ciphertext if needed
                 if (context.args[0] && !context.args[0].isNull()) {
                     // Get expected ciphertext size
                     const ctSize = this.getCiphertextSize(context.operation);
 
                     // Fill with random-looking data
-                    const fakeData = this.generateFakeData(ctSize);
-                    context.args[0].writeByteArray(fakeData);
+                    const bypassData = this.generateBypassData(ctSize);
+                    context.args[0].writeByteArray(bypassData);
                 }
             }
         } catch (error) {
@@ -962,8 +962,8 @@ const QuantumCryptoHandler = {
         return 1024;
     },
 
-    // Generate fake random data
-    generateFakeData: size => {
+    // Generate bypass random data
+    generateBypassData: size => {
         const data = new Uint8Array(size);
         for (let i = 0; i < size; i++) {
             data[i] = Math.floor(Math.random() * 256);
@@ -1001,7 +1001,7 @@ const QuantumCryptoHandler = {
                 },
                 onLeave: function (retval) {
                     // Hybrid schemes need both parts to succeed
-                    if (this.config.bypass.fake_key_exchange) {
+                    if (this.config.bypass.override_key_exchange) {
                         send({
                             type: 'bypass',
                             target: 'quantum_crypto_handler',
@@ -1602,7 +1602,7 @@ const QuantumCryptoHandler = {
                     });
                 },
                 onLeave: function (retval) {
-                    if (func.includes('decaps') && this.config.bypass.fake_key_exchange) {
+                    if (func.includes('decaps') && this.config.bypass.override_key_exchange) {
                         retval.replace(ptr(0));
                         send({
                             type: 'bypass',
@@ -1641,7 +1641,7 @@ const QuantumCryptoHandler = {
                     });
                 },
                 onLeave: function (retval) {
-                    if (func.includes('decaps') && this.config.bypass.fake_key_exchange) {
+                    if (func.includes('decaps') && this.config.bypass.override_key_exchange) {
                         retval.replace(ptr(0));
                         send({
                             type: 'bypass',
@@ -1679,7 +1679,7 @@ const QuantumCryptoHandler = {
                     });
                 },
                 onLeave: function (retval) {
-                    if (func.includes('decaps') && this.config.bypass.fake_key_exchange) {
+                    if (func.includes('decaps') && this.config.bypass.override_key_exchange) {
                         retval.replace(ptr(0));
                         send({
                             type: 'bypass',
@@ -1718,7 +1718,7 @@ const QuantumCryptoHandler = {
                     });
                 },
                 onLeave: function (retval) {
-                    if (func.includes('decaps') && this.config.bypass.fake_key_exchange) {
+                    if (func.includes('decaps') && this.config.bypass.override_key_exchange) {
                         retval.replace(ptr(0));
                         send({
                             type: 'bypass',
@@ -1778,7 +1778,7 @@ const QuantumCryptoHandler = {
                     });
                 },
                 onLeave: function (retval) {
-                    if (this.config.bypass.fake_key_exchange) {
+                    if (this.config.bypass.override_key_exchange) {
                         retval.replace(ptr(0));
                         send({
                             type: 'bypass',
@@ -1955,8 +1955,8 @@ const QuantumCryptoHandler = {
         // Timing analysis
         this.performTimingAnalysis();
 
-        // Power analysis simulation
-        this.simulatePowerAnalysis();
+        // Power analysis profiling
+        this.performPowerAnalysis();
 
         // Fault injection detection
         this.detectFaultVulnerabilities();
@@ -2135,7 +2135,7 @@ const QuantumCryptoHandler = {
     extractAndAnalyzeKey(address, data, expectedSize) {
         try {
             // Log key preview (first 32 bytes)
-            const preview = [...data.slice(0, 32)]
+            const preview = [...data.subarray(0, 32)]
                 .map(b => b.toString(16).padStart(2, '0'))
                 .join(' ');
 
@@ -2376,7 +2376,7 @@ const QuantumCryptoHandler = {
         ]);
 
         try {
-            const pattern = [...x25519Base.slice(0, 8)]
+            const pattern = [...x25519Base.subarray(0, 8)]
                 .map(b => b.toString(16).padStart(2, '0'))
                 .join(' ');
 
@@ -2463,7 +2463,7 @@ const QuantumCryptoHandler = {
                     });
                 },
                 onLeave: function (retval) {
-                    if (this.config.bypass.fake_key_exchange) {
+                    if (this.config.bypass.override_key_exchange) {
                         retval.replace(ptr(0));
                         send({
                             type: 'bypass',

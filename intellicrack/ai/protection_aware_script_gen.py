@@ -215,7 +215,17 @@ class ProtectionAwareScriptGenerator:
         confidence: float,
         protection_info: ProtectionSchemeInfo | None,
     ) -> str:
-        """Generate AI prompt for script enhancement."""
+        """Generate AI prompt for script enhancement.
+
+        Args:
+            result: The unified protection analysis result containing detected protections.
+            protection_type: The name of the primary protection type detected.
+            confidence: The confidence level (0.0-1.0) of the protection detection.
+            protection_info: Optional protection scheme information from knowledge base.
+
+        Returns:
+            str: A formatted prompt string with protection details and bypass instructions.
+        """
         prompt = f"""Generate a bypass script for {protection_type} protection.
 
 Protection Details:
@@ -262,7 +272,14 @@ Focus on the most effective approach for this specific protection type.
         return prompt
 
     def _format_detections(self, result: UnifiedProtectionResult) -> str:
-        """Format detections for display."""
+        """Format detections for display.
+
+        Args:
+            result: The unified protection analysis result with detections to format.
+
+        Returns:
+            str: A formatted string representation of all detected protections and analyses.
+        """
         lines = []
 
         # Format ICP detections if available
@@ -284,7 +301,15 @@ Focus on the most effective approach for this specific protection type.
         return "\n".join(lines) if lines else "- None detected"
 
     def _get_recommended_techniques(self, protection_info: ProtectionSchemeInfo | None) -> list[dict[str, Any]]:
-        """Get recommended bypass techniques."""
+        """Get recommended bypass techniques.
+
+        Args:
+            protection_info: Optional protection scheme information containing bypass techniques.
+
+        Returns:
+            list[dict[str, Any]]: A list of dictionaries containing technique details including
+                name, description, difficulty, success_rate, time_estimate, and tools.
+        """
         if not protection_info:
             return []
 
@@ -301,7 +326,12 @@ Focus on the most effective approach for this specific protection type.
         ]
 
     def _get_hasp_scripts(self) -> dict[str, str]:
-        """Enhanced Sentinel HASP/HL bypass scripts with advanced techniques."""
+        """Enhanced Sentinel HASP/HL bypass scripts with advanced techniques.
+
+        Returns:
+            dict[str, str]: Dictionary mapping script types (e.g., 'frida', 'ghidra') to
+                bypass script implementations for Sentinel HASP/HL protection.
+        """
         return {
             "frida": """// Advanced Sentinel HASP/HL Pro Bypass Script
 // Comprehensive bypasses for HASP HL Pro, SRM, and legacy versions
@@ -873,7 +903,12 @@ public class AdvancedHASPBypass extends GhidraScript {
         }
 
     def _get_flexlm_scripts(self) -> dict[str, str]:
-        """Advanced FlexNet/FlexLM license manager bypass scripts."""
+        """Advanced FlexNet/FlexLM license manager bypass scripts.
+
+        Returns:
+            dict[str, str]: Dictionary mapping script types to bypass scripts for
+                FlexNet/FlexLM licensing systems.
+        """
         return {
             "frida": """// Advanced FlexNet/FlexLM License Manager Bypass
 // Comprehensive bypass for FlexLM, FlexNet Publisher, and RLM
@@ -1597,7 +1632,12 @@ bypass.run()
         }
 
     def _get_winlicense_scripts(self) -> dict[str, str]:
-        """WinLicense/Themida specific scripts."""
+        """WinLicense/Themida specific scripts.
+
+        Returns:
+            dict[str, str]: Dictionary mapping script types to bypass scripts for
+                WinLicense and Themida protection systems.
+        """
         return {
             "frida": """// WinLicense/Themida Analysis Script
 // Note: This protection uses heavy virtualization
@@ -1652,7 +1692,12 @@ console.log("[!] Manual unpacking likely required");
         }
 
     def _get_steam_scripts(self) -> dict[str, str]:
-        """Advanced Steam DRM bypass scripts with sophisticated techniques."""
+        """Advanced Steam DRM bypass scripts with sophisticated techniques.
+
+        Returns:
+            dict[str, str]: Dictionary mapping script types to bypass scripts for
+                Steam CEG DRM protection system.
+        """
         return {
             "frida": """// Advanced Steam DRM & Licensing Bypass Script
 // Comprehensive bypass for Steam API, CEG, and Steamworks DRM
@@ -2617,7 +2662,12 @@ bypass.run()
         }
 
     def _get_vmprotect_scripts(self) -> dict[str, str]:
-        """Advanced VMProtect licensing bypass scripts."""
+        """Advanced VMProtect licensing bypass scripts.
+
+        Returns:
+            dict[str, str]: Dictionary mapping script types to bypass scripts for
+                VMProtect code virtualization and licensing protection.
+        """
         return {
             "frida": """// Advanced VMProtect Licensing Bypass Script
 // Defeats VMProtect's licensing, hardware locks, and expiration checks
@@ -3171,7 +3221,12 @@ bypass.run()
         }
 
     def _get_denuvo_scripts(self) -> dict[str, str]:
-        """Advanced Denuvo Anti-Tamper bypass scripts for licensing."""
+        """Advanced Denuvo Anti-Tamper bypass scripts for licensing.
+
+        Returns:
+            dict[str, str]: Dictionary mapping script types to bypass scripts for
+                Denuvo Anti-Tamper protection system.
+        """
         return {
             "frida": """// Advanced Denuvo Anti-Tamper Licensing Bypass
 // Targets Denuvo v4+ license validation and hardware binding
@@ -3702,7 +3757,12 @@ console.log("[+] Integrity verification redirected");
         }
 
     def _get_ms_activation_scripts(self) -> dict[str, str]:
-        """Microsoft Activation specific scripts."""
+        """Microsoft Activation specific scripts.
+
+        Returns:
+            dict[str, str]: Dictionary mapping script types to bypass scripts for
+                Microsoft product activation systems.
+        """
         return {
             "frida": """// Microsoft Activation Bypass Helper
 // For educational/testing purposes only
@@ -3758,7 +3818,12 @@ console.log("[+] Microsoft Activation hooks installed");
         }
 
     def _get_themida_scripts(self) -> dict[str, str]:
-        """Advanced Themida/WinLicense protection bypass scripts."""
+        """Advanced Themida/WinLicense protection bypass scripts.
+
+        Returns:
+            dict[str, str]: Dictionary mapping script types to bypass scripts for
+                Themida and WinLicense code virtualization systems.
+        """
         return {
             "frida": """// Advanced Themida Protection Bypass
 // Comprehensive bypass for Themida's anti-debug and VM protection
@@ -3863,7 +3928,12 @@ console.log("[+] Themida protection bypass activated");
         }
 
     def _get_ilok_scripts(self) -> dict[str, str]:
-        """PACE iLok licensing system bypass scripts."""
+        """PACE iLok licensing system bypass scripts.
+
+        Returns:
+            dict[str, str]: Dictionary mapping script types to bypass scripts for
+                PACE iLok hardware licensing system.
+        """
         return {
             "frida": """// PACE iLok License Manager Bypass
 // Advanced bypass for iLok USB dongle and cloud licensing
@@ -3989,7 +4059,12 @@ console.log("[+] PACE iLok bypass activated");
         }
 
     def _get_securom_scripts(self) -> dict[str, str]:
-        """SecuROM copy protection bypass scripts."""
+        """SecuROM copy protection bypass scripts.
+
+        Returns:
+            dict[str, str]: Dictionary mapping script types to bypass scripts for
+                SecuROM copy protection system.
+        """
         return {
             "frida": """// SecuROM Copy Protection Bypass
 // Advanced disc check and encryption layer bypass
@@ -4121,7 +4196,12 @@ console.log("[+] SecuROM bypass activated");
         }
 
     def _get_starforce_scripts(self) -> dict[str, str]:
-        """StarForce protection system bypass scripts."""
+        """StarForce protection system bypass scripts.
+
+        Returns:
+            dict[str, str]: Dictionary mapping script types to bypass scripts for
+                StarForce copy protection system.
+        """
         return {
             "frida": """// StarForce Protection Bypass
 // Advanced driver-based protection defeat
@@ -4263,7 +4343,12 @@ console.log("[+] StarForce protection bypass activated");
         }
 
     def _get_arxan_scripts(self) -> dict[str, str]:
-        """Arxan TransformIT protection bypass scripts."""
+        """Arxan TransformIT protection bypass scripts.
+
+        Returns:
+            dict[str, str]: Dictionary mapping script types to bypass scripts for
+                Arxan TransformIT mobile app protection system.
+        """
         return {
             "frida": """// Arxan TransformIT Protection Bypass
 // Advanced code obfuscation and anti-tamper defeat
@@ -4448,7 +4533,12 @@ console.log("[+] Arxan TransformIT bypass activated");
         }
 
     def _get_cloud_licensing_scripts(self) -> dict[str, str]:
-        """Cloud-based licensing system bypass scripts."""
+        """Cloud-based licensing system bypass scripts.
+
+        Returns:
+            dict[str, str]: Dictionary mapping script types to bypass scripts for
+                cloud-based software licensing and subscription systems.
+        """
         return {
             "frida": """// Cloud Licensing System Bypass
 // Generic cloud-based license validation defeat
@@ -4642,7 +4732,12 @@ console.log("[+] Cloud licensing bypass activated");
         }
 
     def _get_custom_obfuscation_scripts(self) -> dict[str, str]:
-        """Get custom obfuscation and packing bypass scripts."""
+        """Get custom obfuscation and packing bypass scripts.
+
+        Returns:
+            dict[str, str]: Dictionary mapping script types to bypass scripts for
+                generic code obfuscation and custom packing systems.
+        """
         return {
             "frida": """// Custom Obfuscation/Packing Bypass
 // Generic unpacker and deobfuscator for custom protections
@@ -4860,7 +4955,12 @@ console.log("[+] Custom obfuscation bypass activated");
         }
 
     def _get_safenet_sentinel_scripts(self) -> dict[str, str]:
-        """SafeNet Sentinel protection bypass scripts."""
+        """SafeNet Sentinel protection bypass scripts.
+
+        Returns:
+            dict[str, str]: Dictionary mapping script types to bypass scripts for
+                SafeNet Sentinel software licensing and protection system.
+        """
         return {
             "frida": """// SafeNet Sentinel Protection Bypass
 // Advanced hardware key and envelope protection defeat
@@ -5072,7 +5172,14 @@ console.log("[+] SafeNet Sentinel bypass activated");
         }
 
     def _get_basic_analysis_script(self, script_type: str) -> str:
-        """Get basic analysis script for unprotected binaries."""
+        """Get basic analysis script for unprotected binaries.
+
+        Args:
+            script_type: Type of script to generate (frida, ghidra).
+
+        Returns:
+            str: A basic analysis script implementation for unprotected binaries.
+        """
         if script_type == "frida":
             return """// Basic Binary Analysis Script
 // No protection detected - standard analysis
@@ -5110,7 +5217,14 @@ console.log("[+] Basic analysis hooks installed");
         return "// Basic analysis script"
 
     def _get_generic_bypass_script(self, script_type: str) -> str:
-        """Get generic bypass script for unknown protections."""
+        """Get generic bypass script for unknown protections.
+
+        Args:
+            script_type: Type of script to generate (frida, ghidra).
+
+        Returns:
+            str: A generic bypass script for unknown or custom protection mechanisms.
+        """
         if script_type == "frida":
             return """// Generic Protection Bypass Script
 // For unknown/custom protection schemes
@@ -5171,7 +5285,14 @@ console.log("[+] Generic bypass hooks installed");
         return "// Generic bypass script"
 
     def _get_generic_analysis_script(self, script_type: str) -> str:
-        """Get generic analysis script when protection detection fails."""
+        """Get generic analysis script when protection detection fails.
+
+        Args:
+            script_type: Type of script to generate (frida, ghidra).
+
+        Returns:
+            str: A generic analysis script for use when protection type cannot be determined.
+        """
         script_type_upper = script_type.upper()
 
         if script_type.lower() == "frida":
@@ -5211,6 +5332,14 @@ def enhance_ai_script_generation(ai_generator: object | None, binary_path: str) 
 
     This function integrates AI-powered enhancements into protection-specific
     script generation for maximum effectiveness against modern protections.
+
+    Args:
+        ai_generator: Optional AI script generator instance for advanced enhancements.
+        binary_path: Path to the binary to analyze and generate scripts for.
+
+    Returns:
+        dict[str, Any]: Dictionary containing generated scripts, analysis results, and
+            bypass techniques tailored to detected protections.
     """
     from .ai_script_generator import AIScriptGenerator
 

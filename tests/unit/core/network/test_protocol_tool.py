@@ -1,27 +1,32 @@
 #!/usr/bin/env python3
-"""
-Comprehensive Test Suite for Protocol Tool
-Production-ready testing of protocol manipulation and analysis capabilities
+"""Comprehensive Test Suite for Protocol Tool.
+
+Production-ready testing of protocol manipulation and analysis capabilities.
 """
 
-import os
-import sys
-import pytest
-import time
-import threading
-import socket
-import struct
-import ssl
+from __future__ import annotations
+
+import contextlib
 import json
+import os
+import socket
+import ssl
+import struct
+import sys
+import threading
+import time
 from pathlib import Path
+
+import pytest
+
 
 # Add project root to Python path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent))
 
 try:
-    from PyQt6.QtWidgets import QApplication
     from PyQt6.QtCore import QTimer, pyqtSignal
     from PyQt6.QtTest import QTest
+    from PyQt6.QtWidgets import QApplication
     PYQT_AVAILABLE = True
 except ImportError:
     PYQT_AVAILABLE = False
@@ -29,10 +34,32 @@ except ImportError:
 from tests.framework.real_world_testing_framework import RealWorldTestingFramework
 
 
+# Vulnerability thresholds
+HIGH_RISK_VULN_THRESHOLD = 3
+
+# Success rate thresholds
+MIN_BYPASS_SUCCESS_RATE = 70
+MIN_STEALTH_MODE_EVASION_RATE = 85
+
+# Output length thresholds
+MIN_SUBSTANTIAL_OUTPUT_LENGTH = 50
+MIN_PAYLOAD_OUTPUT_LENGTH = 200
+MIN_WORKFLOW_OUTPUT_LENGTH = 100
+MIN_CONCURRENT_OUTPUT_LENGTH = 500
+
+# Protocol count thresholds
+MIN_PROTOCOL_COUNT = 5
+MIN_VULN_CHECK_COUNT = 6
+
+# Performance thresholds
+MAX_CONCURRENT_EXECUTION_TIME = 10.0
+MAX_ERROR_COUNT = 2
+
+
 class RealApplicationSimulator:
     """Real application simulator for production testing without mocks."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize application simulator with real capabilities."""
         self.is_running = True
         self.config = {
@@ -67,7 +94,7 @@ class RealApplicationSimulator:
 class RealSignalsManager:
     """Real signals manager for production testing without mocks."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize signals manager with real capabilities."""
         self.signals = {}
         self.handlers = {}
@@ -76,11 +103,8 @@ class RealSignalsManager:
         """Emit signal with proper handler coordination."""
         if signal_name in self.handlers:
             for handler in self.handlers[signal_name]:
-                try:
+                with contextlib.suppress(Exception):
                     handler(*args)
-                except Exception as e:
-                    # Production-ready error handling
-                    pass
         return True
 
     def connect_handler(self, signal_name: str, handler):
@@ -93,7 +117,7 @@ class RealSignalsManager:
 class RealProtocolAnalyzer:
     """Real protocol analyzer for production testing without mocks."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize protocol analyzer with comprehensive capabilities."""
         self.supported_protocols = [
             'HTTP', 'HTTPS', 'FTP', 'SSH', 'SMTP', 'DNS', 'DHCP', 'SNMP',
@@ -104,7 +128,7 @@ class RealProtocolAnalyzer:
         self.traffic_interceptor = RealTrafficInterceptor()
         self.analysis_results = {}
 
-    def analyze_protocol(self, protocol: str, target: str, options: dict = None) -> dict:
+    def analyze_protocol(self, protocol: str, target: str, options: dict | None = None) -> dict:
         """Perform comprehensive protocol analysis with real capabilities."""
         options = options or {}
 
@@ -239,7 +263,7 @@ VULNERABILITIES IDENTIFIED:
                 # Update summary statistics
                 batch_results['summary']['vulnerabilities_found'] += len(result['vulnerabilities'])
                 batch_results['summary']['exploitation_vectors'] += len(result['exploitation_vectors'])
-                if len(result['vulnerabilities']) > 3:
+                if len(result['vulnerabilities']) > HIGH_RISK_VULN_THRESHOLD:
                     batch_results['summary']['high_risk_findings'] += 1
 
         return batch_results
@@ -248,7 +272,7 @@ VULNERABILITIES IDENTIFIED:
 class RealVulnerabilityDatabase:
     """Real vulnerability database for production testing without mocks."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize vulnerability database with comprehensive entries."""
         self.vulnerabilities = {
             'HTTP': [
@@ -287,7 +311,7 @@ class RealVulnerabilityDatabase:
 class RealPayloadGenerator:
     """Real payload generator for production testing without mocks."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize payload generator with comprehensive capabilities."""
         self.payload_templates = {
             'sql_injection': [
@@ -311,7 +335,7 @@ class RealPayloadGenerator:
             ]
         }
 
-    def generate_payload(self, attack_type: str, target_protocol: str, customization: dict = None) -> dict:
+    def generate_payload(self, attack_type: str, target_protocol: str, customization: dict | None = None) -> dict:
         """Generate protocol-specific exploitation payload."""
         customization = customization or {}
 
@@ -354,14 +378,14 @@ class RealPayloadGenerator:
 class RealTrafficInterceptor:
     """Real traffic interceptor for production testing without mocks."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize traffic interceptor with real capabilities."""
         self.is_intercepting = False
         self.captured_traffic = []
         self.protocols_detected = set()
         self.real_time_analysis = True
 
-    def start_interception(self, interface: str = 'eth0', protocols: list = None) -> dict:
+    def start_interception(self, interface: str = 'eth0', protocols: list | None = None) -> dict:
         """Start network traffic interception with real capabilities."""
         protocols = protocols or ['ALL']
 
@@ -424,7 +448,7 @@ class RealTrafficInterceptor:
 class RealSecurityAssessmentSimulator:
     """Real security assessment simulator for production testing without mocks."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize security assessment simulator with comprehensive capabilities."""
         self.assessment_types = [
             'vulnerability_scanning', 'penetration_testing', 'protocol_analysis',
@@ -432,7 +456,7 @@ class RealSecurityAssessmentSimulator:
         ]
         self.assessment_results = {}
 
-    def perform_security_assessment(self, targets: list, assessment_type: str, options: dict = None) -> dict:
+    def perform_security_assessment(self, targets: list, assessment_type: str, options: dict | None = None) -> dict:
         """Perform comprehensive security assessment."""
         options = options or {}
 
@@ -541,7 +565,7 @@ CRITICAL FINDINGS:
 class RealNetworkInterceptorSimulator:
     """Real network interceptor simulator for production testing without mocks."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize network interceptor with real capabilities."""
         self.active_sessions = {}
         self.intercepted_protocols = set()
@@ -550,7 +574,7 @@ class RealNetworkInterceptorSimulator:
             'Protocol hopping', 'Steganographic channels', 'Covert timing channels'
         ]
 
-    def start_protocol_bypass(self, target: str, techniques: list, protocol_hopping: bool = False) -> dict:
+    def start_protocol_bypass(self, target: str, techniques: list, *, protocol_hopping: bool = False) -> dict:
         """Start advanced protocol bypass operation."""
         session_id = f"bypass_{int(time.time())}"
 
@@ -591,9 +615,9 @@ class RealNetworkInterceptorSimulator:
 
         return {
             'session_id': session_id,
-            'bypass_success': session['bypass_success_rate'] > 70,
+            'bypass_success': session['bypass_success_rate'] > MIN_BYPASS_SUCCESS_RATE,
             'evasion_rate': session['detection_evasion_rate'],
-            'stealth_mode': session['detection_evasion_rate'] > 85,
+            'stealth_mode': session['detection_evasion_rate'] > MIN_STEALTH_MODE_EVASION_RATE,
             'covert_transmission': session['covert_channels_established'] > 0,
             'advanced_techniques': {
                 'fragmentation_evasion': 'fragmentation'
@@ -606,10 +630,10 @@ class RealNetworkInterceptorSimulator:
 
 
 class TestProtocolToolSignals:
-    """Test suite for ProtocolToolSignals class signal communication"""
+    """Test suite for ProtocolToolSignals class signal communication."""
 
-    def test_signals_class_exists_and_inherits_properly(self):
-        """Validate ProtocolToolSignals class exists with proper inheritance"""
+    def test_signals_class_exists_and_inherits_properly(self) -> None:
+        """Validate ProtocolToolSignals class exists with proper inheritance."""
         from intellicrack.core.network.protocol_tool import ProtocolToolSignals
 
         # Must be a proper Qt signal class
@@ -625,7 +649,7 @@ class TestProtocolToolSignals:
 
     @pytest.mark.skipif(not PYQT_AVAILABLE, reason="PyQt6 not available")
     def test_signal_emission_functionality(self):
-        """Validate signals can be emitted and received properly"""
+        """Validate signals can be emitted and received properly."""
         from intellicrack.core.network.protocol_tool import ProtocolToolSignals
 
         app = QApplication.instance() or QApplication([])
@@ -665,17 +689,17 @@ class TestProtocolToolSignals:
 
 
 class TestProtocolToolWindow:
-    """Test suite for ProtocolToolWindow GUI and protocol analysis capabilities"""
+    """Test suite for ProtocolToolWindow GUI and protocol analysis capabilities."""
 
     @pytest.fixture
     def protocol_tool_window(self):
-        """Create ProtocolToolWindow instance for testing"""
+        """Create ProtocolToolWindow instance for testing."""
         if not PYQT_AVAILABLE:
             pytest.skip("PyQt6 not available")
 
         from intellicrack.core.network.protocol_tool import ProtocolToolWindow
 
-        app = QApplication.instance() or QApplication([])
+        _app = QApplication.instance() or QApplication([])
         app_instance = RealApplicationSimulator()  # Real app instance
 
         window = ProtocolToolWindow(app_instance)
@@ -684,14 +708,14 @@ class TestProtocolToolWindow:
         if hasattr(window, 'close'):
             window.close()
 
-    def test_singleton_pattern_implementation(self):
-        """Validate singleton pattern prevents multiple instances"""
+    def test_singleton_pattern_implementation(self) -> None:
+        """Validate singleton pattern prevents multiple instances."""
         if not PYQT_AVAILABLE:
             pytest.skip("PyQt6 not available")
 
         from intellicrack.core.network.protocol_tool import ProtocolToolWindow
 
-        app = QApplication.instance() or QApplication([])
+        _app = QApplication.instance() or QApplication([])
         app_instance = RealApplicationSimulator()
 
         # Create first instance
@@ -708,7 +732,7 @@ class TestProtocolToolWindow:
             window1.close()
 
     def test_ui_components_initialization(self, protocol_tool_window):
-        """Validate all required UI components are properly initialized"""
+        """Validate all required UI components are properly initialized."""
         window = protocol_tool_window
 
         # Title and description components
@@ -730,7 +754,7 @@ class TestProtocolToolWindow:
         assert "comprehensive protocol manipulation" in window.description_label.text().lower()
 
     def test_protocol_analysis_command_processing(self, protocol_tool_window):
-        """Validate protocol analysis commands are processed correctly"""
+        """Validate protocol analysis commands are processed correctly."""
         window = protocol_tool_window
 
         # Test HTTP protocol analysis command
@@ -744,10 +768,10 @@ class TestProtocolToolWindow:
         output_text = window.output_text_edit.toPlainText()
         assert "HTTP" in output_text
         assert "Protocol Analysis" in output_text
-        assert len(output_text) > 50  # Must contain substantial analysis
+        assert len(output_text) > MIN_SUBSTANTIAL_OUTPUT_LENGTH  # Must contain substantial analysis
 
     def test_real_world_http_protocol_analysis(self, protocol_tool_window):
-        """Validate real-world HTTP protocol analysis capabilities"""
+        """Validate real-world HTTP protocol analysis capabilities."""
         window = protocol_tool_window
 
         # Simulate HTTP request analysis
@@ -777,7 +801,7 @@ Authorization: Basic YWRtaW46cGFzc3dvcmQ="""
         ])
 
     def test_multi_protocol_batch_processing(self, protocol_tool_window):
-        """Validate batch processing of multiple protocols simultaneously"""
+        """Validate batch processing of multiple protocols simultaneously."""
         window = protocol_tool_window
 
         # Test batch analysis of multiple protocols
@@ -802,7 +826,7 @@ Authorization: Basic YWRtaW46cGFzc3dvcmQ="""
         assert "exploitation opportunities" in output.lower()
 
     def test_ssl_tls_protocol_exploitation(self, protocol_tool_window):
-        """Validate SSL/TLS protocol vulnerability analysis and exploitation"""
+        """Validate SSL/TLS protocol vulnerability analysis and exploitation."""
         window = protocol_tool_window
 
         # Command for SSL/TLS vulnerability assessment
@@ -823,7 +847,7 @@ Authorization: Basic YWRtaW46cGFzc3dvcmQ="""
         ])
 
     def test_protocol_payload_generation(self, protocol_tool_window):
-        """Validate protocol-specific payload generation capabilities"""
+        """Validate protocol-specific payload generation capabilities."""
         window = protocol_tool_window
 
         # Test payload generation for HTTP injection
@@ -841,13 +865,13 @@ Authorization: Basic YWRtaW46cGFzc3dvcmQ="""
         ])
 
         # Must provide payload details and usage instructions
-        assert len(output) > 200  # Substantial payload information
+        assert len(output) > MIN_PAYLOAD_OUTPUT_LENGTH  # Substantial payload information
         assert any(instruction in output.lower() for instruction in [
             'execution', 'deployment', 'target', 'method'
         ])
 
     def test_network_traffic_interception_analysis(self, protocol_tool_window):
-        """Validate real-time network traffic interception and analysis"""
+        """Validate real-time network traffic interception and analysis."""
         window = protocol_tool_window
 
         # Command for network traffic interception
@@ -868,7 +892,7 @@ Authorization: Basic YWRtaW46cGFzc3dvcmQ="""
         ])
 
     def test_protocol_fuzzing_capabilities(self, protocol_tool_window):
-        """Validate protocol fuzzing for vulnerability discovery"""
+        """Validate protocol fuzzing for vulnerability discovery."""
         window = protocol_tool_window
 
         # Command for protocol fuzzing
@@ -890,7 +914,7 @@ Authorization: Basic YWRtaW46cGFzc3dvcmQ="""
         ])
 
     def test_advanced_protocol_bypass_techniques(self, protocol_tool_window):
-        """Validate advanced protocol bypass and evasion techniques"""
+        """Validate advanced protocol bypass and evasion techniques."""
         window = protocol_tool_window
 
         # Command for advanced protocol bypass
@@ -914,7 +938,7 @@ Authorization: Basic YWRtaW46cGFzc3dvcmQ="""
         ])
 
     def test_clear_log_functionality(self, protocol_tool_window):
-        """Validate log clearing maintains system integrity"""
+        """Validate log clearing maintains system integrity."""
         window = protocol_tool_window
 
         # Add content to output
@@ -933,7 +957,7 @@ Authorization: Basic YWRtaW46cGFzc3dvcmQ="""
         assert len(window.output_text_edit.toPlainText()) > 0
 
     def test_window_close_event_handling(self, protocol_tool_window):
-        """Validate proper cleanup on window close"""
+        """Validate proper cleanup on window close."""
         window = protocol_tool_window
 
         # Real close event
@@ -945,14 +969,14 @@ Authorization: Basic YWRtaW46cGFzc3dvcmQ="""
 
 
 class TestProtocolToolFunctions:
-    """Test suite for protocol tool utility functions"""
+    """Test suite for protocol tool utility functions."""
 
     @pytest.mark.skipif(not PYQT_AVAILABLE, reason="PyQt6 not available")
     def test_launch_protocol_tool_function(self):
-        """Validate launch_protocol_tool creates and displays window"""
+        """Validate launch_protocol_tool creates and displays window."""
         from intellicrack.core.network.protocol_tool import launch_protocol_tool
 
-        app = QApplication.instance() or QApplication([])
+        _app = QApplication.instance() or QApplication([])
         real_app_instance = RealApplicationSimulator()
 
         # Launch protocol tool
@@ -966,8 +990,8 @@ class TestProtocolToolFunctions:
         if hasattr(result, 'close'):
             result.close()
 
-    def test_update_protocol_tool_description_function(self):
-        """Validate description update function works correctly"""
+    def test_update_protocol_tool_description_function(self) -> None:
+        """Validate description update function works correctly."""
         from intellicrack.core.network.protocol_tool import update_protocol_tool_description
 
         # Test description update
@@ -979,16 +1003,16 @@ class TestProtocolToolFunctions:
 
 
 class TestProtocolToolIntegration:
-    """Integration tests for protocol tool with real network scenarios"""
+    """Integration tests for protocol tool with real network scenarios."""
 
-    def test_real_world_http_vulnerability_analysis(self):
-        """Test real HTTP vulnerability analysis with actual vulnerable patterns"""
+    def test_real_world_http_vulnerability_analysis(self) -> None:
+        """Test real HTTP vulnerability analysis with actual vulnerable patterns."""
         from intellicrack.core.network.protocol_tool import ProtocolToolWindow
 
         if not PYQT_AVAILABLE:
             pytest.skip("PyQt6 not available")
 
-        app = QApplication.instance() or QApplication([])
+        _app = QApplication.instance() or QApplication([])
         window = ProtocolToolWindow(RealApplicationSimulator())
 
         # Real vulnerable HTTP request pattern
@@ -1018,9 +1042,9 @@ username=admin' OR '1'='1&password=anything"""
 
         window.close()
 
-    def test_multi_protocol_security_assessment(self):
-        """Test comprehensive security assessment across multiple protocols"""
-        framework = RealWorldTestingFramework()
+    def test_multi_protocol_security_assessment(self) -> None:
+        """Test comprehensive security assessment across multiple protocols."""
+        _framework = RealWorldTestingFramework()
 
         # Create test environment with multiple protocol services
         test_scenario = {
@@ -1036,18 +1060,18 @@ username=admin' OR '1'='1&password=anything"""
         # This test validates that the protocol tool can coordinate
         # comprehensive security assessments (would integrate with actual tool)
 
-        assert len(test_scenario['protocols']) >= 5
-        assert len(test_scenario['vulnerability_checks']) >= 6
+        assert len(test_scenario['protocols']) >= MIN_PROTOCOL_COUNT
+        assert len(test_scenario['vulnerability_checks']) >= MIN_VULN_CHECK_COUNT
         assert 'comprehensive_security_scan' in test_scenario['assessment_type']
 
-    def test_protocol_exploitation_workflow_integration(self):
-        """Test complete protocol exploitation workflow integration"""
+    def test_protocol_exploitation_workflow_integration(self) -> None:
+        """Test complete protocol exploitation workflow integration."""
         if not PYQT_AVAILABLE:
             pytest.skip("PyQt6 not available")
 
         from intellicrack.core.network.protocol_tool import ProtocolToolWindow
 
-        app = QApplication.instance() or QApplication([])
+        _app = QApplication.instance() or QApplication([])
         window = ProtocolToolWindow(RealApplicationSimulator())
 
         # Complete exploitation workflow
@@ -1066,7 +1090,7 @@ username=admin' OR '1'='1&password=anything"""
             output = window.output_text_edit.toPlainText()
 
             # Each step must produce meaningful output
-            assert len(output) > 100
+            assert len(output) > MIN_WORKFLOW_OUTPUT_LENGTH
 
             # Must show progression through exploitation workflow
             if "scan" in step:
@@ -1084,16 +1108,16 @@ username=admin' OR '1'='1&password=anything"""
 
 
 class TestProtocolToolPerformance:
-    """Performance and stress tests for protocol tool"""
+    """Performance and stress tests for protocol tool."""
 
-    def test_concurrent_protocol_analysis_performance(self):
-        """Test performance under concurrent protocol analysis load"""
+    def test_concurrent_protocol_analysis_performance(self) -> None:
+        """Test performance under concurrent protocol analysis load."""
         if not PYQT_AVAILABLE:
             pytest.skip("PyQt6 not available")
 
         from intellicrack.core.network.protocol_tool import ProtocolToolWindow
 
-        app = QApplication.instance() or QApplication([])
+        _app = QApplication.instance() or QApplication([])
         window = ProtocolToolWindow(RealApplicationSimulator())
 
         # Stress test with multiple concurrent analysis requests
@@ -1115,24 +1139,24 @@ class TestProtocolToolPerformance:
         execution_time = time.time() - start_time
 
         # Performance requirements
-        assert execution_time < 10.0  # Must complete within 10 seconds
+        assert execution_time < MAX_CONCURRENT_EXECUTION_TIME  # Must complete within 10 seconds
 
         output = window.output_text_edit.toPlainText()
-        assert len(output) > 500  # Must generate substantial analysis output
+        assert len(output) > MIN_CONCURRENT_OUTPUT_LENGTH  # Must generate substantial analysis output
 
         # Must handle concurrent operations without errors
-        assert "error" not in output.lower() or output.lower().count("error") < 2
+        assert "error" not in output.lower() or output.lower().count("error") < MAX_ERROR_COUNT
 
         window.close()
 
-    def test_large_protocol_data_processing(self):
-        """Test processing of large protocol datasets"""
+    def test_large_protocol_data_processing(self) -> None:
+        """Test processing of large protocol datasets."""
         if not PYQT_AVAILABLE:
             pytest.skip("PyQt6 not available")
 
         from intellicrack.core.network.protocol_tool import ProtocolToolWindow
 
-        app = QApplication.instance() or QApplication([])
+        _app = QApplication.instance() or QApplication([])
         window = ProtocolToolWindow(RealApplicationSimulator())
 
         # Large protocol data processing test

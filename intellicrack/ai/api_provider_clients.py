@@ -22,7 +22,17 @@ logger = get_logger(__name__)
 
 @dataclass
 class ModelInfo:
-    """Information about an available model."""
+    """Information about an available model.
+
+    Attributes:
+        id: Unique identifier for the model.
+        name: Human-readable name of the model.
+        provider: Name of the LLM provider (e.g., 'OpenAI', 'Anthropic').
+        description: Detailed description of the model.
+        context_length: Maximum context window length in tokens.
+        capabilities: List of model capabilities (e.g., 'text-generation', 'vision').
+        pricing: Optional pricing information for the model.
+    """
 
     id: str
     name: str
@@ -37,7 +47,12 @@ class BaseProviderClient(ABC):
     """Base class for API provider clients."""
 
     def __init__(self, api_key: str | None = None, base_url: str | None = None) -> None:
-        """Initialize base provider client with API key and base URL."""
+        """Initialize base provider client with API key and base URL.
+
+        Args:
+            api_key: Optional API key for authentication.
+            base_url: Optional base URL for the API endpoint.
+        """
         self.api_key = api_key
         self.base_url = base_url
         self.session = requests.Session()
@@ -51,10 +66,23 @@ class BaseProviderClient(ABC):
 
     @abstractmethod
     def fetch_models(self) -> list[ModelInfo]:
-        """Fetch available models from the provider."""
+        """Fetch available models from the provider.
+
+        Returns:
+            list[ModelInfo]: List of available models from the provider.
+        """
 
     def _make_request(self, method: str, url: str, **kwargs: Any) -> dict[str, Any] | None:
-        """Make HTTP request with error handling."""
+        """Make HTTP request with error handling.
+
+        Args:
+            method: HTTP method (GET, POST, etc.).
+            url: The URL to request.
+            **kwargs: Additional arguments to pass to requests.
+
+        Returns:
+            dict[str, Any] | None: The JSON response or None on error.
+        """
         try:
             response = self.session.request(method, url, timeout=10, **kwargs)
             response.raise_for_status()
@@ -78,7 +106,12 @@ class OpenAIProviderClient(BaseProviderClient):
     """OpenAI API provider client for dynamic model discovery."""
 
     def __init__(self, api_key: str | None = None, base_url: str | None = None) -> None:
-        """Initialize OpenAI provider client with API key and base URL."""
+        """Initialize OpenAI provider client with API key and base URL.
+
+        Args:
+            api_key: Optional OpenAI API key.
+            base_url: Optional base URL for OpenAI API.
+        """
         if base_url is None:
             base_url = "https://api.openai.com/v1"
         super().__init__(api_key, base_url)
@@ -89,7 +122,11 @@ class OpenAIProviderClient(BaseProviderClient):
             self.session.headers.update({"Authorization": f"Bearer {self.api_key}"})
 
     def fetch_models(self) -> list[ModelInfo]:
-        """Fetch available models from OpenAI API."""
+        """Fetch available models from OpenAI API.
+
+        Returns:
+            list[ModelInfo]: List of available OpenAI models.
+        """
         if not self.api_key:
             logger.warning("No API key provided for OpenAI")
             return self._get_fallback_models()
@@ -131,12 +168,26 @@ class OpenAIProviderClient(BaseProviderClient):
         return models
 
     def _is_chat_model(self, model_id: str) -> bool:
-        """Check if model is a chat/completion model."""
+        """Check if model is a chat/completion model.
+
+        Args:
+            model_id: The model identifier to check.
+
+        Returns:
+            bool: True if model is a chat/completion model, False otherwise.
+        """
         chat_indicators = ["gpt", "chatgpt", "turbo", "davinci", "o1", "o3"]
         return any(indicator in model_id.lower() for indicator in chat_indicators)
 
     def _infer_capabilities(self, model_id: str) -> list[str]:
-        """Infer model capabilities from model ID."""
+        """Infer model capabilities from model ID.
+
+        Args:
+            model_id: The model identifier to analyze.
+
+        Returns:
+            list[str]: List of capabilities the model supports.
+        """
         capabilities = ["text-generation", "chat"]
 
         if "turbo" in model_id or "gpt-4" in model_id:
@@ -148,7 +199,11 @@ class OpenAIProviderClient(BaseProviderClient):
         return capabilities
 
     def _get_fallback_models(self) -> list[ModelInfo]:
-        """Get minimal fallback model list when API is unavailable."""
+        """Get minimal fallback model list when API is unavailable.
+
+        Returns:
+            list[ModelInfo]: List of fallback OpenAI models.
+        """
         return [
             ModelInfo(
                 id="gpt-4o",
@@ -173,7 +228,12 @@ class AnthropicProviderClient(BaseProviderClient):
     """Anthropic API provider client for dynamic model discovery."""
 
     def __init__(self, api_key: str | None = None, base_url: str | None = None) -> None:
-        """Initialize Anthropic provider client with API key and base URL."""
+        """Initialize Anthropic provider client with API key and base URL.
+
+        Args:
+            api_key: Optional Anthropic API key.
+            base_url: Optional base URL for Anthropic API.
+        """
         if base_url is None:
             base_url = "https://api.anthropic.com"
         super().__init__(api_key, base_url)
@@ -185,7 +245,11 @@ class AnthropicProviderClient(BaseProviderClient):
             self.session.headers.update({"x-api-key": self.api_key})
 
     def fetch_models(self) -> list[ModelInfo]:
-        """Fetch available models from Anthropic /v1/models API endpoint."""
+        """Fetch available models from Anthropic /v1/models API endpoint.
+
+        Returns:
+            list[ModelInfo]: List of available Anthropic models.
+        """
         if not self.api_key:
             logger.warning("No API key provided for Anthropic")
             return self._get_fallback_models()
@@ -234,7 +298,11 @@ class AnthropicProviderClient(BaseProviderClient):
         return models
 
     def _get_fallback_models(self) -> list[ModelInfo]:
-        """Get minimal fallback model list when API is unavailable."""
+        """Get minimal fallback model list when API is unavailable.
+
+        Returns:
+            list[ModelInfo]: List of fallback Anthropic models.
+        """
         return [
             ModelInfo(
                 id="claude-3-5-sonnet-20241022",
@@ -259,7 +327,12 @@ class OllamaProviderClient(BaseProviderClient):
     """Ollama API provider client for dynamic model discovery."""
 
     def __init__(self, api_key: str | None = None, base_url: str | None = None) -> None:
-        """Initialize Ollama provider client with base URL."""
+        """Initialize Ollama provider client with base URL.
+
+        Args:
+            api_key: Optional API key (typically unused for Ollama).
+            base_url: Optional base URL for Ollama server.
+        """
         if base_url is None:
             base_url = "http://localhost:11434"
         super().__init__(api_key, base_url)
@@ -268,7 +341,11 @@ class OllamaProviderClient(BaseProviderClient):
         """Ollama typically doesn't require authentication."""
 
     def fetch_models(self) -> list[ModelInfo]:
-        """Fetch available models from Ollama."""
+        """Fetch available models from Ollama.
+
+        Returns:
+            list[ModelInfo]: List of available Ollama models.
+        """
         url = f"{self.base_url}/api/tags"
         data = self._make_request("GET", url)
 
@@ -301,7 +378,12 @@ class LMStudioProviderClient(BaseProviderClient):
     """LM Studio API provider client for dynamic model discovery."""
 
     def __init__(self, api_key: str | None = None, base_url: str | None = None) -> None:
-        """Initialize LM Studio provider client with base URL."""
+        """Initialize LM Studio provider client with base URL.
+
+        Args:
+            api_key: Optional API key (typically unused for LM Studio).
+            base_url: Optional base URL for LM Studio server.
+        """
         if base_url is None:
             base_url = "http://localhost:1234/v1"
         super().__init__(api_key, base_url)
@@ -310,7 +392,11 @@ class LMStudioProviderClient(BaseProviderClient):
         """LM Studio typically doesn't require authentication."""
 
     def fetch_models(self) -> list[ModelInfo]:
-        """Fetch available models from LM Studio."""
+        """Fetch available models from LM Studio.
+
+        Returns:
+            list[ModelInfo]: List of available LM Studio models.
+        """
         url = f"{self.base_url}/models"
         data = self._make_request("GET", url)
 
@@ -341,14 +427,23 @@ class LocalProviderClient(BaseProviderClient):
     """Local model provider client for GGUF and other local formats."""
 
     def __init__(self, api_key: str | None = None, base_url: str | None = None) -> None:
-        """Initialize local provider client."""
+        """Initialize local provider client.
+
+        Args:
+            api_key: Optional API key (unused for local models).
+            base_url: Optional base URL (unused for local models).
+        """
         super().__init__(api_key, base_url)
 
     def _configure_auth(self) -> None:
         """Local models don't require authentication."""
 
     def fetch_models(self) -> list[ModelInfo]:
-        """Fetch available local models."""
+        """Fetch available local models.
+
+        Returns:
+            list[ModelInfo]: List of available local GGUF models.
+        """
         models: list[ModelInfo] = []
 
         try:
@@ -385,16 +480,35 @@ class ProviderManager:
         self.providers: dict[str, BaseProviderClient] = {}
 
     def register_provider(self, provider_name: str, client: BaseProviderClient) -> None:
-        """Register a provider client."""
+        """Register a provider client.
+
+        Args:
+            provider_name: Name of the provider.
+            client: The provider client instance to register.
+        """
         self.providers[provider_name] = client
         logger.info("Registered provider: %s", provider_name)
 
     def get_provider(self, provider_name: str) -> BaseProviderClient | None:
-        """Get a registered provider client."""
+        """Get a registered provider client.
+
+        Args:
+            provider_name: Name of the provider to retrieve.
+
+        Returns:
+            BaseProviderClient | None: The provider client or None if not found.
+        """
         return self.providers.get(provider_name)
 
     def fetch_models_from_provider(self, provider_name: str) -> list[ModelInfo]:
-        """Fetch models from a specific provider."""
+        """Fetch models from a specific provider.
+
+        Args:
+            provider_name: Name of the provider.
+
+        Returns:
+            list[ModelInfo]: List of models from the provider or empty list on error.
+        """
         provider = self.get_provider(provider_name)
         if not provider:
             logger.warning("Provider not found: %s", provider_name)
@@ -407,7 +521,11 @@ class ProviderManager:
             return []
 
     def fetch_all_models(self) -> dict[str, list[ModelInfo]]:
-        """Fetch models from all registered providers."""
+        """Fetch models from all registered providers.
+
+        Returns:
+            dict[str, list[ModelInfo]]: Dictionary mapping provider names to their models.
+        """
         all_models: dict[str, list[ModelInfo]] = {}
 
         for provider_name in self.providers:
@@ -417,12 +535,16 @@ class ProviderManager:
         return all_models
 
 
-_PROVIDER_MANAGER: ProviderManager | None = None
+_provider_manager: ProviderManager | None = None
 
 
 def get_provider_manager() -> ProviderManager:
-    """Get the global provider manager instance."""
-    global _PROVIDER_MANAGER
-    if _PROVIDER_MANAGER is None:
-        _PROVIDER_MANAGER = ProviderManager()
-    return _PROVIDER_MANAGER
+    """Get the global provider manager instance.
+
+    Returns:
+        ProviderManager: The global provider manager instance.
+    """
+    global _provider_manager
+    if _provider_manager is None:
+        _provider_manager = ProviderManager()
+    return _provider_manager

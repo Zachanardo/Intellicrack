@@ -1233,7 +1233,6 @@ const tpmEmulator = {
     hookWindowsTPMAPIs() {
         const self = this;
 
-        // Comprehensive Windows TPM API analysis system initialization
         const windowsTPMAnalysis = {
             timestamp: new Date().toISOString(),
             context: 'windows_tpm_api_hooking',
@@ -1247,6 +1246,8 @@ const tpmEmulator = {
         const ncryptOpen = Module.findExportByName('ncrypt.dll', 'NCryptOpenStorageProvider');
         if (ncryptOpen) {
             windowsTPMAnalysis.api_hooks_installed.push('NCryptOpenStorageProvider');
+            windowsTPMAnalysis.security_implications.push('tpm_storage_provider_access');
+            windowsTPMAnalysis.bypass_strategies.push('emulate_provider_handle');
 
             Interceptor.attach(ncryptOpen, {
                 onEnter(args) {
@@ -1254,12 +1255,12 @@ const tpmEmulator = {
                     this.pszProviderName = args[1].readUtf16String();
 
                     if (this.pszProviderName?.includes('TPM')) {
-                        // Use self to access TPM emulator analysis methods
                         const providerAnalysis = self.analyzeWindowsTPMProvider(
                             this.pszProviderName,
                             args
                         );
                         this.providerAnalysisResult = providerAnalysis;
+                        windowsTPMAnalysis.provider_analysis[this.pszProviderName] = providerAnalysis;
 
                         // Store provider analysis using self context
                         self.storeWindowsTPMProviderAnalysis(providerAnalysis);
@@ -1270,6 +1271,8 @@ const tpmEmulator = {
                             action: 'ncrypt_tpm_provider_requested',
                             provider_name: this.pszProviderName,
                             analysis: providerAnalysis,
+                            timestamp: windowsTPMAnalysis.timestamp,
+                            context: windowsTPMAnalysis.context,
                         });
                         this.isTPMProvider = true;
                     }

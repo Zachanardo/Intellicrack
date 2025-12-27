@@ -301,7 +301,9 @@ if (Java.available) {
         try {
             const _WorkManagerUtils = Java.use('androidx.work.impl.utils.WorkManagerUtils');
             log('WorkManager detected - additional SSL handling may be needed');
-        } catch {}
+        } catch {
+            log('WorkManager not present in this application');
+        }
 
         log('Android certificate pinning bypass initialization complete');
         send({ type: 'bypass_success', platform: 'Android' });

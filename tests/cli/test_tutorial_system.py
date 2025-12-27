@@ -93,7 +93,7 @@ class TestTutorialSystem:
 
     def test_tutorial_system_initialization(self) -> None:
         """Test tutorial system initializes with tutorials."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
 
         assert len(system.tutorials) > 0
         assert "getting_started" in system.tutorials
@@ -102,7 +102,7 @@ class TestTutorialSystem:
 
     def test_all_tutorials_have_required_fields(self) -> None:
         """Test all initialized tutorials have required fields."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
 
         for name, tutorial in system.tutorials.items():
             assert tutorial.name == name
@@ -114,7 +114,7 @@ class TestTutorialSystem:
 
     def test_start_tutorial_sets_current_tutorial(self) -> None:
         """Test starting a tutorial sets it as current."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
 
         success = system.start_tutorial("getting_started")
 
@@ -124,7 +124,7 @@ class TestTutorialSystem:
 
     def test_start_nonexistent_tutorial_returns_false(self) -> None:
         """Test starting nonexistent tutorial returns False."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
 
         success = system.start_tutorial("nonexistent")
 
@@ -133,7 +133,7 @@ class TestTutorialSystem:
 
     def test_start_tutorial_with_missing_prerequisites(self) -> None:
         """Test starting tutorial with missing prerequisites."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
 
         tutorial_with_prereqs = None
         for tutorial in system.tutorials.values():
@@ -148,7 +148,7 @@ class TestTutorialSystem:
 
     def test_next_step_advances_progress(self) -> None:
         """Test next_step advances to next tutorial step."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
         system.start_tutorial("getting_started")
 
         initial_step = system.current_step
@@ -159,7 +159,7 @@ class TestTutorialSystem:
 
     def test_prev_step_goes_backwards(self) -> None:
         """Test prev_step goes to previous step."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
         system.start_tutorial("getting_started")
 
         system.next_step()
@@ -170,7 +170,7 @@ class TestTutorialSystem:
 
     def test_prev_step_at_start_returns_false(self) -> None:
         """Test prev_step at beginning returns False."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
         system.start_tutorial("getting_started")
 
         result = system.prev_step()
@@ -180,7 +180,7 @@ class TestTutorialSystem:
 
     def test_skip_step_allowed_when_permitted(self) -> None:
         """Test skipping step when skip_allowed is True."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
         system.start_tutorial("getting_started")
 
         initial_step = system.current_step
@@ -194,7 +194,7 @@ class TestTutorialSystem:
 
     def test_skip_step_not_allowed_when_prohibited(self) -> None:
         """Test skipping step is denied when skip_allowed is False."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
 
         tutorial = Tutorial(
             name="no_skip",
@@ -218,7 +218,7 @@ class TestTutorialSystem:
 
     def test_quit_tutorial_saves_progress(self) -> None:
         """Test quitting tutorial saves current progress."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
         system.start_tutorial("getting_started")
 
         system.next_step()
@@ -233,7 +233,7 @@ class TestTutorialSystem:
 
     def test_resume_tutorial_continues_from_saved_progress(self) -> None:
         """Test resuming tutorial starts from saved progress."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
 
         system.start_tutorial("getting_started")
         system.next_step()
@@ -246,7 +246,7 @@ class TestTutorialSystem:
 
     def test_execute_step_validates_command(self) -> None:
         """Test execute_step validates user commands."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
         system.start_tutorial("getting_started")
 
         if system.current_tutorial and system.current_step < len(system.current_tutorial.steps):
@@ -261,7 +261,7 @@ class TestTutorialSystem:
 
     def test_execute_step_handles_parameterized_commands(self) -> None:
         """Test execute_step handles commands with parameters."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
 
         tutorial = Tutorial(
             name="param_test",
@@ -286,7 +286,7 @@ class TestTutorialSystem:
 
     def test_execute_step_wrong_command_provides_hints(self) -> None:
         """Test execute_step provides hints for wrong commands."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
         system.start_tutorial("getting_started")
 
         success, message = system.execute_step("wrong_command")
@@ -296,7 +296,7 @@ class TestTutorialSystem:
 
     def test_tutorial_progress_tracking(self) -> None:
         """Test tutorial progress is tracked correctly."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
 
         system.start_tutorial("getting_started")
 
@@ -309,7 +309,7 @@ class TestTutorialSystem:
 
     def test_tutorial_history_records_completions(self) -> None:
         """Test tutorial history records completion attempts."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
 
         system.start_tutorial("getting_started")
         system.quit_tutorial()
@@ -319,7 +319,7 @@ class TestTutorialSystem:
 
     def test_tutorial_completion_updates_progress(self) -> None:
         """Test completing tutorial updates progress to max."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
 
         tutorial = Tutorial(
             name="short_tutorial",
@@ -341,7 +341,7 @@ class TestTutorialSystem:
 
     def test_get_custom_tutorial_settings_without_rich(self) -> None:
         """Test getting tutorial settings when rich is not available."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
 
         settings = system.get_custom_tutorial_settings()
 
@@ -349,7 +349,7 @@ class TestTutorialSystem:
 
     def test_confirm_tutorial_reset_without_rich(self) -> None:
         """Test tutorial reset confirmation without rich."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
 
         result = system.confirm_tutorial_reset("getting_started")
 
@@ -357,7 +357,7 @@ class TestTutorialSystem:
 
     def test_interactive_tutorial_selection_without_rich(self) -> None:
         """Test interactive tutorial selection without rich."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
 
         result = system.interactive_tutorial_selection()
 
@@ -411,7 +411,7 @@ class TestTutorialSystemEdgeCases:
 
     def test_start_tutorial_without_steps(self) -> None:
         """Test starting tutorial with no steps."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
 
         tutorial = Tutorial(
             name="empty",
@@ -428,7 +428,7 @@ class TestTutorialSystemEdgeCases:
 
     def test_next_step_at_end_of_tutorial(self) -> None:
         """Test next_step at end of tutorial."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
 
         tutorial = Tutorial(
             name="one_step",
@@ -447,7 +447,7 @@ class TestTutorialSystemEdgeCases:
 
     def test_quit_tutorial_without_active_tutorial(self) -> None:
         """Test quitting when no tutorial is active."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
 
         result = system.quit_tutorial()
 
@@ -455,7 +455,7 @@ class TestTutorialSystemEdgeCases:
 
     def test_resume_tutorial_without_history(self) -> None:
         """Test resuming when no tutorial history exists."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
 
         result = system.resume_tutorial()
 
@@ -463,7 +463,7 @@ class TestTutorialSystemEdgeCases:
 
     def test_execute_step_without_active_tutorial(self) -> None:
         """Test executing step with no active tutorial."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
 
         success, message = system.execute_step("test command")
 
@@ -471,7 +471,7 @@ class TestTutorialSystemEdgeCases:
 
     def test_skip_step_without_active_tutorial(self) -> None:
         """Test skipping step with no active tutorial."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
 
         result = system.skip_step()
 
@@ -479,7 +479,7 @@ class TestTutorialSystemEdgeCases:
 
     def test_prev_step_without_active_tutorial(self) -> None:
         """Test going to previous step with no active tutorial."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
 
         result = system.prev_step()
 
@@ -491,7 +491,7 @@ class TestTutorialRecommendations:
 
     def test_recommendations_after_getting_started(self) -> None:
         """Test recommendations shown after completing getting started."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
 
         system.tutorial_progress["getting_started"] = len(
             system.tutorials["getting_started"].steps
@@ -503,7 +503,7 @@ class TestTutorialRecommendations:
 
     def test_recommendations_after_multiple_completions(self) -> None:
         """Test recommendations adapt to completed tutorials."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
 
         system.tutorial_progress["getting_started"] = len(
             system.tutorials["getting_started"].steps
@@ -522,13 +522,13 @@ class TestTutorialDisplay:
 
     def test_list_tutorials_shows_all(self) -> None:
         """Test list_tutorials displays all available tutorials."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
 
         system.list_tutorials()
 
     def test_show_progress_displays_completion(self) -> None:
         """Test show_progress displays completion status."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
 
         system.tutorial_progress["getting_started"] = 2
 
@@ -536,31 +536,31 @@ class TestTutorialDisplay:
 
     def test_show_help_displays_commands(self) -> None:
         """Test show_help displays available commands."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
 
         system.show_help()
 
     def test_display_tutorial_cards_without_rich(self) -> None:
         """Test displaying tutorial cards when rich unavailable."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
 
         system.display_tutorial_cards()
 
     def test_display_tutorials_table_without_rich(self) -> None:
         """Test displaying tutorials table when rich unavailable."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
 
         system.display_tutorials_table()
 
     def test_display_tutorial_structure_tree(self) -> None:
         """Test displaying tutorial structure as tree."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
 
         system.display_tutorial_structure_tree("getting_started")
 
     def test_display_step_with_syntax(self) -> None:
         """Test displaying step with syntax highlighting."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
 
         step = TutorialStep(
             title="Test Step",
@@ -573,7 +573,7 @@ class TestTutorialDisplay:
 
     def test_display_centered_tutorial_header(self) -> None:
         """Test displaying centered tutorial header."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
 
         tutorial = system.tutorials["getting_started"]
 
@@ -581,7 +581,7 @@ class TestTutorialDisplay:
 
     def test_show_tutorial_progress_bar(self) -> None:
         """Test showing tutorial progress bar."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
 
         system.tutorial_progress["getting_started"] = 3
 
@@ -593,7 +593,7 @@ class TestTutorialContentValidation:
 
     def test_all_steps_have_valid_commands(self) -> None:
         """Test all tutorial steps have valid command formats."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
 
         for tutorial in system.tutorials.values():
             for step in tutorial.steps:
@@ -606,14 +606,14 @@ class TestTutorialContentValidation:
 
     def test_all_tutorials_have_completion_messages(self) -> None:
         """Test all tutorials have completion messages."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
 
         for tutorial in system.tutorials.values():
             assert tutorial.completion_message or len(tutorial.steps) == 0
 
     def test_tutorial_prerequisites_exist(self) -> None:
         """Test tutorial prerequisites reference existing tutorials."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
 
         for tutorial in system.tutorials.values():
             for prereq in tutorial.prerequisites:
@@ -621,7 +621,7 @@ class TestTutorialContentValidation:
 
     def test_step_prerequisites_are_valid(self) -> None:
         """Test step prerequisites are valid."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
 
         for tutorial in system.tutorials.values():
             for step in tutorial.steps:
@@ -633,7 +633,7 @@ class TestTutorialWorkflow:
 
     def test_complete_tutorial_workflow(self) -> None:
         """Test completing an entire tutorial workflow."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
 
         tutorial = Tutorial(
             name="workflow_test",
@@ -659,7 +659,7 @@ class TestTutorialWorkflow:
 
     def test_tutorial_with_navigation(self) -> None:
         """Test tutorial navigation (next/prev/skip)."""
-        system = TutorialSystem()
+        system = TutorialSystem(interactive=False)
 
         tutorial = Tutorial(
             name="nav_test",

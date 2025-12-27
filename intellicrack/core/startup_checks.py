@@ -25,12 +25,76 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Protocol, cast
 
 from intellicrack.utils.logger import log_function_call
 
 
 logger = logging.getLogger(__name__)
+
+
+class TensorFlowDeviceProtocol(Protocol):
+    """Protocol for TensorFlow device."""
+
+    name: str
+
+
+class TensorFlowExperimentalProtocol(Protocol):
+    """Protocol for TensorFlow config.experimental interface."""
+
+    def list_physical_devices(self, device_type: str = "GPU") -> list[TensorFlowDeviceProtocol]:
+        """List physical devices."""
+        ...
+
+    def get_memory_growth(self, device: TensorFlowDeviceProtocol) -> bool:
+        """Get memory growth setting for a device."""
+        ...
+
+
+class TensorFlowConfigProtocol(Protocol):
+    """Protocol for TensorFlow config interface."""
+
+    experimental: TensorFlowExperimentalProtocol
+
+    def set_visible_devices(self, devices: list[object], device_type: str) -> None:
+        """Set visible devices for TensorFlow."""
+        ...
+
+    def get_visible_devices(self, device_type: str | None = None) -> list[object]:
+        """Get visible devices."""
+        ...
+
+    def list_physical_devices(self, device_type: str = "GPU") -> list[object]:
+        """List physical devices."""
+        ...
+
+
+class TensorFlowKerasProtocol(Protocol):
+    """Protocol for TensorFlow keras interface."""
+
+    layers: Any
+    models: Any
+    optimizers: Any
+
+    def __getattr__(self, name: str) -> Any:
+        """Allow any attribute access for full keras compatibility."""
+        ...
+
+
+class TensorFlowProtocol(Protocol):
+    """Protocol for TensorFlow module interface."""
+
+    __version__: str
+    config: TensorFlowConfigProtocol
+    keras: TensorFlowKerasProtocol
+
+    def constant(self, value: object, dtype: str | None = None, shape: tuple[int, ...] | None = None) -> Any:
+        """Create a constant tensor."""
+        ...
+
+    def reduce_sum(self, tensor: object, axis: int | None = None) -> Any:
+        """Reduce tensor by summing elements."""
+        ...
 
 # Configure TensorFlow environment ONCE at module level before any imports
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
@@ -38,13 +102,13 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 os.environ["MKL_THREADING_LAYER"] = "GNU"
 
 # Import TensorFlow handler ONCE at module level to avoid duplicate imports
-_tf_import_attempted = False
-_tf_module: Any = None
-_tf_available = False
+_tf_import_attempted: bool = False
+_tf_module: TensorFlowProtocol | None = None
+_tf_available: bool = False
 
 
 @log_function_call
-def _get_tensorflow() -> tuple[Any, bool]:
+def _get_tensorflow() -> tuple[TensorFlowProtocol | None, bool]:
     """Get TensorFlow module, importing only once.
 
     Returns:
@@ -61,11 +125,14 @@ def _get_tensorflow() -> tuple[Any, bool]:
             from intellicrack.handlers.tensorflow_handler import ensure_tensorflow_loaded, tf
 
             ensure_tensorflow_loaded()
-            _tf_module = cast("Any", tf)
-            _tf_available = True
-            _tf_module.config.set_visible_devices([], "GPU")
-            logger.info("TensorFlow: Imported successfully (version: %s). GPU devices set to invisible.", _tf_module.__version__)
-            logger.debug("TensorFlow: Visible devices after configuration: %s", _tf_module.config.get_visible_devices())
+            if tf is not None and hasattr(tf, "config") and hasattr(tf, "__version__"):
+                _tf_module = cast(TensorFlowProtocol, tf)
+                _tf_available = True
+                _tf_module.config.set_visible_devices([], "GPU")
+                logger.info("TensorFlow: Imported successfully (version: %s). GPU devices set to invisible.", _tf_module.__version__)
+                logger.debug("TensorFlow: Visible devices after configuration: %s", _tf_module.config.get_visible_devices())
+            else:
+                raise AttributeError("TensorFlow module missing required attributes")
         except Exception as e:
             logger.warning("TensorFlow: Import failed: %s", e, exc_info=True)
             _tf_available = False
@@ -538,7 +605,7 @@ def get_system_health_report() -> dict[str, Any]:
             gpu_devices = tf.config.list_physical_devices("GPU")
             if gpu_devices:
                 try:
-                    gpu = gpu_devices[0]
+                    gpu = cast(TensorFlowDeviceProtocol, gpu_devices[0])
                     memory_info["gpu_memory_growth"] = tf.config.experimental.get_memory_growth(gpu)
                     logger.debug("ML Engine: GPU memory growth for %s: %s.", gpu.name, memory_info["gpu_memory_growth"])
                 except Exception as mem_e:

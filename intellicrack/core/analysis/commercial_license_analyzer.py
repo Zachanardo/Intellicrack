@@ -27,11 +27,32 @@ import struct
 import sys
 import time
 from pathlib import Path
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, Protocol, cast
 
 from intellicrack.utils.type_safety import get_typed_item, validate_type
 
 from ...utils.logger import get_logger
+
+if TYPE_CHECKING:
+    pass
+
+
+class ProtocolFingerprinterProtocol(Protocol):
+    """Protocol for protocol fingerprinter with fingerprint_packet method."""
+
+    def fingerprint_packet(
+        self, packet: bytes, context: dict[str, Any] | None = None
+    ) -> dict[str, Any] | None:
+        """Fingerprint a packet to identify its protocol."""
+        ...
+
+
+class DongleEmulatorProtocol(Protocol):
+    """Protocol for dongle emulator with get_dongle_config method."""
+
+    def get_dongle_config(self, dongle_type: str) -> dict[str, Any]:
+        """Get configuration for specified dongle type."""
+        ...
 
 
 def _get_protocol_fingerprinter() -> type:
@@ -364,7 +385,7 @@ class CommercialLicenseAnalyzer:
         if self.binary_path:
             from typing import cast
 
-            pf = cast("Any", self.protocol_fingerprinter)
+            pf = cast(ProtocolFingerprinterProtocol, self.protocol_fingerprinter)
             fingerprint = pf.fingerprint_packet(b"", {"binary_path": self.binary_path})
 
             if fingerprint and fingerprint.get("protocol_type") in [
@@ -731,7 +752,7 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
             bypass["product_id"] = product_id
 
         # Get dynamic dongle configuration
-        dongle_emu = cast("Any", self.dongle_emulator)
+        dongle_emu = cast(DongleEmulatorProtocol, self.dongle_emulator)
         dongle_config = dongle_emu.get_dongle_config("hasp")
         dongle_config["vendor_id"] = bypass["vendor_id"]
         dongle_config["product_id"] = bypass["product_id"]
@@ -1227,7 +1248,7 @@ console.log('[HASP] Patched at {patch["offset"]}');
             bypass["product_code"] = product_code
 
         # Get dynamic dongle configuration
-        dongle_emu_cm = cast("Any", self.dongle_emulator)
+        dongle_emu_cm = cast(DongleEmulatorProtocol, self.dongle_emulator)
         dongle_config = dongle_emu_cm.get_dongle_config("codemeter")
         dongle_config["firm_code"] = bypass["firm_code"]
         dongle_config["product_code"] = bypass["product_code"]

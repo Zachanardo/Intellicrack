@@ -134,7 +134,12 @@ class ModelDownloadManager:
         self.api: Any = HfApi_TYPE(token=self.token) if HAS_HF_HUB else None
 
     def _load_metadata(self) -> dict[str, Any]:
-        """Load cached metadata."""
+        """Load cached metadata.
+
+        Returns:
+            dict[str, Any]: Metadata dictionary containing models and downloads information.
+
+        """
         if self.metadata_file.exists():
             try:
                 with open(self.metadata_file) as f:
@@ -724,7 +729,15 @@ _DOWNLOAD_MANAGER: ModelDownloadManager | None = None
 
 
 def get_download_manager(token: str | None = None) -> ModelDownloadManager:
-    """Get the global model download manager."""
+    """Get the global model download manager.
+
+    Args:
+        token: Hugging Face API token for accessing gated/private models.
+
+    Returns:
+        ModelDownloadManager: The global model download manager instance.
+
+    """
     global _DOWNLOAD_MANAGER
     if _DOWNLOAD_MANAGER is None:
         _DOWNLOAD_MANAGER = ModelDownloadManager(token=token)

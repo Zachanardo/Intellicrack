@@ -94,6 +94,8 @@ class HeadlessTrainingInterface:
             config: Configuration dictionary to save
             config_path: Path where to save configuration
 
+        Raises:
+            Exception: If configuration file cannot be written or serialization fails
         """
         try:
             os.makedirs(os.path.dirname(config_path), exist_ok=True)
@@ -216,7 +218,12 @@ class HeadlessTrainingInterface:
             logger.debug("Set training parameter %s = %s", key, value)
 
     def _training_worker(self, config: dict[str, Any]) -> None:
-        """Execute training in a worker thread."""
+        """Execute training in a worker thread.
+
+        Args:
+            config: Training configuration dictionary containing model, learning, and data parameters
+
+        """
         try:
             start_time = time.time()
             logger.info("Training worker started")
@@ -894,13 +901,29 @@ class HeadlessTrainingInterface:
             self._momentum_beta = 0.9
 
     def _relu(self, x: "npt.NDArray[Any]") -> "npt.NDArray[Any]":
-        """ReLU activation function."""
+        """ReLU activation function.
+
+        Args:
+            x: Input array to apply ReLU activation
+
+        Returns:
+            Array with ReLU activation applied (max(0, x))
+
+        """
         import numpy as np
 
         return np.maximum(0, x)  # type: ignore[no-any-return]
 
     def _sigmoid(self, x: "npt.NDArray[Any]") -> "npt.NDArray[Any]":
-        """Sigmoid activation function."""
+        """Sigmoid activation function.
+
+        Args:
+            x: Input array to apply sigmoid activation
+
+        Returns:
+            Array with sigmoid activation applied (1 / (1 + exp(-x)))
+
+        """
         import numpy as np
 
         # Clip values to prevent overflow

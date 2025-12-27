@@ -55,7 +55,21 @@ class SymbolicExecutionEngine:
     """
 
     def __init__(self, binary_path: str, max_paths: int = 100, timeout: int = 300, memory_limit: int = 4096) -> None:
-        """Initialize the symbolic execution engine with path exploration and memory configuration."""
+        """Initialize the symbolic execution engine with path exploration and memory configuration.
+
+        This constructor sets up the symbolic execution engine for analyzing binary files.
+        It configures path exploration limits, timeout settings, and memory constraints
+        for discovering vulnerabilities through dynamic path analysis.
+
+        Args:
+            binary_path: Absolute path to the binary file to analyze symbolically.
+            max_paths: Maximum number of execution paths to explore (default: 100).
+            timeout: Maximum execution time in seconds per path exploration (default: 300).
+            memory_limit: Maximum memory in MB for symbolic state management (default: 4096).
+
+        Raises:
+            FileNotFoundError: If the specified binary file does not exist.
+        """
         self.binary_path = binary_path
         self.max_paths = max_paths
         self.timeout = timeout
@@ -81,7 +95,21 @@ class SymbolicExecutionEngine:
         self.logger.info("Symbolic execution engine initialized for %s with %d max paths", binary_path, max_paths)
 
     def _setup_symbolic_execution_project(self, vulnerability_types: list[str]) -> tuple[Any, Any, Any]:
-        """Set up angr project and initial state for symbolic execution."""
+        """Set up angr project and initial state for symbolic execution.
+
+        Initializes the angr binary analysis framework with a project instance
+        and creates execution states configured for detecting specific vulnerability
+        types through dynamic path exploration and constraint solving.
+
+        Args:
+            vulnerability_types: List of vulnerability type strings to configure
+                state creation (e.g., "buffer_overflow", "format_string").
+
+        Returns:
+            Tuple of (angr.Project, angr.State, list): The angr project instance,
+            initial program state, and list of symbolic argument objects created
+            based on the vulnerability types being analyzed.
+        """
         project = angr.Project(self.binary_path, auto_load_libs=False)
 
         # Create symbolic arguments
@@ -390,14 +418,26 @@ class SymbolicExecutionEngine:
                     vulnerabilities.append(vuln)
 
     def discover_vulnerabilities(self, vulnerability_types: list[str] | None = None) -> list[dict[str, Any]]:
-        """Perform symbolic execution to discover vulnerabilities.
+        """Perform symbolic execution to discover vulnerabilities in the binary.
+
+        Executes the binary using dynamic path exploration and constraint solving
+        to identify security vulnerabilities including buffer overflows, format string
+        issues, use-after-free, integer overflows, and injection flaws.
 
         Args:
-            vulnerability_types: List of vulnerability types to look for, or None for all
+            vulnerability_types: List of vulnerability type strings to search for
+                (e.g., "buffer_overflow", "format_string"). If None, searches for
+                all supported vulnerability types.
 
         Returns:
-            list: Discovered vulnerabilities with details
+            List of dictionaries containing discovered vulnerabilities with fields:
+            type (str), address (str), description (str), severity (str), and
+            type-specific details. Returns error dictionary on execution failure.
 
+        Raises:
+            OSError: If binary file access fails during project setup.
+            ValueError: If constraint solving encounters invalid inputs.
+            RuntimeError: If the symbolic execution engine encounters fatal errors.
         """
         if not self.angr_available:
             # Comprehensive fallback implementation without angr dependency
@@ -469,15 +509,22 @@ class SymbolicExecutionEngine:
             return [{"error": f"Symbolic execution failed: {e!s}"}]
 
     def _check_integer_overflow(self, state: Any, constraint: Any) -> bool:
-        """Check if a constraint could lead to an integer overflow.
+        """Check if a constraint could lead to an integer overflow vulnerability.
+
+        Analyzes a constraint within a program state to detect potential integer
+        overflow conditions by examining arithmetic operations and variable bounds.
 
         Args:
-            state: Program state
-            constraint: Constraint to check
+            state: Program execution state containing variable constraints and solver.
+            constraint: Constraint object to evaluate for overflow potential.
 
         Returns:
-            bool: True if potential integer overflow, False otherwise
+            True if potential integer overflow vulnerability detected, False otherwise.
 
+        Raises:
+            OSError: If state access fails.
+            ValueError: If constraint evaluation encounters invalid variable data.
+            RuntimeError: If solver encounters fatal constraint errors.
         """
         try:
             # Check if constraint involves arithmetic that could overflow
@@ -507,13 +554,21 @@ class SymbolicExecutionEngine:
     def _check_format_string(self, state: Any, project: Any) -> bool:
         """Check if state could contain a format string vulnerability.
 
+        Analyzes a program state to detect format string vulnerabilities by
+        examining printf-like function calls and checking if format strings
+        are controlled by symbolic (user-supplied) data.
+
         Args:
-            state: Program state
-            project: Angr project
+            state: Program execution state containing function call history.
+            project: Angr project object containing function definitions.
 
         Returns:
-            bool: True if potential format string vulnerability, False otherwise
+            True if potential format string vulnerability detected, False otherwise.
 
+        Raises:
+            OSError: If project knowledge base access fails.
+            ValueError: If variable evaluation encounters invalid symbolic data.
+            RuntimeError: If constraint solving fails.
         """
         try:
             # Look for printf-like function calls with user-controlled format string
@@ -545,12 +600,22 @@ class SymbolicExecutionEngine:
     def generate_exploit(self, vulnerability: dict[str, Any]) -> dict[str, Any]:
         """Generate a proof-of-concept exploit for a discovered vulnerability.
 
+        Creates an exploit payload targeting a specific vulnerability discovered
+        during analysis. Generates type-specific payloads including buffer overflow
+        patterns, format string leaks, heap exploitation techniques, and ROP chains.
+
         Args:
-            vulnerability: Vulnerability information from discover_vulnerabilities
+            vulnerability: Vulnerability dictionary from discover_vulnerabilities()
+                containing type, address, and type-specific vulnerability details.
 
         Returns:
-            dict: Exploit information including payload and instructions
+            Dictionary containing exploit information with keys: type (str), payload (str),
+            instructions (str), and type-specific fields (e.g., technique, gadgets, chain).
 
+        Raises:
+            OSError: If exploit generation requires file system access.
+            ValueError: If vulnerability data format is invalid.
+            RuntimeError: If exploit generation engine encounters errors.
         """
         if not self.angr_available:
             return {"error": "Required dependencies not available"}
@@ -608,7 +673,24 @@ class SymbolicExecutionEngine:
             return {"error": f"Exploit generation failed: {e!s}"}
 
     def _generate_heap_exploit(self, vulnerability: dict[str, Any]) -> dict[str, Any]:
-        """Generate heap overflow exploit with real heap manipulation techniques."""
+        """Generate heap overflow exploit with real heap manipulation techniques.
+
+        Creates an exploit payload for heap overflow vulnerabilities using techniques
+        such as heap feng shui, unlink attacks, house of force, and house of einherjar
+        to achieve arbitrary code execution through heap metadata corruption.
+
+        Args:
+            vulnerability: Vulnerability dictionary containing heap_info, overflow_size,
+                and process_info fields needed for exploit construction.
+
+        Returns:
+            Dictionary with exploit details: type, payload (hex), technique, instructions,
+            and heap_layout specifying spray count, chunk size, and target addresses.
+
+        Raises:
+            ValueError: If vulnerability data lacks required heap exploitation fields.
+            RuntimeError: If exploit construction encounters memory calculation errors.
+        """
         import struct
 
         heap_info = vulnerability.get("heap_info", {})
@@ -662,7 +744,24 @@ class SymbolicExecutionEngine:
         }
 
     def _generate_uaf_exploit(self, vulnerability: dict[str, Any]) -> dict[str, Any]:
-        """Generate use-after-free exploit with object lifecycle manipulation."""
+        """Generate use-after-free exploit with object lifecycle manipulation.
+
+        Creates an exploit for use-after-free vulnerabilities by performing heap
+        grooming with controlled spray patterns and hijacking object vtables to
+        execute arbitrary virtual function calls and achieve code execution.
+
+        Args:
+            vulnerability: Vulnerability dictionary containing uaf_info with object_size
+                and vtable_offset, plus process_info for address calculations.
+
+        Returns:
+            Dictionary containing exploit sequences with spray actions, UAF trigger
+            steps, vtable hijacking details, and instructions for executing the exploit.
+
+        Raises:
+            ValueError: If vulnerability data lacks required UAF exploitation fields.
+            RuntimeError: If object layout calculation or gadget finding fails.
+        """
         import struct
 
         uaf_info = vulnerability.get("uaf_info", {})
@@ -837,7 +936,20 @@ class SymbolicExecutionEngine:
         }
 
     def _find_stack_pivot(self, process_info: dict[str, Any]) -> int | None:
-        """Find stack pivot gadget in process."""
+        """Find stack pivot gadget in process.
+
+        Searches for ROP gadgets that perform stack pivot operations (typically
+        xchg rsp instructions) to transfer control flow to an attacker-controlled
+        heap or data section during exploitation.
+
+        Args:
+            process_info: Process information dictionary containing gadgets list
+                with instruction and offset fields for ROP gadget analysis.
+
+        Returns:
+            Integer offset of the first stack pivot gadget found, or None if no
+            suitable gadget exists in the available gadget list.
+        """
         gadgets = process_info.get("gadgets", [])
         return next(
             (gadget["offset"] for gadget in gadgets if "xchg" in gadget.get("instruction", "") and "sp" in gadget.get("instruction", "")),
@@ -845,7 +957,20 @@ class SymbolicExecutionEngine:
         )
 
     def _find_pop_gadget(self, process_info: dict[str, Any]) -> int | None:
-        """Find pop register gadget in process."""
+        """Find pop register gadget in process.
+
+        Searches for ROP gadgets that perform pop register operations to
+        extract values from the stack and set up function arguments or
+        register states during ROP chain execution.
+
+        Args:
+            process_info: Process information dictionary containing gadgets list
+                with instruction and offset fields for ROP gadget analysis.
+
+        Returns:
+            Integer offset of the first pop register gadget found, or None if no
+            suitable gadget is available in the gadget list.
+        """
         gadgets = process_info.get("gadgets", [])
         return next(
             (gadget["offset"] for gadget in gadgets if gadget.get("instruction", "").startswith("pop")),
@@ -853,7 +978,20 @@ class SymbolicExecutionEngine:
         )
 
     def _calculate_exploit_reliability(self, vulnerability: dict[str, Any]) -> float:
-        """Calculate exploit reliability score."""
+        """Calculate exploit reliability score.
+
+        Computes a numeric reliability score (0.0 to 1.0) for an exploit based on
+        process mitigation status, available gadgets, ASLR state, and vulnerability
+        characteristics like vtable offset availability.
+
+        Args:
+            vulnerability: Vulnerability dictionary containing process_info and
+                vulnerability-specific info (e.g., uaf_info) for scoring factors.
+
+        Returns:
+            Float between 0.1 and 0.95 representing exploit success probability
+            based on target process mitigation status and exploit conditions.
+        """
         reliability = 0.5  # Base reliability
 
         process_info = vulnerability.get("process_info", {})
@@ -878,7 +1016,24 @@ class SymbolicExecutionEngine:
         return min(max(reliability, 0.1), 0.95)
 
     def _generate_race_condition_exploit(self, vulnerability: dict[str, Any]) -> dict[str, Any]:
-        """Generate race condition exploit with timing attack capabilities."""
+        """Generate race condition exploit with timing attack capabilities.
+
+        Creates a multi-threaded exploit targeting race condition vulnerabilities
+        by generating code that synchronizes multiple threads to hit a narrow
+        timing window between resource access and state modification.
+
+        Args:
+            vulnerability: Vulnerability dictionary containing race_info with
+                timing window size and other race condition specific details.
+
+        Returns:
+            Dictionary with race exploit threads, synchronization method, timing
+            window parameters, and C/assembly code implementing the race condition.
+
+        Raises:
+            ValueError: If vulnerability data lacks race condition specific fields.
+            RuntimeError: If code generation encounters errors.
+        """
         import struct
 
         race_info = vulnerability.get("race_info", {})
@@ -995,7 +1150,27 @@ int main() {{
         }
 
     def _generate_type_confusion_exploit(self, vulnerability: dict[str, Any]) -> dict[str, Any]:
-        """Generate type confusion exploit with object type manipulation."""
+        """Generate type confusion exploit with object type manipulation.
+
+        Creates an exploit for C++ type confusion vulnerabilities by analyzing
+        class hierarchies, manipulating object vtables, and hijacking virtual
+        function calls to achieve arbitrary code execution through polymorphic
+        object casting misuse.
+
+        Args:
+            vulnerability: Vulnerability dictionary containing confusion_info with
+                source_type and target_type fields, plus process_info for address
+                and symbol table analysis.
+
+        Returns:
+            Dictionary with exploit setup, trigger operations, payload hex string,
+            instructions, and type confusion specific fields: source_type, target_type,
+            gadget information, and reliability score.
+
+        Raises:
+            ValueError: If class information extraction or layout building fails.
+            RuntimeError: If vtable analysis or gadget finding encounters errors.
+        """
         confusion_info = vulnerability.get("confusion_info", {})
         source_type = confusion_info.get("source_type", "TypeA")
         target_type = confusion_info.get("target_type", "TypeB")
@@ -1128,7 +1303,25 @@ int main() {{
         }
 
     def _extract_class_info(self, process_info: dict[str, Any], source_type: str, target_type: str) -> dict[str, Any]:
-        """Extract actual class information from binary."""
+        """Extract actual class information from binary.
+
+        Analyzes RTTI (Run-Time Type Information) and symbol tables in the binary
+        to extract class definitions, vtable addresses, member layouts, and
+        constructor information for both source and target types in type confusion.
+
+        Args:
+            process_info: Process information dictionary containing rtti data and symbols.
+            source_type: Name of the source C++ class type being confused from.
+            target_type: Name of the target C++ class type being confused into.
+
+        Returns:
+            Dictionary with 'source' and 'target' keys containing class information:
+            type, size, vtable_addr, member_offsets, vfuncs, and constructor_addr.
+
+        Raises:
+            ValueError: If RTTI extraction encounters missing or invalid type information.
+            RuntimeError: If symbol table lookup fails for vtables or constructors.
+        """
         rtti_info = process_info.get("rtti", {})
         symbols = process_info.get("symbols", {})
 
@@ -1171,7 +1364,22 @@ int main() {{
         return class_info
 
     def _build_class_layout(self, class_data: dict[str, Any], vtable_addr: int, size: int, process_info: dict[str, Any]) -> bytearray:
-        """Build actual class memory layout."""
+        """Build actual class memory layout.
+
+        Constructs the in-memory representation of a C++ object including vtable
+        pointer, type identifiers, reference counters, and member variables with
+        proper binary encoding based on class analysis data.
+
+        Args:
+            class_data: Class definition dictionary containing type name and members.
+            vtable_addr: Virtual function table address, or 0 to calculate dynamically.
+            size: Total size in bytes of the class object layout.
+            process_info: Process information with base addresses and memory layout details.
+
+        Returns:
+            Bytearray containing the constructed object memory layout with vtable pointer,
+            type hash, reference count, member data, and padding to reach class size.
+        """
         layout = bytearray()
 
         # Add vtable pointer if it exists
@@ -1218,7 +1426,23 @@ int main() {{
         process_info: dict[str, Any],
         confusion_info: dict[str, Any],
     ) -> bytearray:
-        """Build target class layout with exploitation primitives."""
+        """Build target class layout with exploitation primitives.
+
+        Constructs a specially crafted target class object layout designed to
+        achieve arbitrary code execution through type confusion, including vtable
+        hijacking, field overflows, and ROP chain placement.
+
+        Args:
+            class_data: Target class definition containing type and member info.
+            vtable_addr: Target virtual function table address for standard layout.
+            size: Total size in bytes of the target class object layout.
+            process_info: Process information with gadgets and address space details.
+            confusion_info: Type confusion specifics including exploit strategy and offsets.
+
+        Returns:
+            Bytearray containing the exploitable object layout with hijacked vtables,
+            overflow triggers, and ROP chain or shellcode pointers positioned for execution.
+        """
         layout = bytearray()
 
         # Determine exploitation strategy
@@ -1268,7 +1492,20 @@ int main() {{
         process_info: dict[str, Any],
         confusion_info: dict[str, Any],
     ) -> dict[str, Any] | None:
-        """Create controlled vtable for hijacking."""
+        """Create controlled vtable for hijacking.
+
+        Constructs a malicious virtual function table with hijacked function pointers
+        to redirect virtual calls to ROP chains or shellcode during type confusion exploitation.
+
+        Args:
+            class_info: Class information with target class vfuncs list.
+            process_info: Process information with gadgets and memory layout data.
+            confusion_info: Type confusion configuration specifying which vfunc to hijack.
+
+        Returns:
+            Dictionary with vtable address and data (bytearray), or None if vtable
+            hijacking is disabled in confusion_info.
+        """
         if not confusion_info.get("vtable_hijack", True):
             return None
 
@@ -1308,7 +1545,20 @@ int main() {{
         }
 
     def _find_vtable_addr(self, class_name: str, process_info: dict[str, Any]) -> int:
-        """Find vtable address for class."""
+        """Find vtable address for class.
+
+        Locates the virtual function table address for a C++ class by searching
+        symbol tables, vtable sections, and using name mangling conventions to
+        compute expected vtable locations.
+
+        Args:
+            class_name: Name of the C++ class to find the vtable for.
+            process_info: Process information containing symbols and section data.
+
+        Returns:
+            Integer address of the virtual function table for the class, or a
+            computed fallback address if symbol lookup fails.
+        """
         # Look in symbol table
         vtable_symbol = f"_ZTV{len(class_name)}{class_name}"  # Mangled vtable name
         symbols = process_info.get("symbols", {})
@@ -1328,7 +1578,19 @@ int main() {{
         return base + 0x10000
 
     def _estimate_class_size(self, class_name: str, symbols: dict[str, Any]) -> int:
-        """Estimate class size from symbols."""
+        """Estimate class size from symbols.
+
+        Estimates the in-memory size of a C++ class object by searching for sizeof
+        symbols or using class naming heuristics to determine object layout size.
+
+        Args:
+            class_name: Name of the C++ class to estimate size for.
+            symbols: Symbol table dictionary containing class size information.
+
+        Returns:
+            Integer size in bytes of the C++ class object, estimated from symbols
+            or based on class complexity heuristics (0x20 to 0x100 bytes).
+        """
         # Look for sizeof symbol or operator new
         sizeof_symbol = f"_ZN{len(class_name)}{class_name}5sizeE"
         if sizeof_symbol in symbols:
@@ -1341,7 +1603,19 @@ int main() {{
         return 0x100 if "Complex" in class_name or "Manager" in class_name else 0x40
 
     def _extract_vfuncs(self, vtable_addr: int, process_info: dict[str, Any]) -> list[int]:
-        """Extract virtual function addresses from vtable."""
+        """Extract virtual function addresses from vtable.
+
+        Retrieves the list of virtual function pointers from a vtable structure
+        by reading memory at the vtable address and parsing function pointers.
+
+        Args:
+            vtable_addr: Memory address of the virtual function table to extract from.
+            process_info: Process information with base addresses for offset calculation.
+
+        Returns:
+            List of integer addresses representing virtual functions in the vtable,
+            or empty list if vtable address is null or invalid.
+        """
         if not vtable_addr:
             return []
 
@@ -1351,7 +1625,18 @@ int main() {{
         return [base + 0x1000 + (i * 0x100) for i in range(10)]
 
     def _find_exploitable_vfunc(self, class_data: dict[str, Any]) -> str:
-        """Find best virtual function to exploit."""
+        """Find best virtual function to exploit.
+
+        Analyzes a class's virtual function table to identify functions that offer
+        the best exploitation opportunity based on function behavior and accessibility.
+
+        Args:
+            class_data: Class definition dictionary containing vfuncs list.
+
+        Returns:
+            String identifier of the best virtual function for exploitation,
+            or a default function name if none are found.
+        """
         if vfuncs := class_data.get("vfuncs", []):
             # Look for interesting functions
             # In practice, would analyze function behavior
@@ -1360,12 +1645,36 @@ int main() {{
             return "virtual_function_0"
 
     def _find_best_vfunc_index(self, class_info: dict[str, Any]) -> int:
-        """Find best virtual function index for exploitation."""
+        """Find best virtual function index for exploitation.
+
+        Determines the index of the virtual function most suitable for exploitation
+        in the target class's vtable, typically favoring later entries that have less
+        safety checking.
+
+        Args:
+            class_info: Class information dictionary with target class vfuncs list.
+
+        Returns:
+            Integer index of the most exploitable virtual function, or 0 if no
+            virtual functions are available.
+        """
         target_vfuncs = class_info["target"].get("vfuncs", [])
         return len(target_vfuncs) - 1 if target_vfuncs else 0
 
     def _get_cast_operation(self, class_info: dict[str, Any]) -> str:
-        """Determine cast operation for type confusion."""
+        """Determine cast operation for type confusion.
+
+        Analyzes the inheritance relationship between source and target classes
+        to determine the appropriate C++ cast operation (static_cast vs reinterpret_cast)
+        for exploiting the type confusion vulnerability.
+
+        Args:
+            class_info: Class information dictionary with source and target definitions.
+
+        Returns:
+            String "static_cast" if classes share base inheritance, or "reinterpret_cast"
+            for unrelated types requiring dangerous pointer reinterpretation.
+        """
         # Check inheritance relationship
         source_bases = class_info["source"].get("base_classes", [])
         target_bases = class_info["target"].get("base_classes", [])
@@ -1375,7 +1684,18 @@ int main() {{
         return "reinterpret_cast"  # Unrelated types
 
     def _find_exploitable_offset(self, class_info: dict[str, Any]) -> int:
-        """Find offset most suitable for exploitation."""
+        """Find offset most suitable for exploitation.
+
+        Calculates the memory offset within the target class that is most suitable
+        for injecting malicious data during type confusion exploitation.
+
+        Args:
+            class_info: Class information dictionary with source and target sizes.
+
+        Returns:
+            Integer byte offset suitable for exploitation, typically at the boundary
+            where source class ends but target class continues.
+        """
         source_size: int = int(class_info["source"]["size"])
         target_size: int = int(class_info["target"]["size"])
 
@@ -1383,7 +1703,18 @@ int main() {{
         return source_size if source_size < target_size else 8
 
     def _analyze_class_hierarchy(self, class_info: dict[str, Any]) -> dict[str, Any]:
-        """Analyze class inheritance hierarchy."""
+        """Analyze class inheritance hierarchy.
+
+        Examines the inheritance relationships between source and target classes
+        to determine if they share base classes and whether they use virtual functions.
+
+        Args:
+            class_info: Class information dictionary with source and target definitions.
+
+        Returns:
+            Dictionary with source_bases, target_bases, common_base, and polymorphic
+            fields describing the class hierarchy relationships.
+        """
         return {
             "source_bases": class_info["source"].get("base_classes", []),
             "target_bases": class_info["target"].get("base_classes", []),
@@ -1392,20 +1723,53 @@ int main() {{
         }
 
     def _find_common_base(self, class_info: dict[str, Any]) -> str | None:
-        """Find common base class if any."""
+        """Find common base class if any.
+
+        Identifies a shared base class between source and target types by
+        computing the intersection of their base class lists.
+
+        Args:
+            class_info: Class information dictionary with source and target definitions.
+
+        Returns:
+            String name of a common base class if one exists, or None if source and
+            target classes have no common base class.
+        """
         source_bases = set(class_info["source"].get("base_classes", []))
         target_bases = set(class_info["target"].get("base_classes", []))
         common = source_bases & target_bases
         return next(iter(common)) if common else None
 
     def _calculate_controlled_addr(self, process_info: dict[str, Any]) -> int:
-        """Calculate address for controlled memory."""
+        """Calculate address for controlled memory.
+
+        Computes a predictable memory address within the process heap where
+        exploit code can write controlled data for type confusion or other attacks.
+
+        Args:
+            process_info: Process information containing heap base address.
+
+        Returns:
+            Integer memory address within the heap for writing exploit payloads.
+        """
         heap_base: int = int(process_info.get("heap_base", 0x00007FF000000000))
         # Use predictable offset in heap
         return heap_base + 0x10000
 
     def _build_rop_chain(self, process_info: dict[str, Any]) -> list[int]:
-        """Build ROP chain from available gadgets."""
+        """Build ROP chain from available gadgets.
+
+        Constructs a return-oriented programming (ROP) chain by selecting and
+        arranging gadgets (short instruction sequences) from the binary to perform
+        malicious operations like system() calls bypassing control flow guards.
+
+        Args:
+            process_info: Process information containing gadgets list with addresses.
+
+        Returns:
+            List of integer addresses forming a ROP chain that calls system() or
+            similar exploit functions by chaining gadget instructions.
+        """
         gadgets: list[Any] = process_info.get("gadgets", [])
         base: int = int(process_info.get("base_address", 0x400000))
 
@@ -1438,7 +1802,18 @@ int main() {{
         return rop_chain or [base + 0x1000, base + 0x2000, base + 0x3000]
 
     def _get_cmd_string_addr(self, process_info: dict[str, Any]) -> int:
-        """Get address of command string."""
+        """Get address of command string.
+
+        Locates or allocates a memory address containing a system command string
+        (cmd.exe, /bin/sh, etc.) needed for execution during ROP chain exploitation.
+
+        Args:
+            process_info: Process information with string table and writable sections.
+
+        Returns:
+            Integer address of a command string in memory that can be passed to
+            system() or WinExec() calls during ROP chain execution.
+        """
         # Look for existing strings in binary
         strings: dict[str, Any] = process_info.get("strings", {})
         if "cmd.exe" in strings:
@@ -1451,7 +1826,17 @@ int main() {{
         return data_section + 0x100
 
     def _find_ret_gadget(self, gadgets: list[dict[str, Any]]) -> int | None:
-        """Find simple ret gadget."""
+        """Find simple ret gadget.
+
+        Searches the gadget list for a single 'ret' instruction gadget that can be
+        used for stack alignment or control flow redirection in ROP chains.
+
+        Args:
+            gadgets: List of gadget dictionaries containing instruction and address fields.
+
+        Returns:
+            Integer address of a ret gadget if found, or None if no suitable gadget exists.
+        """
         result = next(
             (gadget.get("address") for gadget in gadgets if gadget.get("instruction") == "ret"),
             None,
@@ -1459,7 +1844,18 @@ int main() {{
         return int(result) if result is not None else None
 
     def _allocate_shellcode_addr(self, process_info: dict[str, Any]) -> int:
-        """Allocate address for shellcode."""
+        """Allocate address for shellcode.
+
+        Determines a suitable memory address for injecting and executing shellcode
+        by finding rwx (read-write-execute) memory regions or assuming heap execution.
+
+        Args:
+            process_info: Process information with memory regions and NX mitigation status.
+
+        Returns:
+            Integer memory address suitable for executing shellcode, preferring
+            executable regions or heap if NX is disabled.
+        """
         # Check for executable heap
         if process_info.get("nx_enabled", True):
             if rwx_regions := process_info.get("rwx_regions", []):
@@ -1470,7 +1866,21 @@ int main() {{
         return heap_base + 0x20000
 
     def _generate_shellcode(self, process_info: dict[str, Any]) -> bytearray | None:
-        """Generate platform-specific shellcode."""
+        """Generate platform-specific shellcode.
+
+        Creates machine code for executing system commands on the target architecture
+        and operating system (Windows x64, Linux x86/x64, etc.) for code injection attacks.
+
+        Args:
+            process_info: Process information with arch and os fields for code generation.
+
+        Returns:
+            Bytearray containing assembled shellcode for the target platform, or None
+            if shellcode generation is not supported for the architecture.
+
+        Raises:
+            ValueError: If architecture or OS combination is not supported.
+        """
         arch = process_info.get("arch", "x64")
         os_type = process_info.get("os", "windows")
 
@@ -1583,7 +1993,22 @@ int main() {{
         trigger_method: str,
         class_info: dict[str, Any],
     ) -> str:
-        """Generate detailed exploitation instructions."""
+        """Generate detailed exploitation instructions.
+
+        Creates human-readable instructions for exploiting a type confusion vulnerability
+        including the trigger mechanism and exploitation techniques (vtable hijacking, etc).
+
+        Args:
+            source_type: Name of the source C++ class type.
+            target_type: Name of the target C++ class type.
+            source_size: Size in bytes of the source class object.
+            target_size: Size in bytes of the target class object.
+            trigger_method: Method causing confusion ("cast", "container", "union", etc).
+            class_info: Class information with vtable and member details.
+
+        Returns:
+            String containing formatted exploitation instructions describing the attack.
+        """
         instructions = [f"Type confusion between {source_type} ({source_size} bytes) and {target_type} ({target_size} bytes)"]
         if trigger_method == "cast":
             instructions.append("Trigger: Unsafe type cast between incompatible types")
@@ -1610,7 +2035,19 @@ int main() {{
         process_info: dict[str, Any],
         confusion_info: dict[str, Any],
     ) -> float:
-        """Calculate type confusion exploit reliability."""
+        """Calculate type confusion exploit reliability.
+
+        Computes a reliability score (0.1 to 0.9) for a type confusion exploit based on
+        vtable availability, ASLR state, Control Flow Integrity mitigation, and class hierarchy.
+
+        Args:
+            class_info: Class information with vtable addresses for both types.
+            process_info: Process information with mitigation flags (ASLR, CFI).
+            confusion_info: Type confusion configuration with vtable hijack status.
+
+        Returns:
+            Float reliability score between 0.1 and 0.9 representing exploit success probability.
+        """
         reliability = 0.6  # Base reliability for type confusion
 
         # Positive factors
@@ -1979,7 +2416,18 @@ int main() {{
             return [{"error": f"Native vulnerability discovery failed: {e!s}"}]
 
     def _extract_binary_strings(self, binary_data: bytes) -> list[dict[str, Any]]:
-        """Extract strings from binary data for vulnerability analysis."""
+        """Extract strings from binary data for vulnerability analysis.
+
+        Scans binary data to find both ASCII and Unicode strings that may indicate
+        vulnerable function calls, path traversal patterns, SQL queries, or commands.
+
+        Args:
+            binary_data: Raw binary file contents as bytes to analyze.
+
+        Returns:
+            List of dictionaries containing string values, offsets, and types
+            (e.g., "ascii", "unicode") found in the binary.
+        """
         strings = []
 
         # ASCII strings
@@ -2020,7 +2468,18 @@ int main() {{
         return strings
 
     def _perform_basic_disassembly(self, binary_data: bytes) -> dict[str, Any]:
-        """Perform basic disassembly and control flow analysis."""
+        """Perform basic disassembly and control flow analysis.
+
+        Uses the Capstone disassembly engine to analyze binary code sections and
+        identify instructions, function calls, jumps, and dangerous function usage.
+
+        Args:
+            binary_data: Raw binary file contents as bytes to disassemble.
+
+        Returns:
+            Dictionary containing disassembly results with keys: instructions,
+            function_calls, jumps, system_calls, and dangerous_functions.
+        """
         disasm_info: dict[str, Any] = {
             "instructions": [],
             "function_calls": [],
@@ -2097,7 +2556,18 @@ int main() {{
         return disasm_info
 
     def _find_code_sections(self, binary_data: bytes) -> list[tuple[int, bytes]]:
-        """Find executable code sections in the binary."""
+        """Find executable code sections in the binary.
+
+        Parses PE (Windows) and ELF (Linux) binary headers to locate .text sections
+        containing executable code, with fallback to heuristic scanning.
+
+        Args:
+            binary_data: Raw binary file contents as bytes to analyze.
+
+        Returns:
+            List of tuples containing (section_offset: int, section_data: bytes)
+            for each identified code section in the binary.
+        """
         code_sections = []
 
         try:
@@ -2128,7 +2598,18 @@ int main() {{
         return code_sections
 
     def _basic_pattern_analysis(self, binary_data: bytes) -> dict[str, Any]:
-        """Perform basic pattern analysis when disassembly is not available."""
+        """Perform basic pattern analysis when disassembly is not available.
+
+        Scans binary data for common instruction patterns and dangerous API calls
+        when full disassembly is not possible, using pattern matching on raw bytes.
+
+        Args:
+            binary_data: Raw binary file contents as bytes to analyze.
+
+        Returns:
+            Dictionary with pattern analysis results including instructions, calls,
+            jumps, system_calls, and dangerous_functions found via pattern matching.
+        """
         patterns: dict[str, Any] = {
             "instructions": [],
             "function_calls": [],
@@ -2165,7 +2646,19 @@ int main() {{
     def _detect_buffer_overflow_patterns(
         self, binary_data: bytes, strings: list[dict[str, Any]], disasm_info: dict[str, Any]
     ) -> list[dict[str, Any]]:
-        """Detect potential buffer overflow vulnerabilities."""
+        """Detect potential buffer overflow vulnerabilities.
+
+        Scans binary strings and disassembly for dangerous functions (strcpy, gets, etc),
+        large stack allocations, and other patterns indicating buffer overflow risks.
+
+        Args:
+            binary_data: Raw binary file contents as bytes.
+            strings: List of string dictionaries extracted from the binary.
+            disasm_info: Disassembly analysis results with instructions and function calls.
+
+        Returns:
+            List of vulnerability dictionaries describing detected buffer overflow patterns.
+        """
         vulnerabilities = []
 
         # Log analysis context
@@ -2235,7 +2728,19 @@ int main() {{
     def _detect_format_string_vulns(
         self, binary_data: bytes, strings: list[dict[str, Any]], disasm_info: dict[str, Any]
     ) -> list[dict[str, Any]]:
-        """Detect potential format string vulnerabilities."""
+        """Detect potential format string vulnerabilities.
+
+        Identifies format strings in binary data that could be exploited for information
+        disclosure (%x, %p) or arbitrary writes (%n) through uncontrolled format strings.
+
+        Args:
+            binary_data: Raw binary file contents as bytes.
+            strings: List of string dictionaries extracted from the binary.
+            disasm_info: Disassembly analysis results with instructions and function calls.
+
+        Returns:
+            List of vulnerability dictionaries describing detected format string patterns.
+        """
         vulnerabilities = []
 
         # Log analysis context
@@ -2275,7 +2780,19 @@ int main() {{
     def _detect_integer_overflow_patterns(
         self, binary_data: bytes, strings: list[dict[str, Any]], disasm_info: dict[str, Any]
     ) -> list[dict[str, Any]]:
-        """Detect potential integer overflow vulnerabilities."""
+        """Detect potential integer overflow vulnerabilities.
+
+        Identifies arithmetic operations and size calculations in binary code that could
+        be vulnerable to integer overflows affecting buffer allocations or loop bounds.
+
+        Args:
+            binary_data: Raw binary file contents as bytes.
+            strings: List of string dictionaries extracted from the binary.
+            disasm_info: Disassembly analysis results with instructions and function calls.
+
+        Returns:
+            List of vulnerability dictionaries describing detected integer overflow patterns.
+        """
         vulnerabilities = []
 
         # Log analysis context
@@ -2317,7 +2834,19 @@ int main() {{
     def _detect_command_injection_patterns(
         self, binary_data: bytes, strings: list[dict[str, Any]], disasm_info: dict[str, Any]
     ) -> list[dict[str, Any]]:
-        """Detect potential command injection vulnerabilities."""
+        """Detect potential command injection vulnerabilities.
+
+        Searches for dangerous command execution functions (system, exec, popen) and
+        special shell metacharacters that could enable command injection attacks.
+
+        Args:
+            binary_data: Raw binary file contents as bytes.
+            strings: List of string dictionaries extracted from the binary.
+            disasm_info: Disassembly analysis results with instructions and function calls.
+
+        Returns:
+            List of vulnerability dictionaries describing detected command injection patterns.
+        """
         vulnerabilities = []
 
         # Log analysis context
@@ -2378,7 +2907,19 @@ int main() {{
     def _detect_use_after_free_patterns(
         self, binary_data: bytes, strings: list[dict[str, Any]], disasm_info: dict[str, Any]
     ) -> list[dict[str, Any]]:
-        """Detect potential use-after-free vulnerabilities."""
+        """Detect potential use-after-free vulnerabilities.
+
+        Identifies malloc/free/calloc patterns that could indicate use-after-free risks
+        through analysis of memory management function references in binary strings.
+
+        Args:
+            binary_data: Raw binary file contents as bytes.
+            strings: List of string dictionaries extracted from the binary.
+            disasm_info: Disassembly analysis results with instructions and function calls.
+
+        Returns:
+            List of vulnerability dictionaries describing detected use-after-free patterns.
+        """
         vulnerabilities = []
 
         # Log analysis context
@@ -2407,7 +2948,19 @@ int main() {{
     def _detect_path_traversal_patterns(
         self, binary_data: bytes, strings: list[dict[str, Any]], disasm_info: dict[str, Any]
     ) -> list[dict[str, Any]]:
-        """Detect potential path traversal vulnerabilities."""
+        """Detect potential path traversal vulnerabilities.
+
+        Searches for path traversal sequences (../, ..\\, encoded variants) that could
+        enable attackers to access files outside intended directories through directory escape.
+
+        Args:
+            binary_data: Raw binary file contents as bytes.
+            strings: List of string dictionaries extracted from the binary.
+            disasm_info: Disassembly analysis results with instructions and function calls.
+
+        Returns:
+            List of vulnerability dictionaries describing detected path traversal patterns.
+        """
         vulnerabilities = []
 
         # Log analysis context
@@ -2436,7 +2989,19 @@ int main() {{
     def _detect_sql_injection_patterns(
         self, binary_data: bytes, strings: list[dict[str, Any]], disasm_info: dict[str, Any]
     ) -> list[dict[str, Any]]:
-        """Detect potential SQL injection vulnerabilities."""
+        """Detect potential SQL injection vulnerabilities.
+
+        Identifies SQL keywords and injection patterns (quotes, UNION SELECT, comments) that
+        could indicate vulnerable SQL query construction without proper parameter binding.
+
+        Args:
+            binary_data: Raw binary file contents as bytes.
+            strings: List of string dictionaries extracted from the binary.
+            disasm_info: Disassembly analysis results with instructions and function calls.
+
+        Returns:
+            List of vulnerability dictionaries describing detected SQL injection patterns.
+        """
         vulnerabilities = []
 
         # Log analysis context
@@ -2470,7 +3035,19 @@ int main() {{
     def _detect_memory_leak_patterns(
         self, binary_data: bytes, strings: list[dict[str, Any]], disasm_info: dict[str, Any]
     ) -> list[dict[str, Any]]:
-        """Detect potential memory leak vulnerabilities."""
+        """Detect potential memory leak vulnerabilities.
+
+        Identifies memory allocation function calls that may not be properly freed,
+        indicating potential memory leak vulnerabilities in the binary code.
+
+        Args:
+            binary_data: Raw binary file contents as bytes.
+            strings: List of string dictionaries extracted from the binary.
+            disasm_info: Disassembly analysis results with instructions and function calls.
+
+        Returns:
+            List of vulnerability dictionaries describing detected memory leak patterns.
+        """
         vulnerabilities = []
 
         # Log analysis context
@@ -2499,7 +3076,19 @@ int main() {{
     def _detect_null_pointer_patterns(
         self, binary_data: bytes, strings: list[dict[str, Any]], disasm_info: dict[str, Any]
     ) -> list[dict[str, Any]]:
-        """Detect potential null pointer dereference vulnerabilities."""
+        """Detect potential null pointer dereference vulnerabilities.
+
+        Identifies null pointer checks and dereference operations in binary code that could
+        lead to segmentation faults if null pointer validation is insufficient.
+
+        Args:
+            binary_data: Raw binary file contents as bytes.
+            strings: List of string dictionaries extracted from the binary.
+            disasm_info: Disassembly analysis results with instructions and function calls.
+
+        Returns:
+            List of vulnerability dictionaries describing detected null pointer patterns.
+        """
         vulnerabilities = []
 
         # Analyze strings for null pointer related error messages

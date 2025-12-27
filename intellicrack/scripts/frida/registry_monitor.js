@@ -30,6 +30,48 @@
         return;
     }
 
+    function matchSerialKeyPattern(str) {
+        if (!str) {
+            return false;
+        }
+        const parts = str.split('-');
+        if (parts.length !== 4) {
+            return false;
+        }
+        for (const part of parts) {
+            if (!/^[\da-z]{5}$/i.test(part)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function matchGuidPattern(str) {
+        if (!str) {
+            return false;
+        }
+        const parts = str.split('-');
+        if (parts.length !== 5) {
+            return false;
+        }
+        if (!/^[\da-f]{8}$/i.test(parts[0])) {
+            return false;
+        }
+        if (!/^[\da-f]{4}$/i.test(parts[1])) {
+            return false;
+        }
+        if (!/^[\da-f]{4}$/i.test(parts[2])) {
+            return false;
+        }
+        if (!/^[\da-f]{4}$/i.test(parts[3])) {
+            return false;
+        }
+        if (!/^[\da-f]{12}$/i.test(parts[4])) {
+            return false;
+        }
+        return true;
+    }
+
     const config = {
         keyFilters: [
             '\\software\\',
@@ -435,21 +477,29 @@
         Interceptor.attach(funcPtr, {
             onEnter(args) {
                 stats.debugAttempts++;
+                if (config.detectDebugging) {
+                    send({
+                        type: 'anti_debug_detected',
+                        target: 'registry_monitor',
+                        function: funcName,
+                        thread: Process.getCurrentThreadId(),
+                    });
+                }
                 if (config.bypassAntiDebug) {
                     if (funcName === 'IsDebuggerPresent') {
-                        this.shouldFake = true;
+                        this.bypassRequired = true;
                     } else if (funcName === 'CheckRemoteDebuggerPresent') {
                         this.debuggerPtr = args[1];
                     } else if (
                         funcName === 'NtQueryInformationProcess'
                         && args[1].toInt32() === 7
                     ) {
-                        this.shouldFake = true;
+                        this.bypassRequired = true;
                     }
                 }
             },
             onLeave(retval) {
-                if (config.bypassAntiDebug && this.shouldFake) {
+                if (config.bypassAntiDebug && this.bypassRequired) {
                     retval.replace(0);
                     stats.antiDebugBypassed++;
                 }
@@ -514,7 +564,9 @@
                     }
                 }
             }
-        } catch {}
+        } catch {
+            return null;
+        }
 
         return null;
     }
@@ -529,7 +581,9 @@
             if (!buffer.isNull() && length > 0) {
                 return buffer.readUtf16String(length / 2);
             }
-        } catch {}
+        } catch {
+            return null;
+        }
         return null;
     }
 
@@ -605,8 +659,14 @@
                     }
                     break;
                 }
+
+                default: {
+                    break;
+                }
             }
-        } catch {}
+        } catch {
+            return { formatted: null, raw: null };
+        }
 
         return { formatted: null, raw: null };
     }
@@ -636,11 +696,11 @@
 
         const patterns = [
             {
-                regex: /(?:[\da-z]{5}-){3}[\da-z]{5}/gi,
+                matcher: matchSerialKeyPattern,
                 type: 'serial_key',
             },
             {
-                regex: /[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}/gi,
+                matcher: matchGuidPattern,
                 type: 'guid',
             },
             { regex: /[\da-z]{32,}/gi, type: 'hash' },
@@ -651,11 +711,12 @@
             },
         ];
 
-        const dataStr = data?.formatted ? data.formatted : '';
+        const dataStr = data?.formatted || '';
         const fullPath = `${keyPath}\\${valueName || ''}`;
 
         patterns.forEach(p => {
-            if (p.regex.test(dataStr) || p.regex.test(fullPath)) {
+            const testFn = p.matcher || (str => p.regex.test(str));
+            if (testFn(dataStr) || testFn(fullPath)) {
                 const detection = {
                     type: p.type,
                     path: fullPath,
@@ -696,7 +757,9 @@
                     info.state = thread.state;
                     info.context = thread.context;
                 }
-            } catch {}
+            } catch {
+                info.state = 'unknown';
+            }
 
             threadInfo.set(tid, info);
         }
@@ -983,9 +1046,23 @@
                         }
                         break;
                     }
+
+                    default: {
+                        break;
+                    }
                 }
             } catch (error) {
                 evt.parse_error = error.toString();
+                if (config.logDetailedErrors) {
+                    evt.error_details = {
+                        name: error.name || 'UnknownError',
+                        message: error.message || error.toString(),
+                        stack: error.stack || null,
+                        function: 'NtQueryValueKey',
+                        context: 'value_data_parsing',
+                    };
+                    stats.failedOps++;
+                }
             }
         }
 
@@ -1173,6 +1250,10 @@
                         // KeyFullInformation
                         break;
                     }
+
+                    default: {
+                        break;
+                    }
                 }
             } catch (error) {
                 evt.parse_error = error.toString();
@@ -1287,6 +1368,10 @@
                                 evt.data_preview_hex = formatted.raw;
                             }
                         }
+                        break;
+                    }
+
+                    default: {
                         break;
                     }
                 }

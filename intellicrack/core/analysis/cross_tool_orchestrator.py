@@ -48,7 +48,7 @@ import psutil
 
 from ...utils.core.plugin_paths import get_ghidra_scripts_dir
 from ..frida_manager import FridaManager
-from .ghidra_analyzer import GhidraFunction, run_advanced_ghidra_analysis
+from .ghidra_analyzer import GhidraFunction, MainAppProtocol, run_advanced_ghidra_analysis
 from .ghidra_results import GhidraAnalysisResult
 from .radare2_enhanced_integration import EnhancedR2Integration
 
@@ -1124,7 +1124,7 @@ class CrossToolOrchestrator:
 
             if self.main_app:
                 # Use GUI integration
-                run_advanced_ghidra_analysis(cast("Any", self.main_app))
+                run_advanced_ghidra_analysis(cast(MainAppProtocol, self.main_app))
                 self.ghidra_results = GhidraAnalysisResult(
                     binary_path=self.binary_path,
                     architecture="",

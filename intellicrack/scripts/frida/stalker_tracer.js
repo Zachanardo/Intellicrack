@@ -186,6 +186,27 @@ function createStalkerTransformer() {
                     if (moduleInfo && !shouldExcludeModule(moduleInfo.name)) {
                         stats.totalInstructions++;
 
+                        if (!stats.modules.has(moduleInfo.name)) {
+                            stats.modules.set(moduleInfo.name, {
+                                base: moduleInfo.base,
+                                path: moduleInfo.path,
+                                callCount: 0,
+                                offsets: new Set(),
+                            });
+                        }
+                        const moduleStats = stats.modules.get(moduleInfo.name);
+                        moduleStats.callCount++;
+                        moduleStats.offsets.add(moduleInfo.offset);
+
+                        if (stats.traces.length < config.maxTraceEvents) {
+                            stats.traces.push({
+                                type: 'call',
+                                module: moduleInfo.name,
+                                offset: moduleInfo.offset,
+                                timestamp: Date.now(),
+                            });
+                        }
+
                         const key = `${moduleInfo.name}:${moduleInfo.offset}`;
                         if (!stats.coverage.has(key)) {
                             stats.coverage.set(key, {
@@ -269,6 +290,14 @@ function stopStalking() {
         calls: calls.slice(0, 100),
     }));
 
+    const moduleData = [...stats.modules.entries()].map(([name, data]) => ({
+        name,
+        base: data.base,
+        path: data.path,
+        callCount: data.callCount,
+        uniqueOffsets: data.offsets.size,
+    }));
+
     send({
         type: 'trace_complete',
         data: {
@@ -277,9 +306,13 @@ function stopStalking() {
             coverage_entries: coverageData.length,
             licensing_routines: stats.licensingRoutines.length,
             api_calls: apiCallData.length,
+            modules_accessed: moduleData.length,
+            trace_events: stats.traces.length,
             coverage: coverageData.sort((a, b) => b.hitCount - a.hitCount).slice(0, 500),
             api_summary: apiCallData.sort((a, b) => b.count - a.count),
             licensing_functions: stats.licensingRoutines.slice(0, 100),
+            modules: moduleData.sort((a, b) => b.callCount - a.callCount).slice(0, 100),
+            traces: stats.traces.slice(-1000),
         },
     });
 }

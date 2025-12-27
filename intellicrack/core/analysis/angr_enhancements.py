@@ -92,7 +92,7 @@ class LicensePathPrioritizer(ExplorationTechniqueBase):
             max_loop_iterations: Maximum loop iterations before deprioritizing
 
         """
-        cast("Any", super()).__init__()
+        super().__init__()
         self.prioritize_license_paths: bool = prioritize_license_paths
         self.max_loop_iterations: int = max_loop_iterations
         self.license_keywords: list[bytes] = [
@@ -319,7 +319,7 @@ class ConstraintOptimizer(ExplorationTechniqueBase):
             solver_timeout: Solver timeout in milliseconds
 
         """
-        cast("Any", super()).__init__()
+        super().__init__()
         self.simplify_interval: int = simplify_interval
         self.cache_size: int = cache_size
         self.solver_timeout: int = solver_timeout
@@ -433,7 +433,7 @@ class StateMerger(ExplorationTechniqueBase):
             max_merge_count: Maximum states to merge at once
 
         """
-        cast("Any", super()).__init__()
+        super().__init__()
         self.merge_threshold: int = merge_threshold
         self.max_merge_count: int = max_merge_count
         self.logger: logging.Logger = logging.getLogger("IntellicrackLogger.StateMerger")
@@ -534,12 +534,12 @@ class WindowsLicensingSimProcedure(SimProcedureBase):
             **kwargs: Variable keyword arguments passed to SimProcedure
 
         """
-        cast("Any", super()).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.logger = logging.getLogger(f"IntellicrackLogger.{self.__class__.__name__}")
 
     @property
     def _state(self) -> Any:
-        return cast("Any", self.state)
+        return self.state
 
     @property
     def _solver(self) -> Any:
@@ -1777,20 +1777,20 @@ def create_enhanced_simgr(project: Any, initial_state: Any, *, enable_state_merg
 
     if ANGR_AVAILABLE and hasattr(angr, "exploration_techniques"):
         if hasattr(angr.exploration_techniques, "DFS"):
-            simgr.use_technique(cast("Any", DFS)())
+            simgr.use_technique(DFS())
 
         if hasattr(angr.exploration_techniques, "Spiller"):
-            spiller_class = cast("Any", getattr(angr.exploration_techniques, "Spiller", None))
+            spiller_class = getattr(angr.exploration_techniques, "Spiller", None)
             if spiller_class is not None:
                 simgr.use_technique(spiller_class())
 
         if hasattr(angr.exploration_techniques, "Veritesting"):
-            veritesting_class = cast("Any", getattr(angr.exploration_techniques, "Veritesting", None))
+            veritesting_class = getattr(angr.exploration_techniques, "Veritesting", None)
             if veritesting_class is not None:
                 simgr.use_technique(veritesting_class())
 
         if hasattr(angr.exploration_techniques, "LoopSeer"):
-            loopseer_class = cast("Any", getattr(angr.exploration_techniques, "LoopSeer", None))
+            loopseer_class = getattr(angr.exploration_techniques, "LoopSeer", None)
             if loopseer_class is not None:
                 simgr.use_technique(loopseer_class(bound=5))
 

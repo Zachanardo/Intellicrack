@@ -74,7 +74,11 @@ else:
 
             @staticmethod
             def validate(instance: object, schema: dict[str, object]) -> None:
-                """Validate schema.
+                """Validate instance against JSON schema.
+
+                Args:
+                    instance: The data object to validate.
+                    schema: The JSON schema dictionary to validate against.
 
                 Note:
                     Valid delegation pattern to recursive validator.
@@ -85,7 +89,17 @@ else:
 
             @staticmethod
             def _validate_recursive(instance: object, schema: dict[str, object], path: list[str]) -> None:
-                """Recursively validate instance against schema."""
+                """Recursively validate instance against schema.
+
+                Args:
+                    instance: The data object to validate.
+                    schema: The JSON schema dictionary to validate against.
+                    path: The current path in the object hierarchy for error reporting.
+
+                Raises:
+                    ValidationError: If the instance does not conform to the schema.
+
+                """
                 if "type" in schema:
                     expected_type = schema["type"]
                     type_map = {
@@ -180,7 +194,12 @@ class ConfigAsCodeManager:
         logger.info("ConfigAsCodeManager initialized with directory: %s", self.config_dir)
 
     def _load_schemas(self) -> dict[str, dict[str, Any]]:
-        """Load JSON schemas for validation."""
+        """Load JSON schemas for validation.
+
+        Returns:
+            dict[str, dict[str, Any]]: Dictionary mapping schema names to their JSON schema definitions.
+
+        """
         schemas = {
             "llm_model": {
                 "type": "object",
@@ -492,6 +511,13 @@ class ConfigAsCodeManager:
         """Recursively substitute environment variables in configuration.
 
         Supports syntax: ${VAR_NAME}, ${VAR_NAME:default_value}
+
+        Args:
+            obj: The configuration object (dict, list, or primitive) to process.
+
+        Returns:
+            object: The configuration object with all environment variables substituted.
+
         """
         if isinstance(obj, dict):
             return {key: self._substitute_env_vars(value) for key, value in obj.items()}
@@ -500,7 +526,15 @@ class ConfigAsCodeManager:
         return self._substitute_string_vars(obj) if isinstance(obj, str) else obj
 
     def _substitute_string_vars(self, text: str) -> str:
-        """Substitute environment variables in a string."""
+        """Substitute environment variables in a string.
+
+        Args:
+            text: The string to process for variable substitution.
+
+        Returns:
+            str: The string with all environment variables substituted.
+
+        """
         pattern = r"\$\{([^}:]+)(?::([^}]*))?\}"
 
         def replace_var(match: re.Match[str]) -> str:
@@ -822,7 +856,12 @@ _CONFIG_AS_CODE_MANAGER: ConfigAsCodeManager | None = None
 
 
 def get_config_as_code_manager() -> ConfigAsCodeManager:
-    """Get the global config-as-code manager instance."""
+    """Get the global config-as-code manager instance.
+
+    Returns:
+        ConfigAsCodeManager: The singleton ConfigAsCodeManager instance.
+
+    """
     global _CONFIG_AS_CODE_MANAGER
     if _CONFIG_AS_CODE_MANAGER is None:
         _CONFIG_AS_CODE_MANAGER = ConfigAsCodeManager()
