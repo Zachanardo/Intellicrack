@@ -67,7 +67,12 @@ except ImportError as e:
     # Production-ready fallback cryptographic implementations
 
     class FallbackAES:
-        """AES encryption/decryption using pure Python."""
+        """AES encryption/decryption using pure Python.
+
+        Provides block-level AES encryption and decryption operations
+        without external cryptography dependencies. Supports 16, 24, and
+        32-byte keys.
+        """
 
         # AES S-box
         S_BOX = [
@@ -348,10 +353,10 @@ except ImportError as e:
             """Encrypt a single 16-byte block.
 
             Args:
-                plaintext: 16-byte plaintext block to encrypt.
+                plaintext: Plaintext block to encrypt.
 
             Returns:
-                16-byte encrypted ciphertext block.
+                bytes: Encrypted ciphertext block.
 
             Raises:
                 ValueError: If plaintext is not exactly 16 bytes.
@@ -371,10 +376,10 @@ except ImportError as e:
             """Decrypt a single 16-byte block.
 
             Args:
-                ciphertext: 16-byte ciphertext block to decrypt.
+                ciphertext: Ciphertext block to decrypt.
 
             Returns:
-                16-byte decrypted plaintext block.
+                bytes: Decrypted plaintext block.
 
             Raises:
                 ValueError: If ciphertext is not exactly 16 bytes.
@@ -395,7 +400,11 @@ except ImportError as e:
             return bytes(plaintext)
 
     class FallbackCipher:
-        """Cipher implementation for AES."""
+        """Cipher implementation for AES.
+
+        Wraps algorithm and mode to provide encryptor and decryptor
+        interface compatible with cryptography library.
+        """
 
         def __init__(self, algorithm: object, mode: object) -> None:
             """Initialize cipher.
@@ -431,7 +440,11 @@ except ImportError as e:
             return self.decryptor_obj
 
     class FallbackEncryptor:
-        """Encryptor for cipher operations."""
+        """Encryptor for cipher operations.
+
+        Performs block-wise encryption with buffering and finalization
+        support for partial blocks.
+        """
 
         def __init__(self, algorithm: object, mode: object) -> None:
             """Initialize encryptor.
@@ -439,6 +452,9 @@ except ImportError as e:
             Args:
                 algorithm: Cipher algorithm with key attribute.
                 mode: Cipher mode instance.
+
+            Raises:
+                ValueError: If algorithm lacks key attribute.
 
             """
             self.algorithm = algorithm
@@ -457,7 +473,7 @@ except ImportError as e:
                 data: Data to encrypt.
 
             Returns:
-                Encrypted output from completed blocks.
+                bytes: Encrypted output from completed blocks.
 
             """
             self._buffer += data
@@ -486,7 +502,7 @@ except ImportError as e:
             """Finalize encryption.
 
             Returns:
-                Final encrypted output including padded data.
+                bytes: Final encrypted output including padded data.
 
             """
             if self._buffer:
@@ -496,7 +512,11 @@ except ImportError as e:
             return b""
 
     class FallbackDecryptor:
-        """Decryptor for cipher operations."""
+        """Decryptor for cipher operations.
+
+        Performs block-wise decryption with buffering and finalization
+        support for removing padding.
+        """
 
         def __init__(self, algorithm: object, mode: object) -> None:
             """Initialize decryptor.
@@ -504,6 +524,9 @@ except ImportError as e:
             Args:
                 algorithm: Cipher algorithm with key attribute.
                 mode: Cipher mode instance.
+
+            Raises:
+                ValueError: If algorithm lacks key attribute.
 
             """
             self.algorithm = algorithm
@@ -522,7 +545,7 @@ except ImportError as e:
                 data: Data to decrypt.
 
             Returns:
-                Decrypted output from completed blocks.
+                bytes: Decrypted output from completed blocks.
 
             """
             self._buffer += data
@@ -549,7 +572,7 @@ except ImportError as e:
             """Finalize decryption.
 
             Returns:
-                Final decrypted output with padding removed.
+                bytes: Final decrypted output with padding removed.
 
             """
             result = self.update(b"")
@@ -562,14 +585,17 @@ except ImportError as e:
             return result
 
     class FallbackFernet:
-        """Fernet symmetric encryption implementation."""
+        """Fernet symmetric encryption implementation.
+
+        Provides authenticated symmetric encryption with HMAC verification
+        compatible with cryptography.Fernet interface.
+        """
 
         def __init__(self, key: bytes | str | None = None) -> None:
             """Initialize Fernet.
 
             Args:
-                key: Base64-encoded key (32 bytes decoded).
-                    If None, generates a new random key.
+                key: Base64-encoded key or generates random key if None.
 
             """
             if key is None:
@@ -587,7 +613,7 @@ except ImportError as e:
             """Generate a new Fernet key.
 
             Returns:
-                Base64-encoded random 32-byte key.
+                bytes: Base64-encoded random 32-byte key.
 
             """
             return base64.urlsafe_b64encode(os.urandom(32))
@@ -596,10 +622,10 @@ except ImportError as e:
             """Encrypt data.
 
             Args:
-                data: Data to encrypt (bytes or str).
+                data: Data to encrypt.
 
             Returns:
-                Base64-encoded encrypted token.
+                bytes: Base64-encoded encrypted token.
 
             """
             if isinstance(data, str):
@@ -636,7 +662,7 @@ except ImportError as e:
                 token: Base64-encoded encrypted token.
 
             Returns:
-                Decrypted plaintext data.
+                bytes: Decrypted plaintext data.
 
             Raises:
                 ValueError: If token is invalid or signature verification fails.
@@ -676,13 +702,27 @@ except ImportError as e:
                 raise ValueError(f"Decryption failed: {e}") from e
 
     class FallbackRSA:
-        """RSA key generation and operations."""
+        """RSA key generation and operations.
+
+        Provides RSA key generation and basic cryptographic operations
+        without external dependencies.
+        """
 
         @staticmethod
         def generate_private_key(
             public_exponent: int = 65537, key_size: int = 2048, backend: object | None = None
         ) -> "FallbackRSAPrivateKey":
-            """Generate RSA private key."""
+            """Generate RSA private key.
+
+            Args:
+                public_exponent: Public exponent value.
+                key_size: Key size in bits.
+                backend: Backend instance (ignored).
+
+            Returns:
+                FallbackRSAPrivateKey: Generated private key.
+
+            """
             # Simplified RSA key generation
             logger.info("Generating RSA key pair (fallback mode)")
 
@@ -700,7 +740,15 @@ except ImportError as e:
 
         @staticmethod
         def _generate_prime(bits: int) -> int:
-            """Generate a prime number (simplified)."""
+            """Generate a prime number (simplified).
+
+            Args:
+                bits: Bit length for prime generation.
+
+            Returns:
+                int: Generated prime number.
+
+            """
             # Use a pre-selected prime for fallback
             if bits <= 512:
                 return 32416190071
@@ -711,7 +759,19 @@ except ImportError as e:
 
         @staticmethod
         def _mod_inverse(a: int, m: int) -> int:
-            """Calculate modular inverse."""
+            """Calculate modular inverse.
+
+            Args:
+                a: Integer to invert.
+                m: Modulus.
+
+            Returns:
+                int: Modular inverse of a modulo m.
+
+            Raises:
+                ValueError: If modular inverse does not exist.
+
+            """
 
             def extended_gcd(a: int, b: int) -> tuple[int, int, int]:
                 if a == 0:
@@ -727,10 +787,22 @@ except ImportError as e:
             return (x % m + m) % m
 
     class FallbackRSAPrivateKey:
-        """RSA private key implementation."""
+        """RSA private key implementation.
+
+        Holds RSA private key parameters for cryptographic operations.
+        """
 
         def __init__(self, p: int, q: int, n: int, e: int, d: int) -> None:
-            """Initialize RSA private key."""
+            """Initialize RSA private key.
+
+            Args:
+                p: First prime factor.
+                q: Second prime factor.
+                n: Modulus.
+                e: Public exponent.
+                d: Private exponent.
+
+            """
             self.p = p
             self.q = q
             self.n = n
@@ -748,7 +820,17 @@ except ImportError as e:
             return FallbackRSAPublicKey(self.n, self.e)
 
         def private_bytes(self, encoding: object, format: object, encryption_algorithm: object) -> bytes:
-            """Export private key."""
+            """Export private key.
+
+            Args:
+                encoding: Encoding format for key.
+                format: Key format structure.
+                encryption_algorithm: Encryption algorithm for key material.
+
+            Returns:
+                bytes: Encoded private key.
+
+            """
             # Simplified PEM format
             key_data = f"""-----BEGIN RSA PRIVATE KEY-----
 MIIEowIBAAKCAQEA{base64.b64encode(str(self.n).encode()).decode()}
@@ -758,7 +840,17 @@ MIIEowIBAAKCAQEA{base64.b64encode(str(self.n).encode()).decode()}
             return key_data.encode()
 
         def sign(self, message: bytes, padding_obj: object, algorithm: object) -> bytes:
-            """Sign a message."""
+            """Sign a message.
+
+            Args:
+                message: Message bytes to sign.
+                padding_obj: Padding scheme instance.
+                algorithm: Hash algorithm instance.
+
+            Returns:
+                bytes: Digital signature.
+
+            """
             # Simplified signature
             h = hashlib.sha256(message).digest()
             h_int = int.from_bytes(h, "big")
@@ -766,22 +858,49 @@ MIIEowIBAAKCAQEA{base64.b64encode(str(self.n).encode()).decode()}
             return signature.to_bytes((signature.bit_length() + 7) // 8, "big")
 
         def decrypt(self, ciphertext: bytes, padding_obj: object) -> bytes:
-            """Decrypt ciphertext."""
+            """Decrypt ciphertext.
+
+            Args:
+                ciphertext: Encrypted data.
+                padding_obj: Padding scheme instance.
+
+            Returns:
+                bytes: Decrypted plaintext.
+
+            """
             c_int = int.from_bytes(ciphertext, "big")
             m_int = pow(c_int, self.d, self.n)
             return m_int.to_bytes((m_int.bit_length() + 7) // 8, "big")
 
     class FallbackRSAPublicKey:
-        """RSA public key implementation."""
+        """RSA public key implementation.
+
+        Holds RSA public key parameters for encryption and verification.
+        """
 
         def __init__(self, n: int, e: int) -> None:
-            """Initialize RSA public key."""
+            """Initialize RSA public key.
+
+            Args:
+                n: Modulus.
+                e: Public exponent.
+
+            """
             self.n = n
             self.e = e
             self.key_size = n.bit_length()
 
         def public_bytes(self, encoding: object, format: object) -> bytes:
-            """Export public key."""
+            """Export public key.
+
+            Args:
+                encoding: Encoding format for key.
+                format: Key format structure.
+
+            Returns:
+                bytes: Encoded public key.
+
+            """
             # Simplified PEM format
             key_data = f"""-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode()).decode()}
@@ -790,13 +909,33 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
             return key_data.encode()
 
         def encrypt(self, message: bytes, padding_obj: object) -> bytes:
-            """Encrypt message."""
+            """Encrypt message.
+
+            Args:
+                message: Plaintext message to encrypt.
+                padding_obj: Padding scheme instance.
+
+            Returns:
+                bytes: Encrypted ciphertext.
+
+            """
             m_int = int.from_bytes(message, "big")
             c_int = pow(m_int, self.e, self.n)
             return c_int.to_bytes((c_int.bit_length() + 7) // 8, "big")
 
         def verify(self, signature: bytes, message: bytes, padding_obj: object, algorithm: object) -> bool:
-            """Verify signature."""
+            """Verify signature.
+
+            Args:
+                signature: Signature bytes to verify.
+                message: Original message for verification.
+                padding_obj: Padding scheme instance.
+                algorithm: Hash algorithm instance.
+
+            Returns:
+                bool: True if signature is valid, False otherwise.
+
+            """
             # Simplified verification
             s_int = int.from_bytes(signature, "big")
             h_recovered = pow(s_int, self.e, self.n)
@@ -804,7 +943,11 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
             return h_recovered == h_expected
 
     class FallbackPBKDF2:
-        """PBKDF2 key derivation."""
+        """PBKDF2 key derivation.
+
+        Implements password-based key derivation with configurable
+        hash algorithm, salt, and iteration count.
+        """
 
         def __init__(
             self,
@@ -814,44 +957,85 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
             iterations: int,
             backend: object | None = None,
         ) -> None:
-            """Initialize PBKDF2."""
+            """Initialize PBKDF2.
+
+            Args:
+                algorithm: Hash algorithm instance.
+                length: Desired derived key length in bytes.
+                salt: Salt bytes for key derivation.
+                iterations: Number of iterations.
+                backend: Backend instance (ignored).
+
+            """
             self.algorithm = algorithm
             self.length = length
             self.salt = salt
             self.iterations = iterations
 
         def derive(self, key_material: bytes) -> bytes:
-            """Derive key from material."""
+            """Derive key from material.
+
+            Args:
+                key_material: Password or key material to derive from.
+
+            Returns:
+                bytes: Derived key material.
+
+            """
             # Use Python's hashlib.pbkdf2_hmac
             return hashlib.pbkdf2_hmac("sha256", key_material, self.salt, self.iterations, dklen=self.length)
 
         def verify(self, key_material: bytes, expected_key: bytes) -> None:
-            """Verify key material produces expected key."""
+            """Verify key material produces expected key.
+
+            Args:
+                key_material: Password or key material to verify.
+                expected_key: Expected derived key for comparison.
+
+            Raises:
+                ValueError: If derived key does not match expected key.
+
+            """
             derived = self.derive(key_material)
             if not hmac.compare_digest(derived, expected_key):
                 raise ValueError("Keys do not match")
 
     # Hazmat primitives fallbacks
     class FallbackHashes:
-        """Hash algorithms."""
+        """Hash algorithms.
+
+        Provides hash algorithm definitions for cryptographic operations.
+        """
 
         class SHA256:
+            """SHA-256 hash algorithm."""
+
             name = "sha256"
             digest_size = 32
 
         class SHA1:
+            """SHA-1 hash algorithm."""
+
             name = "sha1"
             digest_size = 20
 
         class MD5:
+            """MD5 hash algorithm."""
+
             name = "md5"
             digest_size = 16
 
     class FallbackAlgorithms:
-        """Cipher algorithms."""
+        """Cipher algorithms.
+
+        Provides cipher algorithm definitions for encryption operations.
+        """
 
         class AES:
-            """AES cipher algorithm."""
+            """AES cipher algorithm.
+
+            Initializes AES algorithm with specified key.
+            """
 
             def __init__(self, key: bytes) -> None:
                 """Initialize AES algorithm.
@@ -864,42 +1048,105 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
                 self.key_size = len(key) * 8
 
     class FallbackModes:
-        """Cipher modes."""
+        """Cipher modes.
+
+        Provides cipher mode definitions for block cipher operations.
+        """
 
         class CBC:  # noqa: B903 - Must match cryptography library API
+            """CBC mode with initialization vector."""
+
             def __init__(self, initialization_vector: bytes) -> None:
+                """Initialize CBC mode.
+
+                Args:
+                    initialization_vector: Initialization vector bytes.
+
+                """
                 self.initialization_vector = initialization_vector
 
         class ECB:
+            """ECB mode (electronic codebook)."""
+
             pass
 
         class CTR:  # noqa: B903 - Must match cryptography library API
+            """CTR mode with nonce."""
+
             def __init__(self, nonce: bytes) -> None:
+                """Initialize CTR mode.
+
+                Args:
+                    nonce: Nonce bytes for counter mode.
+
+                """
                 self.nonce = nonce
 
     class FallbackPadding:
-        """Padding schemes."""
+        """Padding schemes.
+
+        Provides padding algorithm definitions for block ciphers.
+        """
 
         class PKCS7:
+            """PKCS7 padding scheme.
+
+            Implements PKCS7 padding for symmetric encryption.
+            """
+
             def __init__(self, block_size: int) -> None:
+                """Initialize PKCS7 padding.
+
+                Args:
+                    block_size: Block size in bits.
+
+                """
                 self.block_size = block_size
 
             def padder(self) -> "FallbackPadder":
+                """Get padder for this scheme.
+
+                Returns:
+                    FallbackPadder: Padder instance.
+
+                """
                 return FallbackPadder(self.block_size)
 
             def unpadder(self) -> "FallbackUnpadder":
+                """Get unpadder for this scheme.
+
+                Returns:
+                    FallbackUnpadder: Unpadder instance.
+
+                """
                 return FallbackUnpadder(self.block_size)
 
     class FallbackPadder:
-        """PKCS7 padder."""
+        """PKCS7 padder.
+
+        Pads data using PKCS7 padding scheme.
+        """
 
         def __init__(self, block_size: int) -> None:
-            """Initialize padder."""
+            """Initialize padder.
+
+            Args:
+                block_size: Block size in bits.
+
+            """
             self.block_size = block_size // 8
             self._buffer = b""
 
         def update(self, data: bytes) -> bytes:
-            """Update with data."""
+            """Update with data.
+
+            Args:
+                data: Data to pad.
+
+            Returns:
+                bytes: Padded complete blocks.
+
+            """
             self._buffer += data
 
             # Return complete blocks
@@ -911,21 +1158,42 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
             return result
 
         def finalize(self) -> bytes:
-            """Finalize with padding."""
+            """Finalize with padding.
+
+            Returns:
+                bytes: Final padded data.
+
+            """
             padding_len = self.block_size - len(self._buffer)
             padding = bytes([padding_len] * padding_len)
             return self._buffer + padding
 
     class FallbackUnpadder:
-        """PKCS7 unpadder."""
+        """PKCS7 unpadder.
+
+        Removes PKCS7 padding from decrypted data.
+        """
 
         def __init__(self, block_size: int) -> None:
-            """Initialize unpadder."""
+            """Initialize unpadder.
+
+            Args:
+                block_size: Block size in bits.
+
+            """
             self.block_size = block_size // 8
             self._buffer = b""
 
         def update(self, data: bytes) -> bytes:
-            """Update with data."""
+            """Update with data.
+
+            Args:
+                data: Data to unpad.
+
+            Returns:
+                bytes: Unpadded complete blocks.
+
+            """
             self._buffer += data
 
             # Keep last block for finalize
@@ -936,7 +1204,15 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
             return b""
 
         def finalize(self) -> bytes:
-            """Remove padding."""
+            """Remove padding.
+
+            Returns:
+                bytes: Final unpadded data.
+
+            Raises:
+                ValueError: If padding is invalid.
+
+            """
             if not self._buffer:
                 raise ValueError("Invalid padding")
 
@@ -952,9 +1228,27 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
             return self._buffer[:-padding_len]
 
     class FallbackBackend:
-        """Default backend."""
+        """Default backend.
 
-        pass
+        Provides backend interface for cryptography library compatibility
+        in fallback mode. Supports basic initialization without state.
+        """
+
+        def __init__(self) -> None:
+            """Initialize backend.
+
+            No configuration required for fallback backend.
+            """
+            self._initialized = True
+
+        def __repr__(self) -> str:
+            """Represent backend instance.
+
+            Returns:
+                str: String representation of backend.
+
+            """
+            return "<FallbackBackend>"
 
     # Type variables for conditional imports
     _backend_type: Any = None
@@ -962,14 +1256,28 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
     _key_loader_type: Any = None
 
     def _default_backend() -> FallbackBackend:
-        """Get default backend."""
+        """Get default backend.
+
+        Returns:
+            FallbackBackend: Default backend instance.
+
+        """
         return FallbackBackend()
 
     default_backend = _default_backend
 
     # X.509 certificate handling
     def _load_pem_x509_certificate(data: bytes, backend: object | None = None) -> "FallbackX509Certificate":
-        """Load PEM certificate."""
+        """Load PEM certificate.
+
+        Args:
+            data: PEM-encoded certificate data.
+            backend: Backend instance (ignored).
+
+        Returns:
+            FallbackX509Certificate: Parsed certificate object.
+
+        """
         # Parse PEM format (simplified)
         lines = data.decode().split("\n")
         cert_data = ""
@@ -990,7 +1298,17 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
     load_pem_x509_certificate = _load_pem_x509_certificate  # type: ignore[assignment]
 
     def _load_pem_private_key(data: bytes | str, password: bytes | None = None, backend: object | None = None) -> Any:
-        """Load PEM private key with proper base64 decoding."""
+        """Load PEM private key with proper base64 decoding.
+
+        Args:
+            data: PEM-encoded private key data.
+            password: Password for encrypted keys (ignored in fallback).
+            backend: Backend instance (ignored).
+
+        Returns:
+            Any: Private key object with key material and methods.
+
+        """
         data_str: str = data.decode() if isinstance(data, bytes) else data
         lines: list[str] = data_str.split("\n")
         key_data = ""
@@ -1010,6 +1328,18 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
         raw_data = data if isinstance(data, bytes) else data.encode()
 
         def _private_bytes(self: object, encoding: object, key_format: object, encryption: object) -> bytes:
+            """Export private key bytes.
+
+            Args:
+                self: Key instance.
+                encoding: Encoding format (PEM/DER).
+                key_format: Key format structure.
+                encryption: Encryption algorithm for key.
+
+            Returns:
+                bytes: Encoded key material.
+
+            """
             logger.debug(
                 "Fallback private_bytes called with: encoding=%s, format=%s, encryption=%s",
                 encoding,
@@ -1019,12 +1349,31 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
             return raw_data
 
         def _public_key(self: object) -> object:
+            """Extract public key from private key.
+
+            Args:
+                self: Private key instance.
+
+            Returns:
+                object: Public key object with key_size attribute.
+
+            """
             logger.debug("Fallback public_key called on %s", self)
             return type("PublicKey", (), {"key_size": key_size})()
 
         def _sign(self: object, data_to_sign: bytes, padding: object, algorithm: object) -> bytes:
-            import hashlib
+            """Sign data with private key.
 
+            Args:
+                self: Private key instance.
+                data_to_sign: Data to create signature for.
+                padding: Padding scheme instance.
+                algorithm: Hash algorithm instance.
+
+            Returns:
+                bytes: Digital signature.
+
+            """
             return hashlib.sha256(data_to_sign + decoded_key_bytes).digest()
 
         return type(
@@ -1074,27 +1423,52 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
                 self.not_valid_after = "2038-01-19"
 
         def _extract_subject_from_der(self) -> str:
-            """Extract subject name from DER data."""
+            """Extract subject name from DER data.
+
+            Returns:
+                str: Certificate subject distinguished name.
+
+            """
             if len(self.data) > 32:
                 return f"CN=Subject{self.data[16:20].hex()}"
             return "CN=Certificate"
 
         def _extract_issuer_from_der(self) -> str:
-            """Extract issuer name from DER data."""
+            """Extract issuer name from DER data.
+
+            Returns:
+                str: Certificate issuer distinguished name.
+
+            """
             return f"CN=Issuer{self.data[48:52].hex()}" if len(self.data) > 64 else "CN=CA"
 
         def _extract_serial_from_der(self) -> int:
-            """Extract serial number from DER structure."""
+            """Extract serial number from DER structure.
+
+            Returns:
+                int: Certificate serial number.
+
+            """
             if len(self.data) > 8:
                 return int.from_bytes(self.data[4:8], "big", signed=False)
             return 0
 
         def _extract_not_before_from_der(self) -> str:
-            """Extract certificate validity start date."""
+            """Extract certificate validity start date.
+
+            Returns:
+                str: Certificate not-valid-before datetime string.
+
+            """
             return "1970-01-01"
 
         def _extract_not_after_from_der(self) -> str:
-            """Extract certificate validity end date."""
+            """Extract certificate validity end date.
+
+            Returns:
+                str: Certificate not-valid-after datetime string.
+
+            """
             return "2038-01-19"
 
         def public_key(self) -> "FallbackRSAPublicKey":
@@ -1155,77 +1529,166 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
 
     # Hazmat modules
     class Hazmat:
+        """Hazmat (hardware abstraction) module namespace.
+
+        Provides low-level cryptographic primitives for fallback mode.
+        """
+
         class Backends:
+            """Backend module for cryptographic operations."""
+
             default_backend = staticmethod(default_backend)
 
         class Primitives:
+            """Cryptographic primitives module."""
+
             hashes = FallbackHashes
             padding = FallbackPadding
 
             class Ciphers:
+                """Symmetric cipher operations."""
+
                 Cipher = FallbackCipher
                 algorithms = FallbackAlgorithms
                 modes = FallbackModes
 
             class Asymmetric:
+                """Asymmetric cryptography operations."""
+
                 rsa = type("rsa", (), {"generate_private_key": FallbackRSA.generate_private_key})()
 
                 class Padding:
+                    """Asymmetric padding schemes."""
+
                     class OAEP:  # noqa: B903 - Must match cryptography library API
+                        """OAEP padding for RSA encryption.
+
+                        Optimal Asymmetric Encryption Padding for public key encryption.
+                        """
+
                         def __init__(self, mgf: object, algorithm: object, label: bytes | None = None) -> None:
+                            """Initialize OAEP padding.
+
+                            Args:
+                                mgf: Mask generation function instance.
+                                algorithm: Hash algorithm instance.
+                                label: Optional label for encryption.
+
+                            """
                             self.mgf = mgf
                             self.algorithm = algorithm
                             self.label = label
 
                     class PSS:  # noqa: B903 - Must match cryptography library API
+                        """PSS padding for RSA signatures.
+
+                        Probabilistic Signature Scheme for digital signatures.
+                        """
+
                         def __init__(self, mgf: object, salt_length: int) -> None:
+                            """Initialize PSS padding.
+
+                            Args:
+                                mgf: Mask generation function instance.
+                                salt_length: Salt length in bytes.
+
+                            """
                             self.mgf = mgf
                             self.salt_length = salt_length
 
                     class MGF1:
-                        """MGF1 mask generation function."""
+                        """MGF1 mask generation function.
+
+                        Implements the MGF1 mask generation function
+                        for probabilistic encryption schemes.
+                        """
 
                         def __init__(self, algorithm: object) -> None:
                             """Initialize MGF1.
 
                             Args:
-                                algorithm: Hash algorithm.
+                                algorithm: Hash algorithm instance.
 
                             """
                             self.algorithm = algorithm
 
                     class PKCS1v15:
-                        pass
+                        """PKCS#1 v1.5 padding scheme.
+
+                        Legacy padding for RSA encryption and signatures.
+                        """
+
+                        def __init__(self) -> None:
+                            """Initialize PKCS#1 v1.5 padding.
+
+                            No parameters required for PKCS#1 v1.5.
+                            """
+                            self._initialized = True
 
             class Kdf:
+                """Key derivation functions module."""
+
                 class Pbkdf2:
+                    """PBKDF2 key derivation implementation."""
+
                     PBKDF2HMAC = FallbackPBKDF2
                     PBKDF2 = FallbackPBKDF2  # Alias for compatibility
 
             class Serialization:
+                """Key serialization formats and encryption."""
+
                 class Encoding:
+                    """Key encoding format constants."""
+
                     PEM = "PEM"
                     DER = "DER"
 
                 class PrivateFormat:
+                    """Private key format constants."""
+
                     TraditionalOpenSSL = "TraditionalOpenSSL"
                     PKCS8 = "PKCS8"
 
                 class PublicFormat:
+                    """Public key format constants."""
+
                     SubjectPublicKeyInfo = "SubjectPublicKeyInfo"
                     PKCS1 = "PKCS1"
 
                 class NoEncryption:
-                    pass
+                    """No encryption for private key material.
+
+                    Indicates unencrypted key export without encryption.
+                    """
+
+                    def __init__(self) -> None:
+                        """Initialize no-encryption setting.
+
+                        No parameters required for unencrypted key export.
+                        """
+                        self._encrypted = False
 
                 class BestAvailableEncryption:  # noqa: B903 - Must match cryptography library API
-                    """Best available encryption for private key."""
+                    """Best available encryption for private key.
+
+                    Uses strong encryption for password-protected key export.
+                    """
 
                     def __init__(self, password: bytes) -> None:
+                        """Initialize encryption with password.
+
+                        Args:
+                            password: Password for key encryption.
+
+                        """
                         self.password = password
 
     class FallbackNameOID:
-        """Object identifier constants for X509 certificate name attributes."""
+        """Object identifier constants for X509 certificate name attributes.
+
+        Provides standard attribute name identifiers for X.509 certificate
+        subject and issuer distinguished names.
+        """
 
         COMMON_NAME = "CN"
         ORGANIZATION_NAME = "O"
@@ -1235,6 +1698,12 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
         EMAIL_ADDRESS = "emailAddress"
 
     class X509:
+        """X.509 certificate handling module.
+
+        Provides certificate loading and parsing functionality
+        for X.509 certificate operations.
+        """
+
         load_pem_x509_certificate = staticmethod(_load_pem_x509_certificate)
         NameOID = FallbackNameOID
 

@@ -84,7 +84,11 @@ class FileTreeWidget(QTreeWidget):
     file_selected = pyqtSignal(str)
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Initialize the FileTreeWidget with default values."""
+        """Initialize the FileTreeWidget with default values.
+
+        Args:
+            parent: Parent widget for the file tree widget.
+        """
         super().__init__(parent)
         self.setHeaderLabel("Project Files")
         self.setRootIsDecorated(True)
@@ -200,7 +204,11 @@ class FileTreeWidget(QTreeWidget):
             self.restore_expanded_items(expanded_items)
 
     def get_expanded_items(self) -> list[str]:
-        """Get list of expanded item paths."""
+        """Get list of expanded item paths.
+
+        Returns:
+            List of file paths for all expanded items in the tree.
+        """
         expanded: list[str] = []
 
         def traverse(item: QTreeWidgetItem) -> None:
@@ -275,7 +283,11 @@ class CodeEditor(QPlainTextEdit):
     content_changed = pyqtSignal(str)
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Initialize the CodeEditor with default values."""
+        """Initialize the CodeEditor with default values.
+
+        Args:
+            parent: Parent widget for the code editor.
+        """
         super().__init__(parent)
         self.current_file: str | None = None
         self.is_modified: bool = False
@@ -414,7 +426,11 @@ class ChatWidget(QWidget):
     message_sent = pyqtSignal(str)
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Initialize the ChatWidget with default values."""
+        """Initialize the ChatWidget with default values.
+
+        Args:
+            parent: Parent widget for the chat widget.
+        """
         super().__init__(parent)
         self.conversation_history: list[dict[str, str]] = []
         self.available_models: list[str] = []
@@ -670,7 +686,11 @@ class AICodingAssistantWidget(QWidget):
     """AI Coding Assistant Widget with three-panel layout - extracted from dialog for reuse."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Initialize the AICodingAssistantWidget with development environment features."""
+        """Initialize the AICodingAssistantWidget with development environment features.
+
+        Args:
+            parent: Parent widget for the AI coding assistant widget.
+        """
         super().__init__(parent)
 
         # Main state
@@ -1012,7 +1032,11 @@ class LicenseAnalyzer:
         self.protection_info = {}
 
     def analyze_protection(self) -> Dict[str, Any]:
-        """Analyze license protection mechanisms."""
+        """Analyze license protection mechanisms.
+
+        Returns:
+            Dictionary containing protection analysis information.
+        """
         import pefile
         import re
         import subprocess
@@ -2061,7 +2085,11 @@ def validate_license_key(key: str) -> bool:
                     self.protection_info: dict[str, Any] = {}
 
                 def analyze_protection(self) -> dict[str, Any]:
-                    """Perform comprehensive license protection analysis."""
+                    """Perform comprehensive license protection analysis.
+
+                    Returns:
+                        Dictionary containing detailed protection analysis.
+                    """
                     import re
 
                     import pefile
@@ -4184,7 +4212,14 @@ Keep the response focused and actionable while maintaining technical accuracy.""
                 self.chat_widget.add_message("AI", error_response)
 
     def _classify_quick_license_query(self, message: str) -> str:
-        """Classify the type of quick license query for context."""
+        """Classify the type of quick license query for context.
+
+        Args:
+            message: The license query message to classify.
+
+        Returns:
+            The classification category for the query.
+        """
         try:
             message_lower = message.lower()
 
@@ -4209,7 +4244,14 @@ Keep the response focused and actionable while maintaining technical accuracy.""
             return "general_license_research"
 
     def _format_quick_license_response(self, response: str, original_query: str) -> str:
-        """Format AI response for quick license queries."""
+        """Format AI response for quick license queries.
+
+        Args:
+            response: The AI-generated response to format for display.
+            original_query: The original query that prompted the response.
+
+        Returns:
+            Formatted string with enhanced presentation for quick license queries."""
         try:
             formatted = " **Quick License Research Response:**\n\n"
             formatted += f"{response}\n\n"
@@ -4224,7 +4266,13 @@ Keep the response focused and actionable while maintaining technical accuracy.""
             return f"Quick Response:\n{response}"
 
     def _generate_quick_license_fallback(self, message: str) -> str:
-        """Generate quick fallback response when AI is unavailable."""
+        """Generate quick fallback response when AI is unavailable.
+
+        Args:
+            message: The user's query message requiring a fallback response.
+
+        Returns:
+            Formatted string with offline guidance for license protection research."""
         try:
             query_type = self._classify_quick_license_query(message)
 
@@ -4325,7 +4373,11 @@ class AICodingAssistantDialog(QDialog):
     """AI Coding Assistant with three-panel layout similar to Claude Code."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Initialize the AICodingAssistantDialog as a container for the widget."""
+        """Initialize the AICodingAssistantDialog as a container for the widget.
+
+        Args:
+            parent: Parent widget for the dialog.
+        """
         super().__init__(parent)
         self.setWindowTitle("AI Coding Assistant")
         self.setMinimumSize(1200, 800)
@@ -4388,7 +4440,11 @@ class AICodingAssistantDialog(QDialog):
         self.setup_status_bar(layout)
 
     def setup_menu_bar(self, layout: QVBoxLayout) -> None:
-        """Set up the menu bar."""
+        """Set up the menu bar.
+
+        Args:
+            layout: The main vertical layout to add the menu bar to.
+        """
         menubar = QMenuBar()
 
         if file_menu := menubar.addMenu("File"):
@@ -4424,7 +4480,11 @@ class AICodingAssistantDialog(QDialog):
         layout.setMenuBar(menubar)
 
     def create_file_panel(self) -> QWidget:
-        """Create the left file navigation panel."""
+        """Create the left file navigation panel.
+
+        Returns:
+            QWidget: A frame containing the file tree widget for project navigation.
+        """
         panel = QFrame()
         panel.setFrameStyle(QFrame.Shape.StyledPanel)
         panel.setMaximumWidth(300)
@@ -4456,7 +4516,11 @@ class AICodingAssistantDialog(QDialog):
         return panel
 
     def create_editor_panel(self) -> QWidget:
-        """Create the center code editor panel."""
+        """Create the center code editor panel.
+
+        Returns:
+            QWidget: A frame containing tabs for editing code files.
+        """
         panel = QFrame()
         panel.setFrameStyle(QFrame.Shape.StyledPanel)
 
@@ -4496,7 +4560,11 @@ class AICodingAssistantDialog(QDialog):
         return panel
 
     def create_ai_panel(self) -> QWidget:
-        """Create the right AI assistant panel."""
+        """Create the right AI assistant panel.
+
+        Returns:
+            QWidget: A frame containing the AI assistant chat interface and tools.
+        """
         panel = QFrame()
         panel.setFrameStyle(QFrame.Shape.StyledPanel)
         panel.setMaximumWidth(400)
@@ -4546,7 +4614,11 @@ class AICodingAssistantDialog(QDialog):
         return panel
 
     def setup_status_bar(self, layout: QVBoxLayout) -> None:
-        """Set up the status bar."""
+        """Set up the status bar.
+
+        Args:
+            layout: The main vertical layout to add the status bar to.
+        """
         self.status_bar = QStatusBar()
 
         # Current file label
@@ -4579,7 +4651,11 @@ class AICodingAssistantDialog(QDialog):
             self.status_bar.showMessage(f"Loaded project: {project_root.name}", 3000)
 
     def set_project_root(self, root_path: str) -> None:
-        """Set the project root directory."""
+        """Set the project root directory.
+
+        Args:
+            root_path: The path to set as the project root directory.
+        """
         self.current_project = Path(root_path)
         self.file_tree.set_root_directory(root_path)
         self.update_context_info()
@@ -4590,7 +4666,11 @@ class AICodingAssistantDialog(QDialog):
             self.set_project_root(directory)
 
     def open_file_in_editor(self, file_path: str) -> None:
-        """Open a file in the code editor."""
+        """Open a file in the code editor.
+
+        Args:
+            file_path: The path to the file to open in the editor.
+        """
         # Check if file is already open
         for i in range(self.editor_tabs.count()):
             editor = self.editor_tabs.widget(i)
@@ -4615,7 +4695,11 @@ class AICodingAssistantDialog(QDialog):
         self.update_context_info()
 
     def close_tab(self, index: int) -> None:
-        """Close an editor tab."""
+        """Close an editor tab.
+
+        Args:
+            index: The index of the tab to close.
+        """
         editor = self.editor_tabs.widget(index)
         if editor and hasattr(editor, "is_modified") and getattr(editor, "is_modified", False):
             reply = QMessageBox.question(
@@ -4658,12 +4742,20 @@ class AICodingAssistantDialog(QDialog):
         self.update_modified_status()
 
     def get_current_editor(self) -> CodeEditor | None:
-        """Get the currently active code editor."""
+        """Get the currently active code editor.
+
+        Returns:
+            The currently active CodeEditor widget, or None if no editor is active.
+        """
         current_widget = self.editor_tabs.currentWidget()
         return current_widget if isinstance(current_widget, CodeEditor) else None
 
     def on_file_modified(self, file_path: str) -> None:
-        """Handle file modification."""
+        """Handle file modification.
+
+        Args:
+            file_path: The path to the file that was modified.
+        """
         self.modified_files.add(file_path)
         self.update_modified_status()
         self.update_context_info()
@@ -4693,7 +4785,11 @@ class AICodingAssistantDialog(QDialog):
             self.context_info.setPlainText("No file selected")
 
     def handle_ai_message(self, message: str) -> None:
-        """Handle AI assistant message."""
+        """Handle AI assistant message.
+
+        Args:
+            message: The message from the user to process.
+        """
         try:
             self.ai_status_label.setText("AI Processing...")
 
@@ -4714,7 +4810,11 @@ class AICodingAssistantDialog(QDialog):
             self.ai_status_label.setText("AI Error")
 
     def get_ai_context(self) -> dict[str, Any]:
-        """Get context information for AI processing."""
+        """Get context information for AI processing.
+
+        Returns:
+            Dictionary containing project root, current file, selected text, file content, and file type.
+        """
         context = {
             "project_root": str(self.current_project) if self.current_project else None,
             "current_file": None,
@@ -4733,7 +4833,15 @@ class AICodingAssistantDialog(QDialog):
         return context
 
     def process_ai_request(self, message: str, context: dict[str, Any]) -> str:
-        """Process AI request and return response."""
+        """Process AI request and return response.
+
+        Args:
+            message: The user message to process.
+            context: The context dictionary containing file and selection information.
+
+        Returns:
+            The AI assistant response string.
+        """
         try:
             # Handle specific commands first
             if "explain" in message.lower() and context.get("selected_text"):
@@ -4868,7 +4976,11 @@ def example_function():
             self.chat_widget.add_message("System", error_msg)
 
     def run_python_script(self, file_path: str) -> None:
-        """Run a Python script."""
+        """Run a Python script.
+
+        Args:
+            file_path: The path to the Python script file to execute.
+        """
         try:
             result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                 ["python", file_path],
@@ -4889,7 +5001,11 @@ def example_function():
             self.chat_widget.add_message("System", f"Script execution error: {e}")
 
     def run_javascript_script(self, file_path: str) -> None:
-        """Run a JavaScript script (if Node.js is available)."""
+        """Run a JavaScript script (if Node.js is available).
+
+        Args:
+            file_path: The path to the JavaScript script file to execute.
+        """
         try:
             result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                 ["node", file_path],
@@ -4926,7 +5042,11 @@ def example_function():
             QMessageBox.information(self, "Info", "Code formatting not supported for this file type.")
 
     def format_python_code(self, editor: CodeEditor) -> None:
-        """Format Python code using black if available."""
+        """Format Python code using black if available.
+
+        Args:
+            editor: The code editor containing the Python code to format.
+        """
         try:
             # Try to format with black
             content = editor.toPlainText()
@@ -5016,7 +5136,14 @@ def example_function():
             self.ai_status_label.setText("AI Error")
 
     def _format_analysis_results(self, analysis_result: dict[str, Any]) -> str:
-        """Format code analysis results for display."""
+        """Format code analysis results for display.
+
+        Args:
+            analysis_result: Dictionary containing analysis results with keys like language, lines_of_code, complexity, insights, security_issues, and suggestions.
+
+        Returns:
+            Formatted string representation of the analysis results.
+        """
         lines = [
             " **Code Analysis Results**\n",
             f"**Language:** {analysis_result.get('language', 'Unknown')}",
@@ -5052,7 +5179,11 @@ def example_function():
         return "\n".join(lines)
 
     def _highlight_security_issues(self, security_issues: list[str]) -> None:
-        """Highlight security issues in the code editor."""
+        """Highlight security issues in the code editor.
+
+        Args:
+            security_issues: List of security issue descriptions to highlight.
+        """
         current_editor = self.get_current_editor()
         if not current_editor:
             return

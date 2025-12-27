@@ -349,11 +349,6 @@ class TaintAnalysisEngine:
 
         Returns:
             bool: True if analysis completed successfully, False otherwise.
-
-        Raises:
-            OSError: If binary file cannot be read or accessed.
-            ValueError: If analysis data is invalid.
-            RuntimeError: If analysis engine encounters critical errors.
         """
         if not self.binary_path:
             self.logger.exception("No binary set")
@@ -434,9 +429,6 @@ class TaintAnalysisEngine:
 
         This implementation uses static analysis to track data flow from taint sources
         to taint sinks, identifying potential license validation paths.
-
-        Raises:
-            Exception: Catches and logs all exceptions, falling back to basic analysis.
         """
         try:
             # Load and disassemble the binary
@@ -525,10 +517,6 @@ class TaintAnalysisEngine:
 
         Returns:
             list[dict[str, Any]] | None: List of instruction dictionaries or None if disassembly fails.
-
-        Raises:
-            ImportError: If no disassembly engines are available.
-            IOError: If binary file cannot be read.
         """
         instructions = []
 
@@ -667,10 +655,6 @@ class TaintAnalysisEngine:
 
         Returns:
             dict[int, list[int]]: Dictionary mapping instruction addresses to successor address lists.
-
-        Raises:
-            ValueError: If instruction operands cannot be parsed.
-            IndexError: If instruction list is malformed.
         """
         cfg = {}
 
@@ -879,9 +863,6 @@ class TaintAnalysisEngine:
 
         Returns:
             list[list[dict[str, Any]]]: List of taint propagation paths from source to sinks.
-
-        Raises:
-            ValueError: If control flow graph is invalid.
         """
         paths = []
         visited: set[int] = set()
@@ -992,9 +973,6 @@ class TaintAnalysisEngine:
 
         Returns:
             str | None: HTML string if filename is None, filepath if saved, or None on error.
-
-        Raises:
-            OSError: If report file cannot be written.
         """
         if not self.results:
             self.logger.exception("No analysis results to report")
@@ -1169,9 +1147,6 @@ class TaintAnalysisEngine:
 
         Returns:
             dict[int, dict[str, Any]]: Dictionary mapping instruction addresses to data flow information.
-
-        Raises:
-            ValueError: If instruction data is malformed.
         """
         data_flow = {}
 
@@ -1259,9 +1234,6 @@ class TaintAnalysisEngine:
 
         Returns:
             dict[int, dict[str, Any]]: Dictionary mapping instruction addresses to register states.
-
-        Raises:
-            ValueError: If instruction addresses are invalid.
         """
         register_states = {}
 
@@ -1347,9 +1319,6 @@ class TaintAnalysisEngine:
 
         Returns:
             list[dict[str, Any]]: List of inter-procedural taint propagation paths.
-
-        Raises:
-            Exception: Catches and logs taint tracking errors.
         """
         interprocedural_paths = []
 
@@ -1407,9 +1376,6 @@ class TaintAnalysisEngine:
 
         Returns:
             list[dict[str, Any]]: List of critical validation points with metadata.
-
-        Raises:
-            ValueError: If path or sink data is malformed.
         """
         critical_points = []
         self.logger.debug("Analyzing %s taint paths and %s sink instructions", len(taint_paths), len(sink_instructions))
@@ -1525,9 +1491,6 @@ class TaintAnalysisEngine:
 
         Returns:
             int | None: Resolved target address or None if unresolvable.
-
-        Raises:
-            ValueError: If target address cannot be parsed.
         """
         op_str = call_instr.get("op_str", "")
 
@@ -1979,10 +1942,6 @@ def run_taint_analysis(app: object) -> None:
 
     Args:
         app: Application object with binary_path and update_output attributes.
-
-    Raises:
-        AttributeError: If required app attributes are missing.
-        Exception: Catches and logs any analysis errors.
     """
     # Check if binary is loaded
     if not hasattr(app, "binary_path") or not app.binary_path:

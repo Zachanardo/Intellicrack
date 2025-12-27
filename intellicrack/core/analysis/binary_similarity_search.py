@@ -48,7 +48,12 @@ class BinarySimilaritySearch:
     """
 
     def __init__(self, database_path: str = "binary_database.json") -> None:
-        """Initialize the binary similarity search engine with database configuration."""
+        """Initialize the binary similarity search engine with database configuration.
+
+        Args:
+            database_path: Path to the database file to load or create.
+
+        """
         self.database_path = database_path
         self.database: dict[str, Any] = {}
         self.hash_functions: list[Any] = []
@@ -66,7 +71,7 @@ class BinarySimilaritySearch:
         """Load the binary database from file.
 
         Returns:
-            Database dictionary with binary entries
+            dict[str, Any]: Database dictionary with binary entries.
 
         """
         if not os.path.exists(self.database_path):
@@ -91,11 +96,11 @@ class BinarySimilaritySearch:
         """Add a binary to the database with its features and patterns.
 
         Args:
-            binary_path: Path to the binary file
-            cracking_patterns: List of associated cracking patterns
+            binary_path: Path to the binary file.
+            cracking_patterns: List of associated cracking patterns.
 
         Returns:
-            True if successful, False otherwise
+            bool: True if successful, False otherwise.
 
         """
         try:
@@ -132,10 +137,10 @@ class BinarySimilaritySearch:
         """Extract structural features from a binary file.
 
         Args:
-            binary_path: Path to the binary file
+            binary_path: Path to the binary file.
 
         Returns:
-            Dictionary of extracted features
+            dict[str, Any]: Dictionary of extracted features including entropy, sections, imports, and exports.
 
         """
         features = {
@@ -217,7 +222,16 @@ class BinarySimilaritySearch:
             return features
 
     def _extract_strings(self, data: bytes, min_length: int = 4) -> list[str]:
-        """Extract ASCII strings from binary data using common utility."""
+        """Extract ASCII strings from binary data using common utility.
+
+        Args:
+            data: Binary data to extract strings from.
+            min_length: Minimum length of strings to extract.
+
+        Returns:
+            list[str]: List of extracted ASCII strings.
+
+        """
         from ...utils.core.string_utils import extract_ascii_strings
 
         return extract_ascii_strings(data, min_length)
@@ -226,11 +240,11 @@ class BinarySimilaritySearch:
         """Search for binaries similar to the given binary.
 
         Args:
-            binary_path: Path to the target binary
-            threshold: Similarity threshold (0.0 to 1.0)
+            binary_path: Path to the target binary.
+            threshold: Similarity threshold (0.0 to 1.0).
 
         Returns:
-            List of similar binaries with similarity scores
+            list[dict[str, Any]]: List of similar binaries with similarity scores.
 
         """
         try:
@@ -273,11 +287,11 @@ class BinarySimilaritySearch:
         - Advanced algorithms (LSH, edit distance, n-gram analysis)
 
         Args:
-            features1: First set of features
-            features2: Second set of features
+            features1: First set of features.
+            features2: Second set of features.
 
         Returns:
-            Similarity score (0.0 to 1.0)
+            float: Similarity score between 0.0 and 1.0.
 
         """
         try:
@@ -318,11 +332,11 @@ class BinarySimilaritySearch:
         """Calculate similarity between two sets of sections.
 
         Args:
-            sections1: First set of sections
-            sections2: Second set of sections
+            sections1: First set of sections.
+            sections2: Second set of sections.
 
         Returns:
-            Similarity score (0.0 to 1.0)
+            float: Similarity score between 0.0 and 1.0.
 
         """
         try:
@@ -356,11 +370,11 @@ class BinarySimilaritySearch:
         """Calculate Jaccard similarity between two lists.
 
         Args:
-            list1: First list
-            list2: Second list
+            list1: First list.
+            list2: Second list.
 
         Returns:
-            Similarity score (0.0 to 1.0)
+            float: Similarity score between 0.0 and 1.0.
 
         """
         try:
@@ -382,7 +396,16 @@ class BinarySimilaritySearch:
             return 0.0
 
     def _calculate_basic_similarity(self, features1: dict[str, Any], features2: dict[str, Any]) -> float:
-        """Fallback basic similarity calculation."""
+        """Fallback basic similarity calculation.
+
+        Args:
+            features1: First set of features.
+            features2: Second set of features.
+
+        Returns:
+            float: Similarity score between 0.0 and 1.0.
+
+        """
         try:
             # Calculate section similarity
             section_similarity = self._calculate_section_similarity(
@@ -443,7 +466,16 @@ class BinarySimilaritySearch:
             return 0.0
 
     def _calculate_structural_similarity(self, features1: dict[str, Any], features2: dict[str, Any]) -> float:
-        """Calculate structural similarity using section layout and metadata."""
+        """Calculate structural similarity using section layout and metadata.
+
+        Args:
+            features1: First set of features.
+            features2: Second set of features.
+
+        Returns:
+            float: Similarity score between 0.0 and 1.0.
+
+        """
         try:
             # Section similarity with enhanced comparison
             section_similarity = self._calculate_section_similarity(
@@ -472,7 +504,16 @@ class BinarySimilaritySearch:
             return 0.0
 
     def _calculate_content_similarity(self, features1: dict[str, Any], features2: dict[str, Any]) -> float:
-        """Calculate content similarity using string analysis and n-grams."""
+        """Calculate content similarity using string analysis and n-grams.
+
+        Args:
+            features1: First set of features.
+            features2: Second set of features.
+
+        Returns:
+            float: Similarity score between 0.0 and 1.0.
+
+        """
         try:
             # Enhanced string similarity with fuzzy matching
             string_similarity = self._calculate_fuzzy_string_similarity(
@@ -496,7 +537,16 @@ class BinarySimilaritySearch:
             return 0.0
 
     def _calculate_statistical_similarity(self, features1: dict[str, Any], features2: dict[str, Any]) -> float:
-        """Calculate statistical similarity using file metrics."""
+        """Calculate statistical similarity using file metrics.
+
+        Args:
+            features1: First set of features.
+            features2: Second set of features.
+
+        Returns:
+            float: Similarity score between 0.0 and 1.0.
+
+        """
         try:
             # File size similarity with logarithmic scaling
             size_similarity = self._calculate_logarithmic_size_similarity(
@@ -523,7 +573,16 @@ class BinarySimilaritySearch:
             return 0.0
 
     def _calculate_advanced_similarity(self, features1: dict[str, Any], features2: dict[str, Any]) -> float:
-        """Calculate similarity using advanced algorithms like LSH and edit distance."""
+        """Calculate similarity using advanced algorithms like LSH and edit distance.
+
+        Args:
+            features1: First set of features.
+            features2: Second set of features.
+
+        Returns:
+            float: Similarity score between 0.0 and 1.0.
+
+        """
         try:
             # Locality Sensitive Hashing for large feature sets
             lsh_similarity = self._calculate_lsh_similarity(
@@ -547,7 +606,16 @@ class BinarySimilaritySearch:
             return 0.0
 
     def _calculate_fuzzy_hash_similarity(self, features1: dict[str, Any], features2: dict[str, Any]) -> float:
-        """Calculate similarity using fuzzy hashing (SSDEEP-like algorithm)."""
+        """Calculate similarity using fuzzy hashing (SSDEEP-like algorithm).
+
+        Args:
+            features1: First set of features.
+            features2: Second set of features.
+
+        Returns:
+            float: Similarity score between 0.0 and 1.0.
+
+        """
         try:
             # Generate simple rolling hash for each binary's content
             hash1 = self._generate_rolling_hash(features1.get("strings", []))
@@ -565,7 +633,16 @@ class BinarySimilaritySearch:
             return 0.0
 
     def _calculate_control_flow_similarity(self, features1: dict[str, Any], features2: dict[str, Any]) -> float:
-        """Calculate similarity based on control flow patterns."""
+        """Calculate similarity based on control flow patterns.
+
+        Args:
+            features1: First set of features.
+            features2: Second set of features.
+
+        Returns:
+            float: Similarity score between 0.0 and 1.0.
+
+        """
         try:
             # Analyze section characteristics for control flow indicators
             sections1 = features1.get("sections", [])
@@ -590,7 +667,16 @@ class BinarySimilaritySearch:
             return 0.0
 
     def _calculate_opcode_similarity(self, features1: dict[str, Any], features2: dict[str, Any]) -> float:
-        """Calculate similarity based on opcode sequence patterns."""
+        """Calculate similarity based on opcode sequence patterns.
+
+        Args:
+            features1: First set of features.
+            features2: Second set of features.
+
+        Returns:
+            float: Similarity score between 0.0 and 1.0.
+
+        """
         try:
             # Use import patterns as proxy for opcode patterns
             imports1 = features1.get("imports", [])
@@ -630,7 +716,16 @@ class BinarySimilaritySearch:
             return 0.0
 
     def _calculate_adaptive_weights(self, features1: dict[str, Any], features2: dict[str, Any]) -> dict[str, float]:
-        """Calculate adaptive weights based on feature availability and quality."""
+        """Calculate adaptive weights based on feature availability and quality.
+
+        Args:
+            features1: First set of features.
+            features2: Second set of features.
+
+        Returns:
+            dict[str, float]: Dictionary of component weights normalized to sum to 1.0.
+
+        """
         weights = {
             "structural": 0.25,
             "content": 0.20,
@@ -662,7 +757,16 @@ class BinarySimilaritySearch:
         return weights
 
     def _calculate_weighted_api_similarity(self, imports1: list[str], imports2: list[str]) -> float:
-        """Calculate weighted API similarity with importance scoring."""
+        """Calculate weighted API similarity with importance scoring.
+
+        Args:
+            imports1: First set of import names.
+            imports2: Second set of import names.
+
+        Returns:
+            float: Weighted similarity score between 0.0 and 1.0.
+
+        """
         try:
             if not imports1 or not imports2:
                 return 0.0
@@ -700,7 +804,16 @@ class BinarySimilaritySearch:
             return 0.0
 
     def _calculate_pe_header_similarity(self, features1: dict[str, Any], features2: dict[str, Any]) -> float:
-        """Calculate PE header metadata similarity."""
+        """Calculate PE header metadata similarity.
+
+        Args:
+            features1: First set of features.
+            features2: Second set of features.
+
+        Returns:
+            float: Similarity score between 0.0 and 1.0.
+
+        """
         try:
             similarity_scores = []
 
@@ -728,7 +841,16 @@ class BinarySimilaritySearch:
             return 0.0
 
     def _calculate_fuzzy_string_similarity(self, strings1: list[str], strings2: list[str]) -> float:
-        """Calculate fuzzy string similarity using approximate matching."""
+        """Calculate fuzzy string similarity using approximate matching.
+
+        Args:
+            strings1: First set of strings.
+            strings2: Second set of strings.
+
+        Returns:
+            float: Similarity score between 0.0 and 1.0.
+
+        """
         try:
             if not strings1 or not strings2:
                 self.fuzzy_match_stats = {
@@ -768,7 +890,16 @@ class BinarySimilaritySearch:
             return 0.0
 
     def _calculate_string_similarity(self, s1: str, s2: str) -> float:
-        """Calculate similarity between two strings using edit distance."""
+        """Calculate similarity between two strings using edit distance.
+
+        Args:
+            s1: First string.
+            s2: Second string.
+
+        Returns:
+            float: Similarity score between 0.0 and 1.0.
+
+        """
         try:
             if not s1 or not s2:
                 return 0.0
@@ -794,7 +925,16 @@ class BinarySimilaritySearch:
             return 0.0
 
     def _calculate_ngram_similarity(self, strings1: list[str], strings2: list[str]) -> float:
-        """Calculate n-gram similarity for pattern detection."""
+        """Calculate n-gram similarity for pattern detection.
+
+        Args:
+            strings1: First set of strings.
+            strings2: Second set of strings.
+
+        Returns:
+            float: Similarity score between 0.0 and 1.0.
+
+        """
         try:
             if not strings1 or not strings2:
                 return 0.0
@@ -824,7 +964,16 @@ class BinarySimilaritySearch:
             return 0.0
 
     def _calculate_entropy_pattern_similarity(self, features1: dict[str, Any], features2: dict[str, Any]) -> float:
-        """Calculate similarity based on entropy distribution patterns."""
+        """Calculate similarity based on entropy distribution patterns.
+
+        Args:
+            features1: First set of features.
+            features2: Second set of features.
+
+        Returns:
+            float: Similarity score between 0.0 and 1.0.
+
+        """
         try:
             sections1 = features1.get("sections", [])
             sections2 = features2.get("sections", [])
@@ -859,7 +1008,16 @@ class BinarySimilaritySearch:
             return 0.0
 
     def _calculate_logarithmic_size_similarity(self, size1: int, size2: int) -> float:
-        """Calculate file size similarity using logarithmic scaling."""
+        """Calculate file size similarity using logarithmic scaling.
+
+        Args:
+            size1: First file size in bytes.
+            size2: Second file size in bytes.
+
+        Returns:
+            float: Similarity score between 0.0 and 1.0.
+
+        """
         try:
             if size1 <= 0 or size2 <= 0:
                 return 0.0
@@ -880,7 +1038,16 @@ class BinarySimilaritySearch:
             return 0.0
 
     def _calculate_entropy_similarity(self, entropy1: float, entropy2: float) -> float:
-        """Calculate entropy similarity with improved scaling."""
+        """Calculate entropy similarity with improved scaling.
+
+        Args:
+            entropy1: First entropy value.
+            entropy2: Second entropy value.
+
+        Returns:
+            float: Similarity score between 0.0 and 1.0.
+
+        """
         try:
             if entropy1 <= 0 or entropy2 <= 0:
                 return 0.0
@@ -897,7 +1064,16 @@ class BinarySimilaritySearch:
             return 0.0
 
     def _calculate_section_distribution_similarity(self, sections1: list[dict[str, Any]], sections2: list[dict[str, Any]]) -> float:
-        """Calculate similarity based on section size distribution."""
+        """Calculate similarity based on section size distribution.
+
+        Args:
+            sections1: First set of sections.
+            sections2: Second set of sections.
+
+        Returns:
+            float: Similarity score between 0.0 and 1.0.
+
+        """
         try:
             if not sections1 or not sections2:
                 return 0.0
@@ -928,7 +1104,16 @@ class BinarySimilaritySearch:
             return 0.0
 
     def _calculate_lsh_similarity(self, features1: list[str], features2: list[str]) -> float:
-        """Calculate similarity using Locality Sensitive Hashing approximation."""
+        """Calculate similarity using Locality Sensitive Hashing approximation.
+
+        Args:
+            features1: First set of features.
+            features2: Second set of features.
+
+        Returns:
+            float: Similarity score between 0.0 and 1.0.
+
+        """
         try:
             if not features1 or not features2:
                 return 0.0
@@ -958,7 +1143,16 @@ class BinarySimilaritySearch:
             return 0.0
 
     def _calculate_edit_distance_similarity(self, strings1: list[str], strings2: list[str]) -> float:
-        """Calculate similarity using edit distance on string sequences."""
+        """Calculate similarity using edit distance on string sequences.
+
+        Args:
+            strings1: First set of strings.
+            strings2: Second set of strings.
+
+        Returns:
+            float: Similarity score between 0.0 and 1.0.
+
+        """
         try:
             if not strings1 or not strings2:
                 return 0.0
@@ -997,7 +1191,16 @@ class BinarySimilaritySearch:
             return 0.0
 
     def _calculate_cosine_similarity(self, features1: dict[str, Any], features2: dict[str, Any]) -> float:
-        """Calculate cosine similarity for feature vectors."""
+        """Calculate cosine similarity for feature vectors.
+
+        Args:
+            features1: First set of features.
+            features2: Second set of features.
+
+        Returns:
+            float: Similarity score between 0.0 and 1.0.
+
+        """
         try:
             # Create feature vectors from various attributes
             def create_feature_vector(features: dict[str, Any]) -> list[float]:
@@ -1024,7 +1227,15 @@ class BinarySimilaritySearch:
             return 0.0
 
     def _generate_rolling_hash(self, strings: list[str]) -> str:
-        """Generate a rolling hash for fuzzy matching."""
+        """Generate a rolling hash for fuzzy matching.
+
+        Args:
+            strings: List of strings to hash.
+
+        Returns:
+            str: Hexadecimal hash string.
+
+        """
         try:
             if not strings:
                 return ""
@@ -1043,7 +1254,16 @@ class BinarySimilaritySearch:
             return ""
 
     def _calculate_hash_similarity(self, hash1: str, hash2: str) -> float:
-        """Calculate similarity between two hashes."""
+        """Calculate similarity between two hashes.
+
+        Args:
+            hash1: First hash string.
+            hash2: Second hash string.
+
+        Returns:
+            float: Similarity score between 0.0 and 1.0.
+
+        """
         try:
             if not hash1 or not hash2 or len(hash1) != len(hash2):
                 return 0.0
@@ -1062,7 +1282,7 @@ class BinarySimilaritySearch:
         """Get statistics about the binary database.
 
         Returns:
-            Dictionary with database statistics
+            dict[str, Any]: Dictionary containing total binaries, patterns, average file size, and unique imports/exports.
 
         """
         binaries_list = self.database.get("binaries", [])
@@ -1111,10 +1331,7 @@ class BinarySimilaritySearch:
         """Get statistics from the most recent fuzzy string similarity calculation.
 
         Returns:
-            Dictionary containing:
-                - total_comparisons: Number of string pairs compared
-                - matches_found: Number of fuzzy matches found (similarity > 0.7)
-                - sample_size: Size of the string sample analyzed
+            dict[str, int]: Dictionary containing total_comparisons, matches_found, and sample_size.
 
         """
         return self.fuzzy_match_stats.copy()
@@ -1123,10 +1340,10 @@ class BinarySimilaritySearch:
         """Remove a binary from the database.
 
         Args:
-            binary_path: Path of the binary to remove
+            binary_path: Path of the binary to remove.
 
         Returns:
-            True if removed successfully, False otherwise
+            bool: True if removed successfully, False otherwise.
 
         """
         try:
@@ -1148,10 +1365,10 @@ class BinarySimilaritySearch:
         """Load a specific database file.
 
         Args:
-            database_path: Path to the database file to load
+            database_path: Path to the database file to load.
 
         Returns:
-            True if successful, False otherwise
+            bool: True if successful, False otherwise.
 
         """
         try:
@@ -1167,11 +1384,11 @@ class BinarySimilaritySearch:
         """Find similar binaries to the given binary.
 
         Args:
-            binary_path: Path to the binary file to find similarities for
-            threshold: Similarity threshold (0.0 to 1.0)
+            binary_path: Path to the binary file to find similarities for.
+            threshold: Similarity threshold (0.0 to 1.0).
 
         Returns:
-            List of similar binaries with their similarity scores
+            list[dict[str, Any]]: List of similar binaries with their similarity scores.
 
         """
         return self.search_similar_binaries(binary_path, threshold)
@@ -1181,10 +1398,10 @@ def create_similarity_search(database_path: str = "binary_database.json") -> Bin
     """Create a BinarySimilaritySearch instance.
 
     Args:
-        database_path: Path to the database file
+        database_path: Path to the database file.
 
     Returns:
-        Configured BinarySimilaritySearch instance
+        BinarySimilaritySearch: Configured BinarySimilaritySearch instance.
 
     """
     return BinarySimilaritySearch(database_path)

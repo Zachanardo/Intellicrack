@@ -86,7 +86,12 @@ class BaseFileHandler:
     """
 
     def __init__(self, file_path: Path | str | None = None) -> None:
-        """Initialize the file handler with optional file path."""
+        """Initialize the file handler with optional file path.
+
+        Args:
+            file_path: Path to the file to load.
+
+        """
         self.read_only: bool = True
         self._file_path: Path | None = Path(file_path) if file_path else None
         self._data: bytes = b""
@@ -102,18 +107,41 @@ class BaseFileHandler:
             self._file_size = len(self._data)
 
     def get_file_size(self) -> int:
-        """Get the total size of the file in bytes."""
+        """Get the total size of the file in bytes.
+
+        Returns:
+            int: Total file size in bytes.
+
+        """
         return self._file_size
 
     def read(self, offset: int, size: int) -> bytes:
-        """Read data from the file at the given offset."""
+        """Read data from the file at the given offset.
+
+        Args:
+            offset: Starting offset to read from.
+            size: Number of bytes to read.
+
+        Returns:
+            bytes: Data read from the file, or empty bytes if offset is invalid.
+
+        """
         if offset < 0 or offset >= self._file_size:
             return b""
         end_offset = min(offset + size, self._file_size)
         return self._data[offset:end_offset]
 
     def delete(self, offset: int, length: int) -> bool:
-        """Delete data from the file at the given offset."""
+        """Delete data from the file at the given offset.
+
+        Args:
+            offset: Starting offset for deletion.
+            length: Number of bytes to delete.
+
+        Returns:
+            bool: True if deletion succeeded, False if read-only or invalid offset.
+
+        """
         if self.read_only:
             return False
         if offset < 0 or offset >= self._file_size:
@@ -124,7 +152,16 @@ class BaseFileHandler:
         return True
 
     def insert(self, offset: int, data: bytes) -> bool:
-        """Insert data into the file at the given offset."""
+        """Insert data into the file at the given offset.
+
+        Args:
+            offset: Position to insert at.
+            data: Bytes to insert.
+
+        Returns:
+            bool: True if insertion succeeded, False if read-only or invalid offset.
+
+        """
         if self.read_only:
             return False
         if offset < 0 or offset > self._file_size:
@@ -147,18 +184,36 @@ class SearchResult:
     """Represents a single search result."""
 
     def __init__(self, offset: int, length: int, data: bytes, context: bytes | None = None) -> None:
-        """Initialize the SearchResult with offset, length, data, and context."""
+        """Initialize the SearchResult with offset, length, data, and context.
+
+        Args:
+            offset: Byte offset where match was found.
+            length: Length of matched data.
+            data: The matched bytes.
+            context: Surrounding context bytes.
+
+        """
         self.offset = offset
         self.length = length
         self.data = data
         self.context = context if context is not None else b""
 
     def __str__(self) -> str:
-        """Return string representation of the search result."""
+        """Return string representation of the search result.
+
+        Returns:
+            str: String representation showing offset and length.
+
+        """
         return f"SearchResult(offset=0x{self.offset:X}, length={self.length})"
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary for serialization."""
+        """Convert to dictionary for serialization.
+
+        Returns:
+            dict[str, Any]: Dictionary with offset, length, data (hex), and context (hex).
+
+        """
         return {
             "offset": self.offset,
             "length": self.length,
@@ -168,7 +223,15 @@ class SearchResult:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> SearchResult:
-        """Create from dictionary."""
+        """Create from dictionary.
+
+        Args:
+            data: Dictionary containing offset, length, data (hex), and context (hex).
+
+        Returns:
+            SearchResult: New SearchResult instance.
+
+        """
         return cls(
             offset=data["offset"],
             length=data["length"],
@@ -181,7 +244,12 @@ class SearchHistory:
     """Manages search history persistence."""
 
     def __init__(self, max_entries: int | None = None) -> None:
-        """Initialize the SearchHistory with maximum entries limit."""
+        """Initialize the SearchHistory with maximum entries limit.
+
+        Args:
+            max_entries: Maximum number of history entries to retain.
+
+        """
         from intellicrack.core.config_manager import get_config
 
         config = get_config()
@@ -199,7 +267,14 @@ class SearchHistory:
         self.load_history()
 
     def add_search(self, pattern: str, search_type: SearchType, options: dict[str, Any]) -> None:
-        """Add a search to history."""
+        """Add a search to history.
+
+        Args:
+            pattern: Search pattern string.
+            search_type: Type of search (hex, text, regex, wildcard).
+            options: Dictionary of search options.
+
+        """
         entry = {
             "pattern": pattern,
             "type": search_type.value,
@@ -217,7 +292,16 @@ class SearchHistory:
         self.save_history()
 
     def get_recent_searches(self, search_type: SearchType | None = None, limit: int = 10) -> list[str]:
-        """Get recent search patterns."""
+        """Get recent search patterns.
+
+        Args:
+            search_type: Filter results by search type.
+            limit: Maximum number of patterns to return.
+
+        Returns:
+            list[str]: List of recent search patterns.
+
+        """
         filtered_entries = self.entries
         if search_type:
             filtered_entries = [e for e in self.entries if e["type"] == search_type.value]
@@ -249,7 +333,12 @@ class SearchEngine:
     """Core search engine for finding patterns in binary data."""
 
     def __init__(self, file_handler: BaseFileHandler | VirtualFileAccess) -> None:
-        """Initialize the SearchEngine with file handler and chunk size."""
+        """Initialize the SearchEngine with file handler and chunk size.
+
+        Args:
+            file_handler: Handler for file access and manipulation.
+
+        """
         self.file_handler: BaseFileHandler | VirtualFileAccess = file_handler
 
         from intellicrack.core.config_manager import get_config
@@ -366,6 +455,10 @@ class SearchEngine:
         Returns:
             List of (offset, length) tuples for replaced ranges
 
+        Raises:
+            ValueError: If the file is read-only.
+            RuntimeError: If insertion of replacement at a given offset fails.
+
         """
         if self.file_handler.read_only:
             error_msg = "Cannot replace in read-only file"
@@ -401,7 +494,17 @@ class SearchEngine:
         return list(reversed(replaced_ranges))
 
     def _compile_pattern(self, pattern: str | bytes, search_type: SearchType, case_sensitive: bool) -> bytes | Pattern[str] | None:
-        """Compile pattern based on search type."""
+        """Compile pattern based on search type.
+
+        Args:
+            pattern: Search pattern string or bytes.
+            search_type: Type of search to perform.
+            case_sensitive: Whether comparison is case-sensitive.
+
+        Returns:
+            bytes | Pattern[str] | None: Compiled pattern or None if compilation fails.
+
+        """
         try:
             if search_type == SearchType.HEX:
                 if isinstance(pattern, str):
@@ -436,7 +539,17 @@ class SearchEngine:
         start_offset: int,
         whole_words: bool,
     ) -> SearchResult | None:
-        """Search forward from ``start_offset``."""
+        """Search forward from start_offset.
+
+        Args:
+            compiled_pattern: Compiled search pattern.
+            start_offset: Offset to start search from.
+            whole_words: Whether to match whole words only.
+
+        Returns:
+            SearchResult | None: First match found or None.
+
+        """
         file_size = self.file_handler.get_file_size()
         offset = start_offset
         overlap_size = 100
@@ -466,7 +579,17 @@ class SearchEngine:
         start_offset: int,
         whole_words: bool,
     ) -> SearchResult | None:
-        """Search backward from ``start_offset``."""
+        """Search backward from start_offset.
+
+        Args:
+            compiled_pattern: Compiled search pattern.
+            start_offset: Offset to start search from.
+            whole_words: Whether to match whole words only.
+
+        Returns:
+            SearchResult | None: Last match found or None.
+
+        """
         offset = min(start_offset, self.file_handler.get_file_size())
         overlap_size = 100
 
@@ -499,7 +622,19 @@ class SearchEngine:
         search_type: SearchType,
         whole_words: bool,
     ) -> list[SearchResult]:
-        """Find all matches in a chunk of data."""
+        """Find all matches in a chunk of data.
+
+        Args:
+            compiled_pattern: Compiled search pattern.
+            chunk_data: Binary data chunk to search.
+            chunk_offset: Offset of chunk in the file.
+            search_type: Type of search being performed.
+            whole_words: Whether to match whole words only.
+
+        Returns:
+            list[SearchResult]: List of matches found in the chunk.
+
+        """
         matches: list[SearchResult] = []
 
         case_sensitive = search_type != SearchType.TEXT
@@ -576,7 +711,18 @@ class SearchEngine:
         chunk_offset: int,
         whole_words: bool,
     ) -> SearchResult | None:
-        """Find first match in a chunk of data."""
+        """Find first match in a chunk of data.
+
+        Args:
+            compiled_pattern: Compiled search pattern.
+            chunk_data: Binary data chunk to search.
+            chunk_offset: Offset of chunk in the file.
+            whole_words: Whether to match whole words only.
+
+        Returns:
+            SearchResult | None: First match found or None.
+
+        """
         matches = self._find_matches_in_chunk(
             compiled_pattern,
             chunk_data,
@@ -596,12 +742,12 @@ class SearchEngine:
         - Non-word characters: everything else (whitespace, punctuation, control chars, etc.)
 
         Args:
-            data: The data being searched
-            pos: Position of the match
-            length: Length of the match
+            data: The data being searched.
+            pos: Position of the match.
+            length: Length of the match.
 
         Returns:
-            True if the match is a whole word, False otherwise
+            bool: True if the match is a whole word, False otherwise.
 
         """
 
@@ -613,6 +759,13 @@ class SearchEngine:
             - A-Z (65-90)
             - 0-9 (48-57)
             - underscore (95)
+
+            Args:
+                byte_val: Single byte value to check.
+
+            Returns:
+                bool: True if byte represents a word character.
+
             """
             return (48 <= byte_val <= 57) or (65 <= byte_val <= 90) or (97 <= byte_val <= 122) or (byte_val == 95)
 
@@ -673,7 +826,20 @@ class SearchThread(_SearchThreadBase):  # type: ignore[valid-type,misc]
         start_offset: int = 0,
         direction: str = "forward",
     ) -> None:
-        """Initialize the SearchThread with search parameters."""
+        """Initialize the SearchThread with search parameters.
+
+        Args:
+            search_engine: SearchEngine instance for pattern matching.
+            pattern: Search pattern to find.
+            search_type: Type of search to perform.
+            find_all: Whether to find all occurrences or just one.
+            case_sensitive: Whether search is case-sensitive.
+            whole_words: Whether to match whole words only.
+            max_results: Maximum number of results to return.
+            start_offset: Offset to start searching from.
+            direction: Search direction ("forward" or "backward").
+
+        """
         if PYQT6_AVAILABLE:
             super().__init__()
         self.search_engine = search_engine
@@ -731,7 +897,13 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
         parent: QWidget | None = None,
         search_engine: SearchEngine | None = None,
     ) -> None:
-        """Initialize the advanced search dialog with parent widget and search engine."""
+        """Initialize the advanced search dialog with parent widget and search engine.
+
+        Args:
+            parent: Parent widget for the dialog.
+            search_engine: SearchEngine instance for performing searches.
+
+        """
         if not PYQT6_AVAILABLE:
             return
 
@@ -800,7 +972,12 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
         layout.addWidget(button_box)
 
     def create_search_tab(self) -> QWidget:
-        """Create the search tab."""
+        """Create the search tab.
+
+        Returns:
+            QWidget: The search tab widget.
+
+        """
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
@@ -861,7 +1038,12 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
         return tab
 
     def create_replace_tab(self) -> QWidget:
-        """Create the replace tab."""
+        """Create the replace tab.
+
+        Returns:
+            QWidget: The replace tab widget.
+
+        """
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
@@ -912,7 +1094,12 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
         return tab
 
     def create_find_all_tab(self) -> QWidget:
-        """Create the find all tab."""
+        """Create the find all tab.
+
+        Returns:
+            QWidget: The find all tab widget.
+
+        """
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
@@ -963,7 +1150,12 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
         return tab
 
     def create_history_tab(self) -> QWidget:
-        """Create the search history tab."""
+        """Create the search history tab.
+
+        Returns:
+            QWidget: The history tab widget.
+
+        """
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
@@ -1068,7 +1260,11 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
                     self.search_status_label.setText(f"Search error: {e}")
 
     def find_previous(self) -> None:
-        """Find previous occurrence."""
+        """Find previous occurrence.
+
+        Searches backward from the current position for the search pattern.
+
+        """
         if self.search_pattern_combo is None:
             return
 
@@ -1114,7 +1310,11 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
             self.replace_status_label.setText("Replace functionality requires hex viewer integration")
 
     def replace_all(self) -> None:
-        """Replace all occurrences."""
+        """Replace all occurrences.
+
+        Replaces all occurrences of the find pattern with the replace pattern.
+
+        """
         if self.find_pattern_combo is None or self.replace_pattern_edit is None:
             return
 
@@ -1151,7 +1351,11 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
                     self.replace_status_label.setText(f"Replace error: {e}")
 
     def find_all(self) -> None:
-        """Find all occurrences."""
+        """Find all occurrences.
+
+        Searches for all occurrences of the pattern and displays results in a table.
+
+        """
         if self.find_all_pattern_combo is None:
             return
 
@@ -1190,7 +1394,12 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
             self.current_search_thread.start()
 
     def on_find_all_completed(self, results: list[SearchResult]) -> None:
-        """Handle find all completion."""
+        """Handle find all completion.
+
+        Args:
+            results: List of search results found.
+
+        """
         if self.search_progress is not None:
             self.search_progress.setVisible(False)
         if self.find_all_button is not None:
@@ -1224,7 +1433,12 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
             self.cancel_search_button.setEnabled(False)
 
     def use_history_item(self, item: QListWidgetItem) -> None:
-        """Use selected history item."""
+        """Use selected history item.
+
+        Args:
+            item: History list item to use.
+
+        """
         entry = item.data(Qt.ItemDataRole.UserRole)
         if entry and self.search_pattern_combo is not None:
             self.search_pattern_combo.setCurrentText(str(entry["pattern"]))
@@ -1257,7 +1471,15 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
             self.update_history_list()
 
     def _get_search_type(self, type_str: str) -> SearchType:
-        """Convert string to SearchType enum."""
+        """Convert string to SearchType enum.
+
+        Args:
+            type_str: Search type name.
+
+        Returns:
+            SearchType: Corresponding SearchType enum value.
+
+        """
         type_map = {
             "Hex": SearchType.HEX,
             "Text": SearchType.TEXT,
@@ -1279,7 +1501,13 @@ class FindAllDialog(_FindAllDialogBase):  # type: ignore[valid-type,misc]
         parent: QWidget | None = None,
         results: list[SearchResult] | None = None,
     ) -> None:
-        """Initialize find all dialog."""
+        """Initialize find all dialog.
+
+        Args:
+            parent: Parent widget for the dialog.
+            results: List of search results to display.
+
+        """
         if not PYQT6_AVAILABLE:
             return
         super().__init__(parent)
@@ -1331,7 +1559,12 @@ class ReplaceDialog(_ReplaceDialogBase):  # type: ignore[valid-type,misc]
     """Dialog for replace operations."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Initialize replace dialog."""
+        """Initialize replace dialog.
+
+        Args:
+            parent: Parent widget for the dialog.
+
+        """
         if not PYQT6_AVAILABLE:
             return
         super().__init__(parent)

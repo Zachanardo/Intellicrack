@@ -115,7 +115,13 @@ except ImportError as e:
         """Process does not exist."""
 
         def __init__(self, pid: int, name: str | None = None, msg: str | None = None) -> None:
-            """Initialize NoSuchProcess exception with process details."""
+            """Initialize NoSuchProcess exception with process details.
+
+            Args:
+                pid: Process ID of the missing process.
+                name: Optional process name.
+                msg: Optional custom error message.
+            """
             self.pid: int = pid
             self.name: str | None = name
             self.msg: str = msg or f"process no longer exists (pid={pid})"
@@ -125,7 +131,13 @@ except ImportError as e:
         """Process is a zombie."""
 
         def __init__(self, pid: int, name: str | None = None, ppid: int | None = None) -> None:
-            """Initialize ZombieProcess exception with process details."""
+            """Initialize ZombieProcess exception with process details.
+
+            Args:
+                pid: Process ID of the zombie process.
+                name: Optional process name.
+                ppid: Optional parent process ID.
+            """
             self.pid: int = pid
             self.ppid: int | None = ppid
             self.name: str | None = name
@@ -135,7 +147,13 @@ except ImportError as e:
         """Access denied to process information."""
 
         def __init__(self, pid: int | None = None, name: str | None = None, msg: str | None = None) -> None:
-            """Initialize AccessDenied exception with process details."""
+            """Initialize AccessDenied exception with process details.
+
+            Args:
+                pid: Optional process ID.
+                name: Optional process name.
+                msg: Optional custom error message.
+            """
             self.pid: int | None = pid
             self.name: str | None = name
             self.msg: str = msg or "access denied"
@@ -145,7 +163,13 @@ except ImportError as e:
         """Timeout expired."""
 
         def __init__(self, seconds: float, pid: int | None = None, name: str | None = None) -> None:
-            """Initialize TimeoutExpired exception with timeout details."""
+            """Initialize TimeoutExpired exception with timeout details.
+
+            Args:
+                seconds: Number of seconds before timeout occurred.
+                pid: Optional process ID.
+                name: Optional process name.
+            """
             self.seconds: float = seconds
             self.pid: int | None = pid
             self.name: str | None = name
@@ -156,7 +180,11 @@ except ImportError as e:
         """Functional process implementation using platform commands."""
 
         def __init__(self, pid: int) -> None:
-            """Initialize process object."""
+            """Initialize process object.
+
+            Args:
+                pid: Process ID to monitor.
+            """
             self._pid: int = pid
             self._name: str | None = None
             self._ppid: int | None = None
@@ -166,7 +194,12 @@ except ImportError as e:
             self._get_basic_info()
 
         def _get_basic_info(self) -> None:
-            """Get basic process information."""
+            """Retrieve basic process information using platform-specific commands.
+
+            Attempts to read process name and parent process ID. Skips validation
+            in testing environments. Uses WMIC on Windows and /proc filesystem on
+            Unix-like systems.
+            """
             # Skip strict process validation during testing
             if os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS"):
                 self._name = "python"
@@ -179,7 +212,12 @@ except ImportError as e:
                 self._get_unix_info()
 
         def _get_windows_info(self) -> None:
-            """Get process info on Windows."""
+            """Retrieve process information on Windows using WMIC command.
+
+            Queries Windows Management Instrumentation Command-line (WMIC) to obtain
+            process name, parent process ID, and creation date. Sets _gone flag if
+            process not found or query fails.
+            """
             try:
                 wmic_path = shutil.which("wmic")
                 if not wmic_path:
@@ -216,7 +254,11 @@ except ImportError as e:
                 self._gone = True
 
         def _get_unix_info(self) -> None:
-            """Get process info on Unix-like systems."""
+            """Retrieve process information on Unix-like systems using ps command.
+
+            Executes ps command to obtain process name and parent process ID from
+            running processes. Sets _gone flag if process not found or query fails.
+            """
             try:
                 ps_path = shutil.which("ps")
                 if not ps_path:
@@ -246,12 +288,23 @@ except ImportError as e:
 
         @property
         def pid(self) -> int:
-            """Get process ID."""
+            """Return the process ID.
+
+            Returns:
+                int: The process identifier.
+            """
             return self._pid
 
         @property
         def name(self) -> str:
-            """Get process name."""
+            """Return the process name.
+
+            Returns:
+                str: The process name or process-{pid} if unavailable.
+
+            Raises:
+                NoSuchProcessError: If the process no longer exists.
+            """
             if self._gone:
                 error_msg = f"process no longer exists (pid={self._pid})"
                 logger.error(error_msg)
@@ -259,7 +312,17 @@ except ImportError as e:
             return self._name or f"process-{self._pid}"
 
         def exe(self) -> str:
-            """Get process executable path."""
+            """Return the process executable path.
+
+            Retrieves the full path to the executable running in this process
+            using platform-specific methods (WMIC on Windows, /proc/pid/exe on Linux).
+
+            Returns:
+                str: The executable path or empty string if unavailable.
+
+            Raises:
+                NoSuchProcessError: If the process no longer exists.
+            """
             if self._gone:
                 error_msg = f"process no longer exists (pid={self._pid})"
                 logger.error(error_msg)
@@ -304,7 +367,17 @@ except ImportError as e:
             return ""
 
         def cmdline(self) -> list[str]:
-            """Get process command line."""
+            """Return the process command line arguments.
+
+            Retrieves the complete command line used to start the process.
+            Uses platform-specific methods to read command line information.
+
+            Returns:
+                list[str]: List of command line arguments or empty list if unavailable.
+
+            Raises:
+                NoSuchProcessError: If the process no longer exists.
+            """
             if self._gone:
                 error_msg = f"process no longer exists (pid={self._pid})"
                 logger.error(error_msg)
@@ -350,7 +423,14 @@ except ImportError as e:
             return []
 
         def ppid(self) -> int | None:
-            """Get parent process ID."""
+            """Return the parent process ID.
+
+            Returns:
+                int | None: The parent process ID or None if unavailable.
+
+            Raises:
+                NoSuchProcessError: If the process no longer exists.
+            """
             if self._gone:
                 error_msg = f"process no longer exists (pid={self._pid})"
                 logger.error(error_msg)
@@ -358,12 +438,29 @@ except ImportError as e:
             return self._ppid
 
         def parent(self) -> FallbackProcess | None:
-            """Get parent process."""
+            """Return the parent process object.
+
+            Returns:
+                FallbackProcess | None: Parent process object or None if no parent available.
+            """
             ppid = self.ppid()
             return FallbackProcess(ppid) if ppid is not None else None
 
         def children(self, recursive: bool = False) -> list[FallbackProcess]:
-            """Get child processes."""
+            """Return child processes.
+
+            Identifies all child processes by searching for processes with parent
+            process ID matching this process. Optionally retrieves descendants recursively.
+
+            Args:
+                recursive: If True, includes descendants at all levels.
+
+            Returns:
+                list[FallbackProcess]: List of child process objects.
+
+            Raises:
+                NoSuchProcessError: If the process no longer exists.
+            """
             if self._gone:
                 error_msg = f"process no longer exists (pid={self._pid})"
                 logger.error(error_msg)
@@ -382,7 +479,17 @@ except ImportError as e:
             return children
 
         def status(self) -> str:
-            """Get process status."""
+            """Return the current process status.
+
+            Reads process status from /proc/[pid]/stat on Linux or returns
+            STATUS_RUNNING as default on Windows.
+
+            Returns:
+                str: Process status (e.g. running, sleeping, stopped, zombie).
+
+            Raises:
+                NoSuchProcessError: If the process no longer exists.
+            """
             if self._gone:
                 error_msg = f"process no longer exists (pid={self._pid})"
                 logger.error(error_msg)
@@ -413,7 +520,14 @@ except ImportError as e:
             return str(STATUS_RUNNING)
 
         def create_time(self) -> float:
-            """Get process creation time."""
+            """Return the process creation time as Unix timestamp.
+
+            Returns:
+                float: Unix timestamp of when the process was created.
+
+            Raises:
+                NoSuchProcessError: If the process no longer exists.
+            """
             if self._gone:
                 error_msg = f"process no longer exists (pid={self._pid})"
                 logger.error(error_msg)
@@ -421,7 +535,13 @@ except ImportError as e:
             return self._create_time or self._init_time
 
         def is_running(self) -> bool:
-            """Check if process is running."""
+            """Check whether the process is still running.
+
+            Refreshes process status and returns current state.
+
+            Returns:
+                bool: True if process is running, False otherwise.
+            """
             if self._gone:
                 return False
 
@@ -430,7 +550,13 @@ except ImportError as e:
             return not self._gone
 
         def suspend(self) -> None:
-            """Suspend the process."""
+            """Suspend (pause) the process execution.
+
+            Sends SIGSTOP signal on Unix-like systems. Not supported on Windows.
+
+            Raises:
+                NoSuchProcessError: If the process no longer exists.
+            """
             if self._gone:
                 error_msg = f"process no longer exists (pid={self._pid})"
                 logger.error(error_msg)
@@ -442,7 +568,13 @@ except ImportError as e:
                 os.kill(self._pid, signal.SIGSTOP)
 
         def resume(self) -> None:
-            """Resume the process."""
+            """Resume (unpause) a suspended process.
+
+            Sends SIGCONT signal on Unix-like systems. Not supported on Windows.
+
+            Raises:
+                NoSuchProcessError: If the process no longer exists.
+            """
             if self._gone:
                 error_msg = f"process no longer exists (pid={self._pid})"
                 logger.error(error_msg)
@@ -454,7 +586,13 @@ except ImportError as e:
                 os.kill(self._pid, signal.SIGCONT)
 
         def terminate(self) -> None:
-            """Terminate the process."""
+            """Gracefully terminate the process.
+
+            Uses SIGTERM on Unix-like systems and taskkill command on Windows.
+
+            Raises:
+                NoSuchProcessError: If the process no longer exists.
+            """
             if self._gone:
                 error_msg = f"process no longer exists (pid={self._pid})"
                 logger.error(error_msg)
@@ -469,7 +607,13 @@ except ImportError as e:
                 os.kill(self._pid, signal.SIGTERM)
 
         def kill(self) -> None:
-            """Kill the process."""
+            """Forcefully kill the process immediately.
+
+            Uses SIGKILL on Unix-like systems and taskkill /F command on Windows.
+
+            Raises:
+                NoSuchProcessError: If the process no longer exists.
+            """
             if self._gone:
                 error_msg = f"process no longer exists (pid={self._pid})"
                 logger.error(error_msg)
@@ -488,7 +632,20 @@ except ImportError as e:
                 os.kill(self._pid, signal.SIGKILL)
 
         def wait(self, timeout: float | None = None) -> int:
-            """Wait for process to terminate."""
+            """Wait for the process to terminate.
+
+            Blocks until the process exits or timeout expires. Polls process status
+            at regular intervals.
+
+            Args:
+                timeout: Maximum time to wait in seconds, or None for indefinite wait.
+
+            Returns:
+                int: Zero on successful termination.
+
+            Raises:
+                TimeoutExpiredError: If timeout expires before process terminates.
+            """
             if self._gone:
                 return 0
 
@@ -503,7 +660,20 @@ except ImportError as e:
             return 0
 
         def cpu_percent(self, interval: float | None = None) -> float:
-            """Get CPU usage percent."""
+            """Return CPU usage percentage for this process.
+
+            Simplified implementation. In a real system this would require
+            CPU time tracking over an interval.
+
+            Args:
+                interval: Time interval in seconds for measurement (not used in fallback).
+
+            Returns:
+                float: CPU percentage (0.0 in fallback implementation).
+
+            Raises:
+                NoSuchProcessError: If the process no longer exists.
+            """
             if self._gone:
                 error_msg = f"process no longer exists (pid={self._pid})"
                 logger.error(error_msg)
@@ -512,21 +682,44 @@ except ImportError as e:
             return 0.0
 
         def memory_info(self) -> object:
-            """Get memory information."""
+            """Return memory usage information for this process.
+
+            Returns object with rss (resident set size) and vms (virtual memory size)
+            attributes. In the fallback implementation, these are set to zero.
+
+            Returns:
+                object: Object with rss and vms attributes.
+
+            Raises:
+                NoSuchProcessError: If the process no longer exists.
+            """
             if self._gone:
                 error_msg = f"process no longer exists (pid={self._pid})"
                 logger.error(error_msg)
                 raise NoSuchProcessError(self._pid, msg=error_msg)
 
             class MemInfo:
+                """Memory information container."""
+
                 def __init__(self) -> None:
+                    """Initialize memory info with default values."""
                     self.rss: int = 0
                     self.vms: int = 0
 
             return MemInfo()
 
         def memory_percent(self) -> float:
-            """Get memory usage percent."""
+            """Return memory usage percentage for this process.
+
+            Simplified implementation. In a real system this would calculate
+            percentage based on total system memory.
+
+            Returns:
+                float: Memory percentage (0.0 in fallback implementation).
+
+            Raises:
+                NoSuchProcessError: If the process no longer exists.
+            """
             if self._gone:
                 error_msg = f"process no longer exists (pid={self._pid})"
                 logger.error(error_msg)
@@ -535,7 +728,18 @@ except ImportError as e:
 
     # System information functions
     def cpu_percent(interval: float | None = None, percpu: bool = False) -> float | list[float]:
-        """Get CPU usage percent."""
+        """Return CPU usage percentage.
+
+        Reads CPU usage from system. On Windows queries WMIC, on Linux reads /proc/stat.
+        If interval is specified, sleeps for that duration before returning result.
+
+        Args:
+            interval: Sleep duration in seconds before measuring (optional).
+            percpu: If True, returns per-CPU usage; if False, returns overall usage.
+
+        Returns:
+            float | list[float]: CPU percentage (0-100) or list of per-CPU percentages.
+        """
         if interval:
             time.sleep(interval)
 
@@ -599,7 +803,14 @@ except ImportError as e:
         return [0.0] if percpu else 0.0
 
     def cpu_count(logical: bool = True) -> int:
-        """Get CPU count."""
+        """Return the number of CPUs in the system.
+
+        Args:
+            logical: If True, returns logical CPU count; if False, physical core count.
+
+        Returns:
+            int: Number of CPUs (minimum 1).
+        """
         try:
             return os.cpu_count() or 1 if logical else max(1, (os.cpu_count() or 2) // 2)
         except (OSError, AttributeError) as e:
@@ -607,10 +818,26 @@ except ImportError as e:
             return 1
 
     def cpu_freq(percpu: bool = False) -> object:
-        """Get CPU frequency."""
+        """Return CPU frequency information in MHz.
+
+        Args:
+            percpu: If True, returns per-CPU frequencies; if False, overall frequency.
+
+        Returns:
+            object: CPUFreq object with current, min, max attributes, or list thereof.
+        """
 
         class CPUFreq:  # noqa: B903 - Must match psutil API for compatibility
+            """CPU frequency information container."""
+
             def __init__(self, current: float = 0.0, min: float = 0.0, max: float = 0.0) -> None:
+                """Initialize CPU frequency container.
+
+                Args:
+                    current: Current CPU frequency in MHz.
+                    min: Minimum CPU frequency in MHz.
+                    max: Maximum CPU frequency in MHz.
+                """
                 self.current: float = current
                 self.min: float = min
                 self.max: float = max
@@ -621,10 +848,17 @@ except ImportError as e:
         return [freq] if percpu else freq
 
     def cpu_stats() -> object:
-        """Get CPU statistics."""
+        """Return CPU statistics including context switches and interrupts.
+
+        Returns:
+            object: CPUStats object with ctx_switches, interrupts, soft_interrupts, syscalls.
+        """
 
         class CPUStats:
+            """CPU statistics information container."""
+
             def __init__(self) -> None:
+                """Initialize CPU statistics with default values."""
                 self.ctx_switches: int = 0
                 self.interrupts: int = 0
                 self.soft_interrupts: int = 0
@@ -633,10 +867,20 @@ except ImportError as e:
         return CPUStats()
 
     def virtual_memory() -> object:
-        """Get virtual memory statistics."""
+        """Return virtual memory statistics in bytes.
+
+        Queries system memory information using WMIC on Windows or /proc/meminfo
+        on Linux. Falls back to default estimates if query fails.
+
+        Returns:
+            object: VirtualMemory object with total, available, percent, used, free.
+        """
 
         class VirtualMemory:
+            """Virtual memory information container."""
+
             def __init__(self) -> None:
+                """Initialize virtual memory info with default values."""
                 self.total: int = 8 * 1024 * 1024 * 1024  # 8GB default
                 self.available: int = 4 * 1024 * 1024 * 1024  # 4GB
                 self.percent: float = 50.0
@@ -696,10 +940,17 @@ except ImportError as e:
         return VirtualMemory()
 
     def swap_memory() -> object:
-        """Get swap memory statistics."""
+        """Return swap memory statistics in bytes.
+
+        Returns:
+            object: SwapMemory object with total, used, free, percent, sin, sout.
+        """
 
         class SwapMemory:
+            """Swap memory information container."""
+
             def __init__(self) -> None:
+                """Initialize swap memory info with default values."""
                 self.total: int = 2 * 1024 * 1024 * 1024  # 2GB default
                 self.used: int = 512 * 1024 * 1024  # 512MB
                 self.free: int = self.total - self.used
@@ -710,10 +961,20 @@ except ImportError as e:
         return SwapMemory()
 
     def disk_usage(path: str) -> object:
-        """Get disk usage statistics."""
+        """Return disk usage statistics for a given path in bytes.
+
+        Args:
+            path: File system path to check disk usage for.
+
+        Returns:
+            object: DiskUsage object with total, used, free, percent.
+        """
 
         class DiskUsage:
+            """Disk usage information container."""
+
             def __init__(self) -> None:
+                """Initialize disk usage info with default values."""
                 self.total: int = 500 * 1024 * 1024 * 1024  # 500GB default
                 self.used: int = 250 * 1024 * 1024 * 1024  # 250GB
                 self.free: int = self.total - self.used
@@ -735,10 +996,27 @@ except ImportError as e:
             return DiskUsage()
 
     def disk_partitions(all: bool = False) -> list[object]:
-        """Get disk partitions."""
+        """Return list of disk partitions mounted on the system.
+
+        Args:
+            all: If True, includes pseudo partitions; if False, real partitions only.
+
+        Returns:
+            list[object]: List of DiskPartition objects.
+        """
 
         class DiskPartition:  # noqa: B903 - Must match psutil API for compatibility
+            """Disk partition information container."""
+
             def __init__(self, device: str, mountpoint: str, fstype: str, opts: str) -> None:
+                """Initialize disk partition info.
+
+                Args:
+                    device: Device name or path.
+                    mountpoint: Mount point in file system.
+                    fstype: File system type.
+                    opts: Mount options string.
+                """
                 self.device: str = device
                 self.mountpoint: str = mountpoint
                 self.fstype: str = fstype
@@ -761,10 +1039,20 @@ except ImportError as e:
         return partitions
 
     def disk_io_counters(perdisk: bool = False) -> object:
-        """Get disk I/O statistics."""
+        """Return disk I/O statistics.
+
+        Args:
+            perdisk: If True, returns per-disk counters; if False, system-wide totals.
+
+        Returns:
+            object: DiskIOCounters object or dict of disk names to counters.
+        """
 
         class DiskIOCounters:
+            """Disk I/O counter information container."""
+
             def __init__(self) -> None:
+                """Initialize disk I/O counters with default values."""
                 self.read_count: int = 0
                 self.write_count: int = 0
                 self.read_bytes: int = 0
@@ -775,10 +1063,20 @@ except ImportError as e:
         return {"sda": DiskIOCounters()} if perdisk else DiskIOCounters()
 
     def net_io_counters(pernic: bool = False) -> object:
-        """Get network I/O statistics."""
+        """Return network I/O statistics.
+
+        Args:
+            pernic: If True, returns per-NIC counters; if False, system-wide totals.
+
+        Returns:
+            object: NetIOCounters object or dict of NIC names to counters.
+        """
 
         class NetIOCounters:
+            """Network I/O counter information container."""
+
             def __init__(self) -> None:
+                """Initialize network I/O counters with default values."""
                 self.bytes_sent: int = 0
                 self.bytes_recv: int = 0
                 self.packets_sent: int = 0
@@ -791,28 +1089,61 @@ except ImportError as e:
         return {"eth0": NetIOCounters()} if pernic else NetIOCounters()
 
     def net_connections(kind: str = "all") -> list[object]:
-        """Get network connections."""
+        """Return list of network connections.
+
+        Args:
+            kind: Connection type to filter by (all, inet, inet4, inet6, tcp, udp).
+
+        Returns:
+            list[object]: List of connection objects (empty in fallback implementation).
+        """
         return []
 
     def net_if_addrs() -> dict[str, object]:
-        """Get network interface addresses."""
+        """Return network interface addresses.
+
+        Returns:
+            dict[str, object]: Dictionary mapping interface names to address objects.
+        """
         return {}
 
     def net_if_stats() -> dict[str, object]:
-        """Get network interface statistics."""
+        """Return network interface statistics.
+
+        Returns:
+            dict[str, object]: Dictionary mapping interface names to statistics objects.
+        """
         return {}
 
     def boot_time() -> float:
-        """Get system boot time."""
+        """Return system boot time as Unix timestamp.
+
+        Returns:
+            float: Approximate boot time as seconds since epoch.
+        """
         # Return approximate boot time
         return time.time() - (7 * 24 * 3600)  # 7 days ago
 
     def users() -> list[object]:
-        """Get logged in users."""
+        """Return list of users currently logged in.
+
+        Returns:
+            list[object]: List of user information objects (empty in fallback).
+        """
         return []
 
     def process_iter(attrs: list[str] | None = None) -> list[FallbackProcess]:
-        """Iterate over all processes."""
+        """Iterate over all processes in the system.
+
+        Retrieves all active process IDs and wraps them in FallbackProcess objects.
+        Uses platform-specific methods (WMIC on Windows, /proc on Linux).
+
+        Args:
+            attrs: Optional list of attributes to retrieve (ignored in fallback).
+
+        Returns:
+            list[FallbackProcess]: List of all process objects.
+        """
         processes: list[FallbackProcess] = []
 
         if sys.platform == "win32":
@@ -853,7 +1184,17 @@ except ImportError as e:
         return processes
 
     def pid_exists(pid: int) -> bool:
-        """Check if a PID exists."""
+        """Check whether a process with the given PID exists.
+
+        Uses WMIC on Windows or os.kill with signal 0 on Unix-like systems to
+        test for process existence without killing the process.
+
+        Args:
+            pid: Process ID to check for existence.
+
+        Returns:
+            bool: True if process exists, False otherwise.
+        """
         if sys.platform == "win32":
             try:
                 wmic_path = shutil.which("wmic")
@@ -882,7 +1223,21 @@ except ImportError as e:
         timeout: float | None = None,
         callback: Callable[[FallbackProcess], None] | None = None,
     ) -> tuple[list[FallbackProcess], list[FallbackProcess]]:
-        """Wait for processes to terminate."""
+        """Wait for a list of processes to terminate.
+
+        Monitors multiple processes and moves them from alive to gone list as they
+        terminate. Optionally invokes a callback function for each terminated process.
+
+        Args:
+            procs: List of processes to monitor.
+            timeout: Maximum time to wait in seconds, or None for indefinite wait.
+            callback: Optional callback function invoked for each terminated process.
+
+        Returns:
+            tuple[list[FallbackProcess], list[FallbackProcess]]: Tuple of (gone, alive)
+                process lists. gone contains processes that terminated, alive contains
+                processes still running after timeout.
+        """
         gone: list[FallbackProcess] = []
         alive: list[FallbackProcess] = list(procs)
 
@@ -907,12 +1262,24 @@ except ImportError as e:
         """Process class that wraps subprocess.Popen."""
 
         def __init__(self, *args: object, **kwargs: object) -> None:
-            """Initialize Popen process wrapper with fallback process monitoring capabilities."""
+            """Initialize Popen process wrapper with fallback process monitoring capabilities.
+
+            Args:
+                *args: Positional arguments passed to subprocess.Popen.
+                **kwargs: Keyword arguments passed to subprocess.Popen.
+            """
             super().__init__(*args, **kwargs)  # type: ignore[call-overload]
             self._process: FallbackProcess | None = FallbackProcess(self.pid) if self.pid else None
 
         def as_dict(self, attrs: list[str] | None = None) -> dict[str, object]:
-            """Return process info as dict."""
+            """Return process information as a dictionary.
+
+            Args:
+                attrs: Optional list of attributes to include (ignored in fallback).
+
+            Returns:
+                dict[str, object]: Dictionary with pid, name, and status keys, or empty dict.
+            """
             if not self._process:
                 return {}
 
@@ -925,7 +1292,14 @@ except ImportError as e:
     Popen = PopenFallback
 
     def Process(pid: int | None = None) -> FallbackProcess:
-        """Create a process object matching psutil.Process() interface."""
+        """Create a process object matching psutil.Process() interface.
+
+        Args:
+            pid: Process ID to monitor, or None for current process.
+
+        Returns:
+            FallbackProcess: Process object for the specified or current process.
+        """
         if pid is None:
             pid = os.getpid()
         return FallbackProcess(pid)

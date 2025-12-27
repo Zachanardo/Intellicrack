@@ -84,7 +84,15 @@ class Radare2AdvancedPatcher:
         self.endianness: str = "little"
 
     def open(self, write_mode: bool = True) -> bool:
-        """Open binary in Radare2."""
+        """Open binary in Radare2.
+
+        Args:
+            write_mode: Enable write mode for binary modifications.
+
+        Returns:
+            bool: True if binary opened successfully, False otherwise.
+
+        """
         try:
             flags = ["-w"] if write_mode else []
             self.r2 = r2pipe.open(self.binary_path, flags=flags)
@@ -118,7 +126,19 @@ class Radare2AdvancedPatcher:
             return False
 
     def generate_nop_sled(self, address: int, size: int) -> PatchInfo:
-        """Generate multi-byte NOP sled."""
+        """Generate multi-byte NOP sled.
+
+        Args:
+            address: Target address for NOP sled.
+            size: Size of NOP sled in bytes.
+
+        Returns:
+            PatchInfo: Patch information containing original and patched bytes.
+
+        Raises:
+            RuntimeError: If Radare2 session is not opened.
+
+        """
         if not self.r2:
             raise RuntimeError("Radare2 session not opened")
 
@@ -146,7 +166,12 @@ class Radare2AdvancedPatcher:
         return patch
 
     def _get_nop_instruction(self) -> bytes:
-        """Get NOP instruction for current architecture."""
+        """Get NOP instruction for current architecture.
+
+        Returns:
+            bytes: NOP instruction bytes for the current architecture.
+
+        """
         nop_map: dict[Architecture, bytes] = {
             Architecture.X86: b"\x90",
             Architecture.X86_64: b"\x90",
@@ -160,7 +185,19 @@ class Radare2AdvancedPatcher:
         return nop_map.get(self.architecture, b"\x90")
 
     def modify_jump_table(self, table_address: int, entries: list[int]) -> PatchInfo:
-        """Modify jump table entries."""
+        """Modify jump table entries.
+
+        Args:
+            table_address: Address of jump table to modify.
+            entries: List of new entry addresses.
+
+        Returns:
+            PatchInfo: Patch information containing original and patched bytes.
+
+        Raises:
+            RuntimeError: If Radare2 session is not opened.
+
+        """
         if not self.r2:
             raise RuntimeError("Radare2 session not opened")
 
@@ -196,7 +233,20 @@ class Radare2AdvancedPatcher:
         return patch
 
     def patch_function_prologue(self, func_address: int, skip_bytes: int = 0, custom_prologue: bytes | None = None) -> PatchInfo:
-        """Patch function prologue."""
+        """Patch function prologue.
+
+        Args:
+            func_address: Address of function to patch.
+            skip_bytes: Number of bytes to skip in prologue generation.
+            custom_prologue: Optional custom prologue bytes to use instead of generated ones.
+
+        Returns:
+            PatchInfo: Patch information containing original and patched bytes.
+
+        Raises:
+            RuntimeError: If Radare2 session is not opened.
+
+        """
         if not self.r2:
             raise RuntimeError("Radare2 session not opened")
 
@@ -228,7 +278,15 @@ class Radare2AdvancedPatcher:
         return patch
 
     def _generate_standard_prologue(self, skip_bytes: int) -> bytes:
-        """Generate standard function prologue."""
+        """Generate standard function prologue.
+
+        Args:
+            skip_bytes: Number of bytes to allocate on stack.
+
+        Returns:
+            bytes: Generated prologue instructions for current architecture.
+
+        """
         if self.architecture == Architecture.X86_64:
             # Standard x64 prologue
             prologue = b"\x55"  # push rbp
@@ -264,7 +322,20 @@ class Radare2AdvancedPatcher:
         return prologue
 
     def patch_function_epilogue(self, func_address: int, func_size: int, custom_epilogue: bytes | None = None) -> PatchInfo:
-        """Patch function epilogue."""
+        """Patch function epilogue.
+
+        Args:
+            func_address: Address of function to patch.
+            func_size: Size of function in bytes.
+            custom_epilogue: Optional custom epilogue bytes to use instead of generated ones.
+
+        Returns:
+            PatchInfo: Patch information containing original and patched bytes.
+
+        Raises:
+            RuntimeError: If Radare2 session is not opened.
+
+        """
         if not self.r2:
             raise RuntimeError("Radare2 session not opened")
 
@@ -298,7 +369,19 @@ class Radare2AdvancedPatcher:
         return patch
 
     def _find_epilogue(self, func_address: int, func_size: int) -> int:
-        """Find function epilogue location."""
+        """Find function epilogue location.
+
+        Args:
+            func_address: Address of function to analyze.
+            func_size: Size of function in bytes.
+
+        Returns:
+            int: Address of epilogue instruction.
+
+        Raises:
+            RuntimeError: If Radare2 session is not opened.
+
+        """
         if not self.r2:
             raise RuntimeError("Radare2 session not opened")
 
@@ -324,7 +407,12 @@ class Radare2AdvancedPatcher:
         return func_address + func_size - 16
 
     def _generate_standard_epilogue(self) -> bytes:
-        """Generate standard function epilogue."""
+        """Generate standard function epilogue.
+
+        Returns:
+            bytes: Generated epilogue instructions for current architecture.
+
+        """
         if self.architecture == Architecture.X86_64:
             # Standard x64 epilogue
             epilogue = b"\x48\x89\xec"  # mov rsp, rbp
@@ -353,7 +441,19 @@ class Radare2AdvancedPatcher:
         return epilogue
 
     def invert_conditional_jump(self, address: int) -> PatchInfo:
-        """Invert conditional jump instruction."""
+        """Invert conditional jump instruction.
+
+        Args:
+            address: Address of conditional jump instruction to invert.
+
+        Returns:
+            PatchInfo: Patch information containing original and patched bytes.
+
+        Raises:
+            RuntimeError: If Radare2 session is not opened.
+            ValueError: If instruction at address is not a conditional jump.
+
+        """
         if not self.r2:
             raise RuntimeError("Radare2 session not opened")
 
@@ -421,7 +521,17 @@ class Radare2AdvancedPatcher:
         raise ValueError(f"Cannot invert non-conditional jump: {mnemonic}")
 
     def _get_inverted_jump_bytes(self, original: bytes, original_mnemonic: str, inverted_mnemonic: str) -> bytes:
-        """Get inverted jump instruction bytes."""
+        """Get inverted jump instruction bytes.
+
+        Args:
+            original: Original jump instruction bytes.
+            original_mnemonic: Original jump mnemonic.
+            inverted_mnemonic: Target inverted mnemonic.
+
+        Returns:
+            bytes: Inverted jump instruction bytes.
+
+        """
         # For x86/x64, conditional jumps differ by one bit in many cases
         if len(original) == 2 and original[0] == 0x0F:
             # Long conditional jump (0F xx)
@@ -477,7 +587,20 @@ class Radare2AdvancedPatcher:
         return bytes(inverted)
 
     def modify_return_value(self, func_address: int, return_value: int) -> PatchInfo:
-        """Modify function return value."""
+        """Modify function return value.
+
+        Args:
+            func_address: Address of function to modify.
+            return_value: New return value to set.
+
+        Returns:
+            PatchInfo: Patch information containing original and patched bytes.
+
+        Raises:
+            RuntimeError: If Radare2 session is not opened.
+            ValueError: If no return instructions found in function.
+
+        """
         if not self.r2:
             raise RuntimeError("Radare2 session not opened")
 
@@ -546,7 +669,16 @@ class Radare2AdvancedPatcher:
         raise ValueError(f"No return instructions found in function at {hex(func_address)}")
 
     def _encode_arm64_mov_immediate(self, reg: int, value: int) -> bytes:
-        """Encode ARM64 mov immediate instruction."""
+        """Encode ARM64 mov immediate instruction.
+
+        Args:
+            reg: Register number to encode.
+            value: Immediate value to move.
+
+        Returns:
+            bytes: Encoded ARM64 mov immediate instruction.
+
+        """
         # Simplified encoding for common values
         if value == 0:
             # mov xN, xzr
@@ -560,7 +692,16 @@ class Radare2AdvancedPatcher:
         return b"".join(instructions)
 
     def _encode_arm_mov_immediate(self, reg: int, value: int) -> bytes:
-        """Encode ARM mov immediate instruction."""
+        """Encode ARM mov immediate instruction.
+
+        Args:
+            reg: Register number to encode.
+            value: Immediate value to move.
+
+        Returns:
+            bytes: Encoded ARM mov immediate instruction.
+
+        """
         if value <= 0xFF:
             # mov rN, #value
             return struct.pack("<I", 0xE3A00000 | (reg << 12) | value)
@@ -570,7 +711,20 @@ class Radare2AdvancedPatcher:
         return struct.pack("<I", inst)
 
     def redirect_call_target(self, call_address: int, new_target: int) -> PatchInfo:
-        """Redirect function call to new target."""
+        """Redirect function call to new target.
+
+        Args:
+            call_address: Address of call instruction to redirect.
+            new_target: New target address for the call.
+
+        Returns:
+            PatchInfo: Patch information containing original and patched bytes.
+
+        Raises:
+            RuntimeError: If Radare2 session is not opened.
+            ValueError: If address does not contain a call instruction.
+
+        """
         if not self.r2:
             raise RuntimeError("Radare2 session not opened")
 
@@ -803,7 +957,20 @@ class Radare2AdvancedPatcher:
         return patch
 
     def create_function_hook(self, func_address: int, hook_code: bytes, preserve_original: bool = True) -> PatchInfo:
-        """Create inline function hook."""
+        """Create inline function hook.
+
+        Args:
+            func_address: Address of function to hook.
+            hook_code: Hook code bytes to inject.
+            preserve_original: If True, preserve original function via trampoline.
+
+        Returns:
+            PatchInfo: Patch information containing original and patched bytes.
+
+        Raises:
+            RuntimeError: If Radare2 session is not opened during non-preserve mode.
+
+        """
         if preserve_original:
             # Create trampoline
             trampoline = self._create_trampoline(func_address, len(hook_code))
@@ -1085,7 +1252,19 @@ class Radare2AdvancedPatcher:
         return patch
 
     def _create_trampoline(self, original_address: int, hook_size: int) -> int:
-        """Create trampoline for preserving original function."""
+        """Create trampoline for preserving original function.
+
+        Args:
+            original_address: Address of original function.
+            hook_size: Size of hook code in bytes.
+
+        Returns:
+            int: Address of created trampoline code cave.
+
+        Raises:
+            RuntimeError: If Radare2 session is not opened.
+
+        """
         if not self.r2:
             raise RuntimeError("Radare2 session not opened")
 
@@ -1105,7 +1284,19 @@ class Radare2AdvancedPatcher:
         return code_cave
 
     def _find_code_cave(self, size: int) -> int:
-        """Find suitable code cave for patches."""
+        """Find suitable code cave for patches.
+
+        Args:
+            size: Minimum size of code cave in bytes.
+
+        Returns:
+            int: Address of suitable code cave.
+
+        Raises:
+            RuntimeError: If Radare2 session is not opened.
+            ValueError: If no suitable code cave found.
+
+        """
         if not self.r2:
             raise RuntimeError("Radare2 session not opened")
 
@@ -1135,7 +1326,15 @@ class Radare2AdvancedPatcher:
         raise ValueError(f"No suitable code cave found for {size} bytes")
 
     def defeat_anti_debugging(self) -> list[PatchInfo]:
-        """Apply anti-debugging defeat patches."""
+        """Apply anti-debugging defeat patches.
+
+        Returns:
+            list[PatchInfo]: List of patches applied for anti-debugging defeat.
+
+        Raises:
+            RuntimeError: If Radare2 session is not opened.
+
+        """
         if not self.r2:
             raise RuntimeError("Radare2 session not opened")
 
@@ -1190,7 +1389,16 @@ class Radare2AdvancedPatcher:
         return patches_applied
 
     def _write_bytes(self, address: int, data: bytes) -> None:
-        """Write bytes to address."""
+        """Write bytes to address.
+
+        Args:
+            address: Target address to write to.
+            data: Bytes to write.
+
+        Raises:
+            RuntimeError: If Radare2 session is not opened.
+
+        """
         if not self.r2:
             raise RuntimeError("Radare2 session not opened")
 
@@ -1198,7 +1406,15 @@ class Radare2AdvancedPatcher:
         self.r2.cmd(f"wx {hex_data} @ {address}")
 
     def apply_patch(self, patch: PatchInfo) -> bool:
-        """Apply a single patch."""
+        """Apply a single patch.
+
+        Args:
+            patch: Patch to apply.
+
+        Returns:
+            bool: True if patch applied successfully, False otherwise.
+
+        """
         try:
             self._write_bytes(patch.address, patch.patched_bytes)
             logger.info("Applied patch: %s", patch.description)
@@ -1208,7 +1424,15 @@ class Radare2AdvancedPatcher:
             return False
 
     def revert_patch(self, patch: PatchInfo) -> bool:
-        """Revert a single patch."""
+        """Revert a single patch.
+
+        Args:
+            patch: Patch to revert.
+
+        Returns:
+            bool: True if patch reverted successfully, False otherwise.
+
+        """
         try:
             self._write_bytes(patch.address, patch.original_bytes)
             logger.info("Reverted patch: %s", patch.description)
@@ -1218,12 +1442,25 @@ class Radare2AdvancedPatcher:
             return False
 
     def _read_binary_content(self) -> bytes:
-        """Read binary content safely using a context manager."""
+        """Read binary content safely using a context manager.
+
+        Returns:
+            bytes: Binary file contents.
+
+        """
         with open(self.binary_path, "rb") as f:
             return f.read()
 
     def save_patches(self, output_file: str) -> bool:
-        """Save patches to JSON file."""
+        """Save patches to JSON file.
+
+        Args:
+            output_file: Path to output JSON file.
+
+        Returns:
+            bool: True if patches saved successfully, False otherwise.
+
+        """
         try:
             patches_data = [
                 {
@@ -1258,7 +1495,15 @@ class Radare2AdvancedPatcher:
             return False
 
     def load_patches(self, patch_file: str) -> bool:
-        """Load and apply patches from JSON file."""
+        """Load and apply patches from JSON file.
+
+        Args:
+            patch_file: Path to JSON patch file.
+
+        Returns:
+            bool: True if patches loaded and applied successfully, False otherwise.
+
+        """
         try:
             with open(patch_file) as f:
                 data = json.load(f)
@@ -1290,7 +1535,18 @@ class Radare2AdvancedPatcher:
             return False
 
     def generate_patch_script(self, script_type: str = "python") -> str:
-        """Generate standalone patch script."""
+        """Generate standalone patch script.
+
+        Args:
+            script_type: Type of script to generate (python, radare2, or c).
+
+        Returns:
+            str: Generated patch script code.
+
+        Raises:
+            ValueError: If script_type is not supported.
+
+        """
         if script_type == "python":
             script = self._generate_python_script()
         elif script_type == "radare2":
@@ -1303,7 +1559,12 @@ class Radare2AdvancedPatcher:
         return script
 
     def _generate_python_script(self) -> str:
-        """Generate Python patching script."""
+        """Generate Python patching script.
+
+        Returns:
+            str: Python script that applies stored patches.
+
+        """
         script = [
             "#!/usr/bin/env python3",
             "import sys",
@@ -1336,7 +1597,12 @@ class Radare2AdvancedPatcher:
         return "\n".join(script)
 
     def _generate_radare2_script(self) -> str:
-        """Generate Radare2 script."""
+        """Generate Radare2 script.
+
+        Returns:
+            str: Radare2 script that applies stored patches.
+
+        """
         script = ["#!/usr/bin/r2 -qi"]
 
         for patch in self.patches:
@@ -1347,7 +1613,12 @@ class Radare2AdvancedPatcher:
         return "\n".join(script)
 
     def _generate_c_patcher(self) -> str:
-        """Generate C patcher program."""
+        """Generate C patcher program.
+
+        Returns:
+            str: C program that applies stored patches.
+
+        """
         script = [
             "#include <stdio.h>",
             "#include <stdlib.h>",
@@ -1407,7 +1678,13 @@ class Radare2AdvancedPatcher:
 
 
 def main() -> None:
-    """Demonstrate usage of Radare2AdvancedPatcher."""
+    """Demonstrate usage of Radare2AdvancedPatcher.
+
+    Command-line interface for applying various patches to binaries using Radare2.
+    Supports NOP sled generation, jump inversion, return value modification,
+    call target redirection, and anti-debugging defeat patches.
+
+    """
     import argparse
 
     parser = argparse.ArgumentParser(description="Radare2 Advanced Patching Engine")

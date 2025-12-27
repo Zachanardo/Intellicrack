@@ -31,7 +31,21 @@ class TrialType(Enum):
 
 @dataclass
 class TrialInfo:
-    """Trial information extracted from software installation."""
+    """Trial information extracted from software installation.
+
+    Attributes:
+        product_name: Name of the product with trial protection.
+        trial_type: Type of trial limitation mechanism.
+        trial_days: Number of trial days available.
+        usage_count: Number of uses consumed.
+        install_date: Date and time the product was installed.
+        first_run_date: Date and time of first application run.
+        last_run_date: Date and time of most recent application run.
+        trial_expired: Whether the trial period has expired.
+        registry_keys: Registry keys associated with trial data.
+        files: File paths associated with trial data.
+        processes: Process names associated with the product.
+    """
 
     product_name: str
     trial_type: TrialType
@@ -58,7 +72,11 @@ class TrialResetEngine:
         self.time_manipulation = TimeManipulator()
 
     def _initialize_trial_locations(self) -> dict[str, list[str]]:
-        """Initialize common trial data storage locations."""
+        """Initialize common trial data storage locations.
+
+        Returns:
+            dict[str, list[str]]: Dictionary mapping location category names to path templates.
+        """
         username = os.environ.get("USERNAME", "User")
 
         locations = {
@@ -103,7 +121,11 @@ class TrialResetEngine:
         return locations
 
     def _initialize_detection_patterns(self) -> dict[str, list[str] | list[bytes]]:
-        """Initialize patterns for detecting trial data."""
+        """Initialize patterns for detecting trial data.
+
+        Returns:
+            dict[str, list[str] | list[bytes]]: Dictionary mapping pattern category names to detection patterns.
+        """
         registry_values: list[str] = [
             "TrialDays",
             "DaysLeft",
@@ -168,7 +190,11 @@ class TrialResetEngine:
         return patterns
 
     def _initialize_reset_strategies(self) -> dict[str, Callable[[TrialInfo], bool]]:
-        """Initialize trial reset strategies."""
+        """Initialize trial reset strategies.
+
+        Returns:
+            dict[str, Callable[[TrialInfo], bool]]: Dictionary mapping strategy names to callable reset functions.
+        """
         strategies: dict[str, Callable[[TrialInfo], bool]] = {
             "clean_uninstall": self._clean_uninstall_reset,
             "time_manipulation": self._time_manipulation_reset,
@@ -183,7 +209,14 @@ class TrialResetEngine:
         return strategies
 
     def scan_for_trial(self, product_name: str) -> TrialInfo:
-        """Scan system for trial information."""
+        """Scan system for trial information.
+
+        Args:
+            product_name: Name of the product to scan for.
+
+        Returns:
+            TrialInfo: Information about trial data found for the product.
+        """
         logger.info("Starting comprehensive trial scan for product: %s", product_name)
         trial_info = TrialInfo(
             product_name=product_name,
@@ -232,7 +265,14 @@ class TrialResetEngine:
         return trial_info
 
     def _scan_registry_for_trial(self, product_name: str) -> list[str]:
-        """Scan registry for trial-related keys."""
+        """Scan registry for trial-related keys.
+
+        Args:
+            product_name: Name of the product to scan for.
+
+        Returns:
+            list[str]: List of registry key paths found containing trial data.
+        """
         found_keys = []
 
         for template in self.common_trial_locations["registry"]:
@@ -297,7 +337,14 @@ class TrialResetEngine:
         return found_keys
 
     def _scan_for_hidden_registry_keys(self, product_name: str) -> list[str]:
-        """Scan for hidden or encoded registry keys."""
+        """Scan for hidden or encoded registry keys.
+
+        Args:
+            product_name: Name of the product to scan for.
+
+        Returns:
+            list[str]: List of hidden registry key paths found.
+        """
         hidden_keys = []
 
         # Generate possible encoded key names
@@ -334,7 +381,14 @@ class TrialResetEngine:
         return hidden_keys
 
     def _scan_files_for_trial(self, product_name: str) -> list[str]:
-        """Scan filesystem for trial-related files."""
+        """Scan filesystem for trial-related files.
+
+        Args:
+            product_name: Name of the product to scan for.
+
+        Returns:
+            list[str]: List of file paths found containing trial data.
+        """
         found_files = []
 
         for template in self.common_trial_locations["files"]:
@@ -375,7 +429,14 @@ class TrialResetEngine:
         return found_files
 
     def _scan_alternate_data_streams(self, product_name: str) -> list[str]:
-        """Scan for NTFS alternate data streams using Windows APIs."""
+        """Scan for NTFS alternate data streams using Windows APIs.
+
+        Args:
+            product_name: Name of the product to scan for.
+
+        Returns:
+            list[str]: List of paths to alternate data streams found.
+        """
         ads_files = []
         kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
 
@@ -547,7 +608,14 @@ class TrialResetEngine:
         return ads_files
 
     def _scan_directory_for_ads(self, directory: str) -> list[str]:
-        """Recursively scan directory for files with alternate data streams."""
+        """Recursively scan directory for files with alternate data streams.
+
+        Args:
+            directory: Path to the directory to scan.
+
+        Returns:
+            list[str]: List of paths to alternate data streams found.
+        """
         ads_files = []
         kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
 
@@ -590,7 +658,14 @@ class TrialResetEngine:
         return ads_files
 
     def _scan_for_encrypted_trial_files(self, product_name: str) -> list[str]:
-        """Scan for encrypted trial data files."""
+        """Scan for encrypted trial data files.
+
+        Args:
+            product_name: Name of the product to scan for.
+
+        Returns:
+            list[str]: List of encrypted file paths found.
+        """
         encrypted_files = []
 
         search_paths = [
@@ -629,7 +704,14 @@ class TrialResetEngine:
         return encrypted_files
 
     def _detect_trial_type(self, trial_info: TrialInfo) -> TrialType:
-        """Detect the type of trial protection."""
+        """Detect the type of trial protection.
+
+        Args:
+            trial_info: Trial information to analyze.
+
+        Returns:
+            TrialType: Detected trial type.
+        """
         # Check for time-based markers
         time_markers = ["ExpireDate", "TrialDays", "DaysLeft", "InstallDate"]
         has_time = any(marker in str(trial_info.registry_keys) for marker in time_markers)
@@ -655,7 +737,11 @@ class TrialResetEngine:
         return TrialType.TIME_BASED
 
     def _extract_trial_details(self, trial_info: TrialInfo) -> None:
-        """Extract detailed trial information."""
+        """Extract detailed trial information.
+
+        Args:
+            trial_info: Trial information object to populate with extracted details.
+        """
         # Extract from registry
         for key_path in trial_info.registry_keys:
             if "\\" not in key_path:
@@ -718,7 +804,14 @@ class TrialResetEngine:
         )
 
     def _parse_date(self, date_value: int | str) -> datetime.datetime:
-        """Parse various date formats."""
+        """Parse various date formats.
+
+        Args:
+            date_value: Date value in various formats (unix timestamp or string).
+
+        Returns:
+            datetime.datetime: Parsed datetime object.
+        """
         if isinstance(date_value, int):
             # Unix timestamp
             return datetime.datetime.fromtimestamp(date_value)
@@ -735,7 +828,14 @@ class TrialResetEngine:
         return datetime.datetime.now(datetime.UTC)
 
     def _check_trial_expired(self, trial_info: TrialInfo) -> bool:
-        """Check if trial has expired."""
+        """Check if trial has expired.
+
+        Args:
+            trial_info: Trial information to check.
+
+        Returns:
+            bool: True if trial is expired, False otherwise.
+        """
         if trial_info.trial_type == TrialType.TIME_BASED:
             if trial_info.trial_days > 0:
                 expire_date = trial_info.install_date + datetime.timedelta(days=trial_info.trial_days)
@@ -757,7 +857,14 @@ class TrialResetEngine:
         return False
 
     def _find_related_processes(self, product_name: str) -> list[str]:
-        """Find processes related to the product."""
+        """Find processes related to the product.
+
+        Args:
+            product_name: Name of the product to find processes for.
+
+        Returns:
+            list[str]: List of unique process names found.
+        """
         processes = []
 
         for proc in psutil.process_iter(["pid", "name", "exe"]):
@@ -775,7 +882,15 @@ class TrialResetEngine:
         return unique_processes
 
     def reset_trial(self, trial_info: TrialInfo, strategy: str = "clean_uninstall") -> bool:
-        """Reset trial using specified strategy."""
+        """Reset trial using specified strategy.
+
+        Args:
+            trial_info: Trial information to reset.
+            strategy: Reset strategy name to use.
+
+        Returns:
+            bool: True if reset was successful, False otherwise.
+        """
         logger.debug("Attempting to reset trial for product '%s' using strategy: '%s'", trial_info.product_name, strategy)
         if strategy not in self.reset_strategies:
             logger.warning("Unknown strategy '%s'. Falling back to 'clean_uninstall'.", strategy)
@@ -793,7 +908,11 @@ class TrialResetEngine:
         return success
 
     def _kill_processes(self, process_names: list[str]) -> None:
-        """Kill specified processes."""
+        """Kill specified processes.
+
+        Args:
+            process_names: List of process names to kill.
+        """
         for proc in psutil.process_iter(["pid", "name"]):
             try:
                 if proc.info["name"] in process_names:
@@ -810,7 +929,14 @@ class TrialResetEngine:
                     logger.debug("Failed to kill process %s: %s", proc.info["name"], e)
 
     def _clean_uninstall_reset(self, trial_info: TrialInfo) -> bool:
-        """Reset trial by cleaning all traces."""
+        """Reset trial by cleaning all traces.
+
+        Args:
+            trial_info: Trial information containing data to clean.
+
+        Returns:
+            bool: True if cleaning was successful, False otherwise.
+        """
         success = True
         logger.debug("Starting clean uninstall reset strategy.")
 
@@ -841,7 +967,14 @@ class TrialResetEngine:
         return success
 
     def _delete_registry_key(self, key_path: str) -> bool:
-        """Delete a registry key."""
+        """Delete a registry key.
+
+        Args:
+            key_path: Full path to the registry key to delete.
+
+        Returns:
+            bool: True if deletion was successful, False otherwise.
+        """
         try:
             parts = key_path.split("\\")
             if len(parts) < 2:
@@ -868,7 +1001,14 @@ class TrialResetEngine:
         return False
 
     def _delete_file_securely(self, file_path: str) -> bool:
-        """Securely delete a file."""
+        """Securely delete a file.
+
+        Args:
+            file_path: Path to the file to delete.
+
+        Returns:
+            bool: True if deletion was successful, False otherwise.
+        """
         try:
             if os.path.exists(file_path):
                 logger.debug("Securely deleting file: %s", file_path)
@@ -897,7 +1037,11 @@ class TrialResetEngine:
         return False
 
     def _clear_alternate_data_streams(self, product_name: str) -> None:
-        """Clear NTFS alternate data streams using Windows APIs."""
+        """Clear NTFS alternate data streams using Windows APIs.
+
+        Args:
+            product_name: Name of the product to clear ADS for.
+        """
         kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
 
         # Define constants
@@ -910,7 +1054,11 @@ class TrialResetEngine:
         GENERIC_WRITE = 0x40000000
 
         def remove_ads_from_file(file_path: str) -> None:
-            """Remove all alternate data streams from a file."""
+            """Remove all alternate data streams from a file.
+
+            Args:
+                file_path: Path to the file to remove ADS from.
+            """
             try:
                 # First, enumerate all streams
                 class Win32FindStreamData(ctypes.Structure):
@@ -1046,7 +1194,13 @@ class TrialResetEngine:
         logger.debug("Finished clearing alternate data streams.")
 
     def _clear_directory_ads(self, directory: str, remove_func: Callable[[str], None], max_depth: int = 5) -> None:
-        """Recursively clear alternate data streams from directory."""
+        """Recursively clear alternate data streams from directory.
+
+        Args:
+            directory: Path to the directory to process.
+            remove_func: Function to call for removing ADS from files.
+            max_depth: Maximum recursion depth for directory traversal.
+        """
         try:
             for root, dirs, files in os.walk(directory):
                 # Limit recursion depth
@@ -1068,7 +1222,11 @@ class TrialResetEngine:
             logger.warning("Directory ADS recursive clearing failed for %s: %s", directory, e)
 
     def _clear_prefetch_data(self, product_name: str) -> None:
-        """Clear Windows prefetch data."""
+        """Clear Windows prefetch data.
+
+        Args:
+            product_name: Name of the product to clear prefetch data for.
+        """
         prefetch_path = r"C:\Windows\Prefetch"
         logger.debug("Clearing prefetch data for product: %s from %s", product_name, prefetch_path)
         try:
@@ -1082,7 +1240,11 @@ class TrialResetEngine:
         logger.debug("Finished clearing prefetch data.")
 
     def _clear_event_logs(self, product_name: str) -> None:
-        """Clear related event log entries."""
+        """Clear related event log entries.
+
+        Args:
+            product_name: Name of the product to clear event logs for.
+        """
         try:
             import win32evtlog
 
@@ -1096,14 +1258,28 @@ class TrialResetEngine:
             logger.warning("Failed to clear event logs for product %s: %s", product_name, e)
 
     def _time_manipulation_reset(self, trial_info: TrialInfo) -> bool:
-        """Reset trial by manipulating system time."""
+        """Reset trial by manipulating system time.
+
+        Args:
+            trial_info: Trial information to manipulate time for.
+
+        Returns:
+            bool: True if time manipulation was successful, False otherwise.
+        """
         logger.debug("Attempting time manipulation reset for product: %s", trial_info.product_name)
         success = self.time_manipulation.reset_trial_time(trial_info)
         logger.debug("Time manipulation reset completed. Success: %s", success)
         return success
 
     def _registry_clean_reset(self, trial_info: TrialInfo) -> bool:
-        """Reset trial by cleaning registry only."""
+        """Reset trial by cleaning registry only.
+
+        Args:
+            trial_info: Trial information containing registry keys to clean.
+
+        Returns:
+            bool: True if registry cleaning was successful, False otherwise.
+        """
         success = True
         logger.debug("Starting registry clean reset strategy.")
         for key_path in trial_info.registry_keys:
@@ -1117,7 +1293,14 @@ class TrialResetEngine:
         return success
 
     def _reset_registry_values(self, key_path: str) -> bool:
-        """Reset registry values to default."""
+        """Reset registry values to default.
+
+        Args:
+            key_path: Path to the registry key to reset.
+
+        Returns:
+            bool: True if values were reset successfully, False otherwise.
+        """
         try:
             parts = key_path.split("\\")
             if len(parts) < 2:
@@ -1146,7 +1329,14 @@ class TrialResetEngine:
         return False
 
     def _file_wipe_reset(self, trial_info: TrialInfo) -> bool:
-        """Reset trial by wiping files only."""
+        """Reset trial by wiping files only.
+
+        Args:
+            trial_info: Trial information containing files to wipe.
+
+        Returns:
+            bool: True if file wiping was successful, False otherwise.
+        """
         success = True
         logger.debug("Starting file wipe reset strategy.")
         for file_path in trial_info.files:
@@ -1160,7 +1350,14 @@ class TrialResetEngine:
         return success
 
     def _reset_file_content(self, file_path: str) -> bool:
-        """Reset file content to appear new."""
+        """Reset file content to appear new.
+
+        Args:
+            file_path: Path to the file to reset.
+
+        Returns:
+            bool: True if file content was reset successfully, False otherwise.
+        """
         try:
             # Determine file type
             if file_path.endswith(".xml"):
@@ -1192,7 +1389,14 @@ class TrialResetEngine:
         return False
 
     def _guid_regeneration_reset(self, trial_info: TrialInfo) -> bool:
-        """Reset trial by regenerating machine GUIDs."""
+        """Reset trial by regenerating machine GUIDs.
+
+        Args:
+            trial_info: Trial information containing registry keys to update.
+
+        Returns:
+            bool: True if GUID regeneration was successful, False otherwise.
+        """
         import uuid
 
         try:
@@ -1217,7 +1421,11 @@ class TrialResetEngine:
             return False
 
     def _update_guid_in_key(self, key_path: str) -> None:
-        """Update GUIDs in registry key."""
+        """Update GUIDs in registry key.
+
+        Args:
+            key_path: Path to the registry key to update.
+        """
         import uuid
 
         try:
@@ -1253,7 +1461,14 @@ class TrialResetEngine:
             logger.warning("Failed to update GUID in registry key %s: %s", key_path, e)
 
     def _sandbox_reset(self, trial_info: TrialInfo) -> bool:
-        """Reset trial using sandbox isolation."""
+        """Reset trial using sandbox isolation.
+
+        Args:
+            trial_info: Trial information to reset in sandbox.
+
+        Returns:
+            bool: True if sandbox reset was successful, False otherwise.
+        """
         logger.debug("Attempting sandbox reset for product: %s", trial_info.product_name)
         # This would use sandbox technology to isolate trial
         # Simplified implementation
@@ -1262,7 +1477,14 @@ class TrialResetEngine:
         return success
 
     def _vm_reset(self, trial_info: TrialInfo) -> bool:
-        """Reset trial using VM snapshot."""
+        """Reset trial using VM snapshot.
+
+        Args:
+            trial_info: Trial information to reset via VM.
+
+        Returns:
+            bool: True if VM reset was successful, False otherwise.
+        """
         logger.debug("Attempting VM reset for product: %s", trial_info.product_name)
         # This would revert VM to clean snapshot
         # Simplified implementation
@@ -1271,7 +1493,14 @@ class TrialResetEngine:
         return success
 
     def _system_restore_reset(self, trial_info: TrialInfo) -> bool:
-        """Reset trial using system restore point."""
+        """Reset trial using system restore point.
+
+        Args:
+            trial_info: Trial information to reset via system restore.
+
+        Returns:
+            bool: True if system restore reset was successful, False otherwise.
+        """
         try:
             logger.debug("Attempting system restore reset for product: %s", trial_info.product_name)
             # Create restore point
@@ -1297,7 +1526,12 @@ class TrialResetEngine:
 
 @log_all_methods
 class TimeManipulator:
-    """System time manipulation for trial reset."""
+    """System time manipulation for trial reset.
+
+    Attributes:
+        original_time: Original system time before manipulation.
+        frozen_apps: Dictionary tracking frozen time states for applications.
+    """
 
     def __init__(self) -> None:
         """Initialize the TimeManipulator with time tracking data structures."""
@@ -1305,7 +1539,14 @@ class TimeManipulator:
         self.frozen_apps: dict[str, dict[str, datetime.datetime | list[int] | bool]] = {}
 
     def reset_trial_time(self, trial_info: TrialInfo) -> bool:
-        """Reset trial by manipulating time."""
+        """Reset trial by manipulating time.
+
+        Args:
+            trial_info: Trial information to reset time for.
+
+        Returns:
+            bool: True if time reset was successful, False otherwise.
+        """
         try:
             logger.debug("Attempting to reset trial time for product: %s", trial_info.product_name)
             # Save current time
@@ -1334,7 +1575,14 @@ class TimeManipulator:
         return False
 
     def _set_system_time(self, new_time: datetime.datetime) -> bool:
-        """Set Windows system time."""
+        """Set Windows system time.
+
+        Args:
+            new_time: New datetime to set as system time.
+
+        Returns:
+            bool: True if system time was set successfully, False otherwise.
+        """
         try:
             import win32api
 
@@ -1357,7 +1605,15 @@ class TimeManipulator:
         return False
 
     def freeze_time_for_app(self, process_name: str, frozen_time: datetime.datetime) -> bool:
-        """Freeze time for specific application."""
+        """Freeze time for specific application.
+
+        Args:
+            process_name: Name of the process to freeze time for.
+            frozen_time: Frozen datetime to present to the process.
+
+        Returns:
+            bool: True if time freezing was successful, False otherwise.
+        """
         from ctypes import wintypes
 
         kernel32 = ctypes.windll.kernel32
@@ -1370,7 +1626,14 @@ class TimeManipulator:
 
         # Find target process
         def find_process_by_name(name: str) -> list[int]:
-            """Find process ID by name."""
+            """Find process ID by name.
+
+            Args:
+                name: Process name to search for.
+
+            Returns:
+                list[int]: List of process IDs matching the name.
+            """
             processes: list[int] = []
             logger.debug("Searching for process '%s' to freeze time.", name)
             # Create snapshot
@@ -1410,7 +1673,15 @@ class TimeManipulator:
         # Hook code to inject
 
         def inject_time_hooks(pid: int, frozen_time: datetime.datetime) -> bool:
-            """Inject time hooks into target process."""
+            """Inject time hooks into target process.
+
+            Args:
+                pid: Process ID to inject hooks into.
+                frozen_time: Frozen datetime to present to the process.
+
+            Returns:
+                bool: True if injection was successful, False otherwise.
+            """
             logger.debug("Injecting time hooks into PID %s for frozen time: %s", pid, frozen_time)
             # Open process
             hProcess = kernel32.OpenProcess(PROCESS_ALL_ACCESS, False, pid)
@@ -1752,7 +2023,14 @@ class TimeManipulator:
 
 
 def automated_trial_reset(product_name: str) -> bool:
-    """Automated one-click trial reset."""
+    """Automated one-click trial reset.
+
+    Args:
+        product_name: Name of the product to reset trial for.
+
+    Returns:
+        bool: True if trial reset was successful, False otherwise.
+    """
     engine = TrialResetEngine()
 
     logger.info("Scanning for %s trial data...", product_name)

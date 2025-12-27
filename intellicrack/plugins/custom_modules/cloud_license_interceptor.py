@@ -384,6 +384,9 @@ class CertificateManager:
         Returns:
             tuple[ssl.SSLContext, str]: SSL context and hostname pair.
 
+        Raises:
+            RuntimeError: If CA certificate or key not initialized.
+
         """
         with self.cert_lock:
             if hostname in self.server_certs:

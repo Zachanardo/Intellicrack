@@ -155,7 +155,10 @@ class VMProtectDetector:
     ]
 
     def __init__(self) -> None:
-        """Initialize VMProtect detector."""
+        """Initialize VMProtect detector.
+
+        Sets up capstone disassemblers for x86 and x64 architecture analysis if available.
+        """
         if CAPSTONE_AVAILABLE:
             self.cs_x86 = Cs(CS_ARCH_X86, CS_MODE_32)
             self.cs_x64 = Cs(CS_ARCH_X86, CS_MODE_64)
@@ -163,7 +166,18 @@ class VMProtectDetector:
             self.cs_x64.detail = True
 
     def detect(self, binary_path: str) -> VMProtectDetection:
-        """Perform comprehensive VMProtect 3.x detection."""
+        """Perform comprehensive VMProtect 3.x detection.
+
+        Analyzes a binary file for VMProtect 3.x protection mechanisms including VM handler
+        patterns, virtualized regions, mutation detection, and protection level classification.
+
+        Args:
+            binary_path: Path to the PE binary file to analyze.
+
+        Returns:
+            VMProtectDetection: Complete detection results including identified handlers,
+                virtualized regions, confidence scores, and bypass recommendations.
+        """
         detection = VMProtectDetection(
             detected=False,
             version="Unknown",
@@ -237,11 +251,30 @@ class VMProtectDetector:
         return detection
 
     def _is_pe(self, data: bytes) -> bool:
-        """Check if data is a PE file."""
+        """Check if data is a PE file.
+
+        Validates that the binary data begins with the PE magic header "MZ" and has
+        sufficient length for PE header analysis.
+
+        Args:
+            data: Binary data to validate.
+
+        Returns:
+            bool: True if data appears to be a PE executable, False otherwise.
+        """
         return len(data) > 64 and data[:2] == b"MZ"
 
     def _detect_architecture(self, data: bytes) -> str:
-        """Detect binary architecture."""
+        """Detect binary architecture.
+
+        Parses PE file header to determine whether the binary is x86, x64, or unknown architecture.
+
+        Args:
+            data: Binary data containing PE file.
+
+        Returns:
+            str: Architecture identifier ("x86", "x64", or "unknown").
+        """
         if not PEFILE_AVAILABLE:
             return "unknown"
 
@@ -256,7 +289,18 @@ class VMProtectDetector:
             return "unknown"
 
     def _analyze_sections(self, data: bytes) -> dict[str, Any]:
-        """Analyze PE sections for VMProtect characteristics."""
+        """Analyze PE sections for VMProtect characteristics.
+
+        Scans PE file sections for VMProtect-specific patterns including named sections,
+        entropy indicators, and suspicious memory characteristics.
+
+        Args:
+            data: Binary data containing PE file.
+
+        Returns:
+            dict[str, Any]: Analysis containing vmp_sections, high_entropy_sections,
+                and suspicious_characteristics lists.
+        """
         analysis: dict[str, Any] = {
             "vmp_sections": [],
             "high_entropy_sections": [],
@@ -305,7 +349,18 @@ class VMProtectDetector:
         return analysis
 
     def _detect_vm_handlers(self, data: bytes, architecture: str) -> list[VMHandler]:
-        """Detect VMProtect VM handlers using signature matching."""
+        """Detect VMProtect VM handlers using signature matching.
+
+        Scans binary data for known VMProtect handler signatures and extracts detailed
+        metrics about each handler including complexity, branches, and memory operations.
+
+        Args:
+            data: Binary data to scan.
+            architecture: Target architecture ("x86" or "x64").
+
+        Returns:
+            list[VMHandler]: List of detected VM handler objects with metrics and opcodes.
+        """
         handlers = []
 
         signatures = self.VMP_HANDLER_SIGNATURES_X64 if architecture == "x64" else self.VMP_HANDLER_SIGNATURES_X86
@@ -349,7 +404,19 @@ class VMProtectDetector:
         return handlers
 
     def _estimate_handler_size(self, data: bytes, offset: int, architecture: str) -> int:
-        """Estimate VM handler size through basic flow analysis."""
+        """Estimate VM handler size through basic flow analysis.
+
+        Disassembles code starting at the given offset and detects handler boundaries
+        based on return or jump instructions that exit the handler.
+
+        Args:
+            data: Binary data to analyze.
+            offset: Starting offset of the handler.
+            architecture: Target architecture ("x86" or "x64").
+
+        Returns:
+            int: Estimated size of the handler in bytes.
+        """
         if not CAPSTONE_AVAILABLE:
             return 64
 
@@ -375,12 +442,17 @@ class VMProtectDetector:
     def _calculate_handler_complexity(self, data: bytes, offset: int, size: int, architecture: str) -> dict[str, int]:
         """Calculate handler complexity score with detailed metrics.
 
-        Returns:
-            Dictionary containing:
-                - complexity: Overall complexity score
-                - branches: Number of branch instructions detected
-                - memory_ops: Number of memory operations detected
+        Analyzes handler bytecode to compute complexity based on instruction count,
+        branch operations, memory operations, and unique instruction types.
 
+        Args:
+            data: Binary data containing the handler.
+            offset: Starting offset of the handler.
+            size: Size of the handler in bytes.
+            architecture: Target architecture ("x86" or "x64").
+
+        Returns:
+            dict[str, int]: Dictionary containing complexity, branches, and memory_ops keys.
         """
         default_result: dict[str, int] = {"complexity": 10, "branches": 0, "memory_ops": 0}
 
@@ -420,7 +492,19 @@ class VMProtectDetector:
             return default_result
 
     def _extract_opcodes(self, data: bytes, offset: int, size: int, architecture: str) -> list[tuple[int, str]]:
-        """Extract opcodes from handler."""
+        """Extract opcodes from handler.
+
+        Disassembles handler code and extracts individual instructions as mnemonic-operand pairs.
+
+        Args:
+            data: Binary data containing the handler.
+            offset: Starting offset of the handler.
+            size: Size of the handler in bytes.
+            architecture: Target architecture ("x86" or "x64").
+
+        Returns:
+            list[tuple[int, str]]: List of (address, instruction_string) tuples.
+        """
         opcodes: list[tuple[int, str]] = []
 
         if not CAPSTONE_AVAILABLE:
@@ -441,7 +525,18 @@ class VMProtectDetector:
         return opcodes
 
     def _find_handler_xrefs(self, data: bytes, handler_offset: int) -> list[int]:
-        """Find cross-references to a handler."""
+        """Find cross-references to a handler.
+
+        Scans binary data for 32-bit little-endian references to the handler offset,
+        limiting results to the first 10 references found.
+
+        Args:
+            data: Binary data to scan.
+            handler_offset: Offset of the handler to find references to.
+
+        Returns:
+            list[int]: List of offsets where handler references are found.
+        """
         xrefs = []
 
         handler_bytes = struct.pack("<I", handler_offset)
@@ -460,7 +555,18 @@ class VMProtectDetector:
         return xrefs[:10]
 
     def _find_dispatcher(self, data: bytes, architecture: str) -> int | None:
-        """Find VMProtect dispatcher logic."""
+        """Find VMProtect dispatcher logic.
+
+        Locates the dispatcher routine by searching for known dispatcher patterns or
+        identifying regions with multiple indirect jump-table references.
+
+        Args:
+            data: Binary data to scan.
+            architecture: Target architecture ("x86" or "x64").
+
+        Returns:
+            int | None: Offset of the dispatcher if found, None otherwise.
+        """
         if not CAPSTONE_AVAILABLE:
             return None
 
@@ -496,7 +602,18 @@ class VMProtectDetector:
         return None
 
     def _find_handler_table(self, data: bytes, architecture: str) -> int | None:
-        """Find VMProtect handler table."""
+        """Find VMProtect handler table.
+
+        Scans VMProtect-specific sections for pointer table structures that contain
+        handler routine addresses.
+
+        Args:
+            data: Binary data containing PE file.
+            architecture: Target architecture ("x86" or "x64").
+
+        Returns:
+            int | None: Offset of the handler table if found, None otherwise.
+        """
         if not PEFILE_AVAILABLE:
             return None
 
@@ -521,7 +638,18 @@ class VMProtectDetector:
         return None
 
     def _scan_for_handler_table(self, section_data: bytes, architecture: str) -> int | None:
-        """Scan section for handler table structure."""
+        """Scan section for handler table structure.
+
+        Searches for sequences of consecutive valid pointers within the expected address range,
+        indicating a handler pointer table.
+
+        Args:
+            section_data: Section data to scan.
+            architecture: Target architecture ("x86" or "x64").
+
+        Returns:
+            int | None: Offset of the handler table if found, None otherwise.
+        """
         ptr_size = 8 if architecture == "x64" else 4
         min_table_size = 16
         max_table_size = 512
@@ -546,7 +674,19 @@ class VMProtectDetector:
         return None
 
     def _identify_virtualized_regions(self, data: bytes, handlers: list[VMHandler], architecture: str) -> list[VirtualizedRegion]:
-        """Identify regions of virtualized code."""
+        """Identify regions of virtualized code.
+
+        Locates virtualized code regions by identifying VM entry/exit points and
+        analyzing the handlers and control flow within each region.
+
+        Args:
+            data: Binary data to analyze.
+            handlers: List of detected VM handlers.
+            architecture: Target architecture ("x86" or "x64").
+
+        Returns:
+            list[VirtualizedRegion]: List of identified virtualized code regions.
+        """
         regions: list[VirtualizedRegion] = []
 
         if not handlers:
@@ -581,7 +721,19 @@ class VMProtectDetector:
         return regions
 
     def _find_vm_exit(self, data: bytes, entry_offset: int, architecture: str) -> int | None:
-        """Find VM exit point."""
+        """Find VM exit point.
+
+        Locates the VM exit routine by searching for known exit patterns or identifying
+        context restoration sequences (popad/popfd).
+
+        Args:
+            data: Binary data to analyze.
+            entry_offset: Offset of the VM entry point.
+            architecture: Target architecture ("x86" or "x64").
+
+        Returns:
+            int | None: Offset of the VM exit point if found, None otherwise.
+        """
         if not CAPSTONE_AVAILABLE:
             return None
 
@@ -614,7 +766,20 @@ class VMProtectDetector:
         return None
 
     def _calculate_region_complexity(self, data: bytes, start: int, end: int | None, architecture: str) -> float:
-        """Calculate control flow complexity of a region."""
+        """Calculate control flow complexity of a region.
+
+        Computes complexity metrics based on branch instructions, unique targets,
+        and control flow density within the virtualized region.
+
+        Args:
+            data: Binary data to analyze.
+            start: Starting offset of the region.
+            end: Ending offset of the region.
+            architecture: Target architecture ("x86" or "x64").
+
+        Returns:
+            float: Control flow complexity score (0.0 to 10.0).
+        """
         if not CAPSTONE_AVAILABLE or not end:
             return 1.0
 
@@ -647,7 +812,19 @@ class VMProtectDetector:
         return min(complexity, 10.0)
 
     def _check_region_mutation(self, data: bytes, start: int, end: int) -> bool:
-        """Check if region shows mutation patterns."""
+        """Check if region shows mutation patterns.
+
+        Detects polymorphic or mutated code by counting occurrences of known
+        mutation pattern sequences within the region.
+
+        Args:
+            data: Binary data to analyze.
+            start: Starting offset of the region.
+            end: Ending offset of the region.
+
+        Returns:
+            bool: True if significant mutation patterns are detected, False otherwise.
+        """
         region_data = data[start:end]
         mutation_count = 0
 
@@ -658,7 +835,17 @@ class VMProtectDetector:
         return mutation_count > 5
 
     def _detect_mutations(self, data: bytes) -> float:
-        """Detect mutation/polymorphic code patterns."""
+        """Detect mutation/polymorphic code patterns.
+
+        Computes mutation score by detecting pattern occurrences and combining with
+        junk code ratio analysis.
+
+        Args:
+            data: Binary data to analyze.
+
+        Returns:
+            float: Mutation score from 0.0 to 1.0.
+        """
         mutation_score = 0.0
         total_patterns = len(self.VMP_MUTATION_PATTERNS)
 
@@ -674,7 +861,17 @@ class VMProtectDetector:
         return (mutation_score + junk_ratio) / 2
 
     def _calculate_junk_code_ratio(self, data: bytes) -> float:
-        """Calculate ratio of junk code to real code."""
+        """Calculate ratio of junk code to real code.
+
+        Analyzes sampled instructions to identify no-op and redundant operations
+        that indicate code obfuscation or mutation.
+
+        Args:
+            data: Binary data to analyze.
+
+        Returns:
+            float: Junk code ratio from 0.0 to 1.0.
+        """
         if not CAPSTONE_AVAILABLE:
             return 0.0
 
@@ -708,7 +905,19 @@ class VMProtectDetector:
         regions: list[VirtualizedRegion],
         mutation_score: float,
     ) -> VMProtectLevel:
-        """Determine VMProtect protection level."""
+        """Determine VMProtect protection level.
+
+        Classifies protection strength based on handler complexity, region complexity,
+        and mutation score thresholds.
+
+        Args:
+            handlers: List of detected VM handlers.
+            regions: List of identified virtualized regions.
+            mutation_score: Detected mutation score from 0.0 to 1.0.
+
+        Returns:
+            VMProtectLevel: Determined protection level (LITE, STANDARD, ULTRA, or UNKNOWN).
+        """
         if not handlers:
             return VMProtectLevel.UNKNOWN
 
@@ -722,7 +931,17 @@ class VMProtectDetector:
         return VMProtectLevel.STANDARD if mutation_score > 0.4 or handler_complexity > 50 or region_count > 5 else VMProtectLevel.LITE
 
     def _detect_version(self, data: bytes, section_analysis: dict[str, Any]) -> str:
-        """Detect VMProtect version."""
+        """Detect VMProtect version.
+
+        Infers VMProtect version from section characteristics and embedded version strings.
+
+        Args:
+            data: Binary data to analyze.
+            section_analysis: Results from section analysis containing VMProtect section information.
+
+        Returns:
+            str: Detected version string or "Unknown (likely 2.x or 3.x)".
+        """
         vmp_sections = section_analysis.get("vmp_sections", [])
 
         if len(vmp_sections) >= 2:
@@ -754,7 +973,20 @@ class VMProtectDetector:
         return "Unknown (likely 2.x or 3.x)"
 
     def _analyze_control_flow(self, data: bytes, regions: list[VirtualizedRegion], architecture: str) -> dict[str, Any]:
-        """Analyze control flow within virtualized regions."""
+        """Analyze control flow within virtualized regions.
+
+        Computes control flow metrics including complexity aggregation, indirect branch
+        counting, and VM context transition detection.
+
+        Args:
+            data: Binary data to analyze.
+            regions: List of virtualized regions to analyze.
+            architecture: Target architecture ("x86" or "x64").
+
+        Returns:
+            dict[str, Any]: Control flow analysis including total_regions, avg_complexity,
+                max_complexity, indirect_branches, and vm_transitions.
+        """
         analysis = {
             "total_regions": len(regions),
             "avg_complexity": 0.0,

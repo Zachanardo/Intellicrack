@@ -104,7 +104,11 @@ class WindowsAPIHooker:
         self.active_hooks: set[str] = set()
 
     def hook_is_debugger_present(self) -> bool:
-        """Install hook for IsDebuggerPresent to always return FALSE."""
+        """Install hook for IsDebuggerPresent to always return FALSE.
+
+        Returns:
+            bool: True if hook was installed successfully, False otherwise.
+        """
         try:
             # Get function address
             func_addr = self.kernel32.GetProcAddress(
@@ -153,7 +157,11 @@ class WindowsAPIHooker:
             return False
 
     def hook_check_remote_debugger_present(self) -> bool:
-        """Install hook for CheckRemoteDebuggerPresent to always return FALSE."""
+        """Install hook for CheckRemoteDebuggerPresent to always return FALSE.
+
+        Returns:
+            bool: True if hook was installed successfully, False otherwise.
+        """
         try:
             func_addr = self.kernel32.GetProcAddress(
                 self.kernel32.GetModuleHandleW("kernel32.dll"),
@@ -199,7 +207,11 @@ class WindowsAPIHooker:
             return False
 
     def hook_nt_query_information_process(self) -> bool:
-        """Install hook for NtQueryInformationProcess for debug-related queries."""
+        """Install hook for NtQueryInformationProcess for debug-related queries.
+
+        Returns:
+            bool: True if hook was installed successfully, False otherwise.
+        """
         try:
             func_addr = self.ntdll.GetProcAddress(self.ntdll.LoadLibraryW("ntdll.dll"), b"NtQueryInformationProcess")
 
@@ -242,7 +254,11 @@ class WindowsAPIHooker:
             return False
 
     def hook_nt_set_information_thread(self) -> bool:
-        """Install hook for NtSetInformationThread to prevent thread hiding."""
+        """Install hook for NtSetInformationThread to prevent thread hiding.
+
+        Returns:
+            bool: True if hook was installed successfully, False otherwise.
+        """
         try:
             func_addr = self.ntdll.GetProcAddress(self.ntdll.LoadLibraryW("ntdll.dll"), b"NtSetInformationThread")
 
@@ -291,7 +307,11 @@ class WindowsAPIHooker:
             return False
 
     def hook_output_debug_string(self) -> bool:
-        """Install hook for OutputDebugString to prevent detection."""
+        """Install hook for OutputDebugString to prevent detection.
+
+        Returns:
+            bool: True if hook was installed successfully, False otherwise.
+        """
         try:
             func_addr = self.kernel32.GetProcAddress(
                 self.kernel32.GetModuleHandleW("kernel32.dll"),
@@ -330,7 +350,11 @@ class WindowsAPIHooker:
             return False
 
     def hook_nt_close(self) -> bool:
-        """Install hook for NtClose to prevent invalid handle detection."""
+        """Install hook for NtClose to prevent invalid handle detection.
+
+        Returns:
+            bool: True if hook was installed successfully, False otherwise.
+        """
         try:
             func_addr = self.ntdll.GetProcAddress(self.ntdll.LoadLibraryW("ntdll.dll"), b"NtClose")
 
@@ -370,7 +394,11 @@ class WindowsAPIHooker:
             return False
 
     def hook_close_handle(self) -> bool:
-        """Install hook for CloseHandle to prevent invalid handle detection."""
+        """Install hook for CloseHandle to prevent invalid handle detection.
+
+        Returns:
+            bool: True if hook was installed successfully, False otherwise.
+        """
         try:
             func_addr = self.kernel32.GetProcAddress(self.kernel32.GetModuleHandleW("kernel32.dll"), b"CloseHandle")
 
@@ -410,7 +438,11 @@ class WindowsAPIHooker:
             return False
 
     def hook_get_last_error(self) -> bool:
-        """Install hook for GetLastError to hide debug-related errors."""
+        """Install hook for GetLastError to hide debug-related errors.
+
+        Returns:
+            bool: True if hook was installed successfully, False otherwise.
+        """
         try:
             func_addr = self.kernel32.GetProcAddress(self.kernel32.GetModuleHandleW("kernel32.dll"), b"GetLastError")
 
@@ -450,7 +482,11 @@ class WindowsAPIHooker:
             return False
 
     def hook_set_last_error(self) -> bool:
-        """Install hook for SetLastError to prevent error code manipulation."""
+        """Install hook for SetLastError to prevent error code manipulation.
+
+        Returns:
+            bool: True if hook was installed successfully, False otherwise.
+        """
         try:
             func_addr = self.kernel32.GetProcAddress(self.kernel32.GetModuleHandleW("kernel32.dll"), b"SetLastError")
 
@@ -490,7 +526,11 @@ class WindowsAPIHooker:
             return False
 
     def hook_nt_query_object(self) -> bool:
-        """Install hook for NtQueryObject to prevent debug object detection."""
+        """Install hook for NtQueryObject to prevent debug object detection.
+
+        Returns:
+            bool: True if hook was installed successfully, False otherwise.
+        """
         try:
             func_addr = self.ntdll.GetProcAddress(self.ntdll.LoadLibraryW("ntdll.dll"), b"NtQueryObject")
 
@@ -530,7 +570,11 @@ class WindowsAPIHooker:
             return False
 
     def hook_nt_query_system_information(self) -> bool:
-        """Install hook for NtQuerySystemInformation to hide debugger processes."""
+        """Install hook for NtQuerySystemInformation to hide debugger processes.
+
+        Returns:
+            bool: True if hook was installed successfully, False otherwise.
+        """
         try:
             func_addr = self.ntdll.GetProcAddress(self.ntdll.LoadLibraryW("ntdll.dll"), b"NtQuerySystemInformation")
 
@@ -570,7 +614,11 @@ class WindowsAPIHooker:
             return False
 
     def hook_find_window(self) -> bool:
-        """Install hook for FindWindow to hide debugger windows."""
+        """Install hook for FindWindow to hide debugger windows.
+
+        Returns:
+            bool: True if hook was installed successfully, False otherwise.
+        """
         try:
             func_addr = self.user32.GetProcAddress(self.user32.GetModuleHandleW("user32.dll"), b"FindWindowA")
 
@@ -610,7 +658,11 @@ class WindowsAPIHooker:
             return False
 
     def hook_enum_windows(self) -> bool:
-        """Install hook for EnumWindows to skip debugger windows."""
+        """Install hook for EnumWindows to skip debugger windows.
+
+        Returns:
+            bool: True if hook was installed successfully, False otherwise.
+        """
         try:
             func_addr = self.user32.GetProcAddress(self.user32.GetModuleHandleW("user32.dll"), b"EnumWindows")
 
@@ -650,7 +702,11 @@ class WindowsAPIHooker:
             return False
 
     def hook_get_foreground_window(self) -> bool:
-        """Install hook for GetForegroundWindow to hide debugger focus."""
+        """Install hook for GetForegroundWindow to hide debugger focus.
+
+        Returns:
+            bool: True if hook was installed successfully, False otherwise.
+        """
         try:
             func_addr = self.user32.GetProcAddress(self.user32.GetModuleHandleW("user32.dll"), b"GetForegroundWindow")
 
@@ -691,7 +747,11 @@ class WindowsAPIHooker:
             return False
 
     def hook_nt_yield_execution(self) -> bool:
-        """Install hook for NtYieldExecution to prevent thread timing detection."""
+        """Install hook for NtYieldExecution to prevent thread timing detection.
+
+        Returns:
+            bool: True if hook was installed successfully, False otherwise.
+        """
         try:
             func_addr = self.ntdll.GetProcAddress(self.ntdll.LoadLibraryW("ntdll.dll"), b"NtYieldExecution")
 
@@ -731,7 +791,11 @@ class WindowsAPIHooker:
             return False
 
     def hook_switch_to_thread(self) -> bool:
-        """Install hook for SwitchToThread to prevent thread timing detection."""
+        """Install hook for SwitchToThread to prevent thread timing detection.
+
+        Returns:
+            bool: True if hook was installed successfully, False otherwise.
+        """
         try:
             func_addr = self.kernel32.GetProcAddress(self.kernel32.GetModuleHandleW("kernel32.dll"), b"SwitchToThread")
 
@@ -771,7 +835,11 @@ class WindowsAPIHooker:
             return False
 
     def install_all_hooks(self) -> list[str]:
-        """Install all API hooks."""
+        """Install all API hooks.
+
+        Returns:
+            list[str]: List of installation results for each hook.
+        """
         results = []
 
         hooks = [
@@ -806,7 +874,11 @@ class WindowsAPIHooker:
         return results
 
     def restore_hooks(self) -> bool:
-        """Restore original function code."""
+        """Restore original function code.
+
+        Returns:
+            bool: True if all hooks were restored successfully, False otherwise.
+        """
         try:
             for func_addr, original_bytes in self.original_functions.items():
                 old_protect = ctypes.c_ulong()
@@ -851,7 +923,11 @@ class PEBManipulator:
         self.PEB_HEAP_FLAGS_OFFSET = 0x70
 
     def get_peb_address(self) -> int | None:
-        """Get PEB address for current process."""
+        """Get PEB address for current process.
+
+        Returns:
+            int | None: PEB base address for current process or None on failure.
+        """
         try:
             # Get current process handle
             process_handle = self.kernel32.GetCurrentProcess()
@@ -888,7 +964,11 @@ class PEBManipulator:
         return None
 
     def patch_being_debugged_flag(self) -> bool:
-        """Patch PEB BeingDebugged flag."""
+        """Patch PEB BeingDebugged flag.
+
+        Returns:
+            bool: True if patching was successful, False otherwise.
+        """
         try:
             peb_addr = self.get_peb_address()
             if not peb_addr:
@@ -935,7 +1015,11 @@ class PEBManipulator:
         return False
 
     def patch_nt_global_flag(self) -> bool:
-        """Patch PEB NtGlobalFlag."""
+        """Patch PEB NtGlobalFlag.
+
+        Returns:
+            bool: True if patching was successful, False otherwise.
+        """
         try:
             peb_addr = self.get_peb_address()
             if not peb_addr:
@@ -986,7 +1070,11 @@ class PEBManipulator:
         return False
 
     def patch_heap_flags(self) -> bool:
-        """Patch heap flags to hide debugging."""
+        """Patch heap flags to hide debugging.
+
+        Returns:
+            bool: True if patching was successful, False otherwise.
+        """
         try:
             peb_addr = self.get_peb_address()
             if not peb_addr:
@@ -1032,7 +1120,11 @@ class PEBManipulator:
         return False
 
     def patch_all_peb_flags(self) -> list[str]:
-        """Patch all PEB-related anti-debug flags."""
+        """Patch all PEB-related anti-debug flags.
+
+        Returns:
+            list[str]: List of patching results for each PEB flag modification.
+        """
         results = []
 
         patches = [
@@ -1062,7 +1154,11 @@ class ThreadContextHooker:
         self.logger = logging.getLogger(f"{__name__}.ThreadContextHooker")
 
     def hook_get_thread_context(self) -> bool:
-        """Install hook for GetThreadContext to hide hardware breakpoints."""
+        """Install hook for GetThreadContext to hide hardware breakpoints.
+
+        Returns:
+            bool: True if hook was installed successfully, False otherwise.
+        """
         try:
             kernel32 = ctypes.windll.kernel32
             func_addr = kernel32.GetProcAddress(kernel32.GetModuleHandleW("kernel32.dll"), b"GetThreadContext")
@@ -1119,7 +1215,11 @@ class ThreadContextHooker:
             return False
 
     def hook_set_thread_context(self) -> bool:
-        """Install hook for SetThreadContext to prevent hardware breakpoint setting."""
+        """Install hook for SetThreadContext to prevent hardware breakpoint setting.
+
+        Returns:
+            bool: True if hook was installed successfully, False otherwise.
+        """
         try:
             kernel32 = ctypes.windll.kernel32
             func_addr = kernel32.GetProcAddress(kernel32.GetModuleHandleW("kernel32.dll"), b"SetThreadContext")
@@ -1184,7 +1284,11 @@ class HardwareDebugProtector:
         self.saved_context: dict[str, int] | None = None
 
     def get_thread_context(self) -> Any:
-        """Get current thread context including debug registers."""
+        """Get current thread context including debug registers.
+
+        Returns:
+            Any: Thread CONTEXT structure with debug register values or None on failure.
+        """
         try:
 
             class CONTEXT(ctypes.Structure):
@@ -1226,7 +1330,11 @@ class HardwareDebugProtector:
         return None
 
     def clear_debug_registers(self) -> bool:
-        """Clear all hardware debug registers to bypass detection."""
+        """Clear all hardware debug registers to bypass detection.
+
+        Returns:
+            bool: True if debug registers were cleared successfully, False otherwise.
+        """
         try:
             context = self.get_thread_context()
             if not context:
@@ -1262,7 +1370,11 @@ class HardwareDebugProtector:
         return False
 
     def monitor_debug_registers(self) -> dict[str, int]:
-        """Monitor current debug register values for detection."""
+        """Monitor current debug register values for detection.
+
+        Returns:
+            dict[str, int]: Dictionary with current values of debug registers DR0-DR7.
+        """
         try:
             if context := self.get_thread_context():
                 if hasattr(context, "Dr0"):
@@ -1280,7 +1392,11 @@ class HardwareDebugProtector:
         return {}
 
     def restore_debug_registers(self) -> bool:
-        """Restore original debug register values."""
+        """Restore original debug register values.
+
+        Returns:
+            bool: True if debug registers were restored successfully, False otherwise.
+        """
         try:
             if not self.saved_context:
                 return True
@@ -1443,7 +1559,11 @@ class TimingNormalizer:
         self.logger.info("Baseline times: %s", self.baseline_times)
 
     def normalize_get_tick_count(self) -> bool:
-        """Normalize GetTickCount to prevent timing detection."""
+        """Normalize GetTickCount to prevent timing detection.
+
+        Returns:
+            bool: True if normalization was successful, False otherwise.
+        """
         try:
             # Hook GetTickCount to return consistent values
             func_addr = self.kernel32.GetProcAddress(self.kernel32.GetModuleHandleW("kernel32.dll"), b"GetTickCount")
@@ -1490,7 +1610,11 @@ class TimingNormalizer:
             return False
 
     def normalize_rdtsc(self) -> bool:
-        """Handle RDTSC instruction timing."""
+        """Handle RDTSC instruction timing.
+
+        Returns:
+            bool: True if normalization was successful, False otherwise.
+        """
         try:
             # Install vectored exception handler to trap RDTSC
             # RDTSC (0F 31) will be replaced with INT 3 (CC) to trap execution
@@ -1532,7 +1656,11 @@ class TimingNormalizer:
             return False
 
     def _find_rdtsc_instructions(self) -> list[int]:
-        """Find RDTSC instructions in loaded modules."""
+        """Find RDTSC instructions in loaded modules.
+
+        Returns:
+            list[int]: List of addresses where RDTSC instructions were found.
+        """
         rdtsc_locations = []
 
         try:
@@ -1588,7 +1716,11 @@ class TimingNormalizer:
         time.sleep(delay)
 
     def apply_timing_normalizations(self) -> list[str]:
-        """Apply all timing normalizations."""
+        """Apply all timing normalizations.
+
+        Returns:
+            list[str]: List of results for each timing normalization applied.
+        """
         self.measure_baseline_timing()
 
         results = []
@@ -1642,7 +1774,15 @@ class MemoryPatcher:
         }
 
     def find_patterns_in_memory(self, start_addr: int, size: int) -> list[tuple[str, int]]:
-        """Find anti-debug patterns in memory region."""
+        """Find anti-debug patterns in memory region.
+
+        Args:
+            start_addr: Starting address of memory region to scan.
+            size: Size of memory region in bytes.
+
+        Returns:
+            list[tuple[str, int]]: List of tuples with pattern name and address.
+        """
         found_patterns: list[tuple[str, int]] = []
 
         try:
@@ -1679,7 +1819,15 @@ class MemoryPatcher:
         return found_patterns
 
     def patch_memory_location(self, address: int, new_bytes: bytes) -> bool:
-        """Patch memory at specific location."""
+        """Patch memory at specific location.
+
+        Args:
+            address: Memory address to patch.
+            new_bytes: Bytes to write at address.
+
+        Returns:
+            bool: True if patching was successful, False otherwise.
+        """
         try:
             # Make memory writable
             old_protect = ctypes.c_ulong()
@@ -1725,16 +1873,37 @@ class MemoryPatcher:
         return False
 
     def patch_int3_instructions(self, address: int) -> bool:
-        """Replace INT 3 with NOP."""
+        """Replace INT 3 with NOP.
+
+        Args:
+            address: Memory address of INT 3 instruction to patch.
+
+        Returns:
+            bool: True if patching was successful, False otherwise.
+        """
         return self.patch_memory_location(address, b"\x90")  # NOP
 
     def patch_isdebuggerpresent_calls(self, address: int) -> bool:
-        """Patch IsDebuggerPresent calls to return 0."""
+        """Patch IsDebuggerPresent calls to return 0.
+
+        Args:
+            address: Memory address of IsDebuggerPresent call to patch.
+
+        Returns:
+            bool: True if patching was successful, False otherwise.
+        """
         # Replace with: xor eax, eax; nop
         return self.patch_memory_location(address, b"\x33\xc0\x90")
 
     def scan_and_patch_module(self, module_name: str) -> list[str]:
-        """Scan and patch a specific module."""
+        """Scan and patch a specific module.
+
+        Args:
+            module_name: Name of module to scan and patch.
+
+        Returns:
+            list[str]: List of patching results for the module.
+        """
         results = []
 
         try:
@@ -1784,7 +1953,11 @@ class MemoryPatcher:
         return results
 
     def scan_all_modules(self) -> list[str]:
-        """Scan and patch all loaded modules."""
+        """Scan and patch all loaded modules.
+
+        Returns:
+            list[str]: List of patching results for all scanned modules.
+        """
         results = []
 
         try:
@@ -1815,7 +1988,14 @@ class ExceptionHandler:
         self.exception_count = 0
 
     def custom_exception_handler(self, exception_info: object) -> int | None:
-        """Handle custom exceptions to mask debugging based on exception info."""
+        """Handle custom exceptions to mask debugging based on exception info.
+
+        Args:
+            exception_info: Exception information object.
+
+        Returns:
+            int | None: Exception handler return code or None.
+        """
         self.exception_count += 1
 
         try:
@@ -1845,13 +2025,24 @@ class ExceptionHandler:
             return 0  # EXCEPTION_CONTINUE_SEARCH
 
     def install_exception_handler(self) -> bool:
-        """Install custom exception handler for anti-debug bypass."""
+        """Install custom exception handler for anti-debug bypass.
+
+        Returns:
+            bool: True if exception handler was installed successfully, False otherwise.
+        """
         try:
             # Use AddVectoredExceptionHandler for first-chance exception handling
             EXCEPTION_HANDLER = ctypes.WINFUNCTYPE(ctypes.c_long, ctypes.POINTER(ctypes.c_void_p))
 
             def exception_filter(exception_pointers: Any) -> int:
-                """Filter exceptions to hide debugging."""
+                """Filter exceptions to hide debugging.
+
+                Args:
+                    exception_pointers: Pointer to exception information structure.
+
+                Returns:
+                    int: Exception handling disposition code.
+                """
                 try:
                     # Get exception code
                     if exception_pointers:
@@ -1895,7 +2086,11 @@ class ExceptionHandler:
             return False
 
     def remove_exception_handler(self) -> bool:
-        """Remove custom exception handler and restore original."""
+        """Remove custom exception handler and restore original.
+
+        Returns:
+            bool: True if handler was removed successfully, False otherwise.
+        """
         try:
             if self.original_handler:
                 self.logger.info("Exception handler restored")
@@ -1906,7 +2101,11 @@ class ExceptionHandler:
             return False
 
     def mask_debug_exceptions(self) -> bool:
-        """Mask exceptions commonly used for debugging detection."""
+        """Mask exceptions commonly used for debugging detection.
+
+        Returns:
+            bool: True if exception masking was installed successfully, False otherwise.
+        """
         return self.install_exception_handler()
 
 
@@ -1920,7 +2119,11 @@ class EnvironmentSanitizer:
         self.original_values: dict[str, str | None] = {}
 
     def clean_environment_variables(self) -> list[str]:
-        """Clean debugging-related environment variables."""
+        """Clean debugging-related environment variables.
+
+        Returns:
+            list[str]: List of results for each environment variable cleaned.
+        """
         results = []
 
         debug_vars = [
@@ -1946,7 +2149,11 @@ class EnvironmentSanitizer:
         return results
 
     def hide_debugger_processes(self) -> list[str]:
-        """Attempt to hide debugger processes from detection."""
+        """Attempt to hide debugger processes from detection.
+
+        Returns:
+            list[str]: List of results for debugger process detection checks.
+        """
         results = []
 
         debugger_names = [
@@ -1973,7 +2180,11 @@ class EnvironmentSanitizer:
         return results
 
     def clean_registry_artifacts(self) -> list[str]:
-        """Clean debugging-related registry entries."""
+        """Clean debugging-related registry entries.
+
+        Returns:
+            list[str]: List of results for each registry key cleaned.
+        """
         results = []
 
         debug_keys = [
@@ -2002,7 +2213,11 @@ class EnvironmentSanitizer:
         return results
 
     def sanitize_file_system(self) -> list[str]:
-        """Remove debugging-related files and artifacts."""
+        """Remove debugging-related files and artifacts.
+
+        Returns:
+            list[str]: List of results for each file scanned.
+        """
         results = []
 
         debug_files = [
@@ -2024,7 +2239,11 @@ class EnvironmentSanitizer:
         return results
 
     def sanitize_all(self) -> list[str]:
-        """Run all sanitization procedures."""
+        """Run all sanitization procedures.
+
+        Returns:
+            list[str]: List of results from all sanitization operations.
+        """
         all_results = []
 
         sanitizers = [
@@ -2045,7 +2264,11 @@ class EnvironmentSanitizer:
         return all_results
 
     def restore_environment(self) -> bool:
-        """Restore original environment variables."""
+        """Restore original environment variables.
+
+        Returns:
+            bool: True if environment was restored successfully, False otherwise.
+        """
         try:
             for var, value in self.original_values.items():
                 if value is not None:
@@ -2071,7 +2294,14 @@ class TargetAnalyzer:
         self.detected_techniques: set[AntiDebugTechnique] = set()
 
     def analyze_pe_headers(self, file_path: str) -> list[AntiDebugTechnique]:
-        """Analyze PE headers for anti-debug indicators."""
+        """Analyze PE headers for anti-debug indicators.
+
+        Args:
+            file_path: Path to binary file to analyze.
+
+        Returns:
+            list[AntiDebugTechnique]: List of detected anti-debug techniques.
+        """
         techniques: list[AntiDebugTechnique] = []
 
         try:
@@ -2106,7 +2336,14 @@ class TargetAnalyzer:
         return techniques
 
     def analyze_imports(self, file_path: str) -> list[AntiDebugTechnique]:
-        """Analyze import table for anti-debug APIs."""
+        """Analyze import table for anti-debug APIs.
+
+        Args:
+            file_path: Path to binary file to analyze.
+
+        Returns:
+            list[AntiDebugTechnique]: List of detected anti-debug techniques from imports.
+        """
         techniques = []
 
         try:
@@ -2134,7 +2371,11 @@ class TargetAnalyzer:
         return techniques
 
     def analyze_runtime_behavior(self) -> list[AntiDebugTechnique]:
-        """Analyze runtime behavior for anti-debug techniques."""
+        """Analyze runtime behavior for anti-debug techniques.
+
+        Returns:
+            list[AntiDebugTechnique]: List of detected anti-debug techniques at runtime.
+        """
         techniques: list[AntiDebugTechnique] = []
 
         try:
@@ -2149,7 +2390,11 @@ class TargetAnalyzer:
         return techniques
 
     def detect_vm_environment(self) -> bool:
-        """Detect if running in VM environment."""
+        """Detect if running in VM environment.
+
+        Returns:
+            bool: True if running in VM environment, False otherwise.
+        """
         try:
             # Check for VM artifacts
             vm_indicators = [
@@ -2180,7 +2425,14 @@ class TargetAnalyzer:
             return False
 
     def analyze_target(self, file_path: str | None = None) -> dict[str, Any]:
-        """Perform comprehensive target analysis."""
+        """Perform comprehensive target analysis.
+
+        Args:
+            file_path: Optional path to binary file to analyze.
+
+        Returns:
+            dict[str, Any]: Analysis results with techniques detected and risk level.
+        """
         techniques_detected: list[AntiDebugTechnique] = []
         recommended_bypasses: list[str] = []
 
@@ -2279,12 +2531,26 @@ class AntiAntiDebugSuite:
         }
 
     def analyze_target(self, file_path: str | None = None) -> dict[str, Any]:
-        """Analyze target and recommend bypasses."""
+        """Analyze target and recommend bypasses.
+
+        Args:
+            file_path: Optional path to binary file to analyze.
+
+        Returns:
+            dict[str, Any]: Analysis results with detected techniques and recommendations.
+        """
         self.statistics["targets_analyzed"] += 1
         return self.target_analyzer.analyze_target(file_path)
 
     def apply_bypass(self, technique: AntiDebugTechnique) -> BypassOperation:
-        """Apply specific bypass technique."""
+        """Apply specific bypass technique.
+
+        Args:
+            technique: Anti-debug technique to bypass.
+
+        Returns:
+            BypassOperation: Record of bypass operation with result.
+        """
         self.statistics["bypasses_attempted"] += 1
 
         operation = BypassOperation(
@@ -2378,7 +2644,14 @@ class AntiAntiDebugSuite:
         return operation
 
     def apply_selective_bypasses(self, target_analysis: dict[str, Any]) -> list[BypassOperation]:
-        """Apply bypasses based on target analysis."""
+        """Apply bypasses based on target analysis.
+
+        Args:
+            target_analysis: Target analysis results with detected techniques.
+
+        Returns:
+            list[BypassOperation]: List of bypass operations performed.
+        """
         operations = []
 
         detected_techniques = target_analysis.get("techniques_detected", [])
@@ -2403,7 +2676,11 @@ class AntiAntiDebugSuite:
         return operations
 
     def apply_all_bypasses(self) -> list[BypassOperation]:
-        """Apply all available bypasses."""
+        """Apply all available bypasses.
+
+        Returns:
+            list[BypassOperation]: List of all bypass operations performed.
+        """
         operations = []
 
         for technique in AntiDebugTechnique:
@@ -2413,7 +2690,11 @@ class AntiAntiDebugSuite:
         return operations
 
     def monitor_bypasses(self) -> dict[str, Any]:
-        """Monitor status of active bypasses."""
+        """Monitor status of active bypasses.
+
+        Returns:
+            dict[str, Any]: Status information about active bypasses and statistics.
+        """
         return {
             "active_bypasses": list(self.active_bypasses),
             "bypass_count": len(self.active_bypasses),
@@ -2423,7 +2704,11 @@ class AntiAntiDebugSuite:
         }
 
     def remove_bypasses(self) -> list[str]:
-        """Remove all active bypasses."""
+        """Remove all active bypasses.
+
+        Returns:
+            list[str]: List of results for bypass removal operations.
+        """
         results = []
 
         try:
@@ -2443,7 +2728,11 @@ class AntiAntiDebugSuite:
         return results
 
     def get_report(self) -> dict[str, Any]:
-        """Generate comprehensive bypass report."""
+        """Generate comprehensive bypass report.
+
+        Returns:
+            dict[str, Any]: Detailed report of bypass operations and statistics.
+        """
         successful_bypasses = [op for op in self.bypass_history if op.result == BypassResult.SUCCESS]
         failed_bypasses = [op for op in self.bypass_history if op.result == BypassResult.FAILED]
 
@@ -2471,7 +2760,11 @@ class AntiAntiDebugSuite:
         }
 
     def export_report(self, output_file: str) -> None:
-        """Export bypass report to file."""
+        """Export bypass report to file.
+
+        Args:
+            output_file: Path to output file for report.
+        """
         try:
             report = self.get_report()
 

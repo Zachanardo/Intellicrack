@@ -269,7 +269,15 @@ class SecuROMAnalyzer:
         )
 
     def _detect_version(self, target_path: Path) -> str:
-        """Detect SecuROM version."""
+        """Detect SecuROM version.
+
+        Args:
+            target_path: Path to the binary file to analyze.
+
+        Returns:
+            str: Detected SecuROM version string.
+
+        """
         if not target_path.exists():
             return "Unknown"
 
@@ -290,7 +298,15 @@ class SecuROMAnalyzer:
         return "Unknown"
 
     def _analyze_activation_mechanisms(self, target_path: Path) -> list[ActivationMechanism]:
-        """Analyze activation mechanisms in protected executable."""
+        """Analyze activation mechanisms in protected executable.
+
+        Args:
+            target_path: Path to the binary file to analyze.
+
+        Returns:
+            list[ActivationMechanism]: List of detected activation mechanisms.
+
+        """
         mechanisms: list[ActivationMechanism] = []
 
         if not target_path.exists():
@@ -359,7 +375,15 @@ class SecuROMAnalyzer:
         return mechanisms
 
     def _identify_trigger_points(self, target_path: Path) -> list[TriggerPoint]:
-        """Identify online validation trigger points."""
+        """Identify online validation trigger points.
+
+        Args:
+            target_path: Path to the binary file to analyze.
+
+        Returns:
+            list[TriggerPoint]: List of identified trigger points.
+
+        """
         trigger_points: list[TriggerPoint] = []
 
         if not target_path.exists():
@@ -399,7 +423,15 @@ class SecuROMAnalyzer:
         return trigger_points
 
     def _classify_trigger_type(self, keyword: bytes) -> str:
-        """Classify trigger point type."""
+        """Classify trigger point type.
+
+        Args:
+            keyword: Keyword bytes to classify.
+
+        Returns:
+            str: Classification of the trigger type.
+
+        """
         keyword_lower = keyword.lower()
 
         if b"validate" in keyword_lower or b"verify" in keyword_lower:
@@ -411,7 +443,15 @@ class SecuROMAnalyzer:
         return "Phone Home" if b"phone" in keyword_lower else "Unknown"
 
     def _get_trigger_description(self, keyword: bytes) -> str:
-        """Get human-readable description of trigger."""
+        """Get human-readable description of trigger.
+
+        Args:
+            keyword: Keyword bytes to describe.
+
+        Returns:
+            str: Human-readable description of the trigger.
+
+        """
         descriptions = {
             b"ValidateLicense": "Validates license with activation server",
             b"CheckLicenseStatus": "Checks current license status",
@@ -426,7 +466,16 @@ class SecuROMAnalyzer:
         return descriptions.get(keyword, "Unknown trigger point")
 
     def _estimate_trigger_frequency(self, data: bytes, offset: int) -> str:
-        """Estimate how frequently trigger is called."""
+        """Estimate how frequently trigger is called.
+
+        Args:
+            data: Binary data to analyze.
+            offset: Offset in data to examine.
+
+        Returns:
+            str: Estimated frequency of trigger execution.
+
+        """
         context_start = max(0, offset - 100)
         context_end = min(len(data), offset + 100)
         context = data[context_start:context_end]
@@ -440,7 +489,15 @@ class SecuROMAnalyzer:
         return "Unknown"
 
     def _extract_product_key_info(self, target_path: Path) -> list[ProductActivationKey]:
-        """Extract product activation key structure information."""
+        """Extract product activation key structure information.
+
+        Args:
+            target_path: Path to the binary file to analyze.
+
+        Returns:
+            list[ProductActivationKey]: List of identified product key structures.
+
+        """
         keys: list[ProductActivationKey] = []
 
         if not target_path.exists():
@@ -487,7 +544,16 @@ class SecuROMAnalyzer:
         return keys
 
     def _detect_key_validation_algorithm(self, data: bytes, keyword: bytes) -> str:
-        """Detect product key validation algorithm."""
+        """Detect product key validation algorithm.
+
+        Args:
+            data: Binary data to analyze.
+            keyword: Keyword to search for.
+
+        Returns:
+            str: Detected validation algorithm name.
+
+        """
         offset = data.find(keyword)
         if offset == -1:
             return "Unknown"
@@ -505,7 +571,16 @@ class SecuROMAnalyzer:
         return "Custom Algorithm"
 
     def _detect_checksum_type(self, data: bytes, keyword: bytes) -> str | None:
-        """Detect checksum type used for product key."""
+        """Detect checksum type used for product key.
+
+        Args:
+            data: Binary data to analyze.
+            keyword: Keyword to search for.
+
+        Returns:
+            str | None: Detected checksum type or None if not identified.
+
+        """
         offset = data.find(keyword)
         if offset == -1:
             return None
@@ -523,7 +598,15 @@ class SecuROMAnalyzer:
         return None
 
     def _analyze_disc_authentication(self, target_path: Path) -> list[DiscAuthRoutine]:
-        """Analyze disc authentication routines."""
+        """Analyze disc authentication routines.
+
+        Args:
+            target_path: Path to the binary file to analyze.
+
+        Returns:
+            list[DiscAuthRoutine]: List of identified disc authentication routines.
+
+        """
         routines: list[DiscAuthRoutine] = []
 
         if not target_path.exists():
@@ -557,7 +640,16 @@ class SecuROMAnalyzer:
         return routines
 
     def _extract_scsi_commands(self, data: bytes, offset: int) -> list[str]:
-        """Extract SCSI commands used in disc authentication."""
+        """Extract SCSI commands used in disc authentication.
+
+        Args:
+            data: Binary data to analyze.
+            offset: Offset in data to examine.
+
+        Returns:
+            list[str]: List of identified SCSI command names.
+
+        """
         commands = []
         context = data[max(0, offset - 200) : min(len(data), offset + 200)]
 
@@ -569,7 +661,16 @@ class SecuROMAnalyzer:
         return commands
 
     def _identify_signature_checks(self, data: bytes, offset: int) -> list[str]:
-        """Identify disc signature verification methods."""
+        """Identify disc signature verification methods.
+
+        Args:
+            data: Binary data to analyze.
+            offset: Offset in data to examine.
+
+        Returns:
+            list[str]: List of identified signature check methods.
+
+        """
         context = data[max(0, offset - 300) : min(len(data), offset + 300)]
 
         check_indicators = [
@@ -583,7 +684,16 @@ class SecuROMAnalyzer:
         return [check_name for indicator, check_name in check_indicators if indicator in context]
 
     def _determine_fingerprint_method(self, data: bytes, offset: int) -> str:
-        """Determine disc fingerprinting method."""
+        """Determine disc fingerprinting method.
+
+        Args:
+            data: Binary data to analyze.
+            offset: Offset in data to examine.
+
+        Returns:
+            str: Identified disc fingerprinting method.
+
+        """
         context = data[max(0, offset - 400) : min(len(data), offset + 400)]
 
         if b"Subchannel" in context:
@@ -595,7 +705,16 @@ class SecuROMAnalyzer:
         return "Unknown Method"
 
     def _assess_bypass_difficulty(self, scsi_commands: list[str], signature_checks: list[str]) -> str:
-        """Assess difficulty of bypassing disc authentication."""
+        """Assess difficulty of bypassing disc authentication.
+
+        Args:
+            scsi_commands: List of SCSI commands used.
+            signature_checks: List of signature checks performed.
+
+        Returns:
+            str: Assessment of bypass difficulty level.
+
+        """
         complexity = len(scsi_commands) + len(signature_checks)
 
         if complexity <= 2:
@@ -603,7 +722,15 @@ class SecuROMAnalyzer:
         return "Medium" if complexity <= 4 else "High"
 
     def _detect_phone_home(self, target_path: Path) -> list[PhoneHomeMechanism]:
-        """Detect phone-home mechanisms."""
+        """Detect phone-home mechanisms.
+
+        Args:
+            target_path: Path to the binary file to analyze.
+
+        Returns:
+            list[PhoneHomeMechanism]: List of detected phone-home mechanisms.
+
+        """
         mechanisms: list[PhoneHomeMechanism] = []
 
         if not target_path.exists():
@@ -645,7 +772,16 @@ class SecuROMAnalyzer:
         return mechanisms
 
     def _extract_urls_near_offset(self, data: bytes, offset: int) -> list[str]:
-        """Extract URLs near the given offset."""
+        """Extract URLs near the given offset.
+
+        Args:
+            data: Binary data to analyze.
+            offset: Offset in data to examine.
+
+        Returns:
+            list[str]: List of extracted URLs.
+
+        """
         urls = []
         context_start = max(0, offset - 1000)
         context_end = min(len(data), offset + 1000)
@@ -669,7 +805,16 @@ class SecuROMAnalyzer:
         return urls
 
     def _identify_transmitted_data(self, data: bytes, offset: int) -> list[str]:
-        """Identify what data is transmitted in phone-home."""
+        """Identify what data is transmitted in phone-home.
+
+        Args:
+            data: Binary data to analyze.
+            offset: Offset in data to examine.
+
+        Returns:
+            list[str]: List of identified transmitted data types.
+
+        """
         context = data[max(0, offset - 500) : min(len(data), offset + 500)]
 
         data_indicators = [
@@ -685,7 +830,15 @@ class SecuROMAnalyzer:
         return [name for indicator, name in data_indicators if indicator in context]
 
     def _detect_protocol(self, api_name: bytes) -> str:
-        """Detect network protocol used."""
+        """Detect network protocol used.
+
+        Args:
+            api_name: API function name bytes.
+
+        Returns:
+            str: Detected network protocol name.
+
+        """
         if b"WinHttp" in api_name or b"Http" in api_name:
             return "HTTP/HTTPS"
         if b"WSA" in api_name or b"socket" in api_name.lower():
@@ -693,7 +846,15 @@ class SecuROMAnalyzer:
         return "Unknown"
 
     def _analyze_challenge_response(self, target_path: Path) -> list[ChallengeResponseFlow]:
-        """Analyze challenge-response authentication flows."""
+        """Analyze challenge-response authentication flows.
+
+        Args:
+            target_path: Path to the binary file to analyze.
+
+        Returns:
+            list[ChallengeResponseFlow]: List of identified challenge-response flows.
+
+        """
         flows: list[ChallengeResponseFlow] = []
 
         if not target_path.exists():
@@ -734,7 +895,15 @@ class SecuROMAnalyzer:
         return flows
 
     def _map_license_validation(self, target_path: Path) -> list[LicenseValidationFunction]:
-        """Map license validation functions."""
+        """Map license validation functions.
+
+        Args:
+            target_path: Path to the binary file to analyze.
+
+        Returns:
+            list[LicenseValidationFunction]: List of identified validation functions.
+
+        """
         functions: list[LicenseValidationFunction] = []
 
         if not target_path.exists():
@@ -774,7 +943,16 @@ class SecuROMAnalyzer:
         return functions
 
     def _identify_validation_checks(self, data: bytes, offset: int) -> list[str]:
-        """Identify checks performed in validation function."""
+        """Identify checks performed in validation function.
+
+        Args:
+            data: Binary data to analyze.
+            offset: Offset in data to examine.
+
+        Returns:
+            list[str]: List of identified validation checks.
+
+        """
         context = data[max(0, offset - 300) : min(len(data), offset + 300)]
 
         check_types = [
@@ -789,7 +967,16 @@ class SecuROMAnalyzer:
         return [check_name for indicator, check_name in check_types if indicator in context]
 
     def _extract_return_values(self, data: bytes, offset: int) -> dict[str, str]:
-        """Extract possible return values from validation function."""
+        """Extract possible return values from validation function.
+
+        Args:
+            data: Binary data to analyze.
+            offset: Offset in data to examine.
+
+        Returns:
+            dict[str, str]: Dictionary mapping return values to descriptions.
+
+        """
         return {
             "0": "Validation Success",
             "1": "Invalid License",
@@ -800,7 +987,15 @@ class SecuROMAnalyzer:
         }
 
     def _identify_encryption(self, target_path: Path) -> list[str]:
-        """Identify encryption techniques used."""
+        """Identify encryption techniques used.
+
+        Args:
+            target_path: Path to the binary file to analyze.
+
+        Returns:
+            list[str]: List of identified encryption algorithms.
+
+        """
         techniques: list[str] = []
 
         if not target_path.exists():
@@ -822,7 +1017,15 @@ class SecuROMAnalyzer:
         return list(set(techniques))
 
     def _detect_obfuscation(self, target_path: Path) -> list[str]:
-        """Detect code obfuscation methods."""
+        """Detect code obfuscation methods.
+
+        Args:
+            target_path: Path to the binary file to analyze.
+
+        Returns:
+            list[str]: List of identified obfuscation techniques.
+
+        """
         methods: list[str] = []
 
         if not PEFILE_AVAILABLE or not target_path.exists():
@@ -853,7 +1056,15 @@ class SecuROMAnalyzer:
         return methods
 
     def _get_imports(self, target_path: Path) -> list[str]:
-        """Get imported functions."""
+        """Get imported functions.
+
+        Args:
+            target_path: Path to the binary file to analyze.
+
+        Returns:
+            list[str]: List of imported functions.
+
+        """
         if not PEFILE_AVAILABLE or not target_path.exists():
             return []
 

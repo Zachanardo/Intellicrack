@@ -327,7 +327,7 @@ lint-java:
     @java -cp "tools/pmd/conf;tools/pmd/lib/*" net.sourceforge.pmd.cli.PmdCli check -d intellicrack/scripts/ghidra -R tools/pmd/intellicrack-ruleset.xml -f text
 
 # Format Java files with google-java-format
-lint-java-fix:
+lint-java-fmt:
     @Get-ChildItem -Recurse -Path intellicrack -Filter *.java | ForEach-Object { Write-Host "Formatting: $($_.FullName)"; java -jar tools/google-java-format/google-java-format.jar --replace $_.FullName; if ($LASTEXITCODE -eq 0) { Write-Host "  ✓ Formatted" -ForegroundColor Green } else { Write-Host "  ✗ Error" -ForegroundColor Red } }
 
 # Lint Markdown files with markdownlint
@@ -355,33 +355,21 @@ lint-yaml-fix:
     @echo "[YAML Format] Running Prettier for YAML formatting..."
     @pixi run yarn prettier --write "**/*.yaml" "**/*.yml" --ignore-unknown --log-level warn 2>&1 | Out-Null; Write-Host "[YAMLFMT] Done"
 
-# Lint all JSON files in the project with Prettier
-lint-json:
-    @pixi run yarn prettier --check "**/*.json"
-
-# Fix JSON linting issues automatically with Prettier
-lint-json-fix:
-    @pixi run yarn prettier --write "**/*.json"
-
 # Lint all file types (Python, Rust, Java, JavaScript, Markdown, TOML, YAML, JSON, Formatting)
 lint-all:
     -@just lint
-    -@just lint-rust-all
+    -@just lint-rust
     -@just lint-java
     -@just lint-js
     -@just lint-md
     -@just lint-toml
     -@just lint-yaml
-    -@just lint-json
+    -@just jsonlint
     @echo "All linting complete ✓"
 
 # Lint Rust code with clippy (comprehensive - all lints)
 lint-rust:
     @cargo clippy --manifest-path intellicrack-launcher/Cargo.toml --all-targets --all-features -- -W clippy::all -W clippy::pedantic -W clippy::nursery
-
-# Lint Rust code with clippy (basic - default warnings only)
-lint-rust-basic:
-    @cargo clippy --manifest-path intellicrack-launcher/Cargo.toml -- -D warnings
 
 # Format Rust code with rustfmt
 # NOTE: Requires modern Rust toolchain via rustup (https://rustup.rs/)
@@ -437,10 +425,6 @@ mdfmt:
 lint-rust-fix:
     @cargo clippy --manifest-path intellicrack-launcher/Cargo.toml --fix --allow-dirty --allow-staged -- -D warnings
 
-# All Rust linting and formatting
-lint-rust-all: lint-rust lint-rust-fmt-check
-    @echo "Rust linting and formatting complete ✓"
-
 # Fix all auto-fixable linting issues (Python, Rust, Java, JavaScript, Markdown, TOML, YAML, JSON, Formatting)
 
 # Note: PMD does not support auto-fix (linting only), yamllint does not auto-fix (use Prettier instead)
@@ -448,11 +432,11 @@ lint-all-fix:
     -@just lint-fix
     -@just lint-rust-fix
     -@just lint-rust-fmt
-    -@just lint-java-fix
+    -@just lint-java-fmt
     -@just lint-js-fix
     -@just lint-md-fix
     -@just lint-toml-fix
-    -@just lint-json-fix
+    -@just jsonfmt
     @echo "All auto-fixable linting issues resolved ✓"
 
 # ==================== GIT ====================
@@ -461,11 +445,20 @@ lint-all-fix:
 watch:
     @$ErrorActionPreference = 'Stop'; $e = [char]27; function Write-Step { param($msg) Write-Host "$e[36m[GIT]$e[0m $msg" }; function Write-Fail { param($msg) Write-Host "  $e[31m[FAIL]$e[0m $msg" }; Write-Step "Checking gh CLI..."; try { $ghVersion = gh --version 2>&1 | Select-Object -First 1; if ($LASTEXITCODE -ne 0) { throw "gh CLI not found" } } catch { Write-Fail "gh CLI not installed: $_"; exit 1 }; Write-Step "Watching GitHub Actions..."; gh run watch
 
+# Cleans Windows NUL file artifacts from the repository.
+nul-cleanup:
+    @$ErrorActionPreference = 'Stop'; $e = [char]27; function Write-Step { param($msg) Write-Host "$e[35m[NUL]$e[0m $msg" }; function Write-Success { param($msg) Write-Host "  $e[32m[OK]$e[0m $msg" }; function Write-Fail { param($msg) Write-Host "  $e[31m[FAIL]$e[0m $msg" }; $startTime = Get-Date; Write-Host "`n$e[1;35m=== NUL File Cleanup ===$e[0m`n"; Write-Step "Scanning for NUL file artifacts..."; try { $output = pixi run python scripts/clean_nul.py 2>&1; $outputStr = $output -join "`n"; if ($outputStr -match '(\d+)\s+file\(s\)\s+deleted') { $deleted = $matches[1] } else { $deleted = 0 }; if ($LASTEXITCODE -ne 0) { throw "Clean script failed" }; Write-Success "Cleanup complete ($deleted files removed)" } catch { Write-Fail "Cleanup failed: $_"; exit 1 }; $elapsed = ((Get-Date) - $startTime).TotalSeconds; Write-Host "`n$e[1;35m=== NUL Cleanup Complete ===$e[0m $e[90m($("{0:N1}" -f $elapsed)s)$e[0m`n"
+
+# Generates project structure files (HTA and TXT).
+generate-structure:
+    @$ErrorActionPreference = 'Stop'; $e = [char]27; function Write-Step { param($msg) Write-Host "$e[34m[STRUCT]$e[0m $msg" }; function Write-Success { param($msg) Write-Host "  $e[32m[OK]$e[0m $msg" }; function Write-Fail { param($msg) Write-Host "  $e[31m[FAIL]$e[0m $msg" }; $startTime = Get-Date; Write-Host "`n$e[1;34m=== Generating Structure Files ===$e[0m`n"; Write-Step "Running structure generator..."; try { $output = pixi run python scripts/generate_tree.py 2>&1; if ($LASTEXITCODE -ne 0) { throw "Generator script failed" }; Write-Success "Generator completed" } catch { Write-Fail "Generation failed: $_"; exit 1 }; Write-Step "Validating outputs..."; $htaPath = "IntellicrackStructure.hta"; $txtPath = "IntellicrackStructure.txt"; if (-not (Test-Path $htaPath)) { Write-Fail "HTA file not found: $htaPath"; exit 1 }; Write-Success "HTA: $htaPath"; if (-not (Test-Path $txtPath)) { Write-Fail "TXT file not found: $txtPath"; exit 1 }; Write-Success "TXT: $txtPath"; $elapsed = ((Get-Date) - $startTime).TotalSeconds; Write-Host "`n$e[1;34m=== Structure Generation Complete ===$e[0m $e[90m($("{0:N1}" -f $elapsed)s)$e[0m`n"
+
 # Creates a quick WIP commit with automatic timestamp and pushes to origin.
+# Runs NUL cleanup, structure generation, and knowledge map generation before committing.
 
 # Skips git hooks for faster commits during development work.
 git-commit:
-    @$ErrorActionPreference = 'Stop'; $e = [char]27; function Write-Step { param($msg) Write-Host "$e[36m[GIT]$e[0m $msg" }; function Write-Success { param($msg) Write-Host "  $e[32m[OK]$e[0m $msg" }; function Write-Fail { param($msg) Write-Host "  $e[31m[FAIL]$e[0m $msg" }; $startTime = Get-Date; Write-Step "Quick WIP commit..."; $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"; Write-Step "Staging all changes..."; try { git add -A 2>&1 | ForEach-Object { Write-Host "  $_" }; if ($LASTEXITCODE -ne 0) { throw "git add failed" }; Write-Success "Changes staged" } catch { Write-Fail "Staging failed: $_"; exit 1 }; Write-Step "Committing with timestamp..."; try { git commit --no-verify -m "WIP: $timestamp" 2>&1 | ForEach-Object { Write-Host "  $_" }; if ($LASTEXITCODE -ne 0) { throw "git commit failed" }; Write-Success "Committed" } catch { Write-Fail "Commit failed: $_"; exit 1 }; Write-Step "Pushing to origin..."; try { git push origin HEAD 2>&1 | ForEach-Object { Write-Host "  $_" }; if ($LASTEXITCODE -ne 0) { throw "git push failed" }; Write-Success "Pushed to origin" } catch { Write-Fail "Push failed: $_"; exit 1 }; $elapsed = ((Get-Date) - $startTime).TotalSeconds; Write-Host "`n$e[1;32m=== Commit Complete ===$e[0m $e[90m($("{0:N1}" -f $elapsed)s)$e[0m`n"
+    @$ErrorActionPreference = 'Stop'; $e = [char]27; function Write-Step { param($msg) Write-Host "$e[32m[GIT]$e[0m $msg" }; function Write-Success { param($msg) Write-Host "  $e[32m[OK]$e[0m $msg" }; function Write-Fail { param($msg) Write-Host "  $e[31m[FAIL]$e[0m $msg" }; $startTime = Get-Date; Write-Host "`n$e[1;32m=== WIP Commit with Generated Files ===$e[0m`n"; Write-Step "Step 1/4: Running NUL cleanup..."; try { just nul-cleanup 2>&1 | Out-Null; if ($LASTEXITCODE -ne 0) { throw "NUL cleanup failed" }; Write-Success "NUL cleanup complete" } catch { Write-Fail "NUL cleanup failed: $_"; exit 1 }; Write-Step "Step 2/4: Generating structure files..."; try { just generate-structure 2>&1 | Out-Null; if ($LASTEXITCODE -ne 0) { throw "Structure generation failed" }; Write-Success "Structure files generated" } catch { Write-Fail "Structure generation failed: $_"; exit 1 }; Write-Step "Step 3/4: Generating knowledge map..."; try { just generate-map 2>&1 | Out-Null; if ($LASTEXITCODE -ne 0) { throw "Map generation failed" }; Write-Success "Knowledge map generated" } catch { Write-Fail "Map generation failed: $_"; exit 1 }; Write-Step "Step 4/4: Committing and pushing..."; $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"; try { git add -A 2>&1 | Out-Null; if ($LASTEXITCODE -ne 0) { throw "git add failed" }; Write-Success "Changes staged" } catch { Write-Fail "Staging failed: $_"; exit 1 }; try { git commit --no-verify -m "WIP: $timestamp" 2>&1 | Out-Null; if ($LASTEXITCODE -ne 0) { throw "git commit failed" }; Write-Success "Committed: WIP: $timestamp" } catch { Write-Fail "Commit failed: $_"; exit 1 }; try { git push origin HEAD 2>&1 | Out-Null; if ($LASTEXITCODE -ne 0) { throw "git push failed" }; Write-Success "Pushed to origin" } catch { Write-Fail "Push failed: $_"; exit 1 }; $elapsed = ((Get-Date) - $startTime).TotalSeconds; Write-Host "`n$e[1;32m=== Commit Complete ===$e[0m $e[90m($("{0:N1}" -f $elapsed)s)$e[0m`n"
 
 # Full commit with hooks - prompts for message, runs pre-commit hooks, pushes to origin
 git-commit-hooks message:
@@ -517,12 +510,12 @@ docs-linkcheck:
 # Generate interactive knowledge graph visualization of codebase architecture.
 
 # Creates an interactive HTML visualization (IntellicrackKnowledgeGraph.html) at project root.
-graph:
-    @$ErrorActionPreference = 'Stop'; $e = [char]27; function Write-Step { param($msg) Write-Host "$e[36m[GRAPH]$e[0m $msg" }; function Write-Success { param($msg) Write-Host "  $e[32m[OK]$e[0m $msg" }; function Write-Fail { param($msg) Write-Host "  $e[31m[FAIL]$e[0m $msg" }; $startTime = Get-Date; Write-Host "`n$e[1;36m=== Generating Knowledge Graph ===$e[0m`n"; Write-Step "Checking dependencies..."; try { $pyVersion = pixi run python --version 2>&1; if ($LASTEXITCODE -ne 0) { throw "Python not available" }; Write-Success "Python: $pyVersion" } catch { Write-Fail "Python not available: $_"; exit 1 }; Write-Step "Verifying script exists..."; $scriptPath = "scripts\knowledge-graph\visualize_architecture.py"; if (-not (Test-Path $scriptPath)) { Write-Fail "Script not found: $scriptPath"; exit 1 }; Write-Success "Script found"; Write-Step "Generating knowledge graph..."; Write-Host "  $e[90m...$e[0m Parsing codebase, building graph, calculating layout"; try { pixi run python $scriptPath --layout hierarchical 2>&1 | ForEach-Object { Write-Host "  $e[90m   $_$e[0m" }; if ($LASTEXITCODE -ne 0) { throw "Graph generation failed with exit code $LASTEXITCODE" }; Write-Success "Knowledge graph generated" } catch { Write-Fail "Generation failed: $_"; exit 1 }; Write-Step "Validating outputs..."; $htmlPath = "IntellicrackKnowledgeGraph.html"; $kgDir = "scripts\knowledge-graph"; $graphmlPath = "$kgDir\IntellicrackKnowledgeGraph.graphml"; $dotPath = "$kgDir\IntellicrackKnowledgeGraph.dot"; if (-not (Test-Path $htmlPath)) { Write-Fail "HTML output not found: $htmlPath"; exit 1 }; $htmlSize = [math]::Round((Get-Item $htmlPath).Length / 1MB, 2); Write-Success "HTML: $htmlPath ($htmlSize MB)"; $nodeCount = 0; $edgeCount = 0; if (Test-Path $graphmlPath) { $graphmlSize = [math]::Round((Get-Item $graphmlPath).Length / 1MB, 2); Write-Success "GraphML: $graphmlPath ($graphmlSize MB)"; $graphmlContent = Get-Content $graphmlPath -Raw -ErrorAction SilentlyContinue; if ($graphmlContent -match '<node') { $nodeCount = ([regex]::Matches($graphmlContent, '<node ')).Count }; if ($graphmlContent -match '<edge') { $edgeCount = ([regex]::Matches($graphmlContent, '<edge ')).Count } }; if (Test-Path $dotPath) { $dotSize = [math]::Round((Get-Item $dotPath).Length / 1MB, 2); Write-Success "DOT: $dotPath ($dotSize MB)" }; $elapsed = ((Get-Date) - $startTime).TotalSeconds; Write-Host "`n$e[1;32m=== Knowledge Graph Complete ===$e[0m"; Write-Host "$e[90mNodes: $nodeCount | Edges: $edgeCount | Time: $("{0:N1}" -f $elapsed)s$e[0m"; Write-Host "View: $e[36mIntellicrackKnowledgeGraph.html$e[0m`n"
+generate-map:
+    @$ErrorActionPreference = 'Stop'; $e = [char]27; function Write-Step { param($msg) Write-Host "$e[36m[MAP]$e[0m $msg" }; function Write-Success { param($msg) Write-Host "  $e[32m[OK]$e[0m $msg" }; function Write-Fail { param($msg) Write-Host "  $e[31m[FAIL]$e[0m $msg" }; $startTime = Get-Date; Write-Host "`n$e[1;36m=== Generating Knowledge Map ===$e[0m`n"; Write-Step "Running map generator..."; $scriptPath = "scripts\knowledge-graph\visualize_architecture.py"; try { $output = pixi run python $scriptPath --layout hierarchical 2>&1; if ($LASTEXITCODE -ne 0) { throw "Map generation failed" }; Write-Success "Map generated" } catch { Write-Fail "Generation failed: $_"; exit 1 }; Write-Step "Validating outputs..."; $htmlPath = "IntellicrackKnowledgeGraph.html"; $kgDir = "scripts\knowledge-graph"; $graphmlPath = "$kgDir\IntellicrackKnowledgeGraph.graphml"; $dotPath = "$kgDir\IntellicrackKnowledgeGraph.dot"; if (-not (Test-Path $htmlPath)) { Write-Fail "HTML not found: $htmlPath"; exit 1 }; Write-Success "HTML: $htmlPath"; if (Test-Path $graphmlPath) { Write-Success "GraphML: $graphmlPath" }; if (Test-Path $dotPath) { Write-Success "DOT: $dotPath" }; $elapsed = ((Get-Date) - $startTime).TotalSeconds; Write-Host "`n$e[1;36m=== Knowledge Map Complete ===$e[0m $e[90m($("{0:N1}" -f $elapsed)s)$e[0m`n"
 
-# Open knowledge graph in browser (Windows)
-graph-open:
-    @$ErrorActionPreference = 'Stop'; $e = [char]27; function Write-Step { param($msg) Write-Host "$e[36m[GRAPH]$e[0m $msg" }; function Write-Success { param($msg) Write-Host "  $e[32m[OK]$e[0m $msg" }; function Write-Fail { param($msg) Write-Host "  $e[31m[FAIL]$e[0m $msg" }; $htmlPath = "IntellicrackKnowledgeGraph.html"; if (-not (Test-Path $htmlPath)) { Write-Fail "Knowledge graph not found. Run 'just graph' first."; exit 1 }; Write-Step "Opening knowledge graph in browser..."; Start-Process $htmlPath; Write-Success "Opened in browser"
+# Open knowledge map in browser (Windows)
+open-map:
+    @$ErrorActionPreference = 'Stop'; $e = [char]27; function Write-Step { param($msg) Write-Host "$e[36m[MAP]$e[0m $msg" }; function Write-Success { param($msg) Write-Host "  $e[32m[OK]$e[0m $msg" }; function Write-Fail { param($msg) Write-Host "  $e[31m[FAIL]$e[0m $msg" }; $htmlPath = "IntellicrackKnowledgeGraph.html"; if (-not (Test-Path $htmlPath)) { Write-Fail "Knowledge map not found. Run 'just generate-map' first."; exit 1 }; Write-Step "Opening knowledge map in browser..."; Start-Process $htmlPath; Write-Success "Opened in browser"
 
 # ==================== COMPREHENSIVE REPORTS ====================
 # Runs all development tools in batches of 8 for controlled resource usage.

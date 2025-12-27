@@ -180,7 +180,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
         self.logger.info("QEMU emulator initialized for %s architecture", architecture)
 
     def _set_default_config(self) -> None:
-        """Set default configuration parameters."""
+        """Set default configuration parameters for QEMU emulator."""
         defaults = {
             "memory_mb": 1024,
             "cpu_cores": 2,
@@ -403,7 +403,12 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
         return cmd
 
     def _is_kvm_available(self) -> bool:
-        """Check if KVM acceleration is available."""
+        """Check if KVM acceleration is available.
+
+        Returns:
+            True if KVM is available and accessible, False otherwise.
+
+        """
         try:
             return os.path.exists("/dev/kvm") and os.access("/dev/kvm", os.R_OK | os.W_OK)
         except (OSError, ValueError, RuntimeError) as e:
@@ -439,7 +444,12 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
         return False
 
     def _test_monitor_connection(self) -> bool:
-        """Test if monitor socket is accessible."""
+        """Test if monitor socket is accessible.
+
+        Returns:
+            True if monitor connection is successful, False otherwise.
+
+        """
         try:
             if not self.monitor_socket or not os.path.exists(self.monitor_socket):
                 return False
@@ -775,7 +785,16 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             return {"qemu_comparison_error": str(e)}
 
     def _analyze_memory_changes(self, snap1: str, snap2: str) -> dict[str, Any]:
-        """Analyze memory changes between snapshots."""
+        """Analyze memory changes between snapshots.
+
+        Args:
+            snap1: Name of first snapshot to compare.
+            snap2: Name of second snapshot to compare.
+
+        Returns:
+            Dictionary containing memory region changes, heap growth, stack changes, and new memory mappings.
+
+        """
         try:
             # Get memory info from monitor
             mem_info1 = self._send_monitor_command(f"info mtree -f -d snapshot={snap1}")
@@ -831,7 +850,15 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             }
 
     def _parse_memory_regions(self, mem_info: str) -> list[dict[str, Any]]:
-        """Parse memory region information from QEMU monitor output."""
+        """Parse memory region information from QEMU monitor output.
+
+        Args:
+            mem_info: Memory information string from QEMU monitor.
+
+        Returns:
+            List of dictionaries containing parsed memory region data.
+
+        """
         regions: list[dict[str, Any]] = []
         if not mem_info:
             return regions
@@ -882,7 +909,15 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
         return regions
 
     def _get_snapshot_filesystem(self, snapshot_name: str) -> dict[str, Any]:
-        """Get filesystem state for a specific snapshot via QEMU guest agent."""
+        """Get filesystem state for a specific snapshot via QEMU guest agent.
+
+        Args:
+            snapshot_name: Name of snapshot to query.
+
+        Returns:
+            Dictionary containing filesystem state including files, directories, and error information.
+
+        """
         try:
             filesystem_state: dict[str, Any] = {
                 "files": [],
@@ -1017,7 +1052,15 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             return {"files": [], "directories": [], "snapshot_name": snapshot_name, "error": str(e)}
 
     def _get_snapshot_processes(self, snapshot_name: str) -> list[dict[str, Any]]:
-        """Get process list for a specific snapshot via guest agent."""
+        """Get process list for a specific snapshot via guest agent.
+
+        Args:
+            snapshot_name: Name of snapshot to query.
+
+        Returns:
+            List of dictionaries containing process information for the snapshot.
+
+        """
         try:
             self.logger.debug("Getting process list for snapshot: %s", snapshot_name)
             if self.monitor_socket and self.qemu_process:
@@ -1076,7 +1119,15 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             return []
 
     def _get_snapshot_network(self, snapshot_name: str) -> dict[str, Any]:
-        """Get network state for a specific snapshot."""
+        """Get network state for a specific snapshot.
+
+        Args:
+            snapshot_name: Name of snapshot to query.
+
+        Returns:
+            Dictionary containing network connections, DNS queries, traffic, and listening ports.
+
+        """
         try:
             self.logger.debug("Getting network state for snapshot: %s", snapshot_name)
 
@@ -1404,7 +1455,16 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
         return entries
 
     def _analyze_filesystem_changes(self, snap1: str, snap2: str) -> dict[str, Any]:
-        """Analyze filesystem changes between snapshots."""
+        """Analyze filesystem changes between snapshots.
+
+        Args:
+            snap1: Name of first snapshot to compare.
+            snap2: Name of second snapshot to compare.
+
+        Returns:
+            Dictionary containing created files, modified files, deleted files, and created directories.
+
+        """
         try:
             self.logger.info("Analyzing filesystem changes between snapshots: %s -> %s", snap1, snap2)
 
@@ -1537,7 +1597,16 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             }
 
     def _analyze_process_changes(self, snap1: str, snap2: str) -> dict[str, Any]:
-        """Analyze process changes between snapshots."""
+        """Analyze process changes between snapshots.
+
+        Args:
+            snap1: Name of first snapshot to compare.
+            snap2: Name of second snapshot to compare.
+
+        Returns:
+            Dictionary containing started processes, ended processes, and process memory changes.
+
+        """
         try:
             self.logger.info("Analyzing process changes between snapshots: %s -> %s", snap1, snap2)
 
@@ -1688,7 +1757,16 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             }
 
     def _analyze_network_changes(self, snap1: str, snap2: str) -> dict[str, Any]:
-        """Analyze network changes between snapshots."""
+        """Analyze network changes between snapshots.
+
+        Args:
+            snap1: Name of first snapshot to compare.
+            snap2: Name of second snapshot to compare.
+
+        Returns:
+            Dictionary containing new connections, closed connections, DNS queries, and traffic volume.
+
+        """
         try:
             self.logger.info("Analyzing network changes between snapshots: %s -> %s", snap1, snap2)
 
@@ -1880,7 +1958,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
         """Get comprehensive system status.
 
         Returns:
-            Dictionary containing system status information
+            Dictionary containing system status information including architecture, binary path, rootfs path, and snapshots.
 
         """
         status = {
@@ -1905,7 +1983,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
         """Clean up emulator resources.
 
         Returns:
-            True if cleanup successful, False otherwise
+            True if cleanup successful, False otherwise.
 
         """
         success = bool(not self.qemu_process or self.stop_system())
@@ -1919,11 +1997,11 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
         """Execute binary within the QEMU environment and monitor for activity.
 
         Args:
-            binary_path: Path to the binary to execute
-            app: Application instance for updates
+            binary_path: Path to the binary to execute.
+            app: Application instance for updates.
 
         Returns:
-            Dictionary with execution results
+            Dictionary with execution results including success status and binary type.
 
         """
         try:
@@ -1958,7 +2036,16 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             }
 
     def _execute_pe_binary_real(self, binary_path: str, app: AppProtocol | None = None) -> dict[str, Any]:
-        """Execute Windows PE binary using real QEMU with Windows guest."""
+        """Execute Windows PE binary using real QEMU with Windows guest.
+
+        Args:
+            binary_path: Path to the Windows PE binary to execute.
+            app: Application instance for updates.
+
+        Returns:
+            Dictionary with execution results including success, exit code, output, and monitoring results.
+
+        """
         start_time = time.time()
 
         try:
@@ -2012,7 +2099,16 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             }
 
     def _execute_linux_binary_real(self, binary_path: str, app: AppProtocol | None = None) -> dict[str, Any]:
-        """Execute Linux binary using real QEMU with Linux guest."""
+        """Execute Linux binary using real QEMU with Linux guest.
+
+        Args:
+            binary_path: Path to the Linux binary to execute.
+            app: Application instance for updates.
+
+        Returns:
+            Dictionary with execution results including success, exit code, output, and monitoring results.
+
+        """
         start_time = time.time()
 
         try:

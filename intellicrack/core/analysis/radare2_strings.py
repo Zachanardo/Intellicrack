@@ -66,7 +66,7 @@ class R2StringAnalyzer:
             encoding: String encoding ('auto', 'ascii', 'utf8', 'utf16')
 
         Returns:
-            Complete string analysis results
+            dict[str, Any]: Complete string analysis results
 
         """
         result = {
@@ -138,7 +138,17 @@ class R2StringAnalyzer:
         return result
 
     def _get_comprehensive_strings(self, r2: R2Session, min_length: int, encoding: str) -> list[dict[str, Any]]:
-        """Get strings using multiple radare2 commands for comprehensive coverage."""
+        """Get strings using multiple radare2 commands for comprehensive coverage.
+
+        Args:
+            r2: Active radare2 session for binary analysis
+            min_length: Minimum string length to include in results
+            encoding: Target encoding filter (auto, ascii, utf8, utf16)
+
+        Returns:
+            list[dict]: Normalized string data dictionaries with metadata
+
+        """
         all_strings = []
 
         try:
@@ -208,7 +218,15 @@ class R2StringAnalyzer:
             return []
 
     def _normalize_string_data(self, string_data: dict[str, Any]) -> dict[str, Any] | None:
-        """Normalize string data from radare2 output."""
+        """Normalize string data from radare2 output.
+
+        Args:
+            string_data: Raw string dictionary from radare2 JSON output
+
+        Returns:
+            dict[str, Any] | None: Normalized string data with consistent field names and types, or None if invalid
+
+        """
         if not isinstance(string_data, dict):
             return None  # type: ignore[unreachable]
 
@@ -238,7 +256,16 @@ class R2StringAnalyzer:
         return normalized
 
     def _analyze_strings_by_section(self, r2: R2Session, strings: list[dict[str, Any]]) -> dict[str, Any]:
-        """Analyze string distribution by binary sections."""
+        """Analyze string distribution by binary sections.
+
+        Args:
+            r2: Active radare2 session for binary analysis
+            strings: List of normalized string data dictionaries
+
+        Returns:
+            dict[str, Any]: Section analysis with string counts, sizes, and distributions
+
+        """
         sections = {}
 
         # Get section information
@@ -272,7 +299,15 @@ class R2StringAnalyzer:
         return sections
 
     def _categorize_strings(self, strings: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
-        """Categorize strings based on content patterns."""
+        """Categorize strings based on content patterns.
+
+        Args:
+            strings: List of normalized string data dictionaries
+
+        Returns:
+            dict[str, list[dict]]: Categorized string lists organized by type (license, crypto, api, etc.)
+
+        """
         categories: dict[str, list[dict[str, Any]]] = {
             "license_strings": [],
             "crypto_strings": [],
@@ -342,7 +377,15 @@ class R2StringAnalyzer:
         return categories
 
     def _is_license_string(self, content: str) -> bool:
-        """Enhanced license string detection with advanced algorithms."""
+        """Enhanced license string detection with advanced algorithms.
+
+        Args:
+            content: String content to analyze for licensing indicators
+
+        Returns:
+            bool: True if string matches license-related patterns
+
+        """
         # Basic pattern matching (existing functionality)
         license_patterns = [
             r"\blicens\w*\b",
@@ -369,7 +412,15 @@ class R2StringAnalyzer:
         return self._detect_license_key_formats(content)
 
     def _detect_license_key_formats(self, content: str) -> bool:
-        """Advanced license key format detection algorithms."""
+        """Advanced license key format detection algorithms.
+
+        Args:
+            content: String content to analyze for license key patterns
+
+        Returns:
+            bool: True if content matches known license key formats
+
+        """
         # Remove whitespace and hyphens for analysis
         clean_content = re.sub(r"[\s\-_]", "", content)
 
@@ -401,7 +452,15 @@ class R2StringAnalyzer:
         return self._check_license_validation_context(content)
 
     def _analyze_license_key_entropy(self, content: str) -> bool:
-        """Analyze entropy to detect potential license keys."""
+        """Analyze entropy to detect potential license keys.
+
+        Args:
+            content: String content to analyze for license key entropy characteristics
+
+        Returns:
+            bool: True if entropy profile suggests license key
+
+        """
         if len(content) < 8:
             return False
 
@@ -420,7 +479,15 @@ class R2StringAnalyzer:
         return False
 
     def _analyze_license_key_distribution(self, content: str) -> bool:
-        """Analyze character distribution patterns typical of license keys."""
+        """Analyze character distribution patterns typical of license keys.
+
+        Args:
+            content: String content to analyze for license key distribution patterns
+
+        Returns:
+            bool: True if character distribution matches license key profile
+
+        """
         if len(content) < 12 or len(content) > 50:
             return False
 
@@ -444,7 +511,15 @@ class R2StringAnalyzer:
         )
 
     def _has_license_key_patterns(self, content: str) -> bool:
-        """Check for patterns common in license keys."""
+        """Check for patterns common in license keys.
+
+        Args:
+            content: String content to analyze for license key patterns
+
+        Returns:
+            bool: True if string contains license key-like patterns
+
+        """
         # Avoid keys with too many repeated characters
         char_counts: dict[str, int] = {}
         for char in content:
@@ -460,7 +535,15 @@ class R2StringAnalyzer:
         return 0.3 <= alternation_ratio <= 0.8  # Moderate alternation suggests structure
 
     def _is_repetitive_pattern(self, content: str) -> bool:
-        """Check if string has repetitive patterns that are unlikely in real license keys."""
+        """Check if string has repetitive patterns that are unlikely in real license keys.
+
+        Args:
+            content: String content to analyze for repetitive patterns
+
+        Returns:
+            bool: True if string has excessive character repetition
+
+        """
         if len(content) < 4:
             return False
 
@@ -488,7 +571,15 @@ class R2StringAnalyzer:
         return False
 
     def _check_license_validation_context(self, content: str) -> bool:
-        """Check if string appears in license validation context."""
+        """Check if string appears in license validation context.
+
+        Args:
+            content: String content to analyze for license validation context
+
+        Returns:
+            bool: True if string suggests license validation usage
+
+        """
         # Check if the string format suggests it's used for validation
         # Common patterns in license validation messages
 
@@ -498,7 +589,15 @@ class R2StringAnalyzer:
         return any(pattern in content_lower for pattern in ["key", "serial", "code"] if len(content) >= 10 and content.isascii())
 
     def _is_crypto_string(self, content: str) -> bool:
-        """Enhanced cryptographic string identification with advanced algorithms."""
+        """Enhanced cryptographic string identification with advanced algorithms.
+
+        Args:
+            content: String content to analyze for cryptographic indicators
+
+        Returns:
+            bool: True if string matches cryptographic patterns
+
+        """
         # Basic pattern matching (existing functionality)
         crypto_patterns = [
             r"\b(aes|des|3des|blowfish|twofish|serpent)\b",
@@ -519,7 +618,15 @@ class R2StringAnalyzer:
         return self._detect_cryptographic_data(content)
 
     def _detect_cryptographic_data(self, content: str) -> bool:
-        """Advanced detection of cryptographic data patterns."""
+        """Advanced detection of cryptographic data patterns.
+
+        Args:
+            content: String content to analyze for cryptographic data patterns
+
+        Returns:
+            bool: True if string contains cryptographic data indicators
+
+        """
         # Check for Base64 encoded data (common in crypto)
         if self._is_base64_data(content):
             return True
@@ -540,7 +647,15 @@ class R2StringAnalyzer:
         return self._has_crypto_constants(content)
 
     def _is_base64_data(self, content: str) -> bool:
-        """Detect Base64 encoded cryptographic data."""
+        """Detect Base64 encoded cryptographic data.
+
+        Args:
+            content: String content to analyze for Base64 encoding
+
+        Returns:
+            bool: True if content appears to be valid Base64 cryptographic data
+
+        """
         # Remove whitespace for analysis
         clean_content = re.sub(r"\s+", "", content)
 
@@ -565,7 +680,15 @@ class R2StringAnalyzer:
             return False
 
     def _is_hex_crypto_data(self, content: str) -> bool:
-        """Detect hexadecimal cryptographic data."""
+        """Detect hexadecimal cryptographic data.
+
+        Args:
+            content: String content to analyze for hexadecimal cryptographic data
+
+        Returns:
+            bool: True if content matches hexadecimal cryptographic data patterns
+
+        """
         # Remove spaces and check if it's valid hex
         clean_hex = re.sub(r"[\s:,]", "", content)
 
@@ -598,7 +721,15 @@ class R2StringAnalyzer:
         return False
 
     def _is_pem_format(self, content: str) -> bool:
-        """Detect PEM format cryptographic data."""
+        """Detect PEM format cryptographic data.
+
+        Args:
+            content: String content to analyze for PEM format data
+
+        Returns:
+            bool: True if content contains PEM format markers
+
+        """
         pem_patterns = [
             r"-----BEGIN\s+(CERTIFICATE|PRIVATE KEY|PUBLIC KEY|RSA PRIVATE KEY)-----",
             r"-----END\s+(CERTIFICATE|PRIVATE KEY|PUBLIC KEY|RSA PRIVATE KEY)-----",
@@ -607,7 +738,15 @@ class R2StringAnalyzer:
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in pem_patterns)
 
     def _analyze_crypto_entropy(self, content: str) -> bool:
-        """Analyze entropy to detect potential cryptographic data."""
+        """Analyze entropy to detect potential cryptographic data.
+
+        Args:
+            content: String content to analyze for cryptographic entropy levels
+
+        Returns:
+            bool: True if entropy profile suggests cryptographic data
+
+        """
         if len(content) < 20:
             return False
 
@@ -627,7 +766,15 @@ class R2StringAnalyzer:
         return False
 
     def _has_crypto_constants(self, content: str) -> bool:
-        """Check for known cryptographic constants."""
+        """Check for known cryptographic constants.
+
+        Args:
+            content: String content to analyze for known crypto constants
+
+        Returns:
+            bool: True if content contains recognizable cryptographic constants
+
+        """
         # Common crypto constants (in hex)
         crypto_constants = [
             "67452301",  # MD5 initial value
@@ -642,7 +789,15 @@ class R2StringAnalyzer:
         return any(const in content_upper for const in crypto_constants)
 
     def _analyze_binary_crypto_data(self, data: bytes) -> bool:
-        """Analyze binary data for cryptographic characteristics."""
+        """Analyze binary data for cryptographic characteristics.
+
+        Args:
+            data: Binary data to analyze for cryptographic indicators
+
+        Returns:
+            bool: True if binary data exhibits cryptographic characteristics
+
+        """
         if len(data) < 8:
             return False
 
@@ -660,7 +815,15 @@ class R2StringAnalyzer:
         return chi_square < 300  # Adjusted threshold for crypto detection
 
     def _calculate_hex_entropy(self, hex_string: str) -> float:
-        """Calculate entropy of hex string."""
+        """Calculate entropy of hex string.
+
+        Args:
+            hex_string: Hexadecimal string to analyze
+
+        Returns:
+            float: Shannon entropy value for the hex data
+
+        """
         if not hex_string:
             return 0.0
 
@@ -673,7 +836,15 @@ class R2StringAnalyzer:
             return self._calculate_entropy(hex_string)
 
     def _is_api_string(self, content: str) -> bool:
-        """Enhanced API call string analysis with advanced algorithms."""
+        """Enhanced API call string analysis with advanced algorithms.
+
+        Args:
+            content: String content to analyze for API function names
+
+        Returns:
+            bool: True if string matches API function name patterns
+
+        """
         if len(content) > 50:
             return False
 
@@ -692,7 +863,15 @@ class R2StringAnalyzer:
         return True if any(re.match(pattern, content) for pattern in api_patterns) else self._analyze_api_function_patterns(content)
 
     def _analyze_api_function_patterns(self, content: str) -> bool:
-        """Advanced analysis of API function patterns."""
+        """Advanced analysis of API function patterns.
+
+        Args:
+            content: String content to analyze for API patterns
+
+        Returns:
+            bool: True if content matches known API function patterns
+
+        """
         # Check against comprehensive Windows API database
         if self._is_windows_api_function(content):
             return True
@@ -709,7 +888,15 @@ class R2StringAnalyzer:
         return self._analyze_api_naming_conventions(content)
 
     def _is_windows_api_function(self, content: str) -> bool:
-        """Detect Windows API functions using comprehensive patterns."""
+        """Detect Windows API functions using comprehensive patterns.
+
+        Args:
+            content: String content to analyze for Windows API function names
+
+        Returns:
+            bool: True if content matches Windows API naming conventions
+
+        """
         # Windows API prefixes and common functions
         windows_api_prefixes = [
             "Nt",
@@ -752,7 +939,15 @@ class R2StringAnalyzer:
         return any(re.match(pattern, content, re.IGNORECASE) for pattern in windows_patterns)
 
     def _is_posix_api_function(self, content: str) -> bool:
-        """Detect POSIX/Linux API functions."""
+        """Detect POSIX/Linux API functions.
+
+        Args:
+            content: String content to analyze for POSIX/Linux API function names
+
+        Returns:
+            bool: True if content matches POSIX API functions
+
+        """
         # Common POSIX system calls and library functions
         posix_functions = [
             # File operations
@@ -830,7 +1025,15 @@ class R2StringAnalyzer:
         return any(content.startswith(prefix) for prefix in posix_prefixes)
 
     def _is_library_api_function(self, content: str) -> bool:
-        """Detect common library API functions."""
+        """Detect common library API functions.
+
+        Args:
+            content: String content to analyze for library API function names
+
+        Returns:
+            bool: True if content matches library API naming conventions
+
+        """
         # Common library prefixes
         library_prefixes = [
             # Graphics libraries
@@ -868,7 +1071,15 @@ class R2StringAnalyzer:
         return any(content_lower.startswith(prefix.lower()) for prefix in library_prefixes)
 
     def _analyze_api_naming_conventions(self, content: str) -> bool:
-        """Analyze naming conventions typical of API functions."""
+        """Analyze naming conventions typical of API functions.
+
+        Args:
+            content: String content to analyze for API naming patterns
+
+        Returns:
+            bool: True if content follows API naming conventions
+
+        """
         # Length check - API functions are usually 4-40 characters
         if len(content) < 4 or len(content) > 40:
             return False
@@ -948,7 +1159,15 @@ class R2StringAnalyzer:
         return False
 
     def _is_url_string(self, content: str) -> bool:
-        """Check if string is a URL or network endpoint."""
+        """Check if string is a URL or network endpoint.
+
+        Args:
+            content: String content to analyze for URL patterns
+
+        Returns:
+            bool: True if content contains URL or network endpoint patterns
+
+        """
         url_patterns = [
             r"https?://\S+",
             r"ftp://\S+",
@@ -962,7 +1181,15 @@ class R2StringAnalyzer:
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in url_patterns)
 
     def _is_file_path_string(self, content: str) -> bool:
-        """Check if string is a file path."""
+        """Check if string is a file path.
+
+        Args:
+            content: String content to analyze for file path patterns
+
+        Returns:
+            bool: True if content contains file path indicators
+
+        """
         path_patterns = [
             r"^[A-Z]:\\",  # Windows absolute path
             r"^\\\\",  # UNC path
@@ -976,7 +1203,15 @@ class R2StringAnalyzer:
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in path_patterns)
 
     def _is_registry_string(self, content: str) -> bool:
-        """Check if string is a Windows registry key."""
+        """Check if string is a Windows registry key.
+
+        Args:
+            content: String content to analyze for registry key patterns
+
+        Returns:
+            bool: True if content matches registry key patterns
+
+        """
         registry_patterns = [
             r"^HKEY_",
             r"^HKLM\\",
@@ -993,7 +1228,15 @@ class R2StringAnalyzer:
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in registry_patterns)
 
     def _is_error_message_string(self, content: str) -> bool:
-        """Check if string is an error message."""
+        """Check if string is an error message.
+
+        Args:
+            content: String content to analyze for error message indicators
+
+        Returns:
+            bool: True if content contains error message patterns
+
+        """
         error_patterns = [
             r"\berror\b",
             r"\bfail\w*\b",
@@ -1012,7 +1255,15 @@ class R2StringAnalyzer:
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in error_patterns)
 
     def _is_version_string(self, content: str) -> bool:
-        """Check if string contains version information."""
+        """Check if string contains version information.
+
+        Args:
+            content: String content to analyze for version information
+
+        Returns:
+            bool: True if content contains version patterns
+
+        """
         version_patterns = [
             r"\bv?\d+\.\d+(\.\d+)*\b",
             r"\bversion\b.*\d+",
@@ -1025,7 +1276,15 @@ class R2StringAnalyzer:
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in version_patterns)
 
     def _is_compiler_string(self, content: str) -> bool:
-        """Check if string is compiler-related."""
+        """Check if string is compiler-related.
+
+        Args:
+            content: String content to analyze for compiler indicators
+
+        Returns:
+            bool: True if content contains compiler-related patterns
+
+        """
         compiler_patterns = [
             r"\b(gcc|clang|msvc|mingw|borland)\b",
             r"\b(microsoft|visual|studio)\b.*\bc\+\+\b",
@@ -1039,7 +1298,15 @@ class R2StringAnalyzer:
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in compiler_patterns)
 
     def _is_debug_string(self, content: str) -> bool:
-        """Check if string is debug-related."""
+        """Check if string is debug-related.
+
+        Args:
+            content: String content to analyze for debug indicators
+
+        Returns:
+            bool: True if content contains debug-related patterns
+
+        """
         debug_patterns = [
             r"\bdebug\b",
             r"\btrace\b",
@@ -1056,7 +1323,15 @@ class R2StringAnalyzer:
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in debug_patterns)
 
     def _is_ui_string(self, content: str) -> bool:
-        """Check if string is user interface related."""
+        """Check if string is user interface related.
+
+        Args:
+            content: String content to analyze for UI indicators
+
+        Returns:
+            bool: True if content contains UI-related patterns
+
+        """
         ui_patterns = [
             r"\b(ok|cancel|yes|no|apply|close|exit)\b",
             r"\b(button|dialog|window|menu|tab)\b",
@@ -1072,7 +1347,15 @@ class R2StringAnalyzer:
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in ui_patterns)
 
     def _is_network_string(self, content: str) -> bool:
-        """Check if string is network-related."""
+        """Check if string is network-related.
+
+        Args:
+            content: String content to analyze for network indicators
+
+        Returns:
+            bool: True if content contains network-related patterns
+
+        """
         network_patterns = [
             r"\b(tcp|udp|http|https|ftp|smtp|pop3|imap)\b",
             r"\b(socket|connect|bind|listen|accept)\b",
@@ -1087,7 +1370,16 @@ class R2StringAnalyzer:
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in network_patterns)
 
     def _get_string_cross_references(self, r2: R2Session, strings: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
-        """Get cross-references for important strings."""
+        """Get cross-references for important strings.
+
+        Args:
+            r2: Active radare2 session for binary analysis
+            strings: List of string data dictionaries to analyze
+
+        Returns:
+            dict[str, dict]: Cross-references for license and crypto strings mapped by address
+
+        """
         xrefs: dict[str, dict[str, Any]] = {}
 
         # Focus on license and crypto strings for cross-reference analysis
@@ -1112,7 +1404,15 @@ class R2StringAnalyzer:
         return xrefs
 
     def _analyze_string_entropy(self, strings: list[dict[str, Any]]) -> dict[str, Any]:
-        """Analyze string entropy for encoded/encrypted content detection."""
+        """Analyze string entropy for encoded/encrypted content detection.
+
+        Args:
+            strings: List of string data dictionaries to analyze
+
+        Returns:
+            dict[str, Any]: Entropy analysis with high/low entropy strings and distribution statistics
+
+        """
         entropy_analysis: dict[str, Any] = {
             "high_entropy_strings": [],
             "low_entropy_strings": [],
@@ -1159,7 +1459,15 @@ class R2StringAnalyzer:
         return entropy_analysis
 
     def _detect_suspicious_patterns(self, strings: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Detect suspicious string patterns."""
+        """Detect suspicious string patterns.
+
+        Args:
+            strings: List of string data dictionaries to analyze
+
+        Returns:
+            list[dict]: Suspicious pattern detections with descriptions
+
+        """
         suspicious = []
 
         for string_data in strings:
@@ -1208,7 +1516,15 @@ class R2StringAnalyzer:
         return suspicious
 
     def _calculate_entropy(self, text: str) -> float:
-        """Calculate Shannon entropy of a string."""
+        """Calculate Shannon entropy of a string.
+
+        Args:
+            text: String content to calculate entropy for
+
+        Returns:
+            float: Shannon entropy value (0-8)
+
+        """
         if not text:
             return 0.0
 
@@ -1228,7 +1544,15 @@ class R2StringAnalyzer:
         return entropy
 
     def _generate_category_statistics(self, result: dict[str, Any]) -> dict[str, Any]:
-        """Generate statistics for categorized strings."""
+        """Generate statistics for categorized strings.
+
+        Args:
+            result: Analysis result dictionary containing categorized strings
+
+        Returns:
+            dict[str, Any]: Statistics for each string category including counts and percentages
+
+        """
         stats = {}
 
         categories = [
@@ -1257,7 +1581,12 @@ class R2StringAnalyzer:
         return stats
 
     def search_license_validation_strings(self) -> dict[str, Any]:
-        """Specialized search for license validation related strings."""
+        """Specialized search for license validation related strings.
+
+        Returns:
+            dict[str, Any]: Dictionary with validation_strings list and search metadata
+
+        """
         try:
             with r2_session(self.binary_path, self.radare2_path) as r2_raw:
                 # Type narrowing for r2_session which returns R2Session | R2SessionPoolAdapter
@@ -1341,7 +1670,7 @@ class R2StringAnalyzer:
             min_length: Minimum string length to include.
 
         Returns:
-            Dictionary containing strings list with normalized structure.
+            dict[str, Any]: Dictionary containing strings list with normalized structure.
 
         """
         try:
@@ -1401,7 +1730,7 @@ def analyze_binary_strings(binary_path: str, radare2_path: str | None = None, mi
         min_length: Minimum string length to analyze
 
     Returns:
-        Complete string analysis results
+        dict[str, Any]: Complete string analysis results
 
     """
     analyzer = R2StringAnalyzer(binary_path, radare2_path)

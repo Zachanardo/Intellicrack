@@ -430,14 +430,9 @@ class SymbolicExecutionEngine:
                 all supported vulnerability types.
 
         Returns:
-            List of dictionaries containing discovered vulnerabilities with fields:
+            list[dict[str, Any]]: List of dictionaries containing discovered vulnerabilities with fields:
             type (str), address (str), description (str), severity (str), and
             type-specific details. Returns error dictionary on execution failure.
-
-        Raises:
-            OSError: If binary file access fails during project setup.
-            ValueError: If constraint solving encounters invalid inputs.
-            RuntimeError: If the symbolic execution engine encounters fatal errors.
         """
         if not self.angr_available:
             # Comprehensive fallback implementation without angr dependency
@@ -519,12 +514,7 @@ class SymbolicExecutionEngine:
             constraint: Constraint object to evaluate for overflow potential.
 
         Returns:
-            True if potential integer overflow vulnerability detected, False otherwise.
-
-        Raises:
-            OSError: If state access fails.
-            ValueError: If constraint evaluation encounters invalid variable data.
-            RuntimeError: If solver encounters fatal constraint errors.
+            bool: True if potential integer overflow vulnerability detected, False otherwise.
         """
         try:
             # Check if constraint involves arithmetic that could overflow
@@ -563,12 +553,7 @@ class SymbolicExecutionEngine:
             project: Angr project object containing function definitions.
 
         Returns:
-            True if potential format string vulnerability detected, False otherwise.
-
-        Raises:
-            OSError: If project knowledge base access fails.
-            ValueError: If variable evaluation encounters invalid symbolic data.
-            RuntimeError: If constraint solving fails.
+            bool: True if potential format string vulnerability detected, False otherwise.
         """
         try:
             # Look for printf-like function calls with user-controlled format string
@@ -609,13 +594,8 @@ class SymbolicExecutionEngine:
                 containing type, address, and type-specific vulnerability details.
 
         Returns:
-            Dictionary containing exploit information with keys: type (str), payload (str),
+            dict[str, Any]: Dictionary containing exploit information with keys: type (str), payload (str),
             instructions (str), and type-specific fields (e.g., technique, gadgets, chain).
-
-        Raises:
-            OSError: If exploit generation requires file system access.
-            ValueError: If vulnerability data format is invalid.
-            RuntimeError: If exploit generation engine encounters errors.
         """
         if not self.angr_available:
             return {"error": "Required dependencies not available"}
@@ -684,12 +664,8 @@ class SymbolicExecutionEngine:
                 and process_info fields needed for exploit construction.
 
         Returns:
-            Dictionary with exploit details: type, payload (hex), technique, instructions,
+            dict[str, Any]: Dictionary with exploit details: type, payload (hex), technique, instructions,
             and heap_layout specifying spray count, chunk size, and target addresses.
-
-        Raises:
-            ValueError: If vulnerability data lacks required heap exploitation fields.
-            RuntimeError: If exploit construction encounters memory calculation errors.
         """
         import struct
 
@@ -755,12 +731,8 @@ class SymbolicExecutionEngine:
                 and vtable_offset, plus process_info for address calculations.
 
         Returns:
-            Dictionary containing exploit sequences with spray actions, UAF trigger
+            dict[str, Any]: Dictionary containing exploit sequences with spray actions, UAF trigger
             steps, vtable hijacking details, and instructions for executing the exploit.
-
-        Raises:
-            ValueError: If vulnerability data lacks required UAF exploitation fields.
-            RuntimeError: If object layout calculation or gadget finding fails.
         """
         import struct
 
@@ -1027,12 +999,8 @@ class SymbolicExecutionEngine:
                 timing window size and other race condition specific details.
 
         Returns:
-            Dictionary with race exploit threads, synchronization method, timing
+            dict[str, Any]: Dictionary with race exploit threads, synchronization method, timing
             window parameters, and C/assembly code implementing the race condition.
-
-        Raises:
-            ValueError: If vulnerability data lacks race condition specific fields.
-            RuntimeError: If code generation encounters errors.
         """
         import struct
 
@@ -1163,13 +1131,9 @@ int main() {{
                 and symbol table analysis.
 
         Returns:
-            Dictionary with exploit setup, trigger operations, payload hex string,
+            dict[str, Any]: Dictionary with exploit setup, trigger operations, payload hex string,
             instructions, and type confusion specific fields: source_type, target_type,
             gadget information, and reliability score.
-
-        Raises:
-            ValueError: If class information extraction or layout building fails.
-            RuntimeError: If vtable analysis or gadget finding encounters errors.
         """
         confusion_info = vulnerability.get("confusion_info", {})
         source_type = confusion_info.get("source_type", "TypeA")
@@ -1317,10 +1281,6 @@ int main() {{
         Returns:
             Dictionary with 'source' and 'target' keys containing class information:
             type, size, vtable_addr, member_offsets, vfuncs, and constructor_addr.
-
-        Raises:
-            ValueError: If RTTI extraction encounters missing or invalid type information.
-            RuntimeError: If symbol table lookup fails for vtables or constructors.
         """
         rtti_info = process_info.get("rtti", {})
         symbols = process_info.get("symbols", {})
@@ -1875,11 +1835,8 @@ int main() {{
             process_info: Process information with arch and os fields for code generation.
 
         Returns:
-            Bytearray containing assembled shellcode for the target platform, or None
+            bytearray | None: Bytearray containing assembled shellcode for the target platform, or None
             if shellcode generation is not supported for the architecture.
-
-        Raises:
-            ValueError: If architecture or OS combination is not supported.
         """
         arch = process_info.get("arch", "x64")
         os_type = process_info.get("os", "windows")
@@ -3161,7 +3118,14 @@ int main() {{
         return vulnerabilities
 
     def _deduplicate_and_rank_vulnerabilities(self, vulnerabilities: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Remove duplicates and rank vulnerabilities by severity."""
+        """Remove duplicates and rank vulnerabilities by severity.
+
+        Args:
+            vulnerabilities: List of vulnerability dictionaries to deduplicate and rank.
+
+        Returns:
+            list[dict[str, Any]]: Deduplicated vulnerabilities sorted by severity level.
+        """
         # Remove duplicates based on type and address
         seen = set()
         unique_vulns = []
@@ -3471,7 +3435,17 @@ int main() {{
             return False
 
     def _setup_exploration_project(self, start_address: int) -> tuple[Any, Any]:
-        """Set up angr project and initial state for exploration."""
+        """Set up angr project and initial state for exploration.
+
+        Args:
+            start_address: Memory address to start symbolic execution from.
+
+        Returns:
+            tuple[Any, Any]: Tuple of (angr project, initial program state).
+
+        Raises:
+            ValueError: If start address is outside valid binary address range.
+        """
         project = angr.Project(self.binary_path, auto_load_libs=False)
 
         # Verify start address is valid
@@ -3979,7 +3953,15 @@ int main() {{
         return tree
 
     def _disassemble_from_address(self, binary_data: bytes, start_address: int) -> dict[str, Any]:
-        """Disassemble code starting from a specific address."""
+        """Disassemble code starting from a specific address.
+
+        Args:
+            binary_data: Raw binary data bytes to analyze.
+            start_address: Memory address to begin disassembly from.
+
+        Returns:
+            dict[str, Any]: Dictionary containing 'instructions' list and 'basic_blocks' dictionary.
+        """
         instructions: list[dict[str, Any]] = []
         basic_blocks: dict[int, dict[str, Any]] = {}
 
@@ -4138,7 +4120,15 @@ int main() {{
         }
 
     def _build_basic_cfg(self, disasm_info: dict[str, Any], start_address: int) -> dict[str, Any]:
-        """Build a basic control flow graph from disassembly info."""
+        """Build a basic control flow graph from disassembly info.
+
+        Args:
+            disasm_info: Disassembly information containing instructions and basic blocks.
+            start_address: Starting memory address of the analyzed code region.
+
+        Returns:
+            dict[str, Any]: Control flow graph with 'nodes' and 'edges' keys.
+        """
         nodes = {}
         edges = []
 
@@ -4258,7 +4248,15 @@ int main() {{
         return cfg
 
     def _extract_jump_target(self, instr_bytes: bytes, instr_addr: int) -> int | None:
-        """Extract jump target address from instruction bytes."""
+        """Extract jump target address from instruction bytes.
+
+        Args:
+            instr_bytes: Instruction bytes to decode for jump target.
+            instr_addr: Current instruction address for relative offset calculation.
+
+        Returns:
+            int | None: Calculated jump target address, or None if not a jump instruction.
+        """
         try:
             if len(instr_bytes) < 2:
                 return None
@@ -4293,7 +4291,16 @@ int main() {{
             return None
 
     def _find_all_paths(self, cfg: dict[str, Any], start_address: int, max_depth: int) -> list[list[int]]:
-        """Find all execution paths in the CFG up to max_depth."""
+        """Find all execution paths in the CFG up to max_depth.
+
+        Args:
+            cfg: Control flow graph dictionary with nodes and edges.
+            start_address: Starting memory address for path exploration.
+            max_depth: Maximum depth to explore in the CFG.
+
+        Returns:
+            list[list[int]]: List of execution paths, each path is a list of addresses.
+        """
         paths: list[list[int]] = []
         nodes = cfg.get("nodes", {})
         edges = cfg.get("edges", [])
@@ -4392,7 +4399,15 @@ int main() {{
         return paths
 
     def _analyze_path_for_vulnerabilities(self, path: list[int], binary_data: bytes) -> list[dict[str, Any]]:
-        """Analyze a specific execution path for vulnerabilities."""
+        """Analyze a specific execution path for vulnerabilities.
+
+        Args:
+            path: List of addresses representing an execution path.
+            binary_data: Raw binary data bytes to analyze.
+
+        Returns:
+            list[dict[str, Any]]: List of vulnerability dictionaries found in the path.
+        """
         vulnerabilities: list[dict[str, Any]] = []
 
         if not path or len(path) < 2:
@@ -4458,7 +4473,17 @@ int main() {{
         return unique_vulns[:10]  # Limit to top 10 vulnerabilities
 
     def _check_buffer_overflow_path(self, addr: int, path_idx: int, path: list[int], instr_window: bytes) -> dict[str, Any] | None:
-        """Check for buffer overflow patterns in instruction window."""
+        """Check for buffer overflow vulnerability in execution path.
+
+        Args:
+            addr: Address in the binary to check.
+            path_idx: Index of the address within the path.
+            path: List of addresses in the execution path.
+            instr_window: Bytes of instruction window to analyze.
+
+        Returns:
+            dict[str, Any] | None: Vulnerability dictionary if overflow detected, None otherwise.
+        """
         try:
             # Look for buffer operations and unchecked bounds
             if (b"\xc7\x45" in instr_window or b"\x89\x45" in instr_window) and (
@@ -4488,7 +4513,17 @@ int main() {{
         return None
 
     def _check_integer_overflow_path(self, addr: int, path_idx: int, path: list[int], instr_window: bytes) -> dict[str, Any] | None:
-        """Check for integer overflow patterns."""
+        """Check for integer overflow patterns.
+
+        Args:
+            addr: Address in the binary to check.
+            path_idx: Index of the address within the path.
+            path: List of addresses in the execution path.
+            instr_window: Bytes of instruction window to analyze.
+
+        Returns:
+            dict[str, Any] | None: Vulnerability dictionary if overflow detected, None otherwise.
+        """
         try:
             # Look for arithmetic operations without overflow checks
             if b"\x01" in instr_window or b"\x29" in instr_window:  # add/sub operations
@@ -4518,7 +4553,17 @@ int main() {{
         return None
 
     def _check_use_after_free_path(self, addr: int, path_idx: int, path: list[int], instr_window: bytes) -> dict[str, Any] | None:
-        """Check for use-after-free patterns."""
+        """Check for use-after-free patterns.
+
+        Args:
+            addr: Address in the binary to check.
+            path_idx: Index of the address within the path.
+            path: List of addresses in the execution path.
+            instr_window: Bytes of instruction window to analyze.
+
+        Returns:
+            dict[str, Any] | None: Vulnerability dictionary if UAF detected, None otherwise.
+        """
         try:
             # Look for memory access after potential free operations
             if path_idx > 0 and b"\xff\x15" in instr_window:  # call instruction
@@ -4546,7 +4591,17 @@ int main() {{
         return None
 
     def _check_format_string_path(self, addr: int, path_idx: int, path: list[int], instr_window: bytes) -> dict[str, Any] | None:
-        """Check for format string vulnerabilities."""
+        """Check for format string vulnerabilities.
+
+        Args:
+            addr: Address in the binary to check.
+            path_idx: Index of the address within the path.
+            path: List of addresses in the execution path.
+            instr_window: Bytes of instruction window to analyze.
+
+        Returns:
+            dict[str, Any] | None: Vulnerability dictionary if format string found, None otherwise.
+        """
         try:
             # Look for printf-like function calls with format strings
             if b"%" in instr_window and b"\xff" in instr_window:  # format specifiers + call
@@ -4573,7 +4628,17 @@ int main() {{
         return None
 
     def _check_null_deref_path(self, addr: int, path_idx: int, path: list[int], instr_window: bytes) -> dict[str, Any] | None:
-        """Check for null pointer dereference."""
+        """Check for null pointer dereference.
+
+        Args:
+            addr: Address in the binary to check.
+            path_idx: Index of the address within the path.
+            path: List of addresses in the execution path.
+            instr_window: Bytes of instruction window to analyze.
+
+        Returns:
+            dict[str, Any] | None: Vulnerability dictionary if null deref found, None otherwise.
+        """
         try:
             # Look for memory access without null checks
             if b"\x8b\x00" in instr_window or b"\x89\x00" in instr_window:  # mov [reg], reg
@@ -4601,7 +4666,17 @@ int main() {{
         return None
 
     def _check_race_condition_path(self, addr: int, path_idx: int, path: list[int], instr_window: bytes) -> dict[str, Any] | None:
-        """Check for race condition patterns."""
+        """Check for race condition patterns.
+
+        Args:
+            addr: Address in the binary to check.
+            path_idx: Index of the address within the path.
+            path: List of addresses in the execution path.
+            instr_window: Bytes of instruction window to analyze.
+
+        Returns:
+            dict[str, Any] | None: Vulnerability dictionary if race condition found, None otherwise.
+        """
         try:
             # Look for shared memory access without proper synchronization
             if b"\xf0" in instr_window:  # lock prefix
@@ -4629,7 +4704,14 @@ int main() {{
         return None
 
     def _analyze_path_loops(self, path: list[int]) -> dict[str, Any] | None:
-        """Analyze path for infinite loops or cycle detection."""
+        """Analyze path for infinite loops or cycle detection.
+
+        Args:
+            path: List of addresses representing an execution path.
+
+        Returns:
+            dict[str, Any] | None: Vulnerability dictionary if loop detected, None otherwise.
+        """
         try:
             # Detect repeated addresses that might indicate loops
             seen_addrs = set()
@@ -4648,7 +4730,15 @@ int main() {{
         return None
 
     def _analyze_path_memory_access(self, path: list[int], binary_data: bytes) -> dict[str, Any] | None:
-        """Analyze memory access patterns in the path."""
+        """Analyze memory access patterns in the path.
+
+        Args:
+            path: List of addresses representing an execution path.
+            binary_data: Raw binary data bytes to analyze.
+
+        Returns:
+            dict[str, Any] | None: Vulnerability dictionary if suspicious pattern found, None otherwise.
+        """
         try:
             # Check for out-of-bounds access patterns
             if len(path) > 5:
@@ -4721,7 +4811,14 @@ int main() {{
         return None
 
     def _analyze_path_control_flow(self, path: list[int]) -> dict[str, Any] | None:
-        """Analyze control flow integrity in the path."""
+        """Analyze control flow properties of an execution path.
+
+        Args:
+            path: List of addresses representing an execution path.
+
+        Returns:
+            dict[str, Any] | None: Vulnerability dictionary if CFG anomaly found, None otherwise.
+        """
         try:
             # Check for control flow anomalies
             if len(path) > 10:
@@ -4742,7 +4839,15 @@ int main() {{
         return None
 
     def _extract_path_constraints(self, path: list[int], disasm_info: dict[str, Any]) -> list[str]:
-        """Extract symbolic constraints from a path."""
+        """Extract symbolic constraints from a path.
+
+        Args:
+            path: List of addresses representing an execution path.
+            disasm_info: Disassembly information with instruction details.
+
+        Returns:
+            list[str]: List of constraint descriptions derived from the path.
+        """
         constraints: list[str] = []
 
         for addr in path[:10]:  # Analyze up to 10 addresses in path

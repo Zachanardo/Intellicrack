@@ -276,7 +276,12 @@ class DistributedAnalysisManager:
             self.nodes[self.node_id] = worker_node
 
     def _get_local_ip(self) -> str:
-        """Get local IP address for network communication."""
+        """Get local IP address for network communication.
+
+        Returns:
+            str: Local IP address or loopback address if unreachable.
+
+        """
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             s.settimeout(0.1)
@@ -289,7 +294,15 @@ class DistributedAnalysisManager:
             return "127.0.0.1"
 
     def _check_capability(self, module_name: str) -> bool:
-        """Check if a module/capability is available."""
+        """Check if a module/capability is available.
+
+        Args:
+            module_name: Name of the module to check.
+
+        Returns:
+            bool: True if module is available, False otherwise.
+
+        """
         try:
             __import__(module_name)
             return True
@@ -343,7 +356,15 @@ class DistributedAnalysisManager:
             return False
 
     def _start_coordinator_server(self, port: int) -> None:
-        """Start the coordinator server for network communication."""
+        """Start the coordinator server for network communication.
+
+        Args:
+            port: Port number to listen on.
+
+        Raises:
+            OSError: If server socket binding or listening fails.
+
+        """
         try:
             self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -364,7 +385,12 @@ class DistributedAnalysisManager:
             raise
 
     def _accept_connections_loop(self) -> None:
-        """Accept incoming worker connections."""
+        """Accept incoming worker connections.
+
+        Continuously listens for new worker node connections and spawns
+        handler threads for each connection.
+
+        """
         while self.running and self.server_socket:
             try:
                 client_socket, client_address = self.server_socket.accept()
@@ -386,7 +412,16 @@ class DistributedAnalysisManager:
                 break
 
     def _handle_client_connection(self, client_socket: socket.socket, client_address: tuple[str, int]) -> None:
-        """Handle communication with a connected worker node."""
+        """Handle communication with a connected worker node.
+
+        Processes incoming messages from a worker node including registration,
+        heartbeats, task results, and task requests.
+
+        Args:
+            client_socket: Socket connection to worker node.
+            client_address: Address tuple of the worker node.
+
+        """
         node_id = None
         try:
             while self.running:
@@ -450,7 +485,16 @@ class DistributedAnalysisManager:
                 client_socket.close()
 
     def _connect_to_coordinator(self) -> None:
-        """Connect to a coordinator node as a worker."""
+        """Connect to a coordinator node as a worker.
+
+        Initiates connection to coordinator and begins communication loop
+        for receiving tasks and reporting results.
+
+        Raises:
+            OSError: If connection to coordinator fails.
+            ConnectionError: If coordinator registration fails.
+
+        """
         coordinator_host = self.config.get("coordinator_host", "localhost")
         coordinator_port = self.config.get("coordinator_port", self.DEFAULT_PORT)
 
@@ -494,7 +538,15 @@ class DistributedAnalysisManager:
             raise
 
     def _worker_communication_loop(self, coordinator_socket: socket.socket) -> None:
-        """Worker communication loop with coordinator."""
+        """Worker communication loop with coordinator.
+
+        Continuously requests tasks from coordinator and executes them,
+        reporting results back.
+
+        Args:
+            coordinator_socket: Socket connection to coordinator.
+
+        """
         try:
             while self.running:
                 self._send_message(
@@ -521,7 +573,17 @@ class DistributedAnalysisManager:
             self.logger.exception("Worker communication error: %s", e)
 
     def _send_message(self, sock: socket.socket, message: dict[str, Any]) -> None:
-        """Send a message over socket with length prefix and HMAC."""
+        """Send a message over socket with length prefix and HMAC.
+
+        Args:
+            sock: Socket to send message through.
+            message: Message dictionary to send.
+
+        Raises:
+            OSError: If socket send operation fails.
+            pickle.PickleError: If message serialization fails.
+
+        """
         try:
             data = pickle.dumps(message)
             msg_hmac = hmac.new(self._hmac_key, data, hashlib.sha256).digest()
@@ -533,7 +595,15 @@ class DistributedAnalysisManager:
             raise
 
     def _receive_message(self, sock: socket.socket) -> dict[str, Any] | None:
-        """Receive a message from socket with length prefix and HMAC verification."""
+        """Receive a message from socket with length prefix and HMAC verification.
+
+        Args:
+            sock: Socket to receive message from.
+
+        Returns:
+            dict[str, Any] | None: Deserialized message or None if error or closed.
+
+        """
         try:
             length_data = self._recv_exactly(sock, 4)
             if not length_data:
@@ -558,7 +628,16 @@ class DistributedAnalysisManager:
             return None
 
     def _recv_exactly(self, sock: socket.socket, length: int) -> bytes | None:
-        """Receive exactly the specified number of bytes."""
+        """Receive exactly the specified number of bytes.
+
+        Args:
+            sock: Socket to receive from.
+            length: Number of bytes to receive.
+
+        Returns:
+            bytes | None: Received bytes or None if socket closes before length received.
+
+        """
         data = b""
         while len(data) < length:
             if chunk := sock.recv(length - len(data)):
@@ -568,7 +647,14 @@ class DistributedAnalysisManager:
         return data
 
     def _register_worker_node(self, node_id: str, node_info: dict[str, Any], connection: socket.socket) -> None:
-        """Register a new worker node."""
+        """Register a new worker node.
+
+        Args:
+            node_id: Unique identifier for the worker node.
+            node_info: Dictionary containing node capabilities and platform info.
+            connection: Socket connection to the worker node.
+
+        """
         with self.nodes_lock:
             worker_node = WorkerNode(
                 node_id=node_id,
@@ -592,7 +678,13 @@ class DistributedAnalysisManager:
             self.logger.info("Registered worker node: %s (%s)", node_id, worker_node.hostname)
 
     def _update_node_heartbeat(self, node_id: str, status: dict[str, Any]) -> None:
-        """Update node heartbeat and status."""
+        """Update node heartbeat and status.
+
+        Args:
+            node_id: Unique identifier for the worker node.
+            status: Status dictionary with current load and resource usage.
+
+        """
         with self.nodes_lock:
             if node_id in self.nodes:
                 node = self.nodes[node_id]
@@ -605,7 +697,12 @@ class DistributedAnalysisManager:
                         node.status = NodeStatus(status["status"])
 
     def _mark_node_offline(self, node_id: str) -> None:
-        """Mark a node as offline and reassign its tasks."""
+        """Mark a node as offline and reassign its tasks.
+
+        Args:
+            node_id: Unique identifier for the worker node to mark offline.
+
+        """
         with self.nodes_lock:
             if node_id in self.nodes:
                 self.nodes[node_id].status = NodeStatus.OFFLINE
@@ -624,7 +721,12 @@ class DistributedAnalysisManager:
                 self.nodes[node_id].active_tasks.clear()
 
     def _heartbeat_loop(self) -> None:
-        """Send periodic heartbeat messages."""
+        """Send periodic heartbeat messages.
+
+        Continuously updates the node's heartbeat timestamp to indicate
+        that the node is still alive and responsive.
+
+        """
         while self.running:
             try:
                 with self.nodes_lock:
@@ -638,7 +740,12 @@ class DistributedAnalysisManager:
                 self.logger.exception("Heartbeat error: %s", e)
 
     def _task_monitor_loop(self) -> None:
-        """Monitor task execution and handle timeouts."""
+        """Monitor task execution and handle timeouts.
+
+        Continuously checks for timed-out tasks and nodes that have failed
+        to send heartbeats, triggering failure handling and offline marking.
+
+        """
         while self.running:
             try:
                 current_time = time.time()
@@ -662,7 +769,12 @@ class DistributedAnalysisManager:
                 self.logger.exception("Task monitor error: %s", e)
 
     def _task_scheduler_loop(self) -> None:
-        """Schedule tasks to available worker nodes."""
+        """Schedule tasks to available worker nodes.
+
+        Continuously pops tasks from the priority queue and assigns them
+        to the best available worker node based on load and capabilities.
+
+        """
         while self.running:
             try:
                 if not self.task_queue:
@@ -695,7 +807,12 @@ class DistributedAnalysisManager:
                 time.sleep(1.0)
 
     def _get_available_nodes(self) -> list[WorkerNode]:
-        """Get list of available worker nodes."""
+        """Get list of available worker nodes.
+
+        Returns:
+            list[WorkerNode]: Worker nodes that are ready and have capacity.
+
+        """
         with self.nodes_lock:
             return [
                 node
@@ -704,7 +821,19 @@ class DistributedAnalysisManager:
             ]
 
     def _select_best_node(self, task: AnalysisTask, available_nodes: list[WorkerNode]) -> WorkerNode | None:
-        """Select the best node for a task based on capabilities and load."""
+        """Select the best node for a task based on capabilities and load.
+
+        Scores nodes based on available capacity, capability match, platform,
+        and failure rate to select optimal worker.
+
+        Args:
+            task: Task to assign.
+            available_nodes: List of available worker nodes.
+
+        Returns:
+            WorkerNode | None: Best node for the task or None if no nodes available.
+
+        """
         if not available_nodes:
             return None
 
@@ -734,7 +863,15 @@ class DistributedAnalysisManager:
         return scored_nodes[0][1] if scored_nodes else None
 
     def _assign_task(self, task: AnalysisTask, node: WorkerNode) -> None:
-        """Assign a task to a worker node."""
+        """Assign a task to a worker node.
+
+        Updates task status and node load, marking node as BUSY if at capacity.
+
+        Args:
+            task: Task to assign.
+            node: Worker node to assign task to.
+
+        """
         task.assigned_node = node.node_id
         task.status = TaskStatus.ASSIGNED
         task.started_at = time.time()
@@ -748,7 +885,15 @@ class DistributedAnalysisManager:
         self.logger.info("Assigned task %s to node %s", task.task_id, node.node_id)
 
     def _assign_task_to_node(self, node_id: str) -> AnalysisTask | None:
-        """Assign next available task to requesting node."""
+        """Assign next available task to requesting node.
+
+        Args:
+            node_id: Unique identifier for the requesting worker node.
+
+        Returns:
+            AnalysisTask | None: Next task to execute or None if queue is empty.
+
+        """
         with self.task_lock:
             if not self.task_queue:
                 return None
@@ -763,7 +908,15 @@ class DistributedAnalysisManager:
         return None
 
     def _execute_task_locally(self, task: AnalysisTask, coordinator_socket: socket.socket | None = None) -> None:
-        """Execute a task locally on this worker node."""
+        """Execute a task locally on this worker node.
+
+        Runs analysis task and reports results back to coordinator or stores locally.
+
+        Args:
+            task: Task to execute.
+            coordinator_socket: Socket connection to coordinator for reporting results.
+
+        """
         try:
             task.status = TaskStatus.RUNNING
             start_time = time.time()
@@ -808,7 +961,20 @@ class DistributedAnalysisManager:
                 self._handle_task_failure(task.task_id, error_msg)
 
     def _run_task_analysis(self, task: AnalysisTask) -> dict[str, Any]:
-        """Run the actual binary analysis for a task."""
+        """Run the actual binary analysis for a task.
+
+        Dispatches to appropriate analysis method based on task type.
+
+        Args:
+            task: Task containing analysis parameters.
+
+        Returns:
+            dict[str, Any]: Analysis results.
+
+        Raises:
+            FileNotFoundError: If binary path does not exist.
+
+        """
         binary_path = task.binary_path
         task_type = task.task_type
         params = task.params
@@ -837,7 +1003,18 @@ class DistributedAnalysisManager:
         return self._task_generic_analysis(binary_path, params)
 
     def _task_pattern_search(self, binary_path: str, params: dict[str, Any]) -> dict[str, Any]:
-        """Execute pattern search task."""
+        """Execute pattern search task.
+
+        Searches binary for specified patterns within a chunk.
+
+        Args:
+            binary_path: Path to binary file to search.
+            params: Dictionary with patterns, chunk_start, and chunk_size.
+
+        Returns:
+            dict[str, Any]: Results with matched patterns and offsets.
+
+        """
         import re
 
         patterns = params.get("patterns", [])
@@ -868,7 +1045,18 @@ class DistributedAnalysisManager:
         }
 
     def _task_entropy_analysis(self, binary_path: str, params: dict[str, Any]) -> dict[str, Any]:
-        """Execute entropy analysis task."""
+        """Execute entropy analysis task.
+
+        Calculates Shannon entropy for binary chunk and identifies high-entropy regions.
+
+        Args:
+            binary_path: Path to binary file to analyze.
+            params: Dictionary with chunk_start, chunk_size, and window_size.
+
+        Returns:
+            dict[str, Any]: Entropy measurements and high-entropy regions.
+
+        """
         import math
         from collections import Counter
 
@@ -908,7 +1096,18 @@ class DistributedAnalysisManager:
         }
 
     def _task_section_analysis(self, binary_path: str, params: dict[str, Any]) -> dict[str, Any]:
-        """Execute PE section analysis task."""
+        """Execute PE section analysis task.
+
+        Analyzes PE sections of a Windows binary using pefile.
+
+        Args:
+            binary_path: Path to binary file to analyze.
+            params: Dictionary with optional section_name filter.
+
+        Returns:
+            dict[str, Any]: Section information with entropy and characteristics.
+
+        """
         try:
             import pefile
 
@@ -943,7 +1142,18 @@ class DistributedAnalysisManager:
             return {"error": str(e)}
 
     def _task_string_extraction(self, binary_path: str, params: dict[str, Any]) -> dict[str, Any]:
-        """Execute string extraction task."""
+        """Execute string extraction task.
+
+        Extracts ASCII strings from binary chunk.
+
+        Args:
+            binary_path: Path to binary file.
+            params: Dictionary with chunk_start, chunk_size, and min_length.
+
+        Returns:
+            dict[str, Any]: Extracted strings with offsets and lengths.
+
+        """
         chunk_start = params.get("chunk_start", 0)
         chunk_size = params.get("chunk_size", 1024 * 1024)
         min_length = params.get("min_length", 4)
@@ -983,7 +1193,18 @@ class DistributedAnalysisManager:
         }
 
     def _task_import_analysis(self, binary_path: str, params: dict[str, Any]) -> dict[str, Any]:
-        """Execute import table analysis task."""
+        """Execute import table analysis task.
+
+        Analyzes imports from PE binary using pefile.
+
+        Args:
+            binary_path: Path to binary file.
+            params: Analysis parameters (currently unused).
+
+        Returns:
+            dict[str, Any]: Import table with DLL names and function lists.
+
+        """
         try:
             import pefile
 
