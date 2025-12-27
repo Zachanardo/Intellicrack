@@ -18,6 +18,7 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+import contextlib
 import json
 import logging
 import os
@@ -369,14 +370,10 @@ class TrainingThread(QThread):
             epoch_accuracy = 0.0
 
             for epoch in range(self.config.epochs):
+                while self.paused and not self.should_stop:
+                    time.sleep(0.1)
                 if self.should_stop:
                     break
-
-                if self.paused:
-                    while self.paused and not self.should_stop:
-                        time.sleep(0.1)
-                    if self.should_stop:
-                        break
 
                 epoch_start_time = time.time()
 
@@ -1282,8 +1279,10 @@ class DatasetAnalysisWidget(QWidget):
         self.matplotlib_canvas: Any | None = None
         self.matplotlib_figure: Any | None = None
         if MATPLOTLIB_AVAILABLE:
-            from intellicrack.handlers.matplotlib_handler import Figure as _MPLFigure
-            from intellicrack.handlers.matplotlib_handler import FigureCanvasQTAgg as _MPLCanvas
+            from intellicrack.handlers.matplotlib_handler import (
+                Figure as _MPLFigure,
+                FigureCanvasQTAgg as _MPLCanvas,
+            )
 
             self.matplotlib_figure = _MPLFigure(figsize=(8, 6))
             if _MPLCanvas is not None and callable(_MPLCanvas):
@@ -1292,8 +1291,6 @@ class DatasetAnalysisWidget(QWidget):
                 self.matplotlib_ax = self.matplotlib_figure.add_subplot(111)
         self.distribution_plot.setLabel("left", "Count")
         self.distribution_plot.setLabel("bottom", "Class")
-
-        from typing import cast
 
         analysis_layout.addWidget(self.stats_text)
         analysis_layout.addWidget(validate_type(self.distribution_plot, QWidget))
@@ -1583,8 +1580,6 @@ class HyperparameterOptimizationWidget(QWidget):
         self.progress_plot.setLabel("left", "Best Accuracy")
         self.progress_plot.setLabel("bottom", "Trial")
         self.progress_plot.showGrid(x=True, y=True)
-
-        from typing import cast
 
         results_layout.addWidget(self.results_table)
         results_layout.addWidget(QLabel("Best Parameters:"))
@@ -2265,10 +2260,8 @@ class EnhancedTrainingInterface(QDialog):
         if self.training_thread:
             self.training_thread.pause_training()
             self.pause_btn.setText("Resume")
-            try:
+            with contextlib.suppress(TypeError, RuntimeError):
                 self.pause_btn.clicked.disconnect()
-            except (TypeError, RuntimeError):
-                pass
             self.pause_btn.clicked.connect(self.resume_training)
             self.status_label.setText("Training paused")
 
@@ -2277,10 +2270,8 @@ class EnhancedTrainingInterface(QDialog):
         if self.training_thread:
             self.training_thread.resume_training()
             self.pause_btn.setText("Pause")
-            try:
+            with contextlib.suppress(TypeError, RuntimeError):
                 self.pause_btn.clicked.disconnect()
-            except (TypeError, RuntimeError):
-                pass
             self.pause_btn.clicked.connect(self.pause_training)
             self.status_label.setText("Training resumed")
 

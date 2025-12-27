@@ -20,7 +20,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import datetime
 import logging
-from typing import Any
+from typing import Any, cast
 
 from intellicrack.utils.logger import logger
 

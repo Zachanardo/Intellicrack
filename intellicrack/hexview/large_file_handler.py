@@ -42,9 +42,12 @@ QTimer: type
 pyqtSignal: Any
 
 try:
-    from PyQt6.QtCore import QObject as QObjectBase
-    from PyQt6.QtCore import QThread as QThreadBase
-    from PyQt6.QtCore import QTimer, pyqtSignal
+    from PyQt6.QtCore import (
+        QObject as QObjectBase,
+        QThread as QThreadBase,
+        QTimer,
+        pyqtSignal,
+    )
 
     PYQT6_AVAILABLE = True
 except ImportError as e:
@@ -62,6 +65,7 @@ except ImportError as e:
 
     def pyqtSignal(*args: Any, **kwargs: Any) -> Any:
         return None
+
 
 __all__ = [
     "BackgroundLoader",

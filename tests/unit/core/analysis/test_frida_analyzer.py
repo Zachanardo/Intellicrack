@@ -12,8 +12,16 @@ import sys
 import subprocess
 import json
 from pathlib import Path
+import pytest
 
-import intellicrack.core.analysis.frida_analyzer as frida_analyzer
+try:
+    import intellicrack.core.analysis.frida_analyzer as frida_analyzer
+    FRIDA_ANALYZER_AVAILABLE = True
+except ImportError:
+    frida_analyzer = None
+    FRIDA_ANALYZER_AVAILABLE = False
+
+pytestmark = pytest.mark.skipif(not FRIDA_ANALYZER_AVAILABLE, reason="frida_analyzer module not available")
 
 
 class TestApplicationHarness:

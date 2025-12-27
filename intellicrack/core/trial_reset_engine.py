@@ -8,11 +8,12 @@ import os
 import struct
 import time
 import winreg
+from collections.abc import Callable
 from ctypes import wintypes
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import psutil
 

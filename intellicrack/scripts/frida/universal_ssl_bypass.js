@@ -7,8 +7,8 @@ const MAX_LOG = 1000;
 function log(message, level = 'info') {
     const entry = {
         timestamp: new Date().toISOString(),
-        level: level,
-        message: message,
+        level,
+        message,
     };
     send({ type: 'log', data: entry });
     activity.push(entry);
@@ -98,8 +98,8 @@ function _loadBypassScript(scriptName, scriptContent) {
         activeBypasses.push(scriptName);
         log(`Successfully loaded ${scriptName}`);
         return true;
-    } catch (e) {
-        logError(`Failed to load ${scriptName}: ${e.message}`);
+    } catch (error) {
+        logError(`Failed to load ${scriptName}: ${error.message}`);
         return false;
     }
 }
@@ -172,24 +172,24 @@ function activateGenericBypass() {
 
                     const isLikelyCertFunc = commonValidationPatterns.some(
                         pattern =>
-                            name.includes(pattern) &&
-                            (name.includes('cert') ||
-                                name.includes('Cert') ||
-                                name.includes('ssl') ||
-                                name.includes('SSL') ||
-                                name.includes('tls') ||
-                                name.includes('TLS') ||
-                                name.includes('trust') ||
-                                name.includes('Trust'))
+                            name.includes(pattern)
+                            && (name.includes('cert')
+                                || name.includes('Cert')
+                                || name.includes('ssl')
+                                || name.includes('SSL')
+                                || name.includes('tls')
+                                || name.includes('TLS')
+                                || name.includes('trust')
+                                || name.includes('Trust'))
                     );
 
                     if (isLikelyCertFunc) {
                         try {
                             Interceptor.attach(exp.address, {
-                                onEnter: function (_args) {
+                                onEnter(_args) {
                                     this.funcName = name;
                                 },
-                                onLeave: function (retval) {
+                                onLeave(retval) {
                                     const originalRet = retval.toInt32();
 
                                     if (originalRet === 0 || originalRet < 0) {
@@ -204,14 +204,13 @@ function activateGenericBypass() {
                             hooksInstalled++;
                             log(`Generic hook installed: ${module.name}!${name}`);
 
-                            if (hooksInstalled >= 50) {
-                            }
-                        } catch (_e) {}
+                            if (hooksInstalled >= 50) {}
+                        } catch {}
                     }
                 }
             });
-        } catch (e) {
-            logError(`Failed to enumerate exports for ${module.name}: ${e.message}`);
+        } catch (error) {
+            logError(`Failed to enumerate exports for ${module.name}: ${error.message}`);
         }
     });
 
@@ -273,8 +272,8 @@ function performSelfTest() {
         testResults.testPassed = true;
         testResults.status = 'All systems operational';
     } else if (detectedLibraries.length > 0 && activeBypasses.length === 0) {
-        testResults.status =
-            'Libraries detected but bypasses not loaded - may need external script injection';
+        testResults.status
+            = 'Libraries detected but bypasses not loaded - may need external script injection';
     } else {
         testResults.status = 'No TLS libraries detected - target may not use SSL/TLS';
     }
@@ -318,8 +317,8 @@ rpc.exports = {
         detectedLibraryCount: detectedLibraries.length,
         activeBypassCount: activeBypasses.length,
         detectedLibraries: detectedLibraries.map(lib => lib.type),
-        activeBypasses: activeBypasses,
-        platform: Java.available ? 'Android' : ObjC.available ? 'iOS' : 'Desktop',
+        activeBypasses,
+        platform: Java.available ? 'Android' : (ObjC.available ? 'iOS' : 'Desktop'),
     }),
     testBypass: () => performSelfTest(),
     forceGenericBypass: () => {

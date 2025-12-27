@@ -801,7 +801,7 @@ def handle_r2_error(error: Exception, operation_name: str, **context: object) ->
 
     """
     handler = get_error_handler()
-    context_dict: dict[str, Any] = {k: v for k, v in context.items()}
+    context_dict: dict[str, Any] = dict(context.items())
     return handler.handle_error(error, operation_name, context_dict)
 
 

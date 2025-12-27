@@ -1204,12 +1204,10 @@ class PDFReportGenerator:
             p_matches = re.findall(r"<p[^>]*>(.*?)</p>", text_content, re.IGNORECASE | re.DOTALL)
             for p_text in p_matches:
                 if clean_text := re.sub(r"<[^>]+>", "", p_text).strip():
-                    content.extend(
-                        (
-                            Paragraph(clean_text, styles["Normal"]),
-                            Spacer(1, 0.05 * inch),
-                        )
-                    )
+                    content.extend((
+                        Paragraph(clean_text, styles["Normal"]),
+                        Spacer(1, 0.05 * inch),
+                    ))
             table_matches = re.findall(r"<table[^>]*>(.*?)</table>", text_content, re.IGNORECASE | re.DOTALL)
             for table_html in table_matches:
                 if table_data := self._parse_html_table(table_html):
@@ -1339,7 +1337,9 @@ def run_report_generation(app: ApplicationInstance) -> None:
 
     # Ask for report type
     report_types = ["Comprehensive", "Vulnerability", "License"]
-    report_type, ok = QInputDialog.getItem(validate_type(app, QWidget) if hasattr(app, "isWidgetType") else None, "Report Type", "Select report type:", report_types, 0, False)
+    report_type, ok = QInputDialog.getItem(
+        validate_type(app, QWidget) if hasattr(app, "isWidgetType") else None, "Report Type", "Select report type:", report_types, 0, False
+    )
     if not ok:
         app.update_output.emit("[Report] Cancelled")
         return
@@ -1347,7 +1347,12 @@ def run_report_generation(app: ApplicationInstance) -> None:
     # Ask for report format
     report_formats = ["PDF", "HTML"]
     report_format, ok = QInputDialog.getItem(
-        validate_type(app, QWidget) if hasattr(app, "isWidgetType") else None, "Report Format", "Select report format:", report_formats, 0, False
+        validate_type(app, QWidget) if hasattr(app, "isWidgetType") else None,
+        "Report Format",
+        "Select report format:",
+        report_formats,
+        0,
+        False,
     )
     if not ok:
         app.update_output.emit("[Report] Cancelled")

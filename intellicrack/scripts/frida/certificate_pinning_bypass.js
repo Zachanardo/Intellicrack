@@ -28,6 +28,13 @@
  * License: GPL v3
  */
 
+const sendWithRandomDelay = data => {
+    const delay = Math.random() * 100;
+    setTimeout(() => {
+        send(data);
+    }, delay);
+};
+
 const CertificatePinningBypass = {
     name: 'Certificate Pinning Bypass',
     description: 'Comprehensive SSL/TLS certificate pinning bypass for all platforms',
@@ -89,7 +96,7 @@ const CertificatePinningBypass = {
         trusted_certs: new Set(),
     },
     // Initialize the bypass system
-    initialize: function () {
+    initialize() {
         send({
             type: 'status',
             message: 'Initializing certificate pinning bypass',
@@ -141,7 +148,7 @@ const CertificatePinningBypass = {
     },
 
     // Detect current platform
-    detectPlatform: function () {
+    detectPlatform() {
         if (Java.available) {
             this.state.platform = 'android';
             send({
@@ -166,7 +173,7 @@ const CertificatePinningBypass = {
         }
     },
     // Initialize certificate management
-    initializeCertificates: function () {
+    initializeCertificates() {
         send({
             type: 'info',
             message: 'Initializing certificate management',
@@ -189,12 +196,12 @@ const CertificatePinningBypass = {
     },
 
     // Generate custom Certificate Authority
-    generateCustomCA: function () {
+    generateCustomCA() {
         // Basic CA certificate data (in real implementation, this would be generated)
         this.certificates.custom_ca = {
             subject: 'CN=Intellicrack-CA,O=Intellicrack,C=US',
             issuer: 'CN=Intellicrack-CA,O=Intellicrack,C=US',
-            serial: Math.floor(Math.random() * 1000000),
+            serial: Math.floor(Math.random() * 1_000_000),
             not_before: new Date(),
             not_after: new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000), // 10 years
             public_key: '-----BEGIN CERTIFICATE-----\nMIIC...', // Truncated for space
@@ -209,7 +216,7 @@ const CertificatePinningBypass = {
     },
 
     // Initialize trusted certificate store
-    initializeTrustedStore: function () {
+    initializeTrustedStore() {
         // Add common trusted certificates
         const commonCerts = [
             '*.googleapis.com',
@@ -233,7 +240,7 @@ const CertificatePinningBypass = {
         });
     },
     // Initialize Android-specific bypasses
-    initializeAndroidBypasses: function () {
+    initializeAndroidBypasses() {
         send({
             type: 'status',
             target: 'android_bypass',
@@ -263,29 +270,29 @@ const CertificatePinningBypass = {
                 action: 'initialization_complete',
                 message: 'Android bypasses initialized successfully',
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'android_bypasses',
                 action: 'initialization_failed',
-                error: e.message,
+                error: error.message,
             });
         }
     },
 
     // Bypass OkHttp CertificatePinner
-    bypassOkHttpCertificatePinner: function () {
+    bypassOkHttpCertificatePinner() {
         try {
             // Hook CertificatePinner.check method
             const CertificatePinner = Java.use('okhttp3.CertificatePinner');
 
-            CertificatePinner.check.overload('java.lang.String', 'java.util.List').implementation =
-                function (hostname, peerCertificates) {
+            CertificatePinner.check.overload('java.lang.String', 'java.util.List').implementation
+                = function (hostname, peerCertificates) {
                     send({
                         type: 'bypass',
                         target: 'okhttp_certificate_pinner',
                         action: 'check_bypassed',
-                        hostname: hostname,
+                        hostname,
                     });
                     this.state.bypassed_validations++;
                     this.state.active_bypasses.add('okhttp_check');
@@ -310,13 +317,13 @@ const CertificatePinningBypass = {
                 message: 'CertificatePinner.check() hooked successfully',
             });
             this.state.hooked_functions.set('okhttp_check', 'CertificatePinner.check');
-        } catch (e) {
+        } catch (error) {
             if (this.config.verbose_logging) {
                 send({
                     type: 'warning',
                     target: 'okhttp_certificate_pinner',
                     action: 'hook_failed',
-                    error: e.message,
+                    error: error.message,
                 });
             }
         }
@@ -329,7 +336,7 @@ const CertificatePinningBypass = {
                     type: 'bypass',
                     target: 'okhttp_pin_matching',
                     action: 'pin_matching_bypassed',
-                    hostname: hostname,
+                    hostname,
                 });
                 this.state.bypassed_validations++;
                 return true; // Always return true to bypass pinning
@@ -342,13 +349,13 @@ const CertificatePinningBypass = {
                 message: 'CertificatePinner$Pin.matches() hooked successfully',
             });
             this.state.hooked_functions.set('okhttp_pin_matches', 'Pin.matches');
-        } catch (e) {
+        } catch (error) {
             if (this.config.verbose_logging) {
                 send({
                     type: 'warning',
                     target: 'okhttp_pin_matching',
                     action: 'pin_matches_not_found',
-                    error: e.message,
+                    error: error.message,
                 });
             }
         }
@@ -374,15 +381,15 @@ const CertificatePinningBypass = {
 
                     // Analyze error to determine pinning type and implement specific bypass
                     if (
-                        error.message.includes('certificate') ||
-                        error.message.includes('pinning')
+                        error.message.includes('certificate')
+                        || error.message.includes('pinning')
                     ) {
                         this.implementCertificatePinningBypass(error, connectionSpecSelector);
                     } else if (error.message.includes('ssl') || error.message.includes('tls')) {
                         this.implementSSLTLSBypass(error, connectionSpecSelector);
                     } else if (
-                        error.message.includes('trust') ||
-                        error.message.includes('verify')
+                        error.message.includes('trust')
+                        || error.message.includes('verify')
                     ) {
                         this.implementTrustVerificationBypass(error, connectionSpecSelector);
                     }
@@ -412,19 +419,19 @@ const CertificatePinningBypass = {
                 message: 'RealConnection.connectTls() hooked successfully',
             });
             this.state.hooked_functions.set('okhttp_connect_tls', 'RealConnection.connectTls');
-        } catch (e) {
+        } catch (error) {
             if (this.config.verbose_logging) {
                 send({
                     type: 'warning',
                     target: 'okhttp_tls_connection',
                     action: 'connect_tls_not_found',
-                    error: e.message,
+                    error: error.message,
                 });
             }
         }
     },
     // Bypass X509TrustManager implementations
-    bypassTrustManager: function () {
+    bypassTrustManager() {
         try {
             // Hook X509TrustManager.checkServerTrusted
             const X509TrustManager = Java.use('javax.net.ssl.X509TrustManager');
@@ -473,23 +480,34 @@ const CertificatePinningBypass = {
                 const bypassStrategy = this.selectBypassStrategy(chainAnalysis, authType);
 
                 // Implement authentication type specific bypasses
-                if (authType === 'RSA') {
-                    this.state.rsa_auth_bypassed++;
-                } else if (authType === 'ECDSA') {
-                    this.state.ecdsa_auth_bypassed++;
-                } else if (authType === 'DSA') {
-                    this.state.dsa_auth_bypassed++;
+                switch (authType) {
+                    case 'RSA': {
+                        this.state.rsa_auth_bypassed++;
+
+                        break;
+                    }
+                    case 'ECDSA': {
+                        this.state.ecdsa_auth_bypassed++;
+
+                        break;
+                    }
+                    case 'DSA': {
+                        this.state.dsa_auth_bypassed++;
+
+                        break;
+                    }
+                    // No default
                 }
 
                 // Certificate chain validation bypass using chain information
-                const rootCert = chain && chain.length > 0 ? chain[chain.length - 1] : null;
+                const rootCert = chain && chain.length > 0 ? chain.at(-1) : null;
                 const leafCert = chain && chain.length > 0 ? chain[0] : null;
 
                 if (leafCert) {
                     this.state.leaf_cert_bypassed++;
                     const leafSubject = leafCert.getSubjectDN().toString();
                     this.state.bypassed_subjects = this.state.bypassed_subjects || [];
-                    if (this.state.bypassed_subjects.indexOf(leafSubject) === -1) {
+                    if (!this.state.bypassed_subjects.includes(leafSubject)) {
                         this.state.bypassed_subjects.push(leafSubject);
                     }
                 }
@@ -498,7 +516,7 @@ const CertificatePinningBypass = {
                     this.state.root_cert_bypassed++;
                     const rootIssuer = rootCert.getIssuerDN().toString();
                     this.state.bypassed_issuers = this.state.bypassed_issuers || [];
-                    if (this.state.bypassed_issuers.indexOf(rootIssuer) === -1) {
+                    if (!this.state.bypassed_issuers.includes(rootIssuer)) {
                         this.state.bypassed_issuers.push(rootIssuer);
                     }
                 }
@@ -549,23 +567,34 @@ const CertificatePinningBypass = {
                 );
 
                 // Client authentication type specific handling
-                if (authType === 'RSA') {
-                    this.state.client_rsa_auth_bypassed++;
-                } else if (authType === 'ECDSA') {
-                    this.state.client_ecdsa_auth_bypassed++;
-                } else if (authType === 'DSA') {
-                    this.state.client_dsa_auth_bypassed++;
+                switch (authType) {
+                    case 'RSA': {
+                        this.state.client_rsa_auth_bypassed++;
+
+                        break;
+                    }
+                    case 'ECDSA': {
+                        this.state.client_ecdsa_auth_bypassed++;
+
+                        break;
+                    }
+                    case 'DSA': {
+                        this.state.client_dsa_auth_bypassed++;
+
+                        break;
+                    }
+                    // No default
                 }
 
                 // Client certificate chain validation bypass
-                const clientRootCert = chain && chain.length > 0 ? chain[chain.length - 1] : null;
+                const clientRootCert = chain && chain.length > 0 ? chain.at(-1) : null;
                 const clientLeafCert = chain && chain.length > 0 ? chain[0] : null;
 
                 if (clientLeafCert) {
                     this.state.client_leaf_cert_bypassed++;
                     const clientLeafSubject = clientLeafCert.getSubjectDN().toString();
                     this.state.client_bypassed_subjects = this.state.client_bypassed_subjects || [];
-                    if (this.state.client_bypassed_subjects.indexOf(clientLeafSubject) === -1) {
+                    if (!this.state.client_bypassed_subjects.includes(clientLeafSubject)) {
                         this.state.client_bypassed_subjects.push(clientLeafSubject);
                     }
                 }
@@ -574,7 +603,7 @@ const CertificatePinningBypass = {
                     this.state.client_root_cert_bypassed++;
                     const clientRootIssuer = clientRootCert.getIssuerDN().toString();
                     this.state.client_bypassed_issuers = this.state.client_bypassed_issuers || [];
-                    if (this.state.client_bypassed_issuers.indexOf(clientRootIssuer) === -1) {
+                    if (!this.state.client_bypassed_issuers.includes(clientRootIssuer)) {
                         this.state.client_bypassed_issuers.push(clientRootIssuer);
                     }
                 }
@@ -604,12 +633,12 @@ const CertificatePinningBypass = {
                 message: 'TrustManagerImpl hooks applied successfully',
             });
             this.state.hooked_functions.set('trust_manager_impl', 'TrustManagerImpl');
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'warning',
                 target: 'trust_manager',
                 action: 'trust_manager_impl_not_found',
-                error: e.message,
+                error: error.message,
                 fallback: 'trying_alternatives',
             });
             this.bypassAlternativeTrustManagers();
@@ -617,7 +646,7 @@ const CertificatePinningBypass = {
     },
 
     // Bypass alternative TrustManager implementations
-    bypassAlternativeTrustManagers: function () {
+    bypassAlternativeTrustManagers() {
         const trustManagerClasses = [
             'com.android.org.conscrypt.Platform$1',
             'org.apache.harmony.xnet.provider.jsse.TrustManagerImpl',
@@ -646,27 +675,39 @@ const CertificatePinningBypass = {
                         );
 
                         // Alternative trust manager authentication type specific handling
-                        if (authType === 'RSA') {
-                            this.state.alt_rsa_auth_bypassed++;
-                        } else if (authType === 'ECDSA') {
-                            this.state.alt_ecdsa_auth_bypassed++;
-                        } else if (authType === 'DSA') {
-                            this.state.alt_dsa_auth_bypassed++;
-                        } else if (authType?.includes('EC')) {
-                            this.state.alt_ec_auth_bypassed++;
+                        switch (authType) {
+                            case 'RSA': {
+                                this.state.alt_rsa_auth_bypassed++;
+
+                                break;
+                            }
+                            case 'ECDSA': {
+                                this.state.alt_ecdsa_auth_bypassed++;
+
+                                break;
+                            }
+                            case 'DSA': {
+                                this.state.alt_dsa_auth_bypassed++;
+
+                                break;
+                            }
+                            default: {
+                                if (authType?.includes('EC')) {
+                                    this.state.alt_ec_auth_bypassed++;
+                                }
+                            }
                         }
 
                         // Alternative certificate chain validation bypass
-                        const altRootCert =
-                            chain && chain.length > 0 ? chain[chain.length - 1] : null;
+                        const altRootCert = chain && chain.length > 0 ? chain.at(-1) : null;
                         const altLeafCert = chain && chain.length > 0 ? chain[0] : null;
 
                         if (altLeafCert) {
                             this.state.alt_leaf_cert_bypassed++;
                             const altLeafSubject = altLeafCert.getSubjectDN().toString();
-                            this.state.alt_bypassed_subjects =
-                                this.state.alt_bypassed_subjects || [];
-                            if (this.state.alt_bypassed_subjects.indexOf(altLeafSubject) === -1) {
+                            this.state.alt_bypassed_subjects
+                                = this.state.alt_bypassed_subjects || [];
+                            if (!this.state.alt_bypassed_subjects.includes(altLeafSubject)) {
                                 this.state.alt_bypassed_subjects.push(altLeafSubject);
                             }
                         }
@@ -675,7 +716,7 @@ const CertificatePinningBypass = {
                             this.state.alt_root_cert_bypassed++;
                             const altRootIssuer = altRootCert.getIssuerDN().toString();
                             this.state.alt_bypassed_issuers = this.state.alt_bypassed_issuers || [];
-                            if (this.state.alt_bypassed_issuers.indexOf(altRootIssuer) === -1) {
+                            if (!this.state.alt_bypassed_issuers.includes(altRootIssuer)) {
                                 this.state.alt_bypassed_issuers.push(altRootIssuer);
                             }
                         }
@@ -706,14 +747,14 @@ const CertificatePinningBypass = {
                     });
                     this.state.hooked_functions.set(`trust_${className}`, className);
                 }
-            } catch (e) {
+            } catch (error) {
                 if (this.config.verbose_logging) {
                     send({
                         type: 'info',
                         target: 'alternative_trust_manager',
                         action: 'class_not_found',
                         class_name: className,
-                        error: e.message,
+                        error: error.message,
                     });
                 }
             }
@@ -721,7 +762,7 @@ const CertificatePinningBypass = {
     },
 
     // Bypass SSLContext initialization
-    bypassSSLContext: function () {
+    bypassSSLContext() {
         try {
             const SSLContext = Java.use('javax.net.ssl.SSLContext');
 
@@ -742,11 +783,11 @@ const CertificatePinningBypass = {
 
                 // Implement advanced trust manager analysis using base TrustManager interface
                 const trustManagerAnalysis = {
-                    analyzeTrustManagerImplementation: function (trustManagerImpl) {
+                    analyzeTrustManagerImplementation(trustManagerImpl) {
                         const implClass = trustManagerImpl.class.toString();
                         const trustLevel = this.calculateTrustLevel(implClass);
-                        this.state.trust_manager_implementations =
-                            this.state.trust_manager_implementations || [];
+                        this.state.trust_manager_implementations
+                            = this.state.trust_manager_implementations || [];
                         this.state.trust_manager_implementations.push({
                             class: implClass,
                             trust_level: trustLevel,
@@ -755,7 +796,7 @@ const CertificatePinningBypass = {
                         return trustLevel;
                     },
 
-                    createBypassTrustManager: function (originalTrustManager) {
+                    createBypassTrustManager(originalTrustManager) {
                         const bypassTrust = TrustManager.$new();
                         bypassTrust.implementation = originalTrustManager;
                         this.state.bypass_trust_managers_created++;
@@ -770,7 +811,7 @@ const CertificatePinningBypass = {
                     name: 'com.intellicrack.PermissiveTrustManager',
                     implements: [X509TrustManager],
                     methods: {
-                        checkClientTrusted: function (chain, authType) {
+                        checkClientTrusted(chain, authType) {
                             // Advanced permissive client certificate analysis
                             const permissiveClientAnalysis = this.analyzePermissiveClientChain(
                                 chain,
@@ -789,17 +830,28 @@ const CertificatePinningBypass = {
                             }
 
                             // Permissive client authentication type tracking
-                            if (authType === 'RSA') {
-                                this.state.permissive_client_rsa_count++;
-                            } else if (authType === 'ECDSA') {
-                                this.state.permissive_client_ecdsa_count++;
-                            } else if (authType === 'DSA') {
-                                this.state.permissive_client_dsa_count++;
+                            switch (authType) {
+                                case 'RSA': {
+                                    this.state.permissive_client_rsa_count++;
+
+                                    break;
+                                }
+                                case 'ECDSA': {
+                                    this.state.permissive_client_ecdsa_count++;
+
+                                    break;
+                                }
+                                case 'DSA': {
+                                    this.state.permissive_client_dsa_count++;
+
+                                    break;
+                                }
+                                // No default
                             }
 
                             // Client certificate chain permissive validation
-                            const permissiveClientCert =
-                                chain && chain.length > 0 ? chain[0] : null;
+                            const permissiveClientCert
+                                = chain && chain.length > 0 ? chain[0] : null;
                             if (permissiveClientCert) {
                                 this.state.permissive_client_certs_processed++;
                                 const clientCertInfo = {
@@ -807,8 +859,8 @@ const CertificatePinningBypass = {
                                     issuer: permissiveClientCert.getIssuerDN().toString(),
                                     serial: permissiveClientCert.getSerialNumber().toString(),
                                 };
-                                this.state.permissive_client_cert_info =
-                                    this.state.permissive_client_cert_info || [];
+                                this.state.permissive_client_cert_info
+                                    = this.state.permissive_client_cert_info || [];
                                 this.state.permissive_client_cert_info.push(clientCertInfo);
                             }
 
@@ -824,7 +876,7 @@ const CertificatePinningBypass = {
                                     : null,
                             });
                         },
-                        checkServerTrusted: function (chain, authType) {
+                        checkServerTrusted(chain, authType) {
                             // Advanced permissive server certificate analysis
                             const permissiveServerAnalysis = this.analyzePermissiveServerChain(
                                 chain,
@@ -843,19 +895,30 @@ const CertificatePinningBypass = {
                             }
 
                             // Permissive server authentication type tracking
-                            if (authType === 'RSA') {
-                                this.state.permissive_server_rsa_count++;
-                            } else if (authType === 'ECDSA') {
-                                this.state.permissive_server_ecdsa_count++;
-                            } else if (authType === 'DSA') {
-                                this.state.permissive_server_dsa_count++;
+                            switch (authType) {
+                                case 'RSA': {
+                                    this.state.permissive_server_rsa_count++;
+
+                                    break;
+                                }
+                                case 'ECDSA': {
+                                    this.state.permissive_server_ecdsa_count++;
+
+                                    break;
+                                }
+                                case 'DSA': {
+                                    this.state.permissive_server_dsa_count++;
+
+                                    break;
+                                }
+                                // No default
                             }
 
                             // Server certificate chain permissive validation
-                            const permissiveServerCert =
-                                chain && chain.length > 0 ? chain[0] : null;
-                            const permissiveRootCert =
-                                chain && chain.length > 1 ? chain[chain.length - 1] : null;
+                            const permissiveServerCert
+                                = chain && chain.length > 0 ? chain[0] : null;
+                            const permissiveRootCert
+                                = chain && chain.length > 1 ? chain.at(-1) : null;
 
                             if (permissiveServerCert) {
                                 this.state.permissive_server_certs_processed++;
@@ -864,8 +927,8 @@ const CertificatePinningBypass = {
                                     issuer: permissiveServerCert.getIssuerDN().toString(),
                                     serial: permissiveServerCert.getSerialNumber().toString(),
                                 };
-                                this.state.permissive_server_cert_info =
-                                    this.state.permissive_server_cert_info || [];
+                                this.state.permissive_server_cert_info
+                                    = this.state.permissive_server_cert_info || [];
                                 this.state.permissive_server_cert_info.push(serverCertInfo);
                             }
 
@@ -875,8 +938,8 @@ const CertificatePinningBypass = {
                                     subject: permissiveRootCert.getSubjectDN().toString(),
                                     issuer: permissiveRootCert.getIssuerDN().toString(),
                                 };
-                                this.state.permissive_root_cert_info =
-                                    this.state.permissive_root_cert_info || [];
+                                this.state.permissive_root_cert_info
+                                    = this.state.permissive_root_cert_info || [];
                                 this.state.permissive_root_cert_info.push(rootCertInfo);
                             }
 
@@ -927,18 +990,18 @@ const CertificatePinningBypass = {
                 message: 'SSLContext.init() hooked successfully',
             });
             this.state.hooked_functions.set('ssl_context_init', 'SSLContext.init');
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'ssl_context',
                 action: 'hook_failed',
-                error: e.message,
+                error: error.message,
             });
         }
     },
 
     // Bypass Android Network Security Config
-    bypassNetworkSecurityConfig: function () {
+    bypassNetworkSecurityConfig() {
         try {
             // Hook NetworkSecurityPolicy
             const NetworkSecurityPolicy = Java.use('android.security.NetworkSecurityPolicy');
@@ -955,13 +1018,13 @@ const CertificatePinningBypass = {
 
                 // Hook isCertificateTransparencyVerificationRequired
                 if (policy.isCertificateTransparencyVerificationRequired) {
-                    policy.isCertificateTransparencyVerificationRequired.implementation =
-                        hostname => {
+                    policy.isCertificateTransparencyVerificationRequired.implementation
+                        = hostname => {
                             send({
                                 type: 'bypass',
                                 target: 'network_security_config',
                                 action: 'certificate_transparency_disabled',
-                                hostname: hostname,
+                                hostname,
                             });
                             return false;
                         };
@@ -969,13 +1032,13 @@ const CertificatePinningBypass = {
 
                 // Hook isCleartextTrafficPermitted
                 if (policy.isCleartextTrafficPermitted) {
-                    policy.isCleartextTrafficPermitted.overload('java.lang.String').implementation =
-                        function (hostname) {
+                    policy.isCleartextTrafficPermitted.overload('java.lang.String').implementation
+                        = function (hostname) {
                             send({
                                 type: 'bypass',
                                 target: 'network_security_config',
                                 action: 'cleartext_traffic_permitted',
-                                hostname: hostname,
+                                hostname,
                             });
                             this.state.bypassed_validations++;
                             return true;
@@ -992,20 +1055,20 @@ const CertificatePinningBypass = {
                 message: 'NetworkSecurityPolicy hooked successfully',
             });
             this.state.hooked_functions.set('network_security_policy', 'NetworkSecurityPolicy');
-        } catch (e) {
+        } catch (error) {
             if (this.config.verbose_logging) {
                 send({
                     type: 'warning',
                     target: 'network_security_config',
                     action: 'network_security_policy_not_found',
-                    error: e.message,
+                    error: error.message,
                 });
             }
         }
     },
 
     // Bypass Apache HttpClient certificate validation
-    bypassApacheHttpClient: function () {
+    bypassApacheHttpClient() {
         try {
             // Hook AbstractVerifier (hostname verification)
             const AbstractVerifier = Java.use('org.apache.http.conn.ssl.AbstractVerifier');
@@ -1067,13 +1130,13 @@ const CertificatePinningBypass = {
                 message: 'AbstractVerifier.verify() hooked successfully',
             });
             this.state.hooked_functions.set('apache_verifier', 'AbstractVerifier.verify');
-        } catch (e) {
+        } catch (error) {
             if (this.config.verbose_logging) {
                 send({
                     type: 'warning',
                     target: 'apache_http_client',
                     action: 'abstract_verifier_not_found',
-                    error: e.message,
+                    error: error.message,
                 });
             }
         }
@@ -1133,18 +1196,18 @@ const CertificatePinningBypass = {
                         if (errorMessage.includes('path') || errorMessage.includes('chain')) {
                             errorCategory = 'certificate_path';
                         } else if (
-                            errorMessage.includes('trust') ||
-                            errorMessage.includes('anchor')
+                            errorMessage.includes('trust')
+                            || errorMessage.includes('anchor')
                         ) {
                             errorCategory = 'trust_anchor';
                         } else if (
-                            errorMessage.includes('signature') ||
-                            errorMessage.includes('verify')
+                            errorMessage.includes('signature')
+                            || errorMessage.includes('verify')
                         ) {
                             errorCategory = 'signature_verification';
                         } else if (
-                            errorMessage.includes('expired') ||
-                            errorMessage.includes('validity')
+                            errorMessage.includes('expired')
+                            || errorMessage.includes('validity')
                         ) {
                             errorCategory = 'certificate_validity';
                         }
@@ -1180,7 +1243,7 @@ const CertificatePinningBypass = {
                     type: 'bypass',
                     target: 'apache_http_client',
                     action: 'allow_all_hostname_verifier_bypass',
-                    hostname: hostname,
+                    hostname,
                     session_analysis: sslSessionAnalysis,
                     session_bypass_strategy: sessionBypassStrategy,
                     ssl_protocol: session ? session.getProtocol() : null,
@@ -1195,19 +1258,19 @@ const CertificatePinningBypass = {
                 action: 'allow_all_hostname_verifier_hooked',
             });
             this.state.hooked_functions.set('apache_allow_all', 'AllowAllHostnameVerifier');
-        } catch (e) {
+        } catch (error) {
             if (this.config.verbose_logging) {
                 send({
                     type: 'warning',
                     target: 'apache_http_client',
                     action: 'allow_all_hostname_verifier_not_found',
-                    error: e.message,
+                    error: error.message,
                 });
             }
         }
     },
     // Initialize iOS-specific bypasses
-    initializeIOSBypasses: function () {
+    initializeIOSBypasses() {
         send({
             type: 'info',
             target: 'ios_ssl_bypass',
@@ -1232,29 +1295,29 @@ const CertificatePinningBypass = {
                 target: 'ios_ssl_bypass',
                 action: 'ios_bypasses_initialized',
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'ios_ssl_bypass',
                 action: 'ios_bypass_initialization_error',
-                error: e.message,
+                error: error.message,
             });
         }
     },
 
     // Bypass NSURLSession certificate validation
-    bypassNSURLSession: function () {
+    bypassNSURLSession() {
         try {
             // Hook NSURLSessionDelegate methods
             const { NSURLSessionDelegate } = ObjC.protocols;
 
             if (NSURLSessionDelegate) {
                 // Hook didReceiveChallenge method
-                const originalDidReceiveChallenge =
-                    NSURLSessionDelegate['- URLSession:didReceiveChallenge:completionHandler:'];
+                const originalDidReceiveChallenge
+                    = NSURLSessionDelegate['- URLSession:didReceiveChallenge:completionHandler:'];
 
-                NSURLSessionDelegate['- URLSession:didReceiveChallenge:completionHandler:'] =
-                    function (session, challenge, completionHandler) {
+                NSURLSessionDelegate['- URLSession:didReceiveChallenge:completionHandler:']
+                    = function (session, challenge, completionHandler) {
                         send({
                             type: 'bypass',
                             target: 'nsurlsession',
@@ -1281,8 +1344,8 @@ const CertificatePinningBypass = {
 
                             // Create credential with server trust
                             const serverTrust = challenge.protectionSpace().serverTrust();
-                            const credential =
-                                ObjC.classes.NSURLCredential.credentialForTrust_(serverTrust);
+                            const credential
+                                = ObjC.classes.NSURLCredential.credentialForTrust_(serverTrust);
 
                             // Call completion handler with credential
                             completionHandler(1, credential); // NSURLSessionAuthChallengeUseCredential = 1
@@ -1308,12 +1371,12 @@ const CertificatePinningBypass = {
                 });
                 this.state.hooked_functions.set('nsurlsession_delegate', 'NSURLSessionDelegate');
             }
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'nsurlsession',
                 action: 'failed_to_hook_delegate',
-                error: e.message,
+                error: error.message,
             });
         }
         try {
@@ -1321,11 +1384,11 @@ const CertificatePinningBypass = {
             const { NSURLConnectionDelegate } = ObjC.protocols;
 
             if (NSURLConnectionDelegate) {
-                const originalCanAuthenticateAgainstProtectionSpace =
-                    NSURLConnectionDelegate['- connection:canAuthenticateAgainstProtectionSpace:'];
+                const originalCanAuthenticateAgainstProtectionSpace
+                    = NSURLConnectionDelegate['- connection:canAuthenticateAgainstProtectionSpace:'];
 
-                NSURLConnectionDelegate['- connection:canAuthenticateAgainstProtectionSpace:'] =
-                    function (connection, protectionSpace) {
+                NSURLConnectionDelegate['- connection:canAuthenticateAgainstProtectionSpace:']
+                    = function (connection, protectionSpace) {
                         send({
                             type: 'info',
                             target: 'nsurlconnection',
@@ -1344,18 +1407,18 @@ const CertificatePinningBypass = {
 
                         return originalCanAuthenticateAgainstProtectionSpace
                             ? originalCanAuthenticateAgainstProtectionSpace.call(
-                                  this,
-                                  connection,
-                                  protectionSpace
-                              )
+                                this,
+                                connection,
+                                protectionSpace
+                            )
                             : false;
                     };
 
-                const originalDidReceiveAuthenticationChallenge =
-                    NSURLConnectionDelegate['- connection:didReceiveAuthenticationChallenge:'];
+                const originalDidReceiveAuthenticationChallenge
+                    = NSURLConnectionDelegate['- connection:didReceiveAuthenticationChallenge:'];
 
-                NSURLConnectionDelegate['- connection:didReceiveAuthenticationChallenge:'] =
-                    function (connection, challenge) {
+                NSURLConnectionDelegate['- connection:didReceiveAuthenticationChallenge:']
+                    = function (connection, challenge) {
                         // Advanced authentication challenge analysis using original method
                         let challengeAnalysis = null;
                         if (originalDidReceiveAuthenticationChallenge) {
@@ -1403,8 +1466,8 @@ const CertificatePinningBypass = {
 
                         const sender = challenge.sender();
                         const serverTrust = challenge.protectionSpace().serverTrust();
-                        const credential =
-                            ObjC.classes.NSURLCredential.credentialForTrust_(serverTrust);
+                        const credential
+                            = ObjC.classes.NSURLCredential.credentialForTrust_(serverTrust);
 
                         sender.useCredential_forAuthenticationChallenge_(credential, challenge);
 
@@ -1422,19 +1485,19 @@ const CertificatePinningBypass = {
                     'NSURLConnectionDelegate'
                 );
             }
-        } catch (e) {
+        } catch (error) {
             if (this.config.verbose_logging) {
                 send({
                     type: 'error',
                     target: 'nsurlconnection',
                     action: 'failed_to_hook_delegate',
-                    error: e.message,
+                    error: error.message,
                 });
             }
         }
     },
     // Bypass Security.framework trust evaluation
-    bypassSecurityFramework: function () {
+    bypassSecurityFramework() {
         try {
             // Hook SecTrustEvaluate
             const SecTrustEvaluate = new NativeFunction(
@@ -1447,7 +1510,7 @@ const CertificatePinningBypass = {
                 Interceptor.replace(
                     SecTrustEvaluate,
                     new NativeCallback(
-                        function (trust, result) {
+                        (trust, result) => {
                             const trustObject = new ObjC.Object(trust);
                             const certificateCount = trustObject.$ivars._certificateChain
                                 ? trustObject.$ivars._certificateChain.count()
@@ -1470,7 +1533,7 @@ const CertificatePinningBypass = {
                             this.state.active_bypasses.add('sectrust_evaluate');
 
                             return 0; // errSecSuccess
-                        }.bind(this),
+                        },
                         'int',
                         ['pointer', 'pointer']
                     )
@@ -1483,12 +1546,12 @@ const CertificatePinningBypass = {
                 });
                 this.state.hooked_functions.set('sectrust_evaluate', 'SecTrustEvaluate');
             }
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'sec_trust',
                 action: 'failed_to_hook_sec_trust_evaluate',
-                error: e.message,
+                error: error.message,
             });
         }
 
@@ -1504,7 +1567,7 @@ const CertificatePinningBypass = {
                 Interceptor.replace(
                     SecTrustEvaluateWithError,
                     new NativeCallback(
-                        function (trust, error) {
+                        (trust, error) => {
                             // Advanced SecTrust analysis using trust parameter
                             const trustAnalysis = this.analyzeSecTrustObject(trust);
                             const certificateCount = trustAnalysis.certificate_count;
@@ -1514,8 +1577,8 @@ const CertificatePinningBypass = {
                             let certChainAnalysis = null;
                             if (trust && !trust.isNull()) {
                                 try {
-                                    certChainAnalysis =
-                                        this.extractCertificateChainFromTrust(trust);
+                                    certChainAnalysis
+                                        = this.extractCertificateChainFromTrust(trust);
                                 } catch (extractError) {
                                     certChainAnalysis = {
                                         extraction_failed: true,
@@ -1550,7 +1613,7 @@ const CertificatePinningBypass = {
                             this.state.active_bypasses.add('sectrust_evaluate_error');
 
                             return true; // Success
-                        }.bind(this),
+                        },
                         'bool',
                         ['pointer', 'pointer']
                     )
@@ -1566,13 +1629,13 @@ const CertificatePinningBypass = {
                     'SecTrustEvaluateWithError'
                 );
             }
-        } catch (e) {
+        } catch (error) {
             if (this.config.verbose_logging) {
                 send({
                     type: 'warning',
                     target: 'sec_trust',
                     action: 'sec_trust_evaluate_with_error_not_available',
-                    error: e.message,
+                    error: error.message,
                 });
             }
         }
@@ -1588,24 +1651,24 @@ const CertificatePinningBypass = {
                 Interceptor.replace(
                     SecTrustSetAnchorCertificates,
                     new NativeCallback(
-                        function (trust, anchorCertificates) {
+                        (trust, anchorCertificates) => {
                             // Advanced trust and anchor certificates analysis
                             const trustObjectAnalysis = this.analyzeSecTrustObject(trust);
-                            const anchorCertificatesAnalysis =
-                                this.analyzeAnchorCertificatesArray(anchorCertificates);
+                            const anchorCertificatesAnalysis
+                                = this.analyzeAnchorCertificatesArray(anchorCertificates);
 
                             // Extract certificate details from anchor certificates array
                             let anchorCertDetails = null;
                             if (anchorCertificates && !anchorCertificates.isNull()) {
                                 try {
-                                    anchorCertDetails =
-                                        this.extractCertificateDetailsFromArray(anchorCertificates);
+                                    anchorCertDetails
+                                        = this.extractCertificateDetailsFromArray(anchorCertificates);
                                 } catch (anchorError) {
                                     anchorCertDetails = {
                                         extraction_failed: true,
                                         error:
-                                            anchorError.message ||
-                                            'Anchor certificate extraction failed',
+                                            anchorError.message
+                                            || 'Anchor certificate extraction failed',
                                     };
                                 }
                             }
@@ -1638,7 +1701,7 @@ const CertificatePinningBypass = {
                             this.state.active_bypasses.add('sectrust_anchors');
 
                             return 0; // errSecSuccess
-                        }.bind(this),
+                        },
                         'int',
                         ['pointer', 'pointer']
                     )
@@ -1654,20 +1717,20 @@ const CertificatePinningBypass = {
                     'SecTrustSetAnchorCertificates'
                 );
             }
-        } catch (e) {
+        } catch (error) {
             if (this.config.verbose_logging) {
                 send({
                     type: 'error',
                     target: 'certificate_pinning_bypass',
                     action: 'sectrust_setanchorcertificates_hook_failed',
-                    error: e.message,
+                    error: error.message,
                 });
             }
         }
     },
 
     // Bypass CFNetwork SSL callbacks
-    bypassCFNetwork: function () {
+    bypassCFNetwork() {
         try {
             // Hook SSLSetSessionOption
             const SSLSetSessionOption = new NativeFunction(
@@ -1680,13 +1743,13 @@ const CertificatePinningBypass = {
                 Interceptor.replace(
                     SSLSetSessionOption,
                     new NativeCallback(
-                        function (context, option, value) {
+                        (context, option, value) => {
                             send({
                                 type: 'info',
                                 target: 'certificate_pinning_bypass',
                                 action: 'cfnetwork_sslsetsessionoption_intercepted',
-                                option: option,
-                                value: value,
+                                option,
+                                value,
                             });
 
                             // kSSLSessionOptionBreakOnServerAuth = 0
@@ -1703,7 +1766,7 @@ const CertificatePinningBypass = {
                             }
 
                             return SSLSetSessionOption(context, option, value);
-                        }.bind(this),
+                        },
                         'int',
                         ['pointer', 'int', 'bool']
                     )
@@ -1716,13 +1779,13 @@ const CertificatePinningBypass = {
                 });
                 this.state.hooked_functions.set('cfnetwork_ssl_option', 'SSLSetSessionOption');
             }
-        } catch (e) {
+        } catch (error) {
             if (this.config.verbose_logging) {
                 send({
                     type: 'error',
                     target: 'certificate_pinning_bypass',
                     action: 'cfnetwork_sslsetsessionoption_hook_failed',
-                    error: e.message,
+                    error: error.message,
                 });
             }
         }
@@ -1738,7 +1801,7 @@ const CertificatePinningBypass = {
                 Interceptor.replace(
                     SSLHandshake,
                     new NativeCallback(
-                        function (context) {
+                        context => {
                             send({
                                 type: 'info',
                                 target: 'certificate_pinning_bypass',
@@ -1761,7 +1824,7 @@ const CertificatePinningBypass = {
                             }
 
                             return result;
-                        }.bind(this),
+                        },
                         'int',
                         ['pointer']
                     )
@@ -1774,20 +1837,20 @@ const CertificatePinningBypass = {
                 });
                 this.state.hooked_functions.set('cfnetwork_handshake', 'SSLHandshake');
             }
-        } catch (e) {
+        } catch (error) {
             if (this.config.verbose_logging) {
                 send({
                     type: 'error',
                     target: 'certificate_pinning_bypass',
                     action: 'cfnetwork_sslhandshake_hook_failed',
-                    error: e.message,
+                    error: error.message,
                 });
             }
         }
     },
 
     // Bypass Network.framework (iOS 12+)
-    bypassNetworkFramework: function () {
+    bypassNetworkFramework() {
         try {
             // Hook nw_parameters_set_tls_verify_block if available
             const nw_parameters_set_tls_verify_block = Module.findExportByName(
@@ -1811,19 +1874,19 @@ const CertificatePinningBypass = {
                     action: 'network_framework_bypass_markers_set',
                 });
             }
-        } catch (e) {
+        } catch (error) {
             if (this.config.verbose_logging) {
                 send({
                     type: 'warning',
                     target: 'certificate_pinning_bypass',
                     action: 'network_framework_not_available',
-                    error: e.message,
+                    error: error.message,
                 });
             }
         }
     },
     // Initialize cross-platform bypasses
-    initializeCrossPlatformBypasses: function () {
+    initializeCrossPlatformBypasses() {
         send({
             type: 'info',
             target: 'certificate_pinning_bypass',
@@ -1848,27 +1911,27 @@ const CertificatePinningBypass = {
                 target: 'certificate_pinning_bypass',
                 action: 'cross_platform_bypasses_initialized',
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'certificate_pinning_bypass',
                 action: 'cross_platform_bypasses_error',
-                error: e.message,
+                error: error.message,
             });
         }
     },
 
     // Bypass OpenSSL certificate verification
-    bypassOpenSSL: function () {
+    bypassOpenSSL() {
         try {
             // Hook SSL_CTX_set_verify
-            const SSL_CTX_set_verify =
-                Module.findExportByName('libssl.so', 'SSL_CTX_set_verify') ||
-                Module.findExportByName('libssl.dylib', 'SSL_CTX_set_verify') ||
-                Module.findExportByName('libssl.so.1.1', 'SSL_CTX_set_verify');
+            const SSL_CTX_set_verify
+                = Module.findExportByName('libssl.so', 'SSL_CTX_set_verify')
+                || Module.findExportByName('libssl.dylib', 'SSL_CTX_set_verify')
+                || Module.findExportByName('libssl.so.1.1', 'SSL_CTX_set_verify');
 
             if (SSL_CTX_set_verify) {
-                const originalSSL_CTX_set_verify = new NativeFunction(SSL_CTX_set_verify, 'void', [
+                const originalSslCtxSetVerify = new NativeFunction(SSL_CTX_set_verify, 'void', [
                     'pointer',
                     'int',
                     'pointer',
@@ -1877,7 +1940,7 @@ const CertificatePinningBypass = {
                 Interceptor.replace(
                     SSL_CTX_set_verify,
                     new NativeCallback(
-                        function (ctx, mode, callback) {
+                        (ctx, mode, callback) => {
                             // Advanced OpenSSL verification callback analysis
                             const callbackAnalysis = this.analyzeSSLVerificationCallback(callback);
                             const verificationMode = this.analyzeSSLVerificationMode(mode);
@@ -1933,11 +1996,11 @@ const CertificatePinningBypass = {
                             });
 
                             // Set mode to SSL_VERIFY_NONE (0) and callback to NULL
-                            originalSSL_CTX_set_verify(ctx, 0, ptr(0));
+                            originalSslCtxSetVerify(ctx, 0, ptr(0));
 
                             this.state.bypassed_validations++;
                             this.state.active_bypasses.add('openssl_ctx_verify');
-                        }.bind(this),
+                        },
                         'void',
                         ['pointer', 'int', 'pointer']
                     )
@@ -1950,28 +2013,28 @@ const CertificatePinningBypass = {
                 });
                 this.state.hooked_functions.set('openssl_ctx_verify', 'SSL_CTX_set_verify');
             }
-        } catch (e) {
+        } catch (error) {
             if (this.config.verbose_logging) {
                 send({
                     type: 'error',
                     target: 'certificate_pinning_bypass',
                     action: 'openssl_ctx_set_verify_hook_failed',
-                    error: e.message,
+                    error: error.message,
                 });
             }
         }
         try {
             // Hook SSL_get_verify_result
-            const SSL_get_verify_result =
-                Module.findExportByName('libssl.so', 'SSL_get_verify_result') ||
-                Module.findExportByName('libssl.dylib', 'SSL_get_verify_result') ||
-                Module.findExportByName('libssl.so.1.1', 'SSL_get_verify_result');
+            const SSL_get_verify_result
+                = Module.findExportByName('libssl.so', 'SSL_get_verify_result')
+                || Module.findExportByName('libssl.dylib', 'SSL_get_verify_result')
+                || Module.findExportByName('libssl.so.1.1', 'SSL_get_verify_result');
 
             if (SSL_get_verify_result) {
                 Interceptor.replace(
                     SSL_get_verify_result,
                     new NativeCallback(
-                        function (ssl) {
+                        ssl => {
                             // Advanced SSL connection analysis using ssl parameter
                             const sslConnectionAnalysis = this.analyzeSSLConnectionDetails(ssl);
                             const verificationContext = this.extractSSLVerificationContext(ssl);
@@ -1992,8 +2055,8 @@ const CertificatePinningBypass = {
                                     sslSessionDetails = {
                                         ssl_analysis_failed: true,
                                         error:
-                                            sslAnalysisError.message ||
-                                            'SSL connection analysis failed',
+                                            sslAnalysisError.message
+                                            || 'SSL connection analysis failed',
                                         fallback_bypass_used: true,
                                     };
                                 }
@@ -2020,7 +2083,7 @@ const CertificatePinningBypass = {
                             this.state.active_bypasses.add('openssl_verify_result');
 
                             return 0; // X509_V_OK
-                        }.bind(this),
+                        },
                         'long',
                         ['pointer']
                     )
@@ -2033,33 +2096,33 @@ const CertificatePinningBypass = {
                 });
                 this.state.hooked_functions.set('openssl_verify_result', 'SSL_get_verify_result');
             }
-        } catch (e) {
+        } catch (error) {
             if (this.config.verbose_logging) {
                 send({
                     type: 'error',
                     target: 'certificate_pinning_bypass',
                     action: 'openssl_get_verify_result_hook_failed',
-                    error: e.message,
+                    error: error.message,
                 });
             }
         }
 
         try {
             // Hook X509_verify_cert
-            const X509_verify_cert =
-                Module.findExportByName('libcrypto.so', 'X509_verify_cert') ||
-                Module.findExportByName('libcrypto.dylib', 'X509_verify_cert') ||
-                Module.findExportByName('libcrypto.so.1.1', 'X509_verify_cert');
+            const X509_verify_cert
+                = Module.findExportByName('libcrypto.so', 'X509_verify_cert')
+                || Module.findExportByName('libcrypto.dylib', 'X509_verify_cert')
+                || Module.findExportByName('libcrypto.so.1.1', 'X509_verify_cert');
 
             if (X509_verify_cert) {
                 Interceptor.replace(
                     X509_verify_cert,
                     new NativeCallback(
-                        function (ctx) {
+                        ctx => {
                             // Advanced X509 certificate context analysis
                             const x509StoreCtxAnalysis = this.analyzeX509StoreContext(ctx);
-                            const certificateChainInfo =
-                                this.extractCertificateChainFromStoreCtx(ctx);
+                            const certificateChainInfo
+                                = this.extractCertificateChainFromStoreCtx(ctx);
 
                             // X509_STORE_CTX detailed analysis
                             let storeCtxDetails = null;
@@ -2077,8 +2140,8 @@ const CertificatePinningBypass = {
                                     storeCtxDetails = {
                                         ctx_analysis_failed: true,
                                         error:
-                                            ctxAnalysisError.message ||
-                                            'X509_STORE_CTX analysis failed',
+                                            ctxAnalysisError.message
+                                            || 'X509_STORE_CTX analysis failed',
                                         fallback_bypass_strategy: 'force_success',
                                     };
                                 }
@@ -2105,7 +2168,7 @@ const CertificatePinningBypass = {
                             this.state.active_bypasses.add('openssl_x509_verify');
 
                             return 1; // Success
-                        }.bind(this),
+                        },
                         'int',
                         ['pointer']
                     )
@@ -2118,19 +2181,19 @@ const CertificatePinningBypass = {
                 });
                 this.state.hooked_functions.set('openssl_x509_verify', 'X509_verify_cert');
             }
-        } catch (e) {
+        } catch (error) {
             if (this.config.verbose_logging) {
                 send({
                     type: 'error',
                     target: 'certificate_pinning_bypass',
                     action: 'openssl_x509_verify_cert_hook_failed',
-                    error: e.message,
+                    error: error.message,
                 });
             }
         }
     },
     // Bypass BoringSSL (used in Chrome and Android)
-    bypassBoringSSL: function () {
+    bypassBoringSSL() {
         try {
             // BoringSSL has different symbol names
             const libraries = [
@@ -2152,13 +2215,13 @@ const CertificatePinningBypass = {
                         Interceptor.replace(
                             SSL_CTX_set_custom_verify,
                             new NativeCallback(
-                                function (ctx, mode, callback) {
+                                (ctx, mode, callback) => {
                                     // Advanced BoringSSL custom verification analysis
                                     const boringSslCtxAnalysis = this.analyzeBoringSSLContext(ctx);
-                                    const customVerificationMode =
-                                        this.analyzeCustomVerificationMode(mode);
-                                    const customCallbackAnalysis =
-                                        this.analyzeCustomVerificationCallback(callback);
+                                    const customVerificationMode
+                                        = this.analyzeCustomVerificationMode(mode);
+                                    const customCallbackAnalysis
+                                        = this.analyzeCustomVerificationCallback(callback);
 
                                     // BoringSSL context configuration analysis
                                     let ctxConfigDetails = null;
@@ -2175,8 +2238,8 @@ const CertificatePinningBypass = {
                                             ctxConfigDetails = {
                                                 ctx_analysis_failed: true,
                                                 error:
-                                                    ctxError.message ||
-                                                    'BoringSSL context analysis failed',
+                                                    ctxError.message
+                                                    || 'BoringSSL context analysis failed',
                                             };
                                         }
                                     }
@@ -2203,16 +2266,16 @@ const CertificatePinningBypass = {
                                             customCallbackDetails = {
                                                 callback_analysis_failed: true,
                                                 error:
-                                                    callbackError.message ||
-                                                    'Custom callback analysis failed',
+                                                    callbackError.message
+                                                    || 'Custom callback analysis failed',
                                                 fallback_bypass_strategy: 'disable_verification',
                                             };
                                         }
                                     }
 
                                     // BoringSSL-specific bypass strategy optimization
-                                    const boringSslBypassStrategy =
-                                        this.optimizeBoringSSLCustomVerificationBypass(
+                                    const boringSslBypassStrategy
+                                        = this.optimizeBoringSSLCustomVerificationBypass(
                                             boringSslCtxAnalysis,
                                             customVerificationMode,
                                             customCallbackAnalysis,
@@ -2237,7 +2300,7 @@ const CertificatePinningBypass = {
                                     this.state.active_bypasses.add('boringssl_custom_verify');
 
                                     // Don't call the original to disable custom verification
-                                }.bind(this),
+                                },
                                 'void',
                                 ['pointer', 'int', 'pointer']
                             )
@@ -2263,18 +2326,18 @@ const CertificatePinningBypass = {
                     // Library loading failure categorization
                     let libraryFailureCategory = 'general';
                     if (
-                        errorMessage.includes('not found') ||
-                        errorMessage.includes('cannot open')
+                        errorMessage.includes('not found')
+                        || errorMessage.includes('cannot open')
                     ) {
                         libraryFailureCategory = 'library_missing';
                     } else if (
-                        errorMessage.includes('symbol') ||
-                        errorMessage.includes('undefined')
+                        errorMessage.includes('symbol')
+                        || errorMessage.includes('undefined')
                     ) {
                         libraryFailureCategory = 'symbol_missing';
                     } else if (
-                        errorMessage.includes('permission') ||
-                        errorMessage.includes('access')
+                        errorMessage.includes('permission')
+                        || errorMessage.includes('access')
                     ) {
                         libraryFailureCategory = 'access_denied';
                     }
@@ -2300,10 +2363,10 @@ const CertificatePinningBypass = {
             });
         } catch (boringSslError) {
             // Advanced BoringSSL bypass failure analysis
-            var errorType = boringSslError
+            const errorType = boringSslError
                 ? boringSslError.name || 'UnknownBoringSSLError'
                 : 'GeneralBoringSSLError';
-            var errorMessage = boringSslError
+            const errorMessage = boringSslError
                 ? boringSslError.message || 'No BoringSSL error message'
                 : 'Unknown BoringSSL bypass failure';
 
@@ -2336,7 +2399,7 @@ const CertificatePinningBypass = {
                         original_error: boringSslError
                             ? boringSslError.toString()
                             : 'No error object',
-                        stack_trace_available: !!boringSslError?.stack,
+                        stack_trace_available: Boolean(boringSslError?.stack),
                     },
                 });
             }
@@ -2344,7 +2407,7 @@ const CertificatePinningBypass = {
     },
 
     // Initialize certificate injection capabilities
-    initializeCertificateInjection: function () {
+    initializeCertificateInjection() {
         send({
             type: 'info',
             target: 'certificate_pinning_bypass',
@@ -2368,7 +2431,7 @@ const CertificatePinningBypass = {
         });
     },
     // Setup integration with cloud license interceptor
-    setupCloudInterceptorIntegration: function () {
+    setupCloudInterceptorIntegration() {
         // Define communication interface with cloud interceptor
         this.cloudInterceptor = {
             endpoint: 'http://127.0.0.1:8888',
@@ -2382,7 +2445,7 @@ const CertificatePinningBypass = {
                 type: 'info',
                 target: 'certificate_pinning_bypass',
                 action: 'injecting_custom_certificate',
-                hostname: hostname,
+                hostname,
             });
 
             // Store certificate for hostname
@@ -2395,7 +2458,7 @@ const CertificatePinningBypass = {
                 type: 'success',
                 target: 'certificate_pinning_bypass',
                 action: 'certificate_injected',
-                hostname: hostname,
+                hostname,
             });
             return true;
         }.bind(this);
@@ -2408,7 +2471,7 @@ const CertificatePinningBypass = {
     },
 
     // Setup local certificate server
-    setupLocalCertificateServer: function () {
+    setupLocalCertificateServer() {
         // Simple certificate validation bypass for any hostname
         this.validateCertificate = function (hostname, certificate) {
             // Advanced certificate analysis for bypass optimization
@@ -2424,8 +2487,8 @@ const CertificatePinningBypass = {
                         signature_algorithm: certificate.signatureAlgorithm || 'Unknown',
                         public_key_algorithm: certificate.publicKeyAlgorithm || 'Unknown',
                         fingerprint:
-                            certificate.fingerprint ||
-                            this.calculateCertificateFingerprint(certificate),
+                            certificate.fingerprint
+                            || this.calculateCertificateFingerprint(certificate),
                         is_self_signed: this.isSelfSigned(certificate),
                         key_usage: certificate.keyUsage || [],
                         extended_key_usage: certificate.extKeyUsage || [],
@@ -2443,8 +2506,8 @@ const CertificatePinningBypass = {
                     // Certificate chain analysis
                     if (certificate.issuerCertificate) {
                         certificateAnalysis.chain_depth = this.calculateChainDepth(certificate);
-                        certificateAnalysis.chain_validation =
-                            this.validateCertificateChain(certificate);
+                        certificateAnalysis.chain_validation
+                            = this.validateCertificateChain(certificate);
                     }
 
                     // Certificate trust store analysis
@@ -2465,7 +2528,7 @@ const CertificatePinningBypass = {
                 type: 'info',
                 target: 'certificate_pinning_bypass',
                 action: 'validating_certificate',
-                hostname: hostname,
+                hostname,
                 certificate_analysis: certificateAnalysis,
             });
 
@@ -2475,7 +2538,7 @@ const CertificatePinningBypass = {
                     type: 'success',
                     target: 'certificate_pinning_bypass',
                     action: 'certificate_trusted',
-                    hostname: hostname,
+                    hostname,
                 });
                 return true;
             }
@@ -2483,14 +2546,14 @@ const CertificatePinningBypass = {
             // Check wildcard certificates
             for (const trustedCert of this.certificates.trusted_certs) {
                 if (trustedCert.startsWith('*.')) {
-                    const domain = trustedCert.substring(2);
+                    const domain = trustedCert.slice(2);
                     if (hostname.endsWith(domain)) {
                         send({
                             type: 'success',
                             target: 'certificate_pinning_bypass',
                             action: 'certificate_matched_wildcard',
                             wildcard: trustedCert,
-                            hostname: hostname,
+                            hostname,
                         });
                         return true;
                     }
@@ -2502,7 +2565,7 @@ const CertificatePinningBypass = {
                 type: 'success',
                 target: 'certificate_pinning_bypass',
                 action: 'certificate_auto_trusted',
-                hostname: hostname,
+                hostname,
             });
             this.certificates.trusted_certs.add(hostname);
             return true;
@@ -2515,7 +2578,7 @@ const CertificatePinningBypass = {
         });
     },
     // Initialize trust store modification
-    initializeTrustStoreModification: function () {
+    initializeTrustStoreModification() {
         send({
             type: 'info',
             target: 'certificate_pinning_bypass',
@@ -2536,16 +2599,16 @@ const CertificatePinningBypass = {
     },
 
     // Monitor certificate validation attempts
-    monitorCertificateValidation: function () {
+    monitorCertificateValidation() {
         // Track validation attempts for analysis
         this.validationAttempts = [];
 
         // Create validation logger
         this.logValidationAttempt = function (hostname, result, method) {
             const attempt = {
-                hostname: hostname,
-                result: result,
-                method: method,
+                hostname,
+                result,
+                method,
                 timestamp: Date.now(),
             };
 
@@ -2561,23 +2624,23 @@ const CertificatePinningBypass = {
                     type: 'info',
                     target: 'certificate_pinning_bypass',
                     action: 'validation_attempt',
-                    hostname: hostname,
-                    result: result,
-                    method: method,
+                    hostname,
+                    result,
+                    method,
                 });
             }
         }.bind(this);
     },
 
     // Setup dynamic trust store updates
-    setupDynamicTrustStore: function () {
+    setupDynamicTrustStore() {
         // Allow runtime addition of trusted certificates
         this.addTrustedCertificate = function (hostname, certificate) {
             send({
                 type: 'info',
                 target: 'certificate_pinning_bypass',
                 action: 'adding_trusted_certificate',
-                hostname: hostname,
+                hostname,
             });
 
             this.certificates.trusted_certs.add(hostname);
@@ -2595,7 +2658,7 @@ const CertificatePinningBypass = {
                 type: 'info',
                 target: 'certificate_pinning_bypass',
                 action: 'removing_trusted_certificate',
-                hostname: hostname,
+                hostname,
             });
 
             this.certificates.trusted_certs.delete(hostname);
@@ -2605,7 +2668,7 @@ const CertificatePinningBypass = {
         }.bind(this);
     },
     // Start monitoring and integration services
-    startMonitoring: function () {
+    startMonitoring() {
         send({
             type: 'info',
             target: 'certificate_pinning_bypass',
@@ -2633,14 +2696,14 @@ const CertificatePinningBypass = {
     },
 
     // Start periodic statistics reporting
-    startStatisticsReporting: function () {
+    startStatisticsReporting() {
         setInterval(() => {
             this.printStatistics();
-        }, 60000); // Every minute
+        }, 60_000); // Every minute
     },
 
     // Start stealth monitoring
-    startStealthMonitoring: function () {
+    startStealthMonitoring() {
         send({
             type: 'success',
             target: 'certificate_pinning_bypass',
@@ -2665,11 +2728,11 @@ const CertificatePinningBypass = {
                     try {
                         detectionPatterns.forEach(pattern => {
                             if (
-                                module.name.toLowerCase().includes(pattern.toLowerCase()) ||
-                                module.path.toLowerCase().includes(pattern.toLowerCase())
+                                module.name.toLowerCase().includes(pattern.toLowerCase())
+                                || module.path.toLowerCase().includes(pattern.toLowerCase())
                             ) {
                                 detectionResults.patterns_found.push({
-                                    pattern: pattern,
+                                    pattern,
                                     module_name: module.name,
                                     module_path: module.path,
                                     detection_type: 'module_name',
@@ -2683,7 +2746,7 @@ const CertificatePinningBypass = {
                                 const matches = Memory.scanSync(module.base, module.size, pattern);
                                 if (matches.length > 0) {
                                     detectionResults.memory_scan_results.push({
-                                        pattern: pattern,
+                                        pattern,
                                         module_name: module.name,
                                         matches_count: matches.length,
                                         addresses: matches
@@ -2749,7 +2812,7 @@ const CertificatePinningBypass = {
                         detectionPatterns.forEach(pattern => {
                             if (thread.name?.toLowerCase().includes(pattern.toLowerCase())) {
                                 detectionResults.thread_scan_results.push({
-                                    pattern: pattern,
+                                    pattern,
                                     thread_id: thread.id,
                                     thread_name: thread.name,
                                     detection_type: 'thread_name',
@@ -2783,9 +2846,9 @@ const CertificatePinningBypass = {
 
                 // Report detection results
                 if (
-                    detectionResults.patterns_found.length > 0 ||
-                    detectionResults.memory_scan_results.length > 0 ||
-                    detectionResults.thread_scan_results.length > 0
+                    detectionResults.patterns_found.length > 0
+                    || detectionResults.memory_scan_results.length > 0
+                    || detectionResults.thread_scan_results.length > 0
                 ) {
                     send({
                         type: 'warning',
@@ -2815,11 +2878,11 @@ const CertificatePinningBypass = {
         }.bind(this);
 
         // Run detection monitoring periodically
-        setInterval(this.detectDetectionAttempts, 30000); // Every 30 seconds
+        setInterval(this.detectDetectionAttempts, 30_000); // Every 30 seconds
     },
 
     // Start anti-detection measures
-    startAntiDetection: function () {
+    startAntiDetection() {
         send({
             type: 'success',
             target: 'certificate_pinning_bypass',
@@ -2835,16 +2898,7 @@ const CertificatePinningBypass = {
         this.hideFridaArtifacts();
     },
     // Add random delays to avoid timing-based detection
-    addRandomDelays: () => {
-        const originalSend = send;
-        send = function (data) {
-            // Add random delay before sending
-            const delay = Math.random() * 100;
-            setTimeout(() => {
-                originalSend.call(this, data);
-            }, delay);
-        };
-    },
+    addRandomDelays: () => sendWithRandomDelay,
 
     // Hide Frida-related artifacts
     hideFridaArtifacts: () => {
@@ -2857,7 +2911,7 @@ const CertificatePinningBypass = {
     },
 
     // Print bypass statistics
-    printStatistics: function () {
+    printStatistics() {
         send({
             type: 'info',
             target: 'certificate_pinning_bypass',
@@ -2924,7 +2978,7 @@ const CertificatePinningBypass = {
             target: 'certificate_pinning_bypass',
             action: 'statistics_active_bypass_methods_header',
         });
-        Array.from(this.state.active_bypasses).forEach(bypass => {
+        [...this.state.active_bypasses].forEach(bypass => {
             send({
                 type: 'info',
                 target: 'certificate_pinning_bypass',
@@ -2943,7 +2997,7 @@ const CertificatePinningBypass = {
                 type: 'info',
                 target: 'certificate_pinning_bypass',
                 action: 'statistics_hooked_function',
-                key: key,
+                key,
                 function: func,
             });
         });
@@ -2977,7 +3031,7 @@ const CertificatePinningBypass = {
         });
     },
     // Utility function to check if certificate should be trusted
-    shouldTrustCertificate: function (hostname, certificate) {
+    shouldTrustCertificate(hostname, certificate) {
         // Always trust if certificate injection is enabled
         if (this.config.cert_injection) {
             return this.validateCertificate(hostname, certificate);
@@ -2988,16 +3042,16 @@ const CertificatePinningBypass = {
     },
 
     // Utility function to log bypass attempts
-    logBypassAttempt: function (method, hostname, success) {
+    logBypassAttempt(method, hostname, success) {
         if (this.config.bypass_logging) {
             const status = success ? 'SUCCESS' : 'FAILED';
             send({
                 type: success ? 'bypass' : 'error',
                 target: 'certificate_pinning_bypass',
                 action: 'validation_logged',
-                method: method,
-                hostname: hostname,
-                status: status,
+                method,
+                hostname,
+                status,
             });
 
             if (success) {
@@ -3014,7 +3068,7 @@ const CertificatePinningBypass = {
     },
 
     // Cleanup function
-    cleanup: function () {
+    cleanup() {
         send({
             type: 'info',
             target: 'certificate_pinning_bypass',
@@ -3039,7 +3093,7 @@ const CertificatePinningBypass = {
     },
 
     // Main entry point
-    run: function () {
+    run() {
         send({
             type: 'info',
             target: 'certificate_pinning_bypass',
@@ -3074,6 +3128,9 @@ const CertificatePinningBypass = {
     },
 };
 
+// Store reference for global access
+const sslBypass = CertificatePinningBypass;
+
 // Auto-run on script load
 if (typeof rpc !== 'undefined') {
     // Frida RPC exports
@@ -3086,10 +3143,10 @@ if (typeof rpc !== 'undefined') {
             platform: sslBypass.state.platform,
             bypassed_validations: sslBypass.state.bypassed_validations,
             failed_bypasses: sslBypass.state.failed_bypasses,
-            active_bypasses: Array.from(sslBypass.state.active_bypasses),
-            hooked_functions: Array.from(sslBypass.state.hooked_functions.keys()),
-            trusted_certificates: Array.from(sslBypass.certificates.trusted_certs),
-            injected_certificates: Array.from(sslBypass.certificates.server_certs.keys()),
+            active_bypasses: [...sslBypass.state.active_bypasses],
+            hooked_functions: [...sslBypass.state.hooked_functions.keys()],
+            trusted_certificates: [...sslBypass.certificates.trusted_certs],
+            injected_certificates: [...sslBypass.certificates.server_certs.keys()],
         }),
 
         addTrustedCertificate: (hostname, certificate) =>
@@ -3105,9 +3162,6 @@ if (typeof rpc !== 'undefined') {
         },
     };
 }
-
-// Store reference for global access
-const sslBypass = CertificatePinningBypass;
 
 // Auto-run immediately
 sslBypass.run();
@@ -3144,7 +3198,7 @@ Object.assign(CertificatePinningBypass, {
     // === NEW 2024-2025 MODERN CERTIFICATE SECURITY BYPASS ENHANCEMENTS ===
 
     // 1. Certificate Transparency (CT) Log Bypass 2.0 - Enhanced SCT validation and CT log verification bypass
-    hookCertificateTransparencyLogBypass2: function () {
+    hookCertificateTransparencyLogBypass2() {
         send({
             type: 'info',
             target: 'certificate_pinning_bypass',
@@ -3177,7 +3231,7 @@ Object.assign(CertificatePinningBypass, {
                     ctPatterns.forEach(pattern => {
                         const matches = Memory.scanSync(
                             Module.findBaseAddress(module),
-                            Module.findBaseAddress(module).add(0x1000000),
+                            Module.findBaseAddress(module).add(0x1_00_00_00),
                             pattern
                         );
                         matches.forEach(match => {
@@ -3190,7 +3244,7 @@ Object.assign(CertificatePinningBypass, {
                                 Interceptor.replace(
                                     ctFunction,
                                     new NativeCallback(
-                                        function (policy, scts, count) {
+                                        (policy, scts, count) => {
                                             // Advanced Certificate Transparency analysis
                                             const ctAnalysis = {
                                                 policy_analysis: null,
@@ -3202,8 +3256,8 @@ Object.assign(CertificatePinningBypass, {
                                             try {
                                                 // Analyze CT policy for bypass optimization
                                                 if (policy && !policy.isNull()) {
-                                                    ctAnalysis.policy_analysis =
-                                                        this.analyzeCTPolicy(policy);
+                                                    ctAnalysis.policy_analysis
+                                                        = this.analyzeCTPolicy(policy);
                                                 }
 
                                                 // Analyze SCTs (Signed Certificate Timestamps)
@@ -3217,62 +3271,65 @@ Object.assign(CertificatePinningBypass, {
                                                 // Count-based verification bypass logic
                                                 if (count > 0) {
                                                     ctAnalysis.verification_count = count;
-                                                    ctAnalysis.bypass_method =
-                                                        count === 1
+                                                    ctAnalysis.bypass_method
+                                                        = count === 1
                                                             ? 'single_sct_bypass'
                                                             : 'multiple_sct_bypass';
                                                 }
                                             } catch (analysisError) {
                                                 ctAnalysis.analysis_failed = true;
-                                                ctAnalysis.error =
-                                                    analysisError.message || 'CT analysis error';
+                                                ctAnalysis.error
+                                                    = analysisError.message || 'CT analysis error';
                                             }
 
                                             send({
                                                 type: 'bypass',
                                                 target: 'certificate_pinning_bypass',
                                                 action: 'ct_log_verification_bypassed_v2',
-                                                pattern: pattern,
-                                                module: module,
+                                                pattern,
+                                                module,
                                                 ct_analysis: ctAnalysis,
                                             });
                                             this.state.certificateTransparencyLogBypass2Events++;
                                             return 1; // CT verification success
-                                        }.bind(this),
+                                        },
                                         'int',
                                         ['pointer', 'pointer', 'int']
                                     )
                                 );
-                            } catch (e) {
+                            } catch (error) {
                                 // Log Certificate Transparency function replacement errors for debugging
                                 if (this.config?.debug_mode) {
                                     send({
                                         type: 'debug',
                                         target: 'certificate_pinning_bypass',
                                         action: 'ct_function_replacement_error',
-                                        error: e.message || 'Unknown CT replacement error',
-                                        pattern: pattern,
+                                        error: error.message || 'Unknown CT replacement error',
+                                        pattern,
                                         address: match.address.toString(),
                                     });
                                 }
                             }
                         });
                     });
-                } catch (e) {
+                } catch (error) {
                     // Advanced Certificate Transparency error analysis and bypass
                     const ctErrorAnalysis = {
-                        error_message: e.message || 'Unknown CT module scanning error',
-                        error_type: this.classifyCTError(e),
+                        error_message: error.message || 'Unknown CT module scanning error',
+                        error_type: this.classifyCTError(error),
                         affected_module: module,
-                        ct_protection_level: this.assessCTProtectionLevel(e, module),
-                        bypass_opportunities: this.identifyCTBypassOpportunities(e, module),
-                        evasion_techniques: this.generateCTEvasionTechniques(e),
-                        alternative_strategies: this.determineCTAlternativeStrategies(e, module),
+                        ct_protection_level: this.assessCTProtectionLevel(error, module),
+                        bypass_opportunities: this.identifyCTBypassOpportunities(error, module),
+                        evasion_techniques: this.generateCTEvasionTechniques(error),
+                        alternative_strategies: this.determineCTAlternativeStrategies(
+                            error,
+                            module
+                        ),
                     };
 
                     // Implement CT-specific bypass mechanisms
                     if (ctErrorAnalysis.bypass_opportunities.length > 0) {
-                        this.implementCTModuleBypass(e, module, ctErrorAnalysis);
+                        this.implementCTModuleBypass(error, module, ctErrorAnalysis);
                     }
 
                     // Enhanced error logging with bypass context
@@ -3280,8 +3337,8 @@ Object.assign(CertificatePinningBypass, {
                         type: 'warning',
                         target: 'certificate_pinning_bypass',
                         action: 'ct_module_scan_error',
-                        error: e.message || 'Unknown CT module scanning error',
-                        module: module,
+                        error: error.message || 'Unknown CT module scanning error',
+                        module,
                         bypass_analysis: ctErrorAnalysis,
                     });
                     this.state.ctModuleScanErrors = (this.state.ctModuleScanErrors || 0) + 1;
@@ -3304,14 +3361,14 @@ Object.assign(CertificatePinningBypass, {
                                 let certificateChainAnalysis = null;
                                 if (certificates) {
                                     try {
-                                        certificateChainAnalysis =
-                                            this.analyzeAndroidCertificateChain(certificates);
+                                        certificateChainAnalysis
+                                            = this.analyzeAndroidCertificateChain(certificates);
                                     } catch (analysisError) {
                                         certificateChainAnalysis = {
                                             analysis_failed: true,
                                             error:
-                                                analysisError.message ||
-                                                'Android certificate analysis error',
+                                                analysisError.message
+                                                || 'Android certificate analysis error',
                                         };
                                     }
                                 }
@@ -3320,31 +3377,32 @@ Object.assign(CertificatePinningBypass, {
                                     type: 'bypass',
                                     target: 'certificate_pinning_bypass',
                                     action: 'android_ct_validation_bypassed_v2',
-                                    hostname: hostname,
+                                    hostname,
                                     certificate_chain_analysis: certificateChainAnalysis,
                                 });
                                 this.state.certificateTransparencyLogBypass2Events++;
                                 return true;
                             }.bind(this);
                         }
-                    } catch (e) {
+                    } catch (error) {
                         // Advanced ConscryptEngine error analysis and recovery
                         const conscryptErrorAnalysis = {
-                            error_message: e.message || 'ConscryptEngine hook error',
-                            error_type: this.classifyConscryptError(e),
-                            hook_failure_reason: this.analyzeHookFailure(e),
-                            alternative_methods: this.identifyConscryptAlternatives(e),
-                            bypass_recovery_strategy: this.determineConscryptRecoveryStrategy(e),
-                            fallback_implementations: this.generateConscryptFallbacks(e),
+                            error_message: error.message || 'ConscryptEngine hook error',
+                            error_type: this.classifyConscryptError(error),
+                            hook_failure_reason: this.analyzeHookFailure(error),
+                            alternative_methods: this.identifyConscryptAlternatives(error),
+                            bypass_recovery_strategy:
+                                this.determineConscryptRecoveryStrategy(error),
+                            fallback_implementations: this.generateConscryptFallbacks(error),
                         };
 
                         // Attempt alternative ConscryptEngine bypass methods
                         if (conscryptErrorAnalysis.alternative_methods.length > 0) {
-                            this.implementConscryptAlternativeBypass(e, conscryptErrorAnalysis);
+                            this.implementConscryptAlternativeBypass(error, conscryptErrorAnalysis);
                         }
 
                         // Log error for bypass strategy refinement
-                        this.logConscryptBypassError(e, conscryptErrorAnalysis);
+                        this.logConscryptBypassError(error, conscryptErrorAnalysis);
                     }
 
                     // Hook CT policy enforcement
@@ -3369,8 +3427,8 @@ Object.assign(CertificatePinningBypass, {
                                         logAnalysis = {
                                             analysis_failed: true,
                                             error:
-                                                logAnalysisError.message ||
-                                                'CT log ID analysis error',
+                                                logAnalysisError.message
+                                                || 'CT log ID analysis error',
                                             fallback_bypass: true,
                                         };
                                     }
@@ -3385,24 +3443,28 @@ Object.assign(CertificatePinningBypass, {
                                 return false; // Never disqualify logs
                             }.bind(this);
                         }
-                    } catch (e) {
+                    } catch (error) {
                         // Advanced CT log policy error analysis and bypass
                         const ctLogPolicyErrorAnalysis = {
-                            error_message: e.message || 'CT log policy error',
-                            error_type: this.classifyCTLogPolicyError(e),
-                            policy_bypass_strategy: this.determineCTLogPolicyBypassStrategy(e),
-                            alternative_log_sources: this.identifyAlternativeCTLogSources(e),
-                            policy_enforcement_weakness: this.analyzeCTPolicyEnforcementWeakness(e),
-                            recovery_mechanisms: this.generateCTPolicyRecoveryMechanisms(e),
+                            error_message: error.message || 'CT log policy error',
+                            error_type: this.classifyCTLogPolicyError(error),
+                            policy_bypass_strategy: this.determineCTLogPolicyBypassStrategy(error),
+                            alternative_log_sources: this.identifyAlternativeCTLogSources(error),
+                            policy_enforcement_weakness:
+                                this.analyzeCTPolicyEnforcementWeakness(error),
+                            recovery_mechanisms: this.generateCTPolicyRecoveryMechanisms(error),
                         };
 
                         // Implement CT log policy bypass alternatives
                         if (ctLogPolicyErrorAnalysis.alternative_log_sources.length > 0) {
-                            this.implementCTLogPolicyAlternativeBypass(e, ctLogPolicyErrorAnalysis);
+                            this.implementCTLogPolicyAlternativeBypass(
+                                error,
+                                ctLogPolicyErrorAnalysis
+                            );
                         }
 
                         // Log policy bypass error for strategy refinement
-                        this.logCTLogPolicyError(e, ctLogPolicyErrorAnalysis);
+                        this.logCTLogPolicyError(error, ctLogPolicyErrorAnalysis);
                     }
                 });
             }
@@ -3412,18 +3474,18 @@ Object.assign(CertificatePinningBypass, {
                 target: 'certificate_pinning_bypass',
                 action: 'ct_log_bypass_2_initialized',
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'certificate_pinning_bypass',
                 action: 'ct_log_bypass_2_failed',
-                error: e.message,
+                error: error.message,
             });
         }
     },
 
     // 2. HTTP/3 QUIC TLS Certificate Validation Bypass - Next-generation protocol certificate validation
-    hookHttp3QuicTlsCertificateValidationBypass: function () {
+    hookHttp3QuicTlsCertificateValidationBypass() {
         send({
             type: 'info',
             target: 'certificate_pinning_bypass',
@@ -3448,7 +3510,7 @@ Object.assign(CertificatePinningBypass, {
                     quicPatterns.forEach(pattern => {
                         const matches = Memory.scanSync(
                             Module.findBaseAddress(module),
-                            Module.findBaseAddress(module).add(0x2000000),
+                            Module.findBaseAddress(module).add(0x2_00_00_00),
                             pattern
                         );
                         matches.forEach(match => {
@@ -3462,7 +3524,7 @@ Object.assign(CertificatePinningBypass, {
                                 Interceptor.replace(
                                     quicFunction,
                                     new NativeCallback(
-                                        function (context, cert_chain, proof_verify_details) {
+                                        (context, cert_chain, proof_verify_details) => {
                                             // Advanced QUIC certificate validation analysis
                                             const quicValidationAnalysis = {
                                                 context_analysis: null,
@@ -3474,33 +3536,33 @@ Object.assign(CertificatePinningBypass, {
                                             try {
                                                 // Analyze QUIC context for validation bypass optimization
                                                 if (context && !context.isNull()) {
-                                                    quicValidationAnalysis.context_analysis =
-                                                        this.analyzeQuicValidationContext(context);
+                                                    quicValidationAnalysis.context_analysis
+                                                        = this.analyzeQuicValidationContext(context);
                                                 }
 
                                                 // Analyze certificate chain in QUIC context
                                                 if (cert_chain && !cert_chain.isNull()) {
-                                                    quicValidationAnalysis.certificate_chain_analysis =
-                                                        this.analyzeQuicCertificateChain(
+                                                    quicValidationAnalysis.certificate_chain_analysis
+                                                        = this.analyzeQuicCertificateChain(
                                                             cert_chain
                                                         );
                                                 }
 
                                                 // Analyze proof verification details
                                                 if (
-                                                    proof_verify_details &&
-                                                    !proof_verify_details.isNull()
+                                                    proof_verify_details
+                                                    && !proof_verify_details.isNull()
                                                 ) {
-                                                    quicValidationAnalysis.proof_verification_analysis =
-                                                        this.analyzeQuicProofVerification(
+                                                    quicValidationAnalysis.proof_verification_analysis
+                                                        = this.analyzeQuicProofVerification(
                                                             proof_verify_details
                                                         );
                                                 }
                                             } catch (quicAnalysisError) {
                                                 quicValidationAnalysis.analysis_failed = true;
-                                                quicValidationAnalysis.error =
-                                                    quicAnalysisError.message ||
-                                                    'QUIC validation analysis error';
+                                                quicValidationAnalysis.error
+                                                    = quicAnalysisError.message
+                                                    || 'QUIC validation analysis error';
                                                 quicValidationAnalysis.fallback_bypass = true;
                                             }
 
@@ -3508,28 +3570,29 @@ Object.assign(CertificatePinningBypass, {
                                                 type: 'bypass',
                                                 target: 'certificate_pinning_bypass',
                                                 action: 'quic_cert_validation_bypassed',
-                                                pattern: pattern,
+                                                pattern,
                                                 quic_validation_analysis: quicValidationAnalysis,
                                             });
                                             this.state
                                                 .http3QuicTlsCertificateValidationBypassEvents++;
                                             return 0; // QUIC_SUCCESS
-                                        }.bind(this),
+                                        },
                                         'int',
                                         ['pointer', 'pointer', 'pointer']
                                     )
                                 );
-                            } catch (e) {
+                            } catch (error) {
                                 // Advanced QUIC certificate validation error analysis
                                 const quicCertValidationErrorAnalysis = {
                                     error_message:
-                                        e.message || 'QUIC certificate validation hook error',
-                                    error_type: this.classifyQuicCertValidationError(e),
-                                    hook_failure_context: this.analyzeQuicHookFailureContext(e),
+                                        error.message || 'QUIC certificate validation hook error',
+                                    error_type: this.classifyQuicCertValidationError(error),
+                                    hook_failure_context: this.analyzeQuicHookFailureContext(error),
                                     alternative_quic_methods:
-                                        this.identifyAlternativeQuicMethods(e),
-                                    quic_bypass_strategy: this.determineQuicBypassStrategy(e),
-                                    fallback_validations: this.generateQuicFallbackValidations(e),
+                                        this.identifyAlternativeQuicMethods(error),
+                                    quic_bypass_strategy: this.determineQuicBypassStrategy(error),
+                                    fallback_validations:
+                                        this.generateQuicFallbackValidations(error),
                                 };
 
                                 // Implement alternative QUIC certificate bypass methods
@@ -3538,34 +3601,38 @@ Object.assign(CertificatePinningBypass, {
                                         .length > 0
                                 ) {
                                     this.implementQuicCertAlternativeBypass(
-                                        e,
+                                        error,
                                         quicCertValidationErrorAnalysis
                                     );
                                 }
 
                                 // Log QUIC certificate validation error for bypass optimization
-                                this.logQuicCertValidationError(e, quicCertValidationErrorAnalysis);
+                                this.logQuicCertValidationError(
+                                    error,
+                                    quicCertValidationErrorAnalysis
+                                );
                             }
                         });
                     });
-                } catch (e) {
+                } catch (error) {
                     // Advanced QUIC module scanning error analysis and recovery
                     const quicModuleScanErrorAnalysis = {
-                        error_message: e.message || 'QUIC module scanning error',
-                        error_type: this.classifyQuicModuleScanError(e),
-                        scan_failure_reason: this.analyzeQuicScanFailure(e),
-                        alternative_scan_methods: this.identifyAlternativeQuicScanMethods(e),
-                        module_bypass_opportunities: this.identifyQuicModuleBypassOpportunities(e),
-                        recovery_strategy: this.determineQuicScanRecoveryStrategy(e),
+                        error_message: error.message || 'QUIC module scanning error',
+                        error_type: this.classifyQuicModuleScanError(error),
+                        scan_failure_reason: this.analyzeQuicScanFailure(error),
+                        alternative_scan_methods: this.identifyAlternativeQuicScanMethods(error),
+                        module_bypass_opportunities:
+                            this.identifyQuicModuleBypassOpportunities(error),
+                        recovery_strategy: this.determineQuicScanRecoveryStrategy(error),
                     };
 
                     // Implement alternative QUIC module scanning methods
                     if (quicModuleScanErrorAnalysis.alternative_scan_methods.length > 0) {
-                        this.implementQuicAlternativeScanBypass(e, quicModuleScanErrorAnalysis);
+                        this.implementQuicAlternativeScanBypass(error, quicModuleScanErrorAnalysis);
                     }
 
                     // Log QUIC module scanning error for bypass strategy refinement
-                    this.logQuicModuleScanError(e, quicModuleScanErrorAnalysis);
+                    this.logQuicModuleScanError(error, quicModuleScanErrorAnalysis);
                 }
             });
 
@@ -3602,8 +3669,8 @@ Object.assign(CertificatePinningBypass, {
                                         quicCertChainAnalysis = {
                                             analysis_failed: true,
                                             error:
-                                                quicAnalysisError.message ||
-                                                'QUIC certificate analysis error',
+                                                quicAnalysisError.message
+                                                || 'QUIC certificate analysis error',
                                             fallback_bypass: true,
                                         };
                                     }
@@ -3613,22 +3680,22 @@ Object.assign(CertificatePinningBypass, {
                                     type: 'bypass',
                                     target: 'certificate_pinning_bypass',
                                     action: 'android_quic_cert_verification_bypassed',
-                                    hostname: hostname,
+                                    hostname,
                                     quic_certificate_analysis: quicCertChainAnalysis,
                                 });
                                 this.state.http3QuicTlsCertificateValidationBypassEvents++;
                                 return true;
                             }.bind(this);
                         }
-                    } catch (e) {
+                    } catch (error) {
                         send({
                             type: 'error',
                             target: 'certificate_pinning_bypass',
                             action: 'okhttp_quic_tcp_socket_hook_failed',
-                            error: e.message,
+                            error: error.message,
                             class_name: 'OkHttpClient.Builder',
                             method: 'socketFactory',
-                            stack_trace: e.stack,
+                            stack_trace: error.stack,
                         });
                     }
 
@@ -3666,8 +3733,8 @@ Object.assign(CertificatePinningBypass, {
                                 if (hostnameVerifier && !hostnameVerifier.isNull()) {
                                     hostnameVerifierAnalysis = {
                                         verifier_class:
-                                            hostnameVerifier.$className ||
-                                            'Unknown Hostname Verifier',
+                                            hostnameVerifier.$className
+                                            || 'Unknown Hostname Verifier',
                                         verification_logic:
                                             this.analyzeHostnameVerifierLogic(hostnameVerifier),
                                         bypass_methods:
@@ -3686,10 +3753,10 @@ Object.assign(CertificatePinningBypass, {
                                 }
 
                                 // Implement comprehensive SSL/TLS bypass
-                                const customBypassFactory =
-                                    this.createBypassSslSocketFactory(sslFactoryAnalysis);
-                                const customBypassVerifier =
-                                    this.createBypassHostnameVerifier(hostnameVerifierAnalysis);
+                                const customBypassFactory
+                                    = this.createBypassSslSocketFactory(sslFactoryAnalysis);
+                                const customBypassVerifier
+                                    = this.createBypassHostnameVerifier(hostnameVerifierAnalysis);
 
                                 send({
                                     type: 'bypass',
@@ -3703,15 +3770,15 @@ Object.assign(CertificatePinningBypass, {
                                 this.configureTls(customBypassFactory, customBypassVerifier);
                             };
                         }
-                    } catch (e) {
+                    } catch (error) {
                         send({
                             type: 'error',
                             target: 'certificate_pinning_bypass',
                             action: 'okhttp_quic_transport_hook_failed',
-                            error: e.message,
+                            error: error.message,
                             class_name: 'QuicTransport',
                             method: 'configureTls',
-                            stack_trace: e.stack,
+                            stack_trace: error.stack,
                         });
                     }
                 });
@@ -3722,18 +3789,18 @@ Object.assign(CertificatePinningBypass, {
                 target: 'certificate_pinning_bypass',
                 action: 'http3_quic_bypass_initialized',
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'certificate_pinning_bypass',
                 action: 'http3_quic_bypass_failed',
-                error: e.message,
+                error: error.message,
             });
         }
     },
 
     // 3. DNS-over-HTTPS (DoH) Certificate Authority Authorization Bypass - Encrypted DNS CAA record manipulation
-    hookDnsOverHttpsCAABypass: function () {
+    hookDnsOverHttpsCAABypass() {
         send({
             type: 'info',
             target: 'certificate_pinning_bypass',
@@ -3765,7 +3832,7 @@ Object.assign(CertificatePinningBypass, {
                     dohPatterns.forEach(pattern => {
                         const matches = Memory.scanSync(
                             Module.findBaseAddress(module),
-                            Module.findBaseAddress(module).add(0x1500000),
+                            Module.findBaseAddress(module).add(0x1_50_00_00),
                             pattern
                         );
                         matches.forEach(match => {
@@ -3778,7 +3845,7 @@ Object.assign(CertificatePinningBypass, {
                                 Interceptor.replace(
                                     dohFunction,
                                     new NativeCallback(
-                                        function (hostname, caa_records, record_count) {
+                                        (hostname, caa_records, record_count) => {
                                             // Advanced DoH CAA record analysis for bypass optimization
                                             const dohCAAAnalysis = {
                                                 hostname_analysis: null,
@@ -3806,12 +3873,12 @@ Object.assign(CertificatePinningBypass, {
 
                                                 // Analyze CAA records for bypass strategies
                                                 if (
-                                                    caa_records &&
-                                                    !caa_records.isNull() &&
-                                                    record_count > 0
+                                                    caa_records
+                                                    && !caa_records.isNull()
+                                                    && record_count > 0
                                                 ) {
                                                     dohCAAAnalysis.caa_records_analysis = {
-                                                        record_count: record_count,
+                                                        record_count,
                                                         records_analyzed: this.analyzeCAARecords(
                                                             caa_records,
                                                             record_count
@@ -3834,9 +3901,9 @@ Object.assign(CertificatePinningBypass, {
                                                 }
                                             } catch (dohAnalysisError) {
                                                 dohCAAAnalysis.analysis_failed = true;
-                                                dohCAAAnalysis.error =
-                                                    dohAnalysisError.message ||
-                                                    'DoH CAA analysis error';
+                                                dohCAAAnalysis.error
+                                                    = dohAnalysisError.message
+                                                    || 'DoH CAA analysis error';
                                                 dohCAAAnalysis.fallback_bypass = true;
                                             }
 
@@ -3844,37 +3911,37 @@ Object.assign(CertificatePinningBypass, {
                                                 type: 'bypass',
                                                 target: 'certificate_pinning_bypass',
                                                 action: 'doh_caa_record_query_bypassed',
-                                                pattern: pattern,
-                                                module: module,
+                                                pattern,
+                                                module,
                                                 doh_caa_analysis: dohCAAAnalysis,
                                             });
                                             this.state.dnsOverHttpsCAABypassEvents++;
                                             return 1; // CAA validation success
-                                        }.bind(this),
+                                        },
                                         'int',
                                         ['pointer', 'pointer', 'int']
                                     )
                                 );
-                            } catch (e) {
+                            } catch (error) {
                                 send({
                                     type: 'error',
                                     target: 'certificate_pinning_bypass',
                                     action: 'ios_doh_caa_native_hook_failed',
-                                    error: e.message,
+                                    error: error.message,
                                     hook_type: 'NativeCallback replacement',
-                                    stack_trace: e.stack,
+                                    stack_trace: error.stack,
                                 });
                             }
                         });
                     });
-                } catch (e) {
+                } catch (error) {
                     send({
                         type: 'error',
                         target: 'certificate_pinning_bypass',
                         action: 'ios_doh_caa_memory_scan_failed',
-                        error: e.message,
+                        error: error.message,
                         scan_type: 'DoH CAA validation memory scan',
-                        stack_trace: e.stack,
+                        stack_trace: error.stack,
                     });
                 }
             });
@@ -3891,21 +3958,21 @@ Object.assign(CertificatePinningBypass, {
                                     type: 'bypass',
                                     target: 'certificate_pinning_bypass',
                                     action: 'android_doh_caa_query_bypassed',
-                                    domain: domain,
+                                    domain,
                                 });
                                 this.state.dnsOverHttpsCAABypassEvents++;
                                 return null; // No CAA restrictions
                             }.bind(this);
                         }
-                    } catch (e) {
+                    } catch (error) {
                         send({
                             type: 'error',
                             target: 'certificate_pinning_bypass',
                             action: 'android_doh_resolver_hook_failed',
-                            error: e.message,
+                            error: error.message,
                             class_name: 'DohResolver',
                             method: 'queryCaaRecords',
-                            stack_trace: e.stack,
+                            stack_trace: error.stack,
                         });
                     }
 
@@ -3922,14 +3989,14 @@ Object.assign(CertificatePinningBypass, {
                                     certificate,
                                     hostname
                                 );
-                                const caaBypassStrategy =
-                                    this.determineCaaBypassStrategy(certificateAnalysis);
+                                const caaBypassStrategy
+                                    = this.determineCaaBypassStrategy(certificateAnalysis);
 
                                 send({
                                     type: 'bypass',
                                     target: 'certificate_pinning_bypass',
                                     action: 'okhttp_doh_caa_validation_bypassed',
-                                    hostname: hostname,
+                                    hostname,
                                     certificate_analysis: certificateAnalysis,
                                     caa_bypass_strategy: caaBypassStrategy,
                                     issuer: certificateAnalysis.issuer,
@@ -3943,15 +4010,15 @@ Object.assign(CertificatePinningBypass, {
                                 return true;
                             }.bind(this);
                         }
-                    } catch (e) {
+                    } catch (error) {
                         send({
                             type: 'error',
                             target: 'certificate_pinning_bypass',
                             action: 'okhttp_doh_interceptor_hook_failed',
-                            error: e.message,
+                            error: error.message,
                             class_name: 'DohInterceptor',
                             method: 'validateCaaRecords',
-                            stack_trace: e.stack,
+                            stack_trace: error.stack,
                         });
                     }
                 });
@@ -3962,13 +4029,13 @@ Object.assign(CertificatePinningBypass, {
                 try {
                     const { NSURLSessionDohDelegate } = ObjC.classes;
                     if (NSURLSessionDohDelegate) {
-                        const validateCaaRecords =
-                            NSURLSessionDohDelegate['- validateCaaRecords:forHostname:'];
+                        const validateCaaRecords
+                            = NSURLSessionDohDelegate['- validateCaaRecords:forHostname:'];
                         if (validateCaaRecords) {
                             Interceptor.replace(
                                 validateCaaRecords.implementation,
                                 new NativeCallback(
-                                    function (self, cmd, records, hostname) {
+                                    (self, cmd, records, hostname) => {
                                         const selfObject = new ObjC.Object(self);
                                         const selector = ObjC.selectorAsString(cmd);
                                         const recordsArray = records.isNull()
@@ -3980,51 +4047,49 @@ Object.assign(CertificatePinningBypass, {
                                             target: 'certificate_pinning_bypass',
                                             action: 'ios_doh_caa_validation_bypassed',
                                             hostname: hostname.toString(),
-                                            selector: selector,
+                                            selector,
                                             self_class: selfObject.$className,
                                             records_count: recordsArray.length || 0,
                                         });
                                         this.state.dnsOverHttpsCAABypassEvents++;
                                         return true;
-                                    }.bind(this),
+                                    },
                                     'bool',
                                     ['pointer', 'pointer', 'pointer', 'pointer']
                                 )
                             );
                         }
                     }
-                } catch (e) {
+                } catch (error) {
                     // Implement advanced error handling for DNS-over-HTTPS CAA bypass
                     this.state.dnsOverHttpsCAABypassErrors++;
                     send({
                         type: 'error',
                         target: 'certificate_pinning_bypass',
                         action: 'ios_doh_caa_bypass_error',
-                        error: e.message || 'Unknown CAA bypass error',
+                        error: error.message || 'Unknown CAA bypass error',
                         bypass_strategy: 'fallback_to_direct_caa_bypass',
                     });
 
                     // Implement fallback CAA bypass mechanism
                     try {
-                        const { NSURLRequest } = ObjC.classes;
+                        const { NSURLRequest, NSString } = ObjC.classes;
                         if (NSURLRequest) {
                             const originalInit = NSURLRequest['- init'];
                             Interceptor.replace(
                                 originalInit.implementation,
                                 new NativeCallback(
-                                    function (self, cmd) {
+                                    (self, cmd) => {
                                         const result = originalInit.call(this, self, cmd);
                                         // Force CAA bypass by modifying request headers
                                         const mutableRequest = result.mutableCopy();
                                         mutableRequest.setValue_forHTTPHeaderField_(
-                                            ObjC.classes.NSString.stringWithString_('bypass'),
-                                            ObjC.classes.NSString.stringWithString_(
-                                                'X-CAA-Override'
-                                            )
+                                            NSString.stringWithString_('bypass'),
+                                            NSString.stringWithString_('X-CAA-Override')
                                         );
                                         this.state.caaFallbackBypassEvents++;
                                         return mutableRequest;
-                                    }.bind(this),
+                                    },
                                     'pointer',
                                     ['pointer', 'pointer']
                                 )
@@ -4036,7 +4101,7 @@ Object.assign(CertificatePinningBypass, {
                             type: 'critical_error',
                             target: 'certificate_pinning_bypass',
                             action: 'caa_bypass_complete_failure',
-                            original_error: e.message,
+                            original_error: error.message,
                             fallback_error: fallbackError.message,
                         });
                     }
@@ -4048,18 +4113,18 @@ Object.assign(CertificatePinningBypass, {
                 target: 'certificate_pinning_bypass',
                 action: 'doh_caa_bypass_initialized',
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'certificate_pinning_bypass',
                 action: 'doh_caa_bypass_failed',
-                error: e.message,
+                error: error.message,
             });
         }
     },
 
     // 4. Certificate Authority Browser Forum (CA/B Forum) Baseline Requirements Bypass - Updated 2024 certificate policy validation
-    hookCertificateAuthorityBrowserForumBaselineBypass: function () {
+    hookCertificateAuthorityBrowserForumBaselineBypass() {
         send({
             type: 'info',
             target: 'certificate_pinning_bypass',
@@ -4090,7 +4155,7 @@ Object.assign(CertificatePinningBypass, {
                     cabfPatterns.forEach(pattern => {
                         const matches = Memory.scanSync(
                             Module.findBaseAddress(module),
-                            Module.findBaseAddress(module).add(0x1800000),
+                            Module.findBaseAddress(module).add(0x1_80_00_00),
                             pattern
                         );
                         matches.forEach(match => {
@@ -4102,14 +4167,14 @@ Object.assign(CertificatePinningBypass, {
                                 Interceptor.replace(
                                     cabfFunction,
                                     new NativeCallback(
-                                        function (certificate, policy_oids) {
+                                        (certificate, policy_oids) => {
                                             // Advanced CA/Browser Forum baseline requirements analysis
-                                            const certificateAnalysis =
-                                                this.analyzeCabfCertificate(certificate);
-                                            const policyAnalysis =
-                                                this.analyzeCabfPolicyOids(policy_oids);
-                                            const baselineCompliance =
-                                                this.evaluateCabfBaselineCompliance(
+                                            const certificateAnalysis
+                                                = this.analyzeCabfCertificate(certificate);
+                                            const policyAnalysis
+                                                = this.analyzeCabfPolicyOids(policy_oids);
+                                            const baselineCompliance
+                                                = this.evaluateCabfBaselineCompliance(
                                                     certificateAnalysis,
                                                     policyAnalysis
                                                 );
@@ -4118,8 +4183,8 @@ Object.assign(CertificatePinningBypass, {
                                                 type: 'bypass',
                                                 target: 'certificate_pinning_bypass',
                                                 action: 'cabf_baseline_requirements_bypassed',
-                                                pattern: pattern,
-                                                module: module,
+                                                pattern,
+                                                module,
                                                 certificate_analysis: certificateAnalysis,
                                                 policy_analysis: policyAnalysis,
                                                 baseline_compliance: baselineCompliance,
@@ -4131,33 +4196,33 @@ Object.assign(CertificatePinningBypass, {
                                             this.state
                                                 .certificateAuthorityBrowserForumBaselineBypassEvents++;
                                             return 1; // Policy validation success
-                                        }.bind(this),
+                                        },
                                         'int',
                                         ['pointer', 'pointer']
                                     )
                                 );
-                            } catch (e) {
+                            } catch (error) {
                                 send({
                                     type: 'error',
                                     target: 'certificate_pinning_bypass',
                                     action: 'cabf_native_function_hook_failed',
-                                    error: e.message,
+                                    error: error.message,
                                     hook_type: 'NativeFunction replacement',
-                                    pattern: pattern,
-                                    stack_trace: e.stack,
+                                    pattern,
+                                    stack_trace: error.stack,
                                 });
                             }
                         });
                     });
-                } catch (e) {
+                } catch (error) {
                     send({
                         type: 'error',
                         target: 'certificate_pinning_bypass',
                         action: 'cabf_memory_scan_failed',
-                        error: e.message,
-                        module: module,
+                        error: error.message,
+                        module,
                         scan_type: 'CA/Browser Forum baseline requirements scan',
-                        stack_trace: e.stack,
+                        stack_trace: error.stack,
                     });
                 }
             });
@@ -4176,8 +4241,8 @@ Object.assign(CertificatePinningBypass, {
                                 policy
                             ) {
                                 // Advanced Android policy validation bypass analysis
-                                const certificateAnalysis =
-                                    this.analyzeAndroidCertificate(certificate);
+                                const certificateAnalysis
+                                    = this.analyzeAndroidCertificate(certificate);
                                 const policyAnalysis = this.analyzeAndroidPolicy(policy);
                                 const validationBypass = this.createAndroidValidationBypass(
                                     certificateAnalysis,
@@ -4207,15 +4272,15 @@ Object.assign(CertificatePinningBypass, {
                                 return true;
                             }.bind(this);
                         }
-                    } catch (e) {
+                    } catch (error) {
                         send({
                             type: 'error',
                             target: 'certificate_pinning_bypass',
                             action: 'android_policy_validator_hook_failed',
-                            error: e.message,
+                            error: error.message,
                             class_name: 'PolicyValidator',
                             method: 'validateBaselineRequirements',
-                            stack_trace: e.stack,
+                            stack_trace: error.stack,
                         });
                     }
 
@@ -4241,7 +4306,7 @@ Object.assign(CertificatePinningBypass, {
                                     type: 'bypass',
                                     target: 'certificate_pinning_bypass',
                                     action: 'extended_validation_policy_bypassed',
-                                    hostname: hostname,
+                                    hostname,
                                     certificate_subject: subject,
                                     certificate_issuer: issuer,
                                     serial_number: serialNumber,
@@ -4249,14 +4314,14 @@ Object.assign(CertificatePinningBypass, {
                                 return true;
                             };
                         }
-                    } catch (e) {
+                    } catch (error) {
                         // Implement comprehensive error handling for Extended Validation policy bypass
                         this.state.extendedValidationBypassErrors++;
                         send({
                             type: 'error',
                             target: 'certificate_pinning_bypass',
                             action: 'extended_validation_bypass_error',
-                            error: e.message || 'Unknown EV bypass error',
+                            error: error.message || 'Unknown EV bypass error',
                             fallback_strategy: 'certificate_transparency_bypass',
                         });
 
@@ -4273,8 +4338,8 @@ Object.assign(CertificatePinningBypass, {
                                 ) {
                                     // Implement comprehensive SCT analysis and manipulation
                                     const sctAnalysis = this.analyzeSCTForBypass(sct);
-                                    const certFingerprint =
-                                        this.generateCertificateHash(certificate);
+                                    const certFingerprint
+                                        = this.generateCertificateHash(certificate);
                                     const logKeyHash = this.generateLogPublicKeyHash(logPublicKey);
 
                                     // Advanced CT bypass: Manipulate SCT validation
@@ -4317,7 +4382,7 @@ Object.assign(CertificatePinningBypass, {
                                 type: 'critical_error',
                                 target: 'certificate_pinning_bypass',
                                 action: 'ev_bypass_complete_failure',
-                                original_error: e.message,
+                                original_error: error.message,
                                 fallback_error: fallbackError.message,
                             });
                         }
@@ -4330,18 +4395,18 @@ Object.assign(CertificatePinningBypass, {
                 target: 'certificate_pinning_bypass',
                 action: 'cabf_baseline_bypass_initialized',
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'certificate_pinning_bypass',
                 action: 'cabf_baseline_bypass_failed',
-                error: e.message,
+                error: error.message,
             });
         }
     },
 
     // 5. DANE-over-DoH (DNS-based Authentication) Bypass - TLSA record validation over encrypted DNS
-    hookDaneOverDohBypass: function () {
+    hookDaneOverDohBypass() {
         send({
             type: 'info',
             target: 'certificate_pinning_bypass',
@@ -4372,7 +4437,7 @@ Object.assign(CertificatePinningBypass, {
                     danePatterns.forEach(pattern => {
                         const matches = Memory.scanSync(
                             Module.findBaseAddress(module),
-                            Module.findBaseAddress(module).add(0x1200000),
+                            Module.findBaseAddress(module).add(0x1_20_00_00),
                             pattern
                         );
                         matches.forEach(match => {
@@ -4385,16 +4450,16 @@ Object.assign(CertificatePinningBypass, {
                                 Interceptor.replace(
                                     daneFunction,
                                     new NativeCallback(
-                                        function (certificate, tlsa_records, usage) {
+                                        (certificate, tlsa_records, usage) => {
                                             let certInfo = 'unknown';
                                             let recordsInfo = 'unknown';
 
                                             if (certificate && !certificate.isNull()) {
                                                 const certData = certificate.readByteArray(20);
                                                 certInfo = certData
-                                                    ? Array.from(new Uint8Array(certData))
-                                                          .map(b => b.toString(16).padStart(2, '0'))
-                                                          .join(':')
+                                                    ? [...new Uint8Array(certData)]
+                                                        .map(b => b.toString(16).padStart(2, '0'))
+                                                        .join(':')
                                                     : 'null_data';
                                             }
 
@@ -4407,40 +4472,41 @@ Object.assign(CertificatePinningBypass, {
                                                 type: 'bypass',
                                                 target: 'certificate_pinning_bypass',
                                                 action: 'dane_over_doh_validation_bypassed',
-                                                pattern: pattern,
-                                                usage: usage,
+                                                pattern,
+                                                usage,
                                                 certificate_hash: certInfo,
                                                 tlsa_records_info: recordsInfo,
                                             });
                                             this.state.daneOverDohBypassEvents++;
                                             return 1; // DANE validation success
-                                        }.bind(this),
+                                        },
                                         'int',
                                         ['pointer', 'pointer', 'int']
                                     )
                                 );
-                            } catch (e) {
+                            } catch (error) {
                                 // Implement error handling for native DANE function replacement
                                 this.state.nativeDaneBypassErrors++;
                                 send({
                                     type: 'error',
                                     target: 'certificate_pinning_bypass',
                                     action: 'native_dane_function_replacement_error',
-                                    error: e.message || 'Native DANE function replacement failed',
-                                    pattern: pattern,
+                                    error:
+                                        error.message || 'Native DANE function replacement failed',
+                                    pattern,
                                     address: match.address.toString(),
                                 });
                             }
                         });
                     });
-                } catch (e) {
+                } catch (error) {
                     // Implement error handling for DANE pattern scanning
                     this.state.danePatternScanErrors++;
                     send({
                         type: 'error',
                         target: 'certificate_pinning_bypass',
                         action: 'dane_pattern_scan_error',
-                        error: e.message || 'DANE pattern scanning failed',
+                        error: error.message || 'DANE pattern scanning failed',
                         fallback_strategy: 'hook_standard_ssl_functions',
                     });
 
@@ -4448,13 +4514,13 @@ Object.assign(CertificatePinningBypass, {
                     try {
                         const libssl = Process.getModuleByName('libssl.so');
                         if (libssl) {
-                            const SSL_get_verify_result =
-                                libssl.getExportByName('SSL_get_verify_result');
+                            const SSL_get_verify_result
+                                = libssl.getExportByName('SSL_get_verify_result');
                             if (SSL_get_verify_result) {
                                 Interceptor.replace(
                                     SSL_get_verify_result,
                                     new NativeCallback(
-                                        function (ssl) {
+                                        ssl => {
                                             // Implement comprehensive SSL context analysis
                                             const sslAnalysis = this.analyzeSSLContext(ssl);
                                             const sslState = this.extractSSLState(ssl);
@@ -4463,8 +4529,8 @@ Object.assign(CertificatePinningBypass, {
                                             this.state.sslContextAnalyses++;
 
                                             // Store SSL bypass telemetry
-                                            this.state.sslBypassHistory =
-                                                this.state.sslBypassHistory || [];
+                                            this.state.sslBypassHistory
+                                                = this.state.sslBypassHistory || [];
                                             this.state.sslBypassHistory.push({
                                                 timestamp: new Date().toISOString(),
                                                 ssl_context: sslAnalysis,
@@ -4481,7 +4547,7 @@ Object.assign(CertificatePinningBypass, {
                                                 bypass_strategy: 'ssl_context_manipulation',
                                             });
                                             return 0; // X509_V_OK
-                                        }.bind(this),
+                                        },
                                         'long',
                                         ['pointer']
                                     )
@@ -4494,7 +4560,7 @@ Object.assign(CertificatePinningBypass, {
                             type: 'critical_error',
                             target: 'certificate_pinning_bypass',
                             action: 'dane_bypass_complete_failure',
-                            original_error: e.message,
+                            original_error: error.message,
                             fallback_error: fallbackError.message,
                         });
                     }
@@ -4504,8 +4570,8 @@ Object.assign(CertificatePinningBypass, {
             // Hook Firefox DANE-over-DoH implementation
             if (typeof Components !== 'undefined') {
                 try {
-                    const dohDaneService =
-                        Components.classes['@mozilla.org/network/doh-dane-service;1'];
+                    const dohDaneService
+                        = Components.classes['@mozilla.org/network/doh-dane-service;1'];
                     if (dohDaneService) {
                         const originalValidateTlsaRecords = dohDaneService.validateTlsaRecords;
                         dohDaneService.validateTlsaRecords = function (
@@ -4519,8 +4585,8 @@ Object.assign(CertificatePinningBypass, {
                                 hostname,
                                 port
                             );
-                            const tlsaBypass =
-                                this.createFirefoxDaneTlsaBypass(certificateAnalysis);
+                            const tlsaBypass
+                                = this.createFirefoxDaneTlsaBypass(certificateAnalysis);
 
                             // Call original function for forensic analysis
                             let originalResult = null;
@@ -4542,8 +4608,8 @@ Object.assign(CertificatePinningBypass, {
                                 type: 'bypass',
                                 target: 'certificate_pinning_bypass',
                                 action: 'firefox_dane_over_doh_bypassed',
-                                hostname: hostname,
-                                port: port,
+                                hostname,
+                                port,
                                 certificate_analysis: certificateAnalysis,
                                 tlsa_bypass: tlsaBypass,
                                 original_result: originalResult,
@@ -4554,15 +4620,15 @@ Object.assign(CertificatePinningBypass, {
                             return true;
                         }.bind(this);
                     }
-                } catch (e) {
+                } catch (error) {
                     send({
                         type: 'error',
                         target: 'certificate_pinning_bypass',
                         action: 'firefox_dane_over_doh_hook_failed',
-                        error: e.message,
+                        error: error.message,
                         component: '@mozilla.org/network/doh-dane-service;1',
                         method: 'validateTlsaRecords',
-                        stack_trace: e.stack,
+                        stack_trace: error.stack,
                     });
                 }
             }
@@ -4579,10 +4645,10 @@ Object.assign(CertificatePinningBypass, {
                                 tlsaRecords
                             ) {
                                 // Implement comprehensive DANE over DoH bypass with certificate and TLSA analysis
-                                const certificateAnalysis =
-                                    this.analyzeCertificateForDaneBypass(certificate);
-                                const tlsaBypassAnalysis =
-                                    this.analyzeTlsaRecordsForBypass(tlsaRecords);
+                                const certificateAnalysis
+                                    = this.analyzeCertificateForDaneBypass(certificate);
+                                const tlsaBypassAnalysis
+                                    = this.analyzeTlsaRecordsForBypass(tlsaRecords);
 
                                 // Advanced DANE bypass: Manipulate TLSA record validation
                                 const manipulatedRecords = this.manipulateTlsaRecordsForBypass(
@@ -4594,7 +4660,7 @@ Object.assign(CertificatePinningBypass, {
                                     type: 'bypass',
                                     target: 'certificate_pinning_bypass',
                                     action: 'android_dane_over_doh_bypassed',
-                                    hostname: hostname,
+                                    hostname,
                                     certificate_analysis: certificateAnalysis,
                                     tlsa_bypass_analysis: tlsaBypassAnalysis,
                                     original_tlsa_records: tlsaRecords
@@ -4611,10 +4677,10 @@ Object.assign(CertificatePinningBypass, {
                                 // Store certificate fingerprint for advanced bypass tracking
                                 if (certificate) {
                                     const certHash = this.generateCertificateHash(certificate);
-                                    this.state.bypassedCertificates =
-                                        this.state.bypassedCertificates || [];
+                                    this.state.bypassedCertificates
+                                        = this.state.bypassedCertificates || [];
                                     this.state.bypassedCertificates.push({
-                                        hostname: hostname,
+                                        hostname,
                                         hash: certHash,
                                         timestamp: new Date().toISOString(),
                                     });
@@ -4623,14 +4689,14 @@ Object.assign(CertificatePinningBypass, {
                                 return true;
                             }.bind(this);
                         }
-                    } catch (e) {
+                    } catch (error) {
                         // Implement comprehensive error handling for DANE over DoH bypass
                         this.state.daneOverDohBypassErrors++;
                         send({
                             type: 'error',
                             target: 'certificate_pinning_bypass',
                             action: 'android_dane_over_doh_error',
-                            error: e.message || 'Unknown DANE bypass error',
+                            error: error.message || 'Unknown DANE bypass error',
                             fallback_strategy: 'direct_certificate_bypass',
                         });
 
@@ -4656,7 +4722,7 @@ Object.assign(CertificatePinningBypass, {
                                 type: 'critical_error',
                                 target: 'certificate_pinning_bypass',
                                 action: 'dane_bypass_complete_failure',
-                                original_error: e.message,
+                                original_error: error.message,
                                 fallback_error: fallbackError.message,
                             });
                         }
@@ -4669,18 +4735,18 @@ Object.assign(CertificatePinningBypass, {
                 target: 'certificate_pinning_bypass',
                 action: 'dane_over_doh_bypass_initialized',
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'certificate_pinning_bypass',
                 action: 'dane_over_doh_bypass_failed',
-                error: e.message,
+                error: error.message,
             });
         }
     },
 
     // 6. Certificate Signed Certificate Timestamps (SCT) Validation Bypass v2 - Enhanced SCT verification systems
-    hookSignedCertificateTimestampsValidationBypass2: function () {
+    hookSignedCertificateTimestampsValidationBypass2() {
         send({
             type: 'info',
             target: 'certificate_pinning_bypass',
@@ -4711,7 +4777,7 @@ Object.assign(CertificatePinningBypass, {
                     sctPatterns.forEach(pattern => {
                         const matches = Memory.scanSync(
                             Module.findBaseAddress(module),
-                            Module.findBaseAddress(module).add(0x1600000),
+                            Module.findBaseAddress(module).add(0x1_60_00_00),
                             pattern
                         );
                         matches.forEach(match => {
@@ -4724,13 +4790,13 @@ Object.assign(CertificatePinningBypass, {
                                 Interceptor.replace(
                                     sctFunction,
                                     new NativeCallback(
-                                        function (certificate, sct_list, ct_logs) {
+                                        (certificate, sct_list, ct_logs) => {
                                             // Advanced Certificate Transparency SCT validation bypass
-                                            const certificateAnalysis =
-                                                this.analyzeSctCertificate(certificate);
+                                            const certificateAnalysis
+                                                = this.analyzeSctCertificate(certificate);
                                             const sctAnalysis = this.analyzeSctList(sct_list);
-                                            const ctLogsAnalysis =
-                                                this.analyzeCertificateTransparencyLogs(ct_logs);
+                                            const ctLogsAnalysis
+                                                = this.analyzeCertificateTransparencyLogs(ct_logs);
                                             const validationBypass = this.createSctValidationBypass(
                                                 certificateAnalysis,
                                                 sctAnalysis,
@@ -4741,8 +4807,8 @@ Object.assign(CertificatePinningBypass, {
                                                 type: 'bypass',
                                                 target: 'certificate_pinning_bypass',
                                                 action: 'enhanced_sct_validation_bypassed',
-                                                pattern: pattern,
-                                                module: module,
+                                                pattern,
+                                                module,
                                                 certificate_analysis: certificateAnalysis,
                                                 sct_analysis: sctAnalysis,
                                                 ct_logs_analysis: ctLogsAnalysis,
@@ -4767,45 +4833,45 @@ Object.assign(CertificatePinningBypass, {
                                             this.state
                                                 .signedCertificateTimestampsValidationBypass2Events++;
                                             return 1; // SCT validation success
-                                        }.bind(this),
+                                        },
                                         'int',
                                         ['pointer', 'pointer', 'pointer']
                                     )
                                 );
-                            } catch (e) {
+                            } catch (error) {
                                 send({
                                     type: 'error',
                                     target: 'certificate_pinning_bypass',
                                     action: 'sct_native_function_hook_failed',
-                                    error: e.message,
+                                    error: error.message,
                                     hook_type: 'NativeFunction replacement',
-                                    pattern: pattern,
-                                    stack_trace: e.stack,
+                                    pattern,
+                                    stack_trace: error.stack,
                                 });
                             }
                         });
                     });
-                } catch (e) {
+                } catch (error) {
                     send({
                         type: 'error',
                         target: 'certificate_pinning_bypass',
                         action: 'sct_memory_scan_failed',
-                        error: e.message,
-                        module: module,
+                        error: error.message,
+                        module,
                         scan_type: 'Certificate Transparency SCT validation scan',
-                        stack_trace: e.stack,
+                        stack_trace: error.stack,
                     });
                 }
             });
 
             // Hook Chrome's enhanced SCT validation
             try {
-                const chromeCtModule =
-                    Module.findBaseAddress('chrome.exe') || Module.findBaseAddress('libchrome.so');
+                const chromeCtModule
+                    = Module.findBaseAddress('chrome.exe') || Module.findBaseAddress('libchrome.so');
                 if (chromeCtModule) {
                     const sctAuditingPattern = Memory.scanSync(
                         chromeCtModule,
-                        chromeCtModule.add(0x2000000),
+                        chromeCtModule.add(0x2_00_00_00),
                         'SCTAuditingDelegate'
                     );
                     sctAuditingPattern.forEach(match => {
@@ -4817,7 +4883,7 @@ Object.assign(CertificatePinningBypass, {
                             Interceptor.replace(
                                 sctAuditingDelegate,
                                 new NativeCallback(
-                                    function (origin, report) {
+                                    (origin, report) => {
                                         // Implement comprehensive SCT origin analysis and report manipulation
                                         const originAnalysis = this.analyzeSCTOrigin(origin);
                                         const reportAnalysis = this.analyzeSCTReport(report);
@@ -4833,8 +4899,8 @@ Object.assign(CertificatePinningBypass, {
                                         this.state.sctReportManipulations++;
 
                                         // Store SCT auditing bypass forensics
-                                        this.state.sctAuditingBypassHistory =
-                                            this.state.sctAuditingBypassHistory || [];
+                                        this.state.sctAuditingBypassHistory
+                                            = this.state.sctAuditingBypassHistory || [];
                                         this.state.sctAuditingBypassHistory.push({
                                             timestamp: new Date().toISOString(),
                                             origin_analysis: originAnalysis,
@@ -4854,33 +4920,33 @@ Object.assign(CertificatePinningBypass, {
                                         });
 
                                         // Skip SCT auditing after analysis
-                                    }.bind(this),
+                                    },
                                     'void',
                                     ['pointer', 'pointer']
                                 )
                             );
-                        } catch (e) {
+                        } catch (error) {
                             // Implement error handling for SCT auditing delegate replacement
                             this.state.sctAuditingDelegateErrors++;
                             send({
                                 type: 'error',
                                 target: 'certificate_pinning_bypass',
                                 action: 'sct_auditing_delegate_error',
-                                error: e.message || 'SCT auditing delegate replacement failed',
+                                error: error.message || 'SCT auditing delegate replacement failed',
                                 address: match.address.toString(),
                                 fallback_strategy: 'direct_sct_validation_bypass',
                             });
                         }
                     });
                 }
-            } catch (e) {
+            } catch (error) {
                 // Implement comprehensive error handling for Chrome CT module analysis
                 this.state.chromeCTModuleErrors++;
                 send({
                     type: 'error',
                     target: 'certificate_pinning_bypass',
                     action: 'chrome_ct_module_analysis_error',
-                    error: e.message || 'Chrome CT module analysis failed',
+                    error: error.message || 'Chrome CT module analysis failed',
                     fallback_strategy: 'alternative_sct_bypass_methods',
                 });
 
@@ -4894,7 +4960,7 @@ Object.assign(CertificatePinningBypass, {
                         Interceptor.replace(
                             chromeCTValidator,
                             new NativeCallback(
-                                function (cert, scts) {
+                                (cert, scts) => {
                                     this.state.directSCTValidationBypasses++;
                                     send({
                                         type: 'fallback_bypass',
@@ -4904,7 +4970,7 @@ Object.assign(CertificatePinningBypass, {
                                         scts_analyzed: scts ? 'present' : 'null',
                                     });
                                     return 1; // SCT validation success
-                                }.bind(this),
+                                },
                                 'int',
                                 ['pointer', 'pointer']
                             )
@@ -4916,7 +4982,7 @@ Object.assign(CertificatePinningBypass, {
                         type: 'critical_error',
                         target: 'certificate_pinning_bypass',
                         action: 'sct_bypass_complete_failure',
-                        original_error: e.message,
+                        original_error: error.message,
                         fallback_error: fallbackError.message,
                     });
                 }
@@ -4970,13 +5036,13 @@ Object.assign(CertificatePinningBypass, {
                                     }
 
                                     // Enhanced verification bypass logic
-                                    sctVerificationAnalysis.bypass_optimization =
-                                        this.optimizeSCTBypass(certificates, sctList, hostname);
+                                    sctVerificationAnalysis.bypass_optimization
+                                        = this.optimizeSCTBypass(certificates, sctList, hostname);
                                 } catch (sctAnalysisError) {
                                     sctVerificationAnalysis.analysis_failed = true;
-                                    sctVerificationAnalysis.error =
-                                        sctAnalysisError.message ||
-                                        'SCT verification analysis error';
+                                    sctVerificationAnalysis.error
+                                        = sctAnalysisError.message
+                                        || 'SCT verification analysis error';
                                     sctVerificationAnalysis.fallback_bypass = true;
                                 }
 
@@ -4984,21 +5050,21 @@ Object.assign(CertificatePinningBypass, {
                                     type: 'bypass',
                                     target: 'certificate_pinning_bypass',
                                     action: 'android_enhanced_sct_verification_bypassed',
-                                    hostname: hostname,
+                                    hostname,
                                     sct_verification_analysis: sctVerificationAnalysis,
                                 });
                                 this.state.signedCertificateTimestampsValidationBypass2Events++;
                                 return true;
                             }.bind(this);
                         }
-                    } catch (e) {
+                    } catch (error) {
                         // Implement advanced error handling for enhanced SCT verification bypass
                         this.state.enhancedSctVerificationBypassErrors++;
                         send({
                             type: 'error',
                             target: 'certificate_pinning_bypass',
                             action: 'enhanced_sct_verification_bypass_error',
-                            error: e.message || 'Unknown enhanced SCT verification error',
+                            error: error.message || 'Unknown enhanced SCT verification error',
                             bypass_strategy: 'fallback_to_basic_sct_bypass',
                         });
 
@@ -5050,7 +5116,7 @@ Object.assign(CertificatePinningBypass, {
                                         type: 'fallback_bypass',
                                         target: 'certificate_pinning_bypass',
                                         action: 'basic_sct_bypass_through_trust_manager',
-                                        original_error: e.message,
+                                        original_error: error.message,
                                         auth_type: authType,
                                         auth_algorithm: authAlgorithm,
                                         session_info: sessionInfo,
@@ -5065,7 +5131,7 @@ Object.assign(CertificatePinningBypass, {
                                 type: 'critical_error',
                                 target: 'certificate_pinning_bypass',
                                 action: 'enhanced_sct_verification_complete_failure',
-                                original_error: e.message,
+                                original_error: error.message,
                                 fallback_error: fallbackError.message,
                             });
                         }
@@ -5095,8 +5161,8 @@ Object.assign(CertificatePinningBypass, {
                                 this.state.certificateIssuerAnalyses++;
 
                                 // Store CT timestamp bypass forensics
-                                this.state.ctTimestampBypassHistory =
-                                    this.state.ctTimestampBypassHistory || [];
+                                this.state.ctTimestampBypassHistory
+                                    = this.state.ctTimestampBypassHistory || [];
                                 this.state.ctTimestampBypassHistory.push({
                                     timestamp: new Date().toISOString(),
                                     sct_analysis: sctTimestampAnalysis,
@@ -5118,14 +5184,14 @@ Object.assign(CertificatePinningBypass, {
                                 return true;
                             }.bind(this);
                         }
-                    } catch (e) {
+                    } catch (error) {
                         // Implement error handling for CT log manager bypass
                         this.state.ctLogManagerErrors++;
                         send({
                             type: 'error',
                             target: 'certificate_pinning_bypass',
                             action: 'ct_log_manager_error',
-                            error: e.message || 'CT log manager bypass failed',
+                            error: error.message || 'CT log manager bypass failed',
                             fallback_strategy: 'alternative_ct_validation_bypass',
                         });
 
@@ -5137,8 +5203,8 @@ Object.assign(CertificatePinningBypass, {
                             if (
                                 NetworkSecurityConfig.isCertificateTransparencyVerificationRequired
                             ) {
-                                NetworkSecurityConfig.isCertificateTransparencyVerificationRequired.implementation =
-                                    function (hostname) {
+                                NetworkSecurityConfig.isCertificateTransparencyVerificationRequired.implementation
+                                    = function (hostname) {
                                         this.state.ctVerificationRequiredBypasses++;
                                         send({
                                             type: 'fallback_bypass',
@@ -5155,7 +5221,7 @@ Object.assign(CertificatePinningBypass, {
                                 type: 'critical_error',
                                 target: 'certificate_pinning_bypass',
                                 action: 'ct_log_manager_complete_failure',
-                                original_error: e.message,
+                                original_error: error.message,
                                 fallback_error: fallbackError.message,
                             });
                         }
@@ -5168,18 +5234,18 @@ Object.assign(CertificatePinningBypass, {
                 target: 'certificate_pinning_bypass',
                 action: 'sct_validation_bypass_v2_initialized',
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'certificate_pinning_bypass',
                 action: 'sct_validation_bypass_v2_failed',
-                error: e.message,
+                error: error.message,
             });
         }
     },
 
     // 7. TLS 1.3 Post-Quantum Certificate Validation Bypass - Quantum-resistant certificate algorithms
-    hookTls13PostQuantumCertificateValidationBypass: function () {
+    hookTls13PostQuantumCertificateValidationBypass() {
         send({
             type: 'info',
             target: 'certificate_pinning_bypass',
@@ -5211,7 +5277,7 @@ Object.assign(CertificatePinningBypass, {
                     pqPatterns.forEach(pattern => {
                         const matches = Memory.scanSync(
                             Module.findBaseAddress(module),
-                            Module.findBaseAddress(module).add(0x1400000),
+                            Module.findBaseAddress(module).add(0x1_40_00_00),
                             pattern
                         );
                         matches.forEach(match => {
@@ -5224,17 +5290,17 @@ Object.assign(CertificatePinningBypass, {
                                 Interceptor.replace(
                                     pqFunction,
                                     new NativeCallback(
-                                        function (certificate, signature, algorithm) {
+                                        (certificate, signature, algorithm) => {
                                             // Advanced post-quantum certificate validation bypass
-                                            const certificateAnalysis =
-                                                this.analyzePostQuantumCertificate(certificate);
-                                            const signatureAnalysis =
-                                                this.analyzePostQuantumSignature(
+                                            const certificateAnalysis
+                                                = this.analyzePostQuantumCertificate(certificate);
+                                            const signatureAnalysis
+                                                = this.analyzePostQuantumSignature(
                                                     signature,
                                                     algorithm
                                                 );
-                                            const algorithmAnalysis =
-                                                this.analyzePostQuantumAlgorithm(algorithm);
+                                            const algorithmAnalysis
+                                                = this.analyzePostQuantumAlgorithm(algorithm);
                                             const pqBypass = this.createPostQuantumBypass(
                                                 certificateAnalysis,
                                                 signatureAnalysis,
@@ -5245,8 +5311,8 @@ Object.assign(CertificatePinningBypass, {
                                                 type: 'bypass',
                                                 target: 'certificate_pinning_bypass',
                                                 action: 'post_quantum_cert_validation_bypassed',
-                                                pattern: pattern,
-                                                module: module,
+                                                pattern,
+                                                module,
                                                 certificate_analysis: certificateAnalysis,
                                                 signature_analysis: signatureAnalysis,
                                                 algorithm_analysis: algorithmAnalysis,
@@ -5278,33 +5344,33 @@ Object.assign(CertificatePinningBypass, {
                                             this.state
                                                 .tls13PostQuantumCertificateValidationBypassEvents++;
                                             return 1; // Post-quantum validation success
-                                        }.bind(this),
+                                        },
                                         'int',
                                         ['pointer', 'pointer', 'pointer']
                                     )
                                 );
-                            } catch (e) {
+                            } catch (error) {
                                 send({
                                     type: 'error',
                                     target: 'certificate_pinning_bypass',
                                     action: 'post_quantum_native_function_hook_failed',
-                                    error: e.message,
+                                    error: error.message,
                                     hook_type: 'NativeFunction replacement',
-                                    pattern: pattern,
-                                    stack_trace: e.stack,
+                                    pattern,
+                                    stack_trace: error.stack,
                                 });
                             }
                         });
                     });
-                } catch (e) {
+                } catch (error) {
                     send({
                         type: 'error',
                         target: 'certificate_pinning_bypass',
                         action: 'post_quantum_memory_scan_failed',
-                        error: e.message,
-                        module: module,
+                        error: error.message,
+                        module,
                         scan_type: 'Post-quantum certificate validation scan',
-                        stack_trace: e.stack,
+                        stack_trace: error.stack,
                     });
                 }
             });
@@ -5320,13 +5386,13 @@ Object.assign(CertificatePinningBypass, {
 
                 nistPqPatterns.forEach(algorithm => {
                     try {
-                        const libcryptoBase =
-                            Module.findBaseAddress('libcrypto.so') ||
-                            Module.findBaseAddress('libcrypto.dylib');
+                        const libcryptoBase
+                            = Module.findBaseAddress('libcrypto.so')
+                            || Module.findBaseAddress('libcrypto.dylib');
                         if (libcryptoBase) {
                             const algorithmMatches = Memory.scanSync(
                                 libcryptoBase,
-                                libcryptoBase.add(0x1000000),
+                                libcryptoBase.add(0x1_00_00_00),
                                 algorithm
                             );
                             algorithmMatches.forEach(match => {
@@ -5339,20 +5405,20 @@ Object.assign(CertificatePinningBypass, {
                                     Interceptor.replace(
                                         pqAlgFunction,
                                         new NativeCallback(
-                                            function (key, keylen, signature) {
+                                            (key, keylen, signature) => {
                                                 // Implement comprehensive post-quantum cryptography analysis and bypass
                                                 const keyAnalysis = this.analyzePostQuantumKey(
                                                     key,
                                                     keylen,
                                                     algorithm
                                                 );
-                                                const signatureAnalysis =
-                                                    this.analyzePostQuantumSignature(
+                                                const signatureAnalysis
+                                                    = this.analyzePostQuantumSignature(
                                                         signature,
                                                         algorithm
                                                     );
-                                                const bypassStrategy =
-                                                    this.generatePostQuantumBypassStrategy(
+                                                const bypassStrategy
+                                                    = this.generatePostQuantumBypassStrategy(
                                                         keyAnalysis,
                                                         signatureAnalysis,
                                                         algorithm
@@ -5365,11 +5431,11 @@ Object.assign(CertificatePinningBypass, {
                                                 this.state.postQuantumSignatureAnalyses++;
 
                                                 // Store post-quantum bypass telemetry for advanced tracking
-                                                this.state.postQuantumBypassHistory =
-                                                    this.state.postQuantumBypassHistory || [];
+                                                this.state.postQuantumBypassHistory
+                                                    = this.state.postQuantumBypassHistory || [];
                                                 this.state.postQuantumBypassHistory.push({
                                                     timestamp: new Date().toISOString(),
-                                                    algorithm: algorithm,
+                                                    algorithm,
                                                     key_analysis: keyAnalysis,
                                                     signature_analysis: signatureAnalysis,
                                                     bypass_strategy: bypassStrategy,
@@ -5380,7 +5446,7 @@ Object.assign(CertificatePinningBypass, {
                                                     type: 'bypass',
                                                     target: 'certificate_pinning_bypass',
                                                     action: 'nist_post_quantum_algorithm_bypassed',
-                                                    algorithm: algorithm,
+                                                    algorithm,
                                                     key_analysis: keyAnalysis,
                                                     signature_analysis: signatureAnalysis,
                                                     bypass_strategy: bypassStrategy,
@@ -5388,20 +5454,21 @@ Object.assign(CertificatePinningBypass, {
                                                 });
 
                                                 return 1; // Algorithm verification success
-                                            }.bind(this),
+                                            },
                                             'int',
                                             ['pointer', 'int', 'pointer']
                                         )
                                     );
-                                } catch (e) {
+                                } catch (error) {
                                     // Implement advanced error handling for post-quantum algorithm interception
                                     this.state.postQuantumAlgorithmInterceptionErrors++;
                                     send({
                                         type: 'error',
                                         target: 'certificate_pinning_bypass',
                                         action: 'post_quantum_algorithm_interception_error',
-                                        error: e.message || 'Unknown post-quantum algorithm error',
-                                        algorithm: algorithm,
+                                        error:
+                                            error.message || 'Unknown post-quantum algorithm error',
+                                        algorithm,
                                         bypass_strategy: 'fallback_to_memory_patch',
                                     });
 
@@ -5416,9 +5483,9 @@ Object.assign(CertificatePinningBypass, {
                                             type: 'fallback_bypass',
                                             target: 'certificate_pinning_bypass',
                                             action: 'post_quantum_memory_patch_applied',
-                                            algorithm: algorithm,
+                                            algorithm,
                                             patch_result: patchResult,
-                                            original_error: e.message,
+                                            original_error: error.message,
                                         });
                                     } catch (patchError) {
                                         this.state.postQuantumAlgorithmCriticalErrors++;
@@ -5426,23 +5493,23 @@ Object.assign(CertificatePinningBypass, {
                                             type: 'critical_error',
                                             target: 'certificate_pinning_bypass',
                                             action: 'post_quantum_algorithm_bypass_failed',
-                                            algorithm: algorithm,
-                                            original_error: e.message,
+                                            algorithm,
+                                            original_error: error.message,
                                             patch_error: patchError.message,
                                         });
                                     }
                                 }
                             });
                         }
-                    } catch (e) {
+                    } catch (error) {
                         // Implement advanced error handling for post-quantum algorithm scanning
                         this.state.postQuantumAlgorithmScanningErrors++;
                         send({
                             type: 'error',
                             target: 'certificate_pinning_bypass',
                             action: 'post_quantum_algorithm_scanning_error',
-                            error: e.message || 'Unknown post-quantum scanning error',
-                            algorithm: algorithm,
+                            error: error.message || 'Unknown post-quantum scanning error',
+                            algorithm,
                             bypass_strategy: 'fallback_to_java_implementation',
                         });
 
@@ -5464,7 +5531,7 @@ Object.assign(CertificatePinningBypass, {
                                         type: 'fallback_bypass',
                                         target: 'certificate_pinning_bypass',
                                         action: 'java_post_quantum_protocol_bypassed',
-                                        algorithm: algorithm,
+                                        algorithm,
                                         original_protocols: protocols,
                                         modified_protocols: modifiedProtocols,
                                     });
@@ -5477,29 +5544,29 @@ Object.assign(CertificatePinningBypass, {
                                 type: 'critical_error',
                                 target: 'certificate_pinning_bypass',
                                 action: 'post_quantum_scanning_complete_failure',
-                                algorithm: algorithm,
-                                original_error: e.message,
+                                algorithm,
+                                original_error: error.message,
                                 fallback_error: fallbackError.message,
                             });
                         }
                     }
                 });
-            } catch (e) {
+            } catch (error) {
                 // Implement advanced error handling for NIST post-quantum pattern analysis
                 this.state.nistPostQuantumPatternErrors++;
                 send({
                     type: 'error',
                     target: 'certificate_pinning_bypass',
                     action: 'nist_post_quantum_pattern_error',
-                    error: e.message || 'Unknown NIST post-quantum pattern error',
+                    error: error.message || 'Unknown NIST post-quantum pattern error',
                     bypass_strategy: 'fallback_to_openssl_post_quantum_hooks',
                 });
 
                 // Implement fallback OpenSSL post-quantum hooks
                 try {
-                    const opensslBase =
-                        Module.findBaseAddress('libssl.so') ||
-                        Module.findBaseAddress('libssl.dylib');
+                    const opensslBase
+                        = Module.findBaseAddress('libssl.so')
+                        || Module.findBaseAddress('libssl.dylib');
                     if (opensslBase) {
                         const sslCtxNewAddr = Module.findExportByName(opensslBase, 'SSL_CTX_new');
                         if (sslCtxNewAddr) {
@@ -5530,7 +5597,7 @@ Object.assign(CertificatePinningBypass, {
                         type: 'critical_error',
                         target: 'certificate_pinning_bypass',
                         action: 'nist_post_quantum_pattern_complete_failure',
-                        original_error: e.message,
+                        original_error: error.message,
                         fallback_error: fallbackError.message,
                     });
                 }
@@ -5562,7 +5629,7 @@ Object.assign(CertificatePinningBypass, {
                                     type: 'bypass',
                                     target: 'certificate_pinning_bypass',
                                     action: 'bouncycastle_pq_validation_bypassed',
-                                    algorithm: algorithm,
+                                    algorithm,
                                     certificate_subject: subject,
                                     certificate_issuer: issuer,
                                     key_algorithm: keyAlgorithm,
@@ -5571,14 +5638,14 @@ Object.assign(CertificatePinningBypass, {
                                 return true;
                             }.bind(this);
                         }
-                    } catch (e) {
+                    } catch (error) {
                         // Implement advanced error handling for BouncyCastle post-quantum validation
                         this.state.bouncyCastlePostQuantumValidationErrors++;
                         send({
                             type: 'error',
                             target: 'certificate_pinning_bypass',
                             action: 'bouncy_castle_post_quantum_validation_error',
-                            error: e.message || 'Unknown BouncyCastle post-quantum error',
+                            error: error.message || 'Unknown BouncyCastle post-quantum error',
                             bypass_strategy: 'fallback_to_android_tls13_extension',
                         });
 
@@ -5597,7 +5664,7 @@ Object.assign(CertificatePinningBypass, {
                                         type: 'fallback_bypass',
                                         target: 'certificate_pinning_bypass',
                                         action: 'android_tls13_post_quantum_fallback_bypassed',
-                                        original_error: e.message,
+                                        original_error: error.message,
                                     });
                                     return builder;
                                 }.bind(this);
@@ -5608,7 +5675,7 @@ Object.assign(CertificatePinningBypass, {
                                 type: 'critical_error',
                                 target: 'certificate_pinning_bypass',
                                 action: 'bouncy_castle_post_quantum_complete_failure',
-                                original_error: e.message,
+                                original_error: error.message,
                                 fallback_error: fallbackError.message,
                             });
                         }
@@ -5620,15 +5687,15 @@ Object.assign(CertificatePinningBypass, {
                             'android.net.ssl.Tls13PostQuantumExtension'
                         );
                         if (Tls13PostQuantum.validateQuantumResistantCertificate) {
-                            Tls13PostQuantum.validateQuantumResistantCertificate.implementation =
-                                function (certificate, keyExchange) {
+                            Tls13PostQuantum.validateQuantumResistantCertificate.implementation
+                                = function (certificate, keyExchange) {
                                     // Implement comprehensive TLS 1.3 post-quantum certificate and key exchange analysis
-                                    const certificateAnalysis =
-                                        this.analyzeTls13PostQuantumCertificate(certificate);
-                                    const keyExchangeAnalysis =
-                                        this.analyzeTls13PostQuantumKeyExchange(keyExchange);
-                                    const combinedBypassStrategy =
-                                        this.generateTls13PostQuantumBypassStrategy(
+                                    const certificateAnalysis
+                                        = this.analyzeTls13PostQuantumCertificate(certificate);
+                                    const keyExchangeAnalysis
+                                        = this.analyzeTls13PostQuantumKeyExchange(keyExchange);
+                                    const combinedBypassStrategy
+                                        = this.generateTls13PostQuantumBypassStrategy(
                                             certificateAnalysis,
                                             keyExchangeAnalysis
                                         );
@@ -5639,8 +5706,8 @@ Object.assign(CertificatePinningBypass, {
                                     this.state.combinedPostQuantumBypasses++;
 
                                     // Store TLS 1.3 post-quantum bypass telemetry for advanced tracking
-                                    this.state.tls13PostQuantumBypassHistory =
-                                        this.state.tls13PostQuantumBypassHistory || [];
+                                    this.state.tls13PostQuantumBypassHistory
+                                        = this.state.tls13PostQuantumBypassHistory || [];
                                     this.state.tls13PostQuantumBypassHistory.push({
                                         timestamp: new Date().toISOString(),
                                         certificate_analysis: certificateAnalysis,
@@ -5661,14 +5728,14 @@ Object.assign(CertificatePinningBypass, {
                                     return true;
                                 }.bind(this);
                         }
-                    } catch (e) {
+                    } catch (error) {
                         // Implement advanced error handling for Android TLS 1.3 post-quantum extension
                         this.state.androidTls13PostQuantumExtensionErrors++;
                         send({
                             type: 'error',
                             target: 'certificate_pinning_bypass',
                             action: 'android_tls13_post_quantum_extension_error',
-                            error: e.message || 'Unknown Android TLS 1.3 post-quantum error',
+                            error: error.message || 'Unknown Android TLS 1.3 post-quantum error',
                             bypass_strategy: 'fallback_to_conscrypt_post_quantum',
                         });
 
@@ -5681,14 +5748,14 @@ Object.assign(CertificatePinningBypass, {
                                 ConscryptEngine.supportedCipherSuites.implementation = function () {
                                     // Force post-quantum cipher suite acceptance
                                     const originalSuites = this.supportedCipherSuites();
-                                    const postQuantumSuites =
-                                        this.addPostQuantumCipherSuites(originalSuites);
+                                    const postQuantumSuites
+                                        = this.addPostQuantumCipherSuites(originalSuites);
                                     this.state.conscryptPostQuantumFallbackEvents++;
                                     send({
                                         type: 'fallback_bypass',
                                         target: 'certificate_pinning_bypass',
                                         action: 'conscrypt_post_quantum_cipher_bypass',
-                                        original_error: e.message,
+                                        original_error: error.message,
                                         original_suites_count: originalSuites.length,
                                         post_quantum_suites_count: postQuantumSuites.length,
                                     });
@@ -5701,7 +5768,7 @@ Object.assign(CertificatePinningBypass, {
                                 type: 'critical_error',
                                 target: 'certificate_pinning_bypass',
                                 action: 'android_tls13_post_quantum_complete_failure',
-                                original_error: e.message,
+                                original_error: error.message,
                                 fallback_error: fallbackError.message,
                             });
                         }
@@ -5714,18 +5781,18 @@ Object.assign(CertificatePinningBypass, {
                 target: 'certificate_pinning_bypass',
                 action: 'tls13_post_quantum_bypass_initialized',
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'certificate_pinning_bypass',
                 action: 'tls13_post_quantum_bypass_failed',
-                error: e.message,
+                error: error.message,
             });
         }
     },
 
     // 8. Application-Layer Protocol Negotiation (ALPN) Certificate Binding Bypass - Protocol-specific certificate validation
-    hookApplicationLayerProtocolNegotiationCertificateBindingBypass: function () {
+    hookApplicationLayerProtocolNegotiationCertificateBindingBypass() {
         send({
             type: 'info',
             target: 'certificate_pinning_bypass',
@@ -5756,7 +5823,7 @@ Object.assign(CertificatePinningBypass, {
                     alpnPatterns.forEach(pattern => {
                         const matches = Memory.scanSync(
                             Module.findBaseAddress(module),
-                            Module.findBaseAddress(module).add(0x1300000),
+                            Module.findBaseAddress(module).add(0x1_30_00_00),
                             pattern
                         );
                         matches.forEach(match => {
@@ -5769,16 +5836,16 @@ Object.assign(CertificatePinningBypass, {
                                 Interceptor.replace(
                                     alpnFunction,
                                     new NativeCallback(
-                                        function (ssl, protocol, certificate) {
+                                        (ssl, protocol, certificate) => {
                                             // Implement comprehensive ALPN certificate binding analysis and bypass
-                                            const sslContextAnalysis =
-                                                this.analyzeSslContextForAlpnBypass(ssl);
-                                            const protocolAnalysis =
-                                                this.analyzeAlpnProtocolForBypass(protocol);
-                                            const certificateAnalysis =
-                                                this.analyzeAlpnCertificateForBypass(certificate);
-                                            const bindingBypassStrategy =
-                                                this.generateAlpnBindingBypassStrategy(
+                                            const sslContextAnalysis
+                                                = this.analyzeSslContextForAlpnBypass(ssl);
+                                            const protocolAnalysis
+                                                = this.analyzeAlpnProtocolForBypass(protocol);
+                                            const certificateAnalysis
+                                                = this.analyzeAlpnCertificateForBypass(certificate);
+                                            const bindingBypassStrategy
+                                                = this.generateAlpnBindingBypassStrategy(
                                                     sslContextAnalysis,
                                                     protocolAnalysis,
                                                     certificateAnalysis
@@ -5792,12 +5859,12 @@ Object.assign(CertificatePinningBypass, {
                                             this.state.alpnCertificateAnalyses++;
 
                                             // Store ALPN bypass telemetry for advanced tracking
-                                            this.state.alpnBypassHistory =
-                                                this.state.alpnBypassHistory || [];
+                                            this.state.alpnBypassHistory
+                                                = this.state.alpnBypassHistory || [];
                                             this.state.alpnBypassHistory.push({
                                                 timestamp: new Date().toISOString(),
-                                                pattern: pattern,
-                                                module: module,
+                                                pattern,
+                                                module,
                                                 ssl_context_analysis: sslContextAnalysis,
                                                 protocol_analysis: protocolAnalysis,
                                                 certificate_analysis: certificateAnalysis,
@@ -5808,8 +5875,8 @@ Object.assign(CertificatePinningBypass, {
                                                 type: 'bypass',
                                                 target: 'certificate_pinning_bypass',
                                                 action: 'alpn_certificate_binding_bypassed',
-                                                pattern: pattern,
-                                                module: module,
+                                                pattern,
+                                                module,
                                                 ssl_context_analysis: sslContextAnalysis,
                                                 protocol_analysis: protocolAnalysis,
                                                 certificate_analysis: certificateAnalysis,
@@ -5817,21 +5884,21 @@ Object.assign(CertificatePinningBypass, {
                                             });
 
                                             return 1; // ALPN binding success
-                                        }.bind(this),
+                                        },
                                         'int',
                                         ['pointer', 'pointer', 'pointer']
                                     )
                                 );
-                            } catch (e) {
+                            } catch (error) {
                                 // Implement advanced error handling for ALPN function interception
                                 this.state.alpnFunctionInterceptionErrors++;
                                 send({
                                     type: 'error',
                                     target: 'certificate_pinning_bypass',
                                     action: 'alpn_function_interception_error',
-                                    error: e.message || 'Unknown ALPN function error',
-                                    pattern: pattern,
-                                    module: module,
+                                    error: error.message || 'Unknown ALPN function error',
+                                    pattern,
+                                    module,
                                     bypass_strategy: 'fallback_to_ssl_ctx_alpn_override',
                                 });
 
@@ -5845,10 +5912,10 @@ Object.assign(CertificatePinningBypass, {
                                         Interceptor.attach(sslCtxSetAlpnSelectCb, {
                                             onEnter: function (args) {
                                                 // Implement comprehensive SSL context and ALPN callback analysis
-                                                const sslCtxAnalysis =
-                                                    this.analyzeSslContextFromArgs(args[0]);
-                                                const alpnCallbackAnalysis =
-                                                    this.analyzeAlpnCallbackFromArgs(args[1]);
+                                                const sslCtxAnalysis
+                                                    = this.analyzeSslContextFromArgs(args[0]);
+                                                const alpnCallbackAnalysis
+                                                    = this.analyzeAlpnCallbackFromArgs(args[1]);
                                                 const userData = args[2]
                                                     ? this.analyzeUserDataFromArgs(args[2])
                                                     : null;
@@ -5861,9 +5928,9 @@ Object.assign(CertificatePinningBypass, {
                                                     type: 'fallback_bypass',
                                                     target: 'certificate_pinning_bypass',
                                                     action: 'alpn_selection_callback_bypassed',
-                                                    original_error: e.message,
-                                                    pattern: pattern,
-                                                    module: module,
+                                                    original_error: error.message,
+                                                    pattern,
+                                                    module,
                                                     ssl_context_analysis: sslCtxAnalysis,
                                                     alpn_callback_analysis: alpnCallbackAnalysis,
                                                     user_data: userData,
@@ -5877,31 +5944,31 @@ Object.assign(CertificatePinningBypass, {
                                         type: 'critical_error',
                                         target: 'certificate_pinning_bypass',
                                         action: 'alpn_function_interception_complete_failure',
-                                        pattern: pattern,
-                                        module: module,
-                                        original_error: e.message,
+                                        pattern,
+                                        module,
+                                        original_error: error.message,
                                         fallback_error: fallbackError.message,
                                     });
                                 }
                             }
                         });
                     });
-                } catch (e) {
+                } catch (error) {
                     // Implement advanced error handling for ALPN pattern scanning
                     this.state.alpnPatternScanningErrors++;
                     send({
                         type: 'error',
                         target: 'certificate_pinning_bypass',
                         action: 'alpn_pattern_scanning_error',
-                        error: e.message || 'Unknown ALPN pattern scanning error',
+                        error: error.message || 'Unknown ALPN pattern scanning error',
                         bypass_strategy: 'fallback_to_openssl_alpn_hooks',
                     });
 
                     // Implement fallback OpenSSL ALPN hooks
                     try {
-                        const opensslBase =
-                            Module.findBaseAddress('libssl.so') ||
-                            Module.findBaseAddress('libssl.dylib');
+                        const opensslBase
+                            = Module.findBaseAddress('libssl.so')
+                            || Module.findBaseAddress('libssl.dylib');
                         if (opensslBase) {
                             const sslSetAlpnProtocols = Module.findExportByName(
                                 opensslBase,
@@ -5928,9 +5995,9 @@ Object.assign(CertificatePinningBypass, {
 
                                         try {
                                             if (
-                                                protocolsBuffer &&
-                                                !protocolsBuffer.isNull() &&
-                                                protocolsLength > 0
+                                                protocolsBuffer
+                                                && !protocolsBuffer.isNull()
+                                                && protocolsLength > 0
                                             ) {
                                                 // Parse ALPN protocol list (length-prefixed strings)
                                                 let offset = 0;
@@ -5939,8 +6006,8 @@ Object.assign(CertificatePinningBypass, {
                                                         .add(offset)
                                                         .readU8();
                                                     if (
-                                                        protoLength > 0 &&
-                                                        offset + protoLength < protocolsLength
+                                                        protoLength > 0
+                                                        && offset + protoLength < protocolsLength
                                                     ) {
                                                         const protocol = protocolsBuffer
                                                             .add(offset + 1)
@@ -5949,7 +6016,7 @@ Object.assign(CertificatePinningBypass, {
                                                         alpnAnalysis.extracted_protocols.push({
                                                             length: protoLength,
                                                             name: protocol,
-                                                            offset: offset,
+                                                            offset,
                                                             security_risk: protocol.includes('h2')
                                                                 ? 'high'
                                                                 : 'medium',
@@ -5962,16 +6029,16 @@ Object.assign(CertificatePinningBypass, {
 
                                                 // Implement protocol manipulation for bypass
                                                 if (
-                                                    alpnProtocols.includes('h2') ||
-                                                    alpnProtocols.includes('http/1.1')
+                                                    alpnProtocols.includes('h2')
+                                                    || alpnProtocols.includes('http/1.1')
                                                 ) {
                                                     alpnAnalysis.security_implications.push(
                                                         'HTTP/2_certificate_binding_vulnerability'
                                                     );
                                                 }
                                                 if (
-                                                    alpnProtocols.includes('h3') ||
-                                                    alpnProtocols.includes('h3-Q050')
+                                                    alpnProtocols.includes('h3')
+                                                    || alpnProtocols.includes('h3-Q050')
                                                 ) {
                                                     alpnAnalysis.security_implications.push(
                                                         'HTTP/3_QUIC_certificate_validation_bypass'
@@ -6001,8 +6068,8 @@ Object.assign(CertificatePinningBypass, {
                                                 args[1] = modifiedBuffer;
                                                 args[2] = ptr(modifiedOffset);
 
-                                                alpnAnalysis.bypass_strategy =
-                                                    'protocol_buffer_replacement';
+                                                alpnAnalysis.bypass_strategy
+                                                    = 'protocol_buffer_replacement';
                                                 alpnAnalysis.modified_protocols = bypassProtocols;
                                             }
                                         } catch (analysisError) {
@@ -6011,15 +6078,15 @@ Object.assign(CertificatePinningBypass, {
 
                                         // Force ALPN protocol acceptance with comprehensive tracking
                                         this.state.opensslAlpnProtocolFallbackEvents++;
-                                        this.state.alpnProtocolAnalyses =
-                                            this.state.alpnProtocolAnalyses || [];
+                                        this.state.alpnProtocolAnalyses
+                                            = this.state.alpnProtocolAnalyses || [];
                                         this.state.alpnProtocolAnalyses.push(alpnAnalysis);
 
                                         send({
                                             type: 'fallback_bypass',
                                             target: 'certificate_pinning_bypass',
                                             action: 'openssl_alpn_protocol_bypass',
-                                            original_error: e.message,
+                                            original_error: error.message,
                                             alpn_analysis: alpnAnalysis,
                                             protocols_detected: alpnProtocols,
                                             bypass_effectiveness:
@@ -6035,7 +6102,7 @@ Object.assign(CertificatePinningBypass, {
                             type: 'critical_error',
                             target: 'certificate_pinning_bypass',
                             action: 'alpn_pattern_scanning_complete_failure',
-                            original_error: e.message,
+                            original_error: error.message,
                             fallback_error: fallbackError.message,
                         });
                     }
@@ -6048,7 +6115,7 @@ Object.assign(CertificatePinningBypass, {
                 if (nghttp2Base) {
                     const http2AlpnMatches = Memory.scanSync(
                         nghttp2Base,
-                        nghttp2Base.add(0x500000),
+                        nghttp2Base.add(0x50_00_00),
                         'nghttp2_session_verify_alpn'
                     );
                     http2AlpnMatches.forEach(match => {
@@ -6060,14 +6127,14 @@ Object.assign(CertificatePinningBypass, {
                             Interceptor.replace(
                                 http2AlpnFunction,
                                 new NativeCallback(
-                                    function (session, certificate) {
+                                    (session, certificate) => {
                                         // Implement comprehensive HTTP/2 ALPN session and certificate analysis
-                                        const http2SessionAnalysis =
-                                            this.analyzeHttp2SessionForAlpnBypass(session);
-                                        const alpnCertificateAnalysis =
-                                            this.analyzeHttp2AlpnCertificate(certificate);
-                                        const bindingBypassStrategy =
-                                            this.generateHttp2AlpnBypassStrategy(
+                                        const http2SessionAnalysis
+                                            = this.analyzeHttp2SessionForAlpnBypass(session);
+                                        const alpnCertificateAnalysis
+                                            = this.analyzeHttp2AlpnCertificate(certificate);
+                                        const bindingBypassStrategy
+                                            = this.generateHttp2AlpnBypassStrategy(
                                                 http2SessionAnalysis,
                                                 alpnCertificateAnalysis
                                             );
@@ -6079,8 +6146,8 @@ Object.assign(CertificatePinningBypass, {
                                         this.state.http2AlpnCertificateAnalyses++;
 
                                         // Store HTTP/2 ALPN bypass telemetry for advanced tracking
-                                        this.state.http2AlpnBypassHistory =
-                                            this.state.http2AlpnBypassHistory || [];
+                                        this.state.http2AlpnBypassHistory
+                                            = this.state.http2AlpnBypassHistory || [];
                                         this.state.http2AlpnBypassHistory.push({
                                             timestamp: new Date().toISOString(),
                                             session_analysis: http2SessionAnalysis,
@@ -6098,19 +6165,19 @@ Object.assign(CertificatePinningBypass, {
                                         });
 
                                         return 0; // Success
-                                    }.bind(this),
+                                    },
                                     'int',
                                     ['pointer', 'pointer']
                                 )
                             );
-                        } catch (e) {
+                        } catch (error) {
                             // Implement advanced error handling for HTTP/2 ALPN function interception
                             this.state.http2AlpnFunctionInterceptionErrors++;
                             send({
                                 type: 'error',
                                 target: 'certificate_pinning_bypass',
                                 action: 'http2_alpn_function_interception_error',
-                                error: e.message || 'Unknown HTTP/2 ALPN function error',
+                                error: error.message || 'Unknown HTTP/2 ALPN function error',
                                 bypass_strategy: 'fallback_to_nghttp2_settings_override',
                             });
 
@@ -6141,7 +6208,7 @@ Object.assign(CertificatePinningBypass, {
                                                 type: 'fallback_bypass',
                                                 target: 'certificate_pinning_bypass',
                                                 action: 'nghttp2_settings_override_bypassed',
-                                                original_error: e.message,
+                                                original_error: error.message,
                                                 settings_analysis: settingsAnalysis,
                                                 session_ptr: sessionPtr
                                                     ? sessionPtr.toString()
@@ -6159,29 +6226,29 @@ Object.assign(CertificatePinningBypass, {
                                     type: 'critical_error',
                                     target: 'certificate_pinning_bypass',
                                     action: 'http2_alpn_function_interception_complete_failure',
-                                    original_error: e.message,
+                                    original_error: error.message,
                                     fallback_error: fallbackError.message,
                                 });
                             }
                         }
                     });
                 }
-            } catch (e) {
+            } catch (error) {
                 // Implement advanced error handling for HTTP/2 ALPN certificate binding
                 this.state.http2AlpnCertificateBindingErrors++;
                 send({
                     type: 'error',
                     target: 'certificate_pinning_bypass',
                     action: 'http2_alpn_certificate_binding_error',
-                    error: e.message || 'Unknown HTTP/2 ALPN certificate binding error',
+                    error: error.message || 'Unknown HTTP/2 ALPN certificate binding error',
                     bypass_strategy: 'fallback_to_curl_alpn_hooks',
                 });
 
                 // Implement fallback cURL ALPN hooks
                 try {
-                    const curlBase =
-                        Module.findBaseAddress('libcurl.so') ||
-                        Module.findBaseAddress('libcurl.dylib');
+                    const curlBase
+                        = Module.findBaseAddress('libcurl.so')
+                        || Module.findBaseAddress('libcurl.dylib');
                     if (curlBase) {
                         const curlEasySetopt = Module.findExportByName(
                             curlBase,
@@ -6193,8 +6260,8 @@ Object.assign(CertificatePinningBypass, {
                                     const option = args[1];
                                     // Check for ALPN-related options
                                     if (
-                                        option &&
-                                        (option.toInt32() === 10243 || option.toInt32() === 10244)
+                                        option
+                                        && (option.toInt32() === 10_243 || option.toInt32() === 10_244)
                                     ) {
                                         // CURLOPT_HTTP2_ALPN
                                         this.state.curlAlpnOptionBypasses++;
@@ -6202,7 +6269,7 @@ Object.assign(CertificatePinningBypass, {
                                             type: 'fallback_bypass',
                                             target: 'certificate_pinning_bypass',
                                             action: 'curl_alpn_option_bypassed',
-                                            original_error: e.message,
+                                            original_error: error.message,
                                             curl_option: option.toInt32(),
                                         });
                                     }
@@ -6216,7 +6283,7 @@ Object.assign(CertificatePinningBypass, {
                         type: 'critical_error',
                         target: 'certificate_pinning_bypass',
                         action: 'http2_alpn_certificate_binding_complete_failure',
-                        original_error: e.message,
+                        original_error: error.message,
                         fallback_error: fallbackError.message,
                     });
                 }
@@ -6231,8 +6298,8 @@ Object.assign(CertificatePinningBypass, {
                             'javax.net.ssl.AlpnCertificateBinder'
                         );
                         if (AlpnCertificateBinder.bindCertificateToProtocol) {
-                            AlpnCertificateBinder.bindCertificateToProtocol.implementation =
-                                function (protocol, certificate) {
+                            AlpnCertificateBinder.bindCertificateToProtocol.implementation
+                                = function (protocol, certificate) {
                                     // Comprehensive certificate analysis for ALPN binding bypass
                                     const certificateAnalysis = {
                                         certificate_class: certificate
@@ -6250,11 +6317,10 @@ Object.assign(CertificatePinningBypass, {
 
                                     try {
                                         if (certificate) {
+                                            let subjectDN = null;
                                             // Extract certificate subject information
                                             if (certificate.getSubjectDN) {
-                                                const subjectDN = certificate
-                                                    .getSubjectDN()
-                                                    .getName();
+                                                subjectDN = certificate.getSubjectDN().getName();
                                                 certificateAnalysis.subject_analysis = {
                                                     full_dn: subjectDN,
                                                     common_name: this.extractCNFromDN(subjectDN),
@@ -6278,8 +6344,8 @@ Object.assign(CertificatePinningBypass, {
 
                                             // Extract validity period
                                             if (
-                                                certificate.getNotBefore &&
-                                                certificate.getNotAfter
+                                                certificate.getNotBefore
+                                                && certificate.getNotAfter
                                             ) {
                                                 const notBefore = certificate.getNotBefore();
                                                 const notAfter = certificate.getNotAfter();
@@ -6303,13 +6369,13 @@ Object.assign(CertificatePinningBypass, {
                                                     .toString(16);
                                             }
                                             if (certificate.getVersion) {
-                                                certificateAnalysis.version =
-                                                    certificate.getVersion();
+                                                certificateAnalysis.version
+                                                    = certificate.getVersion();
                                             }
 
                                             // Analyze certificate type and security implications
-                                            certificateAnalysis.certificate_type =
-                                                certificate.getType
+                                            certificateAnalysis.certificate_type
+                                                = certificate.getType
                                                     ? certificate.getType()
                                                     : 'X.509';
 
@@ -6347,8 +6413,8 @@ Object.assign(CertificatePinningBypass, {
                                     }
 
                                     // Store certificate analysis for forensic tracking
-                                    this.state.certificateAnalyses =
-                                        this.state.certificateAnalyses || [];
+                                    this.state.certificateAnalyses
+                                        = this.state.certificateAnalyses || [];
                                     this.state.certificateAnalyses.push(certificateAnalysis);
                                     this.state
                                         .applicationLayerProtocolNegotiationCertificateBindingBypassEvents++;
@@ -6357,7 +6423,7 @@ Object.assign(CertificatePinningBypass, {
                                         type: 'bypass',
                                         target: 'certificate_pinning_bypass',
                                         action: 'java_alpn_certificate_binding_bypassed',
-                                        protocol: protocol,
+                                        protocol,
                                         certificate_analysis: certificateAnalysis,
                                         bypass_effectiveness:
                                             certificateAnalysis.security_implications.length > 0
@@ -6368,15 +6434,15 @@ Object.assign(CertificatePinningBypass, {
                                     return true;
                                 }.bind(this);
                         }
-                    } catch (e) {
+                    } catch (error) {
                         // Comprehensive Java ALPN certificate binding error analysis
-                        this.state.javaAlpnCertificateBindingErrors =
-                            this.state.javaAlpnCertificateBindingErrors || [];
+                        this.state.javaAlpnCertificateBindingErrors
+                            = this.state.javaAlpnCertificateBindingErrors || [];
                         const errorAnalysis = {
                             timestamp: new Date().toISOString(),
-                            error_type: e.name || 'Unknown',
-                            error_message: e.message || 'No message available',
-                            error_stack: e.stack || 'No stack trace available',
+                            error_type: error.name || 'Unknown',
+                            error_message: error.message || 'No message available',
+                            error_stack: error.stack || 'No stack trace available',
                             bypass_stage: 'java_alpn_certificate_binding',
                             fallback_strategy: 'android_http2_alpn_validator',
                             impact_assessment: 'medium',
@@ -6384,17 +6450,17 @@ Object.assign(CertificatePinningBypass, {
                         };
 
                         // Classify error type and determine bypass strategy
-                        if (e.message?.includes('ClassNotFoundException')) {
+                        if (error.message?.includes('ClassNotFoundException')) {
                             errorAnalysis.impact_assessment = 'low';
                             errorAnalysis.recovery_actions.push(
                                 'alpn_certificate_binder_not_available'
                             );
                             errorAnalysis.fallback_strategy = 'native_openssl_alpn_hooks';
-                        } else if (e.message?.includes('NoSuchMethodError')) {
+                        } else if (error.message?.includes('NoSuchMethodError')) {
                             errorAnalysis.impact_assessment = 'medium';
                             errorAnalysis.recovery_actions.push('method_signature_mismatch');
                             errorAnalysis.fallback_strategy = 'reflection_based_alpn_bypass';
-                        } else if (e.message?.includes('SecurityException')) {
+                        } else if (error.message?.includes('SecurityException')) {
                             errorAnalysis.impact_assessment = 'high';
                             errorAnalysis.recovery_actions.push('security_restriction_detected');
                             errorAnalysis.fallback_strategy = 'native_library_direct_patching';
@@ -6438,22 +6504,22 @@ Object.assign(CertificatePinningBypass, {
                                     type: 'bypass',
                                     target: 'certificate_pinning_bypass',
                                     action: 'android_http2_alpn_validation_bypassed',
-                                    protocol: protocol,
+                                    protocol,
                                     certificate_subject: subject,
                                     certificate_issuer: issuer,
                                 });
                                 return true;
                             };
                         }
-                    } catch (e) {
+                    } catch (error) {
                         // Comprehensive Android HTTP/2 ALPN validation error analysis
-                        this.state.androidHttp2AlpnValidationErrors =
-                            this.state.androidHttp2AlpnValidationErrors || [];
+                        this.state.androidHttp2AlpnValidationErrors
+                            = this.state.androidHttp2AlpnValidationErrors || [];
                         const errorAnalysis = {
                             timestamp: new Date().toISOString(),
-                            error_type: e.name || 'Unknown',
-                            error_message: e.message || 'No message available',
-                            error_stack: e.stack || 'No stack trace available',
+                            error_type: error.name || 'Unknown',
+                            error_message: error.message || 'No message available',
+                            error_stack: error.stack || 'No stack trace available',
                             bypass_stage: 'android_http2_alpn_validation',
                             fallback_strategy: 'okhttp_alpn_binding_bypass',
                             impact_assessment: 'medium',
@@ -6461,32 +6527,32 @@ Object.assign(CertificatePinningBypass, {
                         };
 
                         // Classify Android-specific error types
-                        if (e.message?.includes('ClassNotFoundException')) {
+                        if (error.message?.includes('ClassNotFoundException')) {
                             errorAnalysis.impact_assessment = 'low';
                             errorAnalysis.recovery_actions.push(
                                 'android_http2_alpn_validator_not_available'
                             );
                             errorAnalysis.fallback_strategy = 'conscrypt_alpn_hooks';
-                        } else if (e.message?.includes('android')) {
+                        } else if (error.message?.includes('android')) {
                             errorAnalysis.impact_assessment = 'medium';
                             errorAnalysis.recovery_actions.push(
                                 'android_version_compatibility_issue'
                             );
-                            errorAnalysis.fallback_strategy =
-                                'generic_certificate_validation_bypass';
-                        } else if (e.message?.includes('SecurityException')) {
+                            errorAnalysis.fallback_strategy
+                                = 'generic_certificate_validation_bypass';
+                        } else if (error.message?.includes('SecurityException')) {
                             errorAnalysis.impact_assessment = 'high';
                             errorAnalysis.recovery_actions.push(
                                 'android_security_policy_restriction'
                             );
                             errorAnalysis.fallback_strategy = 'native_ssl_context_manipulation';
-                        } else if (e.message?.includes('SELinux')) {
+                        } else if (error.message?.includes('SELinux')) {
                             errorAnalysis.impact_assessment = 'critical';
                             errorAnalysis.recovery_actions.push(
                                 'selinux_enforcement_blocking_bypass'
                             );
-                            errorAnalysis.fallback_strategy =
-                                'userspace_certificate_validation_override';
+                            errorAnalysis.fallback_strategy
+                                = 'userspace_certificate_validation_override';
                         } else {
                             errorAnalysis.impact_assessment = 'high';
                             errorAnalysis.recovery_actions.push(
@@ -6520,7 +6586,7 @@ Object.assign(CertificatePinningBypass, {
                             ) {
                                 // Comprehensive OkHttp ALPN certificate and protocol analysis
                                 const alpnBindingAnalysis = {
-                                    hostname: hostname,
+                                    hostname,
                                     certificate_analysis: {},
                                     protocols_analysis: {},
                                     binding_analysis: {},
@@ -6597,11 +6663,11 @@ Object.assign(CertificatePinningBypass, {
 
                                         // Extract protocol information
                                         if (Array.isArray(protocols)) {
-                                            alpnBindingAnalysis.protocols_analysis.protocols_count =
-                                                protocols.length;
+                                            alpnBindingAnalysis.protocols_analysis.protocols_count
+                                                = protocols.length;
                                             protocols.forEach((protocol, index) => {
                                                 const protocolInfo = {
-                                                    index: index,
+                                                    index,
                                                     value: protocol ? protocol.toString() : 'null',
                                                     security_risk: 'low',
                                                 };
@@ -6631,8 +6697,8 @@ Object.assign(CertificatePinningBypass, {
                                                 );
                                             });
                                         } else if (protocols.toString) {
-                                            alpnBindingAnalysis.protocols_analysis.single_protocol =
-                                                protocols.toString();
+                                            alpnBindingAnalysis.protocols_analysis.single_protocol
+                                                = protocols.toString();
                                             alpnBindingAnalysis.protocols_analysis.protocols_count = 1;
                                         }
                                     } else {
@@ -6647,11 +6713,11 @@ Object.assign(CertificatePinningBypass, {
 
                                     // Analyze hostname-certificate-protocols binding relationship
                                     alpnBindingAnalysis.binding_analysis = {
-                                        hostname_present: !!hostname,
+                                        hostname_present: Boolean(hostname),
                                         certificate_hostname_match:
-                                            hostname &&
-                                            alpnBindingAnalysis.certificate_analysis.subject &&
-                                            alpnBindingAnalysis.certificate_analysis.subject
+                                            hostname
+                                            && alpnBindingAnalysis.certificate_analysis.subject
+                                            && alpnBindingAnalysis.certificate_analysis.subject
                                                 .matches_hostname,
                                         protocols_count:
                                             alpnBindingAnalysis.protocols_analysis
@@ -6661,19 +6727,19 @@ Object.assign(CertificatePinningBypass, {
 
                                     // Overall security implications
                                     if (alpnBindingAnalysis.security_implications.length > 0) {
-                                        alpnBindingAnalysis.binding_analysis.bypass_effectiveness =
-                                            'high';
+                                        alpnBindingAnalysis.binding_analysis.bypass_effectiveness
+                                            = 'high';
                                     } else {
-                                        alpnBindingAnalysis.binding_analysis.bypass_effectiveness =
-                                            'medium';
+                                        alpnBindingAnalysis.binding_analysis.bypass_effectiveness
+                                            = 'medium';
                                     }
                                 } catch (analysisError) {
                                     alpnBindingAnalysis.analysis_error = analysisError.message;
                                 }
 
                                 // Store OkHttp ALPN binding analysis for forensic tracking
-                                this.state.okHttpAlpnBindingAnalyses =
-                                    this.state.okHttpAlpnBindingAnalyses || [];
+                                this.state.okHttpAlpnBindingAnalyses
+                                    = this.state.okHttpAlpnBindingAnalyses || [];
                                 this.state.okHttpAlpnBindingAnalyses.push(alpnBindingAnalysis);
                                 this.state.okHttpAlpnBindingBypassEvents++;
 
@@ -6681,7 +6747,7 @@ Object.assign(CertificatePinningBypass, {
                                     type: 'bypass',
                                     target: 'certificate_pinning_bypass',
                                     action: 'okhttp_alpn_binding_bypassed',
-                                    hostname: hostname,
+                                    hostname,
                                     alpn_binding_analysis: alpnBindingAnalysis,
                                     bypass_effectiveness:
                                         alpnBindingAnalysis.binding_analysis.bypass_effectiveness,
@@ -6692,14 +6758,14 @@ Object.assign(CertificatePinningBypass, {
                                 return true;
                             }.bind(this);
                         }
-                    } catch (e) {
+                    } catch (error) {
                         // Comprehensive OkHttp ALPN certificate binding bypass error forensics
                         const alpnBypassErrorForensics = {
                             timestamp: new Date().toISOString(),
                             error_type: 'okhttp_alpn_certificate_binding_bypass',
-                            error_message: e.message || 'unknown_error',
-                            error_stack: e.stack || 'no_stack_trace',
-                            error_name: e.name || 'unknown_exception',
+                            error_message: error.message || 'unknown_error',
+                            error_stack: error.stack || 'no_stack_trace',
+                            error_name: error.name || 'unknown_exception',
                             bypass_context: 'okhttp3_internal_tls_AlpnCertificateBinder',
                             security_implications: [
                                 'alpn_binding_bypass_failure',
@@ -6710,7 +6776,7 @@ Object.assign(CertificatePinningBypass, {
                             forensic_data: {
                                 function_context: 'verifyAlpnBinding',
                                 library_context: 'okhttp3.internal.tls',
-                                error_classification: this.classifyOkHttpError(e),
+                                error_classification: this.classifyOkHttpError(error),
                                 bypass_resilience: 'medium',
                                 recovery_possible: true,
                                 alternative_bypass_available: true,
@@ -6720,10 +6786,10 @@ Object.assign(CertificatePinningBypass, {
                         // Store error forensics for analysis
                         this.state.alpnBypassErrors = this.state.alpnBypassErrors || [];
                         this.state.alpnBypassErrors.push(alpnBypassErrorForensics);
-                        this.state.okHttpBypassAttempts =
-                            (this.state.okHttpBypassAttempts || 0) + 1;
-                        this.state.okHttpBypassFailures =
-                            (this.state.okHttpBypassFailures || 0) + 1;
+                        this.state.okHttpBypassAttempts
+                            = (this.state.okHttpBypassAttempts || 0) + 1;
+                        this.state.okHttpBypassFailures
+                            = (this.state.okHttpBypassFailures || 0) + 1;
 
                         // Report error forensics for bypass optimization
                         send({
@@ -6747,18 +6813,18 @@ Object.assign(CertificatePinningBypass, {
                 target: 'certificate_pinning_bypass',
                 action: 'alpn_cert_binding_bypass_initialized',
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'certificate_pinning_bypass',
                 action: 'alpn_cert_binding_bypass_failed',
-                error: e.message,
+                error: error.message,
             });
         }
     },
 
     // 9. Certificate Authority Authorization (CAA) DNS Security Extensions Bypass - DNSSEC-protected CAA records
-    hookCertificateAuthorityAuthorizationDnsSecBypass: function () {
+    hookCertificateAuthorityAuthorizationDnsSecBypass() {
         send({
             type: 'info',
             target: 'certificate_pinning_bypass',
@@ -6789,7 +6855,7 @@ Object.assign(CertificatePinningBypass, {
                     dnssecPatterns.forEach(pattern => {
                         const matches = Memory.scanSync(
                             Module.findBaseAddress(module),
-                            Module.findBaseAddress(module).add(0x1100000),
+                            Module.findBaseAddress(module).add(0x1_10_00_00),
                             pattern
                         );
                         matches.forEach(match => {
@@ -6802,7 +6868,7 @@ Object.assign(CertificatePinningBypass, {
                                 Interceptor.replace(
                                     dnssecFunction,
                                     new NativeCallback(
-                                        function (domain, caa_records, dnssec_status) {
+                                        (domain, caa_records, dnssec_status) => {
                                             // Comprehensive DNS security analysis for DNSSEC CAA validation bypass
                                             const dnsSecurityAnalysis = {
                                                 timestamp: new Date().toISOString(),
@@ -6895,58 +6961,58 @@ Object.assign(CertificatePinningBypass, {
                                                                     i * 32
                                                                 ); // Assume 32-byte CAA record structure
                                                                 if (!recordPtr.isNull()) {
-                                                                    const flags =
-                                                                        recordPtr.readU8();
+                                                                    const flags
+                                                                        = recordPtr.readU8();
                                                                     const tagLength = recordPtr
                                                                         .add(1)
                                                                         .readU8();
                                                                     if (
-                                                                        tagLength > 0 &&
-                                                                        tagLength < 16
+                                                                        tagLength > 0
+                                                                        && tagLength < 16
                                                                     ) {
                                                                         const tag = recordPtr
                                                                             .add(2)
                                                                             .readCString(tagLength);
-                                                                        const valuePtr =
-                                                                            recordPtr.add(
+                                                                        const valuePtr
+                                                                            = recordPtr.add(
                                                                                 2 + tagLength
                                                                             );
-                                                                        const value =
-                                                                            valuePtr.readCString(
+                                                                        const value
+                                                                            = valuePtr.readCString(
                                                                                 64
                                                                             ); // Max 64 chars for CAA value
 
                                                                         const caaRecord = {
-                                                                            flags: flags,
-                                                                            tag: tag,
-                                                                            value: value,
+                                                                            flags,
+                                                                            tag,
+                                                                            value,
                                                                             critical:
-                                                                                (flags & 0x80) !==
-                                                                                0,
+                                                                                (flags & 0x80)
+                                                                                !== 0,
                                                                         };
 
                                                                         recordsData.push(caaRecord);
 
                                                                         // Analyze CAA record security implications
                                                                         if (
-                                                                            tag === 'issue' &&
-                                                                            value
+                                                                            tag === 'issue'
+                                                                            && value
                                                                         ) {
                                                                             dnsSecurityAnalysis.caa_records_analysis.security_implications.push(
                                                                                 'caa_issue_policy_bypassed'
                                                                             );
                                                                         }
                                                                         if (
-                                                                            tag === 'issuewild' &&
-                                                                            value
+                                                                            tag === 'issuewild'
+                                                                            && value
                                                                         ) {
                                                                             dnsSecurityAnalysis.caa_records_analysis.security_implications.push(
                                                                                 'caa_wildcard_policy_bypassed'
                                                                             );
                                                                         }
                                                                         if (
-                                                                            tag === 'iodef' &&
-                                                                            value
+                                                                            tag === 'iodef'
+                                                                            && value
                                                                         ) {
                                                                             dnsSecurityAnalysis.caa_records_analysis.security_implications.push(
                                                                                 'caa_iodef_reporting_bypassed'
@@ -6959,14 +7025,14 @@ Object.assign(CertificatePinningBypass, {
                                                             }
                                                         }
 
-                                                        dnsSecurityAnalysis.caa_records_analysis.parsed_records =
-                                                            recordsData;
-                                                        dnsSecurityAnalysis.caa_records_analysis.records_count =
-                                                            recordsData.length;
+                                                        dnsSecurityAnalysis.caa_records_analysis.parsed_records
+                                                            = recordsData;
+                                                        dnsSecurityAnalysis.caa_records_analysis.records_count
+                                                            = recordsData.length;
 
                                                         // Analyze CAA policy implications
-                                                        dnsSecurityAnalysis.caa_records_analysis.policy_analysis =
-                                                            {
+                                                        dnsSecurityAnalysis.caa_records_analysis.policy_analysis
+                                                            = {
                                                                 has_issue_policy: recordsData.some(
                                                                     r => r.tag === 'issue'
                                                                 ),
@@ -6984,8 +7050,8 @@ Object.assign(CertificatePinningBypass, {
                                                                     ).length,
                                                             };
                                                     } catch (caaParsingError) {
-                                                        dnsSecurityAnalysis.caa_records_analysis.parsing_error =
-                                                            caaParsingError.message;
+                                                        dnsSecurityAnalysis.caa_records_analysis.parsing_error
+                                                            = caaParsingError.message;
                                                     }
                                                 } else {
                                                     dnsSecurityAnalysis.caa_records_analysis = {
@@ -7000,15 +7066,15 @@ Object.assign(CertificatePinningBypass, {
 
                                                 // Analyze DNSSEC status parameter
                                                 if (
-                                                    dnssec_status !== undefined &&
-                                                    dnssec_status !== null
+                                                    dnssec_status !== undefined
+                                                    && dnssec_status !== null
                                                 ) {
-                                                    const statusValue =
-                                                        typeof dnssec_status === 'number'
-                                                            ? dnssec_status
-                                                            : typeof dnssec_status === 'object'
-                                                              ? dnssec_status.toInt32()
-                                                              : 0;
+                                                    let statusValue = 0;
+                                                    if (typeof dnssec_status === 'number') {
+                                                        statusValue = dnssec_status;
+                                                    } else if (typeof dnssec_status === 'object') {
+                                                        statusValue = dnssec_status.toInt32();
+                                                    }
 
                                                     dnsSecurityAnalysis.dnssec_status_analysis = {
                                                         dnssec_status_present: true,
@@ -7019,22 +7085,33 @@ Object.assign(CertificatePinningBypass, {
                                                     };
 
                                                     // Interpret DNSSEC status codes
-                                                    if (statusValue === 0) {
-                                                        dnsSecurityAnalysis.dnssec_status_analysis.security_implications.push(
-                                                            'dnssec_validation_disabled'
-                                                        );
-                                                    } else if (statusValue === 1) {
-                                                        dnsSecurityAnalysis.dnssec_status_analysis.security_implications.push(
-                                                            'dnssec_validation_enabled_but_bypassed'
-                                                        );
-                                                    } else if (statusValue === -1) {
-                                                        dnsSecurityAnalysis.dnssec_status_analysis.security_implications.push(
-                                                            'dnssec_validation_failed_but_accepted'
-                                                        );
-                                                    } else {
-                                                        dnsSecurityAnalysis.dnssec_status_analysis.security_implications.push(
-                                                            'unknown_dnssec_status_bypassed'
-                                                        );
+                                                    switch (statusValue) {
+                                                        case 0: {
+                                                            dnsSecurityAnalysis.dnssec_status_analysis.security_implications.push(
+                                                                'dnssec_validation_disabled'
+                                                            );
+
+                                                            break;
+                                                        }
+                                                        case 1: {
+                                                            dnsSecurityAnalysis.dnssec_status_analysis.security_implications.push(
+                                                                'dnssec_validation_enabled_but_bypassed'
+                                                            );
+
+                                                            break;
+                                                        }
+                                                        case -1: {
+                                                            dnsSecurityAnalysis.dnssec_status_analysis.security_implications.push(
+                                                                'dnssec_validation_failed_but_accepted'
+                                                            );
+
+                                                            break;
+                                                        }
+                                                        default: {
+                                                            dnsSecurityAnalysis.dnssec_status_analysis.security_implications.push(
+                                                                'unknown_dnssec_status_bypassed'
+                                                            );
+                                                        }
                                                     }
                                                 } else {
                                                     dnsSecurityAnalysis.dnssec_status_analysis = {
@@ -7048,30 +7125,34 @@ Object.assign(CertificatePinningBypass, {
                                                 }
 
                                                 // Overall security implications analysis
-                                                const totalImplications =
-                                                    dnsSecurityAnalysis.security_implications
-                                                        .length +
-                                                    (dnsSecurityAnalysis.domain_analysis
-                                                        .security_implications?.length || 0) +
-                                                    (dnsSecurityAnalysis.caa_records_analysis
-                                                        .security_implications?.length || 0) +
-                                                    (dnsSecurityAnalysis.dnssec_status_analysis
+                                                const totalImplications
+                                                    = dnsSecurityAnalysis.security_implications
+                                                        .length
+                                                    + (dnsSecurityAnalysis.domain_analysis
+                                                        .security_implications?.length || 0)
+                                                    + (dnsSecurityAnalysis.caa_records_analysis
+                                                        .security_implications?.length || 0)
+                                                    + (dnsSecurityAnalysis.dnssec_status_analysis
                                                         .security_implications?.length || 0);
 
-                                                dnsSecurityAnalysis.bypass_effectiveness =
-                                                    totalImplications > 3
-                                                        ? 'critical'
-                                                        : totalImplications > 1
-                                                          ? 'high'
-                                                          : 'medium';
+                                                if (totalImplications > 3) {
+                                                    dnsSecurityAnalysis.bypass_effectiveness
+                                                        = 'critical';
+                                                } else if (totalImplications > 1) {
+                                                    dnsSecurityAnalysis.bypass_effectiveness
+                                                        = 'high';
+                                                } else {
+                                                    dnsSecurityAnalysis.bypass_effectiveness
+                                                        = 'medium';
+                                                }
                                             } catch (analysisError) {
-                                                dnsSecurityAnalysis.analysis_error =
-                                                    analysisError.message;
+                                                dnsSecurityAnalysis.analysis_error
+                                                    = analysisError.message;
                                             }
 
                                             // Store DNS security analysis for forensic tracking
-                                            this.state.dnsSecurityAnalyses =
-                                                this.state.dnsSecurityAnalyses || [];
+                                            this.state.dnsSecurityAnalyses
+                                                = this.state.dnsSecurityAnalyses || [];
                                             this.state.dnsSecurityAnalyses.push(
                                                 dnsSecurityAnalysis
                                             );
@@ -7082,8 +7163,8 @@ Object.assign(CertificatePinningBypass, {
                                                 type: 'bypass',
                                                 target: 'certificate_pinning_bypass',
                                                 action: 'dnssec_caa_validation_bypassed',
-                                                pattern: pattern,
-                                                module: module,
+                                                pattern,
+                                                module,
                                                 dns_security_analysis: dnsSecurityAnalysis,
                                                 bypass_effectiveness:
                                                     dnsSecurityAnalysis.bypass_effectiveness,
@@ -7092,19 +7173,19 @@ Object.assign(CertificatePinningBypass, {
                                             });
 
                                             return 1; // DNSSEC CAA validation success
-                                        }.bind(this),
+                                        },
                                         'int',
                                         ['pointer', 'pointer', 'int']
                                     )
                                 );
-                            } catch (e) {
+                            } catch (error) {
                                 // Comprehensive DNSSEC CAA validation bypass error forensics
                                 const dnssecErrorAnalysis = {
                                     timestamp: new Date().toISOString(),
                                     error_type: 'dnssec_caa_validation_bypass',
-                                    error_message: e.message || 'unknown_error',
-                                    error_stack: e.stack || 'no_stack_trace',
-                                    error_name: e.name || 'unknown_exception',
+                                    error_message: error.message || 'unknown_error',
+                                    error_stack: error.stack || 'no_stack_trace',
+                                    error_name: error.name || 'unknown_exception',
                                     bypass_context: 'libssl_dnssec_caa_validation',
                                     security_implications: [
                                         'dnssec_bypass_failure',
@@ -7115,7 +7196,7 @@ Object.assign(CertificatePinningBypass, {
                                     forensic_data: {
                                         function_context: 'SSL_dane_verify_caa',
                                         library_context: 'libssl.so',
-                                        error_classification: this.classifyDnssecError(e),
+                                        error_classification: this.classifyDnssecError(error),
                                         bypass_resilience: 'medium',
                                         recovery_possible: true,
                                     },
@@ -7139,14 +7220,14 @@ Object.assign(CertificatePinningBypass, {
                             }
                         });
                     });
-                } catch (e) {
+                } catch (error) {
                     // Comprehensive OpenSSL DNSSEC module bypass error forensics
                     const opensslDnssecErrorAnalysis = {
                         timestamp: new Date().toISOString(),
                         error_type: 'openssl_dnssec_module_bypass',
-                        error_message: e.message || 'unknown_openssl_error',
-                        error_stack: e.stack || 'no_stack_trace',
-                        error_name: e.name || 'unknown_exception',
+                        error_message: error.message || 'unknown_openssl_error',
+                        error_stack: error.stack || 'no_stack_trace',
+                        error_name: error.name || 'unknown_exception',
                         bypass_context: 'openssl_dnssec_caa_module',
                         security_implications: [
                             'openssl_dnssec_detection',
@@ -7157,7 +7238,7 @@ Object.assign(CertificatePinningBypass, {
                         forensic_data: {
                             library_detection: 'libssl.so_module_scan',
                             function_enumeration: 'SSL_dane_verify_caa_discovery',
-                            error_classification: this.classifyOpenSslError(e),
+                            error_classification: this.classifyOpenSslError(error),
                             bypass_resilience: 'low',
                             recovery_strategy: 'switch_to_alternative_ssl_bypass',
                         },
@@ -7184,7 +7265,7 @@ Object.assign(CertificatePinningBypass, {
                 if (unboundBase) {
                     const unboundCaaPattern = Memory.scanSync(
                         unboundBase,
-                        unboundBase.add(0x800000),
+                        unboundBase.add(0x80_00_00),
                         'ub_resolve_caa'
                     );
                     unboundCaaPattern.forEach(match => {
@@ -7198,7 +7279,7 @@ Object.assign(CertificatePinningBypass, {
                             Interceptor.replace(
                                 ubResolveCaa,
                                 new NativeCallback(
-                                    function (ctx, name, rrtype, result) {
+                                    (ctx, name, rrtype, result) => {
                                         let contextInfo = 'unknown';
                                         let domainName = 'unknown';
                                         const recordType = rrtype;
@@ -7237,19 +7318,19 @@ Object.assign(CertificatePinningBypass, {
                                             result.writePointer(ptr(0));
                                         }
                                         return 0; // Success with no CAA restrictions
-                                    }.bind(this),
+                                    },
                                     'int',
                                     ['pointer', 'pointer', 'int', 'pointer']
                                 )
                             );
-                        } catch (e) {
+                        } catch (error) {
                             // Comprehensive libunbound CAA resolution hook error forensics
                             const unboundCaaHookErrorForensics = {
                                 timestamp: new Date().toISOString(),
                                 error_type: 'libunbound_caa_resolution_hook',
-                                error_message: e.message || 'unknown_error',
-                                error_stack: e.stack || 'no_stack_trace',
-                                error_name: e.name || 'unknown_exception',
+                                error_message: error.message || 'unknown_error',
+                                error_stack: error.stack || 'no_stack_trace',
+                                error_name: error.name || 'unknown_exception',
                                 bypass_context: 'libunbound_ub_resolve_caa_function_hook',
                                 security_implications: [
                                     'caa_resolution_hook_failure',
@@ -7263,7 +7344,7 @@ Object.assign(CertificatePinningBypass, {
                                         : 'unknown',
                                     library_context: 'libunbound.so',
                                     hook_type: 'native_function_replacement',
-                                    error_classification: this.classifyUnboundError(e),
+                                    error_classification: this.classifyUnboundError(error),
                                     bypass_resilience: 'low',
                                     recovery_possible: true,
                                 },
@@ -7272,10 +7353,10 @@ Object.assign(CertificatePinningBypass, {
                             // Store error forensics for analysis
                             this.state.unboundCaaHookErrors = this.state.unboundCaaHookErrors || [];
                             this.state.unboundCaaHookErrors.push(unboundCaaHookErrorForensics);
-                            this.state.unboundHookAttempts =
-                                (this.state.unboundHookAttempts || 0) + 1;
-                            this.state.unboundHookFailures =
-                                (this.state.unboundHookFailures || 0) + 1;
+                            this.state.unboundHookAttempts
+                                = (this.state.unboundHookAttempts || 0) + 1;
+                            this.state.unboundHookFailures
+                                = (this.state.unboundHookFailures || 0) + 1;
 
                             // Report individual hook failure for bypass optimization
                             send({
@@ -7292,14 +7373,14 @@ Object.assign(CertificatePinningBypass, {
                         }
                     });
                 }
-            } catch (e) {
+            } catch (error) {
                 // Comprehensive libunbound DNSSEC CAA validation bypass error forensics
                 const unboundDnssecBypassErrorForensics = {
                     timestamp: new Date().toISOString(),
                     error_type: 'libunbound_dnssec_caa_validation_bypass',
-                    error_message: e.message || 'unknown_error',
-                    error_stack: e.stack || 'no_stack_trace',
-                    error_name: e.name || 'unknown_exception',
+                    error_message: error.message || 'unknown_error',
+                    error_stack: error.stack || 'no_stack_trace',
+                    error_name: error.name || 'unknown_exception',
                     bypass_context: 'libunbound_dnssec_caa_validation_module',
                     security_implications: [
                         'libunbound_module_detection',
@@ -7310,7 +7391,7 @@ Object.assign(CertificatePinningBypass, {
                     forensic_data: {
                         library_detection: 'libunbound.so_module_scan',
                         module_base_address: 'dynamic_resolution',
-                        error_classification: this.classifyDnsSecurityError(e),
+                        error_classification: this.classifyDnsSecurityError(error),
                         bypass_resilience: 'medium',
                         recovery_strategy: 'fallback_to_system_dns_bypass',
                     },
@@ -7319,10 +7400,10 @@ Object.assign(CertificatePinningBypass, {
                 // Store error forensics for analysis
                 this.state.unboundDnssecBypassErrors = this.state.unboundDnssecBypassErrors || [];
                 this.state.unboundDnssecBypassErrors.push(unboundDnssecBypassErrorForensics);
-                this.state.dnsSecurityBypassAttempts =
-                    (this.state.dnsSecurityBypassAttempts || 0) + 1;
-                this.state.dnsSecurityBypassFailures =
-                    (this.state.dnsSecurityBypassFailures || 0) + 1;
+                this.state.dnsSecurityBypassAttempts
+                    = (this.state.dnsSecurityBypassAttempts || 0) + 1;
+                this.state.dnsSecurityBypassFailures
+                    = (this.state.dnsSecurityBypassFailures || 0) + 1;
 
                 // Report comprehensive module bypass error for fallback strategy
                 send({
@@ -7368,13 +7449,12 @@ Object.assign(CertificatePinningBypass, {
                                 // Process CAA records for comprehensive analysis
                                 if (records && records.length > 0) {
                                     try {
-                                        dnssecRecordAnalysis.caa_records_analysis.record_count =
-                                            records.length;
-                                        dnssecRecordAnalysis.caa_records_analysis.processed_records =
-                                            [];
+                                        dnssecRecordAnalysis.caa_records_analysis.record_count
+                                            = records.length;
+                                        dnssecRecordAnalysis.caa_records_analysis.processed_records
+                                            = [];
 
-                                        for (let i = 0; i < records.length; i++) {
-                                            const record = records[i];
+                                        for (const [i, record] of records.entries()) {
                                             const recordAnalysis = {
                                                 index: i,
                                                 flags: record.getFlags ? record.getFlags() : 0,
@@ -7391,21 +7471,20 @@ Object.assign(CertificatePinningBypass, {
                                             );
                                         }
                                     } catch (recordError) {
-                                        dnssecRecordAnalysis.caa_records_analysis.processing_error =
-                                            recordError.message;
+                                        dnssecRecordAnalysis.caa_records_analysis.processing_error
+                                            = recordError.message;
                                     }
                                 }
 
                                 // Process RRSIG signatures for validation bypass
                                 if (rrsigs && rrsigs.length > 0) {
                                     try {
-                                        dnssecRecordAnalysis.rrsig_signatures_analysis.signature_count =
-                                            rrsigs.length;
-                                        dnssecRecordAnalysis.rrsig_signatures_analysis.processed_signatures =
-                                            [];
+                                        dnssecRecordAnalysis.rrsig_signatures_analysis.signature_count
+                                            = rrsigs.length;
+                                        dnssecRecordAnalysis.rrsig_signatures_analysis.processed_signatures
+                                            = [];
 
-                                        for (let j = 0; j < rrsigs.length; j++) {
-                                            const rrsig = rrsigs[j];
+                                        for (const [j, rrsig] of rrsigs.entries()) {
                                             const signatureAnalysis = {
                                                 index: j,
                                                 algorithm: rrsig.getAlgorithm
@@ -7427,8 +7506,8 @@ Object.assign(CertificatePinningBypass, {
                                             );
                                         }
                                     } catch (signatureError) {
-                                        dnssecRecordAnalysis.rrsig_signatures_analysis.processing_error =
-                                            signatureError.message;
+                                        dnssecRecordAnalysis.rrsig_signatures_analysis.processing_error
+                                            = signatureError.message;
                                     }
                                 }
 
@@ -7446,14 +7525,14 @@ Object.assign(CertificatePinningBypass, {
                                 return true;
                             }.bind(this);
                         }
-                    } catch (e) {
+                    } catch (error) {
                         // Comprehensive dnsjava DNSSEC CAA validation bypass error forensics
                         const dnsjavaBypassErrorForensics = {
                             timestamp: new Date().toISOString(),
                             error_type: 'dnsjava_dnssec_caa_validation_bypass',
-                            error_message: e.message || 'unknown_error',
-                            error_stack: e.stack || 'no_stack_trace',
-                            error_name: e.name || 'unknown_exception',
+                            error_message: error.message || 'unknown_error',
+                            error_stack: error.stack || 'no_stack_trace',
+                            error_name: error.name || 'unknown_exception',
                             bypass_context: 'org_xbill_DNS_security_DNSSECValidator',
                             security_implications: [
                                 'dnsjava_library_detection',
@@ -7464,7 +7543,7 @@ Object.assign(CertificatePinningBypass, {
                             forensic_data: {
                                 library_context: 'org.xbill.DNS.security',
                                 function_context: 'validateCaaRecords',
-                                error_classification: this.classifyJavaDnsError(e),
+                                error_classification: this.classifyJavaDnsError(error),
                                 bypass_resilience: 'medium',
                                 recovery_possible: true,
                                 alternative_methods: [
@@ -7477,10 +7556,10 @@ Object.assign(CertificatePinningBypass, {
                         // Store error forensics for analysis
                         this.state.dnsjavaBypassErrors = this.state.dnsjavaBypassErrors || [];
                         this.state.dnsjavaBypassErrors.push(dnsjavaBypassErrorForensics);
-                        this.state.javaDnsSecurityBypassAttempts =
-                            (this.state.javaDnsSecurityBypassAttempts || 0) + 1;
-                        this.state.javaDnsSecurityBypassFailures =
-                            (this.state.javaDnsSecurityBypassFailures || 0) + 1;
+                        this.state.javaDnsSecurityBypassAttempts
+                            = (this.state.javaDnsSecurityBypassAttempts || 0) + 1;
+                        this.state.javaDnsSecurityBypassFailures
+                            = (this.state.javaDnsSecurityBypassFailures || 0) + 1;
 
                         // Report dnsjava bypass error for strategy optimization
                         send({
@@ -7501,8 +7580,8 @@ Object.assign(CertificatePinningBypass, {
                         // Android DNSSEC CAA validator
                         const AndroidDnssecCaa = Java.use('android.net.DnssecCaaValidator');
                         if (AndroidDnssecCaa.validateAuthenticatedCaaRecords) {
-                            AndroidDnssecCaa.validateAuthenticatedCaaRecords.implementation =
-                                function (hostname, caaRecords, rrsigs) {
+                            AndroidDnssecCaa.validateAuthenticatedCaaRecords.implementation
+                                = function (hostname, caaRecords, rrsigs) {
                                     // Comprehensive Android DNSSEC CAA records and RRSIG analysis for bypass
                                     const androidDnssecAnalysis = {
                                         timestamp: new Date().toISOString(),
@@ -7527,14 +7606,14 @@ Object.assign(CertificatePinningBypass, {
                                     if (caaRecords) {
                                         try {
                                             if (Array.isArray(caaRecords)) {
-                                                androidDnssecAnalysis.android_caa_records_analysis.record_count =
-                                                    caaRecords.length;
-                                                androidDnssecAnalysis.android_caa_records_analysis.processed_android_records =
-                                                    [];
+                                                androidDnssecAnalysis.android_caa_records_analysis.record_count
+                                                    = caaRecords.length;
+                                                androidDnssecAnalysis.android_caa_records_analysis.processed_android_records
+                                                    = [];
 
                                                 caaRecords.forEach((caaRecord, index) => {
                                                     const androidRecordAnalysis = {
-                                                        index: index,
+                                                        index,
                                                         flags: caaRecord.flags || 0,
                                                         tag: caaRecord.tag || 'unknown',
                                                         value: caaRecord.value || 'unknown',
@@ -7547,8 +7626,8 @@ Object.assign(CertificatePinningBypass, {
                                                     );
                                                 });
                                             } else {
-                                                androidDnssecAnalysis.android_caa_records_analysis.single_record =
-                                                    {
+                                                androidDnssecAnalysis.android_caa_records_analysis.single_record
+                                                    = {
                                                         flags: caaRecords.flags || 0,
                                                         tag: caaRecords.tag || 'unknown',
                                                         value: caaRecords.value || 'unknown',
@@ -7556,8 +7635,8 @@ Object.assign(CertificatePinningBypass, {
                                                     };
                                             }
                                         } catch (caaError) {
-                                            androidDnssecAnalysis.android_caa_records_analysis.processing_error =
-                                                caaError.message;
+                                            androidDnssecAnalysis.android_caa_records_analysis.processing_error
+                                                = caaError.message;
                                         }
                                     }
 
@@ -7565,14 +7644,14 @@ Object.assign(CertificatePinningBypass, {
                                     if (rrsigs) {
                                         try {
                                             if (Array.isArray(rrsigs)) {
-                                                androidDnssecAnalysis.android_rrsig_analysis.signature_count =
-                                                    rrsigs.length;
-                                                androidDnssecAnalysis.android_rrsig_analysis.processed_android_signatures =
-                                                    [];
+                                                androidDnssecAnalysis.android_rrsig_analysis.signature_count
+                                                    = rrsigs.length;
+                                                androidDnssecAnalysis.android_rrsig_analysis.processed_android_signatures
+                                                    = [];
 
                                                 rrsigs.forEach((rrsig, index) => {
                                                     const androidSignatureAnalysis = {
-                                                        index: index,
+                                                        index,
                                                         algorithm: rrsig.algorithm || 0,
                                                         key_tag: rrsig.keyTag || 0,
                                                         signer_name: rrsig.signerName || 'unknown',
@@ -7588,8 +7667,8 @@ Object.assign(CertificatePinningBypass, {
                                                     );
                                                 });
                                             } else {
-                                                androidDnssecAnalysis.android_rrsig_analysis.single_signature =
-                                                    {
+                                                androidDnssecAnalysis.android_rrsig_analysis.single_signature
+                                                    = {
                                                         algorithm: rrsigs.algorithm || 0,
                                                         key_tag: rrsigs.keyTag || 0,
                                                         signer_name: rrsigs.signerName || 'unknown',
@@ -7597,8 +7676,8 @@ Object.assign(CertificatePinningBypass, {
                                                     };
                                             }
                                         } catch (rrsigError) {
-                                            androidDnssecAnalysis.android_rrsig_analysis.processing_error =
-                                                rrsigError.message;
+                                            androidDnssecAnalysis.android_rrsig_analysis.processing_error
+                                                = rrsigError.message;
                                         }
                                     }
 
@@ -7606,7 +7685,7 @@ Object.assign(CertificatePinningBypass, {
                                         type: 'bypass',
                                         target: 'certificate_pinning_bypass',
                                         action: 'android_dnssec_caa_validation_bypassed',
-                                        hostname: hostname,
+                                        hostname,
                                         android_dnssec_analysis: androidDnssecAnalysis,
                                         bypass_effectiveness: 'high',
                                         security_implications:
@@ -7615,14 +7694,14 @@ Object.assign(CertificatePinningBypass, {
                                     return true;
                                 };
                         }
-                    } catch (e) {
+                    } catch (error) {
                         // Comprehensive Android DNSSEC CAA validation bypass error forensics
                         const androidDnssecBypassErrorForensics = {
                             timestamp: new Date().toISOString(),
                             error_type: 'android_dnssec_caa_validation_bypass',
-                            error_message: e.message || 'unknown_error',
-                            error_stack: e.stack || 'no_stack_trace',
-                            error_name: e.name || 'unknown_exception',
+                            error_message: error.message || 'unknown_error',
+                            error_stack: error.stack || 'no_stack_trace',
+                            error_name: error.name || 'unknown_exception',
                             bypass_context: 'android_net_DnssecCaaValidator',
                             security_implications: [
                                 'android_dnssec_detection',
@@ -7634,7 +7713,7 @@ Object.assign(CertificatePinningBypass, {
                                 platform_context: 'android_system_security',
                                 library_context: 'android.net',
                                 function_context: 'validateAuthenticatedCaaRecords',
-                                error_classification: this.classifyAndroidDnsError(e),
+                                error_classification: this.classifyAndroidDnsError(error),
                                 bypass_resilience: 'high',
                                 recovery_possible: true,
                                 android_version_dependent: true,
@@ -7642,15 +7721,15 @@ Object.assign(CertificatePinningBypass, {
                         };
 
                         // Store error forensics for analysis
-                        this.state.androidDnssecBypassErrors =
-                            this.state.androidDnssecBypassErrors || [];
+                        this.state.androidDnssecBypassErrors
+                            = this.state.androidDnssecBypassErrors || [];
                         this.state.androidDnssecBypassErrors.push(
                             androidDnssecBypassErrorForensics
                         );
-                        this.state.androidDnsSecurityBypassAttempts =
-                            (this.state.androidDnsSecurityBypassAttempts || 0) + 1;
-                        this.state.androidDnsSecurityBypassFailures =
-                            (this.state.androidDnsSecurityBypassFailures || 0) + 1;
+                        this.state.androidDnsSecurityBypassAttempts
+                            = (this.state.androidDnsSecurityBypassAttempts || 0) + 1;
+                        this.state.androidDnsSecurityBypassFailures
+                            = (this.state.androidDnsSecurityBypassFailures || 0) + 1;
 
                         // Report Android DNS security bypass error for platform-specific optimization
                         send({
@@ -7675,13 +7754,13 @@ Object.assign(CertificatePinningBypass, {
                 try {
                     const { DNSSECValidator } = ObjC.classes;
                     if (DNSSECValidator) {
-                        const validateCaaRecords =
-                            DNSSECValidator['- validateCaaRecords:withSignatures:forDomain:'];
+                        const validateCaaRecords
+                            = DNSSECValidator['- validateCaaRecords:withSignatures:forDomain:'];
                         if (validateCaaRecords) {
                             Interceptor.replace(
                                 validateCaaRecords.implementation,
                                 new NativeCallback(
-                                    function (self, cmd, records, signatures, domain) {
+                                    (self, cmd, records, signatures, domain) => {
                                         const selfObject = new ObjC.Object(self);
                                         const selector = ObjC.selectorAsString(cmd);
                                         const recordsArray = records.isNull()
@@ -7703,7 +7782,7 @@ Object.assign(CertificatePinningBypass, {
                                             target: 'certificate_pinning_bypass',
                                             action: 'ios_dnssec_caa_validation_bypassed',
                                             domain: domain.toString(),
-                                            selector: selector,
+                                            selector,
                                             self_class: selfObject.$className,
                                             records_count: recordCount,
                                             signatures_count: signatureCount,
@@ -7711,21 +7790,21 @@ Object.assign(CertificatePinningBypass, {
                                         this.state
                                             .certificateAuthorityAuthorizationDnsSecBypassEvents++;
                                         return true;
-                                    }.bind(this),
+                                    },
                                     'bool',
                                     ['pointer', 'pointer', 'pointer', 'pointer', 'pointer']
                                 )
                             );
                         }
                     }
-                } catch (e) {
+                } catch (error) {
                     // Comprehensive iOS DNSSEC CAA validation bypass error forensics
                     const iosDnssecBypassErrorForensics = {
                         timestamp: new Date().toISOString(),
                         error_type: 'ios_dnssec_caa_validation_bypass',
-                        error_message: e.message || 'unknown_error',
-                        error_stack: e.stack || 'no_stack_trace',
-                        error_name: e.name || 'unknown_exception',
+                        error_message: error.message || 'unknown_error',
+                        error_stack: error.stack || 'no_stack_trace',
+                        error_name: error.name || 'unknown_exception',
                         bypass_context: 'ios_DNSSECValidator_objc_class',
                         security_implications: [
                             'ios_dnssec_detection',
@@ -7737,7 +7816,7 @@ Object.assign(CertificatePinningBypass, {
                             platform_context: 'ios_objective_c_runtime',
                             class_context: 'DNSSECValidator',
                             method_context: 'validateCaaRecords:withSignatures:forDomain:',
-                            error_classification: this.classifyIosDnsError(e),
+                            error_classification: this.classifyIosDnsError(error),
                             bypass_resilience: 'high',
                             recovery_possible: true,
                             objc_runtime_dependent: true,
@@ -7747,10 +7826,10 @@ Object.assign(CertificatePinningBypass, {
                     // Store error forensics for analysis
                     this.state.iosDnssecBypassErrors = this.state.iosDnssecBypassErrors || [];
                     this.state.iosDnssecBypassErrors.push(iosDnssecBypassErrorForensics);
-                    this.state.iosDnsSecurityBypassAttempts =
-                        (this.state.iosDnsSecurityBypassAttempts || 0) + 1;
-                    this.state.iosDnsSecurityBypassFailures =
-                        (this.state.iosDnsSecurityBypassFailures || 0) + 1;
+                    this.state.iosDnsSecurityBypassAttempts
+                        = (this.state.iosDnsSecurityBypassAttempts || 0) + 1;
+                    this.state.iosDnsSecurityBypassFailures
+                        = (this.state.iosDnsSecurityBypassFailures || 0) + 1;
 
                     // Report iOS DNS security bypass error for platform-specific optimization
                     send({
@@ -7773,18 +7852,18 @@ Object.assign(CertificatePinningBypass, {
                 target: 'certificate_pinning_bypass',
                 action: 'caa_dnssec_bypass_initialized',
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'certificate_pinning_bypass',
                 action: 'caa_dnssec_bypass_failed',
-                error: e.message,
+                error: error.message,
             });
         }
     },
 
     // 10. Certificate Transparency Gossip and Monitor Log Bypass - Distributed CT log verification systems
-    hookCertificateTransparencyGossipMonitorLogBypass: function () {
+    hookCertificateTransparencyGossipMonitorLogBypass() {
         send({
             type: 'info',
             target: 'certificate_pinning_bypass',
@@ -7815,7 +7894,7 @@ Object.assign(CertificatePinningBypass, {
                     gossipPatterns.forEach(pattern => {
                         const matches = Memory.scanSync(
                             Module.findBaseAddress(module),
-                            Module.findBaseAddress(module).add(0x1700000),
+                            Module.findBaseAddress(module).add(0x1_70_00_00),
                             pattern
                         );
                         matches.forEach(match => {
@@ -7828,7 +7907,7 @@ Object.assign(CertificatePinningBypass, {
                                 Interceptor.replace(
                                     gossipFunction,
                                     new NativeCallback(
-                                        function (certificate, gossip_data, monitors) {
+                                        (certificate, gossip_data, monitors) => {
                                             // Comprehensive Certificate Transparency gossip protocol analysis
                                             const ctGossipAnalysis = {
                                                 timestamp: new Date().toISOString(),
@@ -7849,42 +7928,42 @@ Object.assign(CertificatePinningBypass, {
                                             // Process certificate for CT transparency bypass
                                             if (certificate && !certificate.isNull()) {
                                                 try {
-                                                    const certData =
-                                                        certificate.readByteArray(1024); // Read certificate data
+                                                    const certData
+                                                        = certificate.readByteArray(1024); // Read certificate data
                                                     ctGossipAnalysis.certificate_analysis.data_extracted = true;
-                                                    ctGossipAnalysis.certificate_analysis.size =
-                                                        certData ? certData.byteLength : 0;
-                                                    ctGossipAnalysis.certificate_analysis.fingerprint =
-                                                        this.calculateCertificateFingerprint(
+                                                    ctGossipAnalysis.certificate_analysis.size
+                                                        = certData ? certData.byteLength : 0;
+                                                    ctGossipAnalysis.certificate_analysis.fingerprint
+                                                        = this.calculateCertificateFingerprint(
                                                             certData
                                                         );
-                                                    ctGossipAnalysis.certificate_analysis.bypass_action =
-                                                        'certificate_transparency_evasion';
+                                                    ctGossipAnalysis.certificate_analysis.bypass_action
+                                                        = 'certificate_transparency_evasion';
                                                 } catch (certError) {
-                                                    ctGossipAnalysis.certificate_analysis.extraction_error =
-                                                        certError.message;
+                                                    ctGossipAnalysis.certificate_analysis.extraction_error
+                                                        = certError.message;
                                                 }
                                             }
 
                                             // Process CT gossip data for transparency bypass
                                             if (gossip_data && !gossip_data.isNull()) {
                                                 try {
-                                                    const gossipBuffer =
-                                                        gossip_data.readByteArray(512); // Read gossip data
+                                                    const gossipBuffer
+                                                        = gossip_data.readByteArray(512); // Read gossip data
                                                     ctGossipAnalysis.gossip_data_analysis.data_extracted = true;
-                                                    ctGossipAnalysis.gossip_data_analysis.size =
-                                                        gossipBuffer ? gossipBuffer.byteLength : 0;
-                                                    ctGossipAnalysis.gossip_data_analysis.protocol_version =
-                                                        this.extractGossipProtocolVersion(
+                                                    ctGossipAnalysis.gossip_data_analysis.size
+                                                        = gossipBuffer ? gossipBuffer.byteLength : 0;
+                                                    ctGossipAnalysis.gossip_data_analysis.protocol_version
+                                                        = this.extractGossipProtocolVersion(
                                                             gossipBuffer
                                                         );
-                                                    ctGossipAnalysis.gossip_data_analysis.sth_entries =
-                                                        this.extractSthEntries(gossipBuffer);
-                                                    ctGossipAnalysis.gossip_data_analysis.bypass_action =
-                                                        'gossip_data_neutralization';
+                                                    ctGossipAnalysis.gossip_data_analysis.sth_entries
+                                                        = this.extractSthEntries(gossipBuffer);
+                                                    ctGossipAnalysis.gossip_data_analysis.bypass_action
+                                                        = 'gossip_data_neutralization';
                                                 } catch (gossipError) {
-                                                    ctGossipAnalysis.gossip_data_analysis.extraction_error =
-                                                        gossipError.message;
+                                                    ctGossipAnalysis.gossip_data_analysis.extraction_error
+                                                        = gossipError.message;
                                                 }
                                             }
 
@@ -7893,17 +7972,17 @@ Object.assign(CertificatePinningBypass, {
                                                 try {
                                                     const monitorsData = monitors.readPointer();
                                                     ctGossipAnalysis.monitors_analysis.monitors_detected = true;
-                                                    ctGossipAnalysis.monitors_analysis.monitors_address =
-                                                        monitors.toString();
-                                                    ctGossipAnalysis.monitors_analysis.monitor_count =
-                                                        this.extractMonitorCount(monitorsData);
-                                                    ctGossipAnalysis.monitors_analysis.monitor_endpoints =
-                                                        this.extractMonitorEndpoints(monitorsData);
-                                                    ctGossipAnalysis.monitors_analysis.bypass_action =
-                                                        'ct_monitors_evasion';
+                                                    ctGossipAnalysis.monitors_analysis.monitors_address
+                                                        = monitors.toString();
+                                                    ctGossipAnalysis.monitors_analysis.monitor_count
+                                                        = this.extractMonitorCount(monitorsData);
+                                                    ctGossipAnalysis.monitors_analysis.monitor_endpoints
+                                                        = this.extractMonitorEndpoints(monitorsData);
+                                                    ctGossipAnalysis.monitors_analysis.bypass_action
+                                                        = 'ct_monitors_evasion';
                                                 } catch (monitorError) {
-                                                    ctGossipAnalysis.monitors_analysis.extraction_error =
-                                                        monitorError.message;
+                                                    ctGossipAnalysis.monitors_analysis.extraction_error
+                                                        = monitorError.message;
                                                 }
                                             }
 
@@ -7911,29 +7990,29 @@ Object.assign(CertificatePinningBypass, {
                                                 type: 'bypass',
                                                 target: 'certificate_pinning_bypass',
                                                 action: 'ct_gossip_monitor_bypassed',
-                                                pattern: pattern,
+                                                pattern,
                                                 ct_gossip_analysis: ctGossipAnalysis,
                                                 bypass_effectiveness: 'high',
                                                 security_implications:
                                                     ctGossipAnalysis.security_implications,
-                                                module: module,
+                                                module,
                                             });
                                             this.state
                                                 .certificateTransparencyGossipMonitorLogBypassEvents++;
                                             return 1; // CT gossip verification success
-                                        }.bind(this),
+                                        },
                                         'int',
                                         ['pointer', 'pointer', 'pointer']
                                     )
                                 );
-                            } catch (e) {
+                            } catch (error) {
                                 // Comprehensive CT gossip monitor Chrome integration error forensics
                                 const ctGossipChromeErrorForensics = {
                                     timestamp: new Date().toISOString(),
                                     error_type: 'ct_gossip_monitor_chrome_integration',
-                                    error_message: e.message || 'unknown_error',
-                                    error_stack: e.stack || 'no_stack_trace',
-                                    error_name: e.name || 'unknown_exception',
+                                    error_message: error.message || 'unknown_error',
+                                    error_stack: error.stack || 'no_stack_trace',
+                                    error_name: error.name || 'unknown_exception',
                                     bypass_context:
                                         'chrome_certificate_transparency_gossip_monitor',
                                     security_implications: [
@@ -7945,7 +8024,7 @@ Object.assign(CertificatePinningBypass, {
                                     forensic_data: {
                                         function_context: 'chromeCtGossipMonitorLogBypass',
                                         browser_context: 'chrome_certificate_transparency',
-                                        error_classification: this.classifyCtGossipError(e),
+                                        error_classification: this.classifyCtGossipError(error),
                                         bypass_resilience: 'medium',
                                         recovery_possible: true,
                                         alternative_bypass_available: true,
@@ -7958,14 +8037,14 @@ Object.assign(CertificatePinningBypass, {
                             }
                         });
                     });
-                } catch (e) {
+                } catch (error) {
                     // Comprehensive CT gossip monitor Chrome outer integration error forensics
                     const ctGossipChromeOuterErrorForensics = {
                         timestamp: new Date().toISOString(),
                         error_type: 'ct_gossip_monitor_chrome_outer_integration',
-                        error_message: e.message || 'unknown_error',
-                        error_stack: e.stack || 'no_stack_trace',
-                        error_name: e.name || 'unknown_exception',
+                        error_message: error.message || 'unknown_error',
+                        error_stack: error.stack || 'no_stack_trace',
+                        error_name: error.name || 'unknown_exception',
                         bypass_context: 'chrome_certificate_transparency_gossip_monitor_outer',
                         security_implications: [
                             'ct_gossip_outer_bypass_failure',
@@ -7976,7 +8055,7 @@ Object.assign(CertificatePinningBypass, {
                         forensic_data: {
                             function_context: 'chromeCtGossipMonitorOuterBypass',
                             browser_context: 'chrome_certificate_transparency_module',
-                            error_classification: this.classifyCtGossipModuleError(e),
+                            error_classification: this.classifyCtGossipModuleError(error),
                             bypass_resilience: 'high',
                             recovery_possible: true,
                             alternative_bypass_available: true,
@@ -7991,9 +8070,10 @@ Object.assign(CertificatePinningBypass, {
             });
 
             // Hook Chrome's CT monitor integration
+            let chromeBase = null;
             try {
-                const chromeBase =
-                    Module.findBaseAddress('chrome.exe') || Module.findBaseAddress('libchrome.so');
+                chromeBase
+                    = Module.findBaseAddress('chrome.exe') || Module.findBaseAddress('libchrome.so');
                 if (chromeBase) {
                     const ctMonitorPatterns = [
                         'CertificateTransparencyMonitor',
@@ -8004,7 +8084,7 @@ Object.assign(CertificatePinningBypass, {
                     ctMonitorPatterns.forEach(pattern => {
                         const matches = Memory.scanSync(
                             chromeBase,
-                            chromeBase.add(0x2500000),
+                            chromeBase.add(0x2_50_00_00),
                             pattern
                         );
                         matches.forEach(match => {
@@ -8017,7 +8097,7 @@ Object.assign(CertificatePinningBypass, {
                                 Interceptor.replace(
                                     ctMonitorFunction,
                                     new NativeCallback(
-                                        function (origin, sct_data) {
+                                        (origin, sct_data) => {
                                             // Comprehensive Chrome CT monitor origin and SCT data analysis
                                             const chromeCTAnalysis = {
                                                 timestamp: new Date().toISOString(),
@@ -8041,17 +8121,17 @@ Object.assign(CertificatePinningBypass, {
                                                 try {
                                                     const originData = origin.readCString(256);
                                                     chromeCTAnalysis.origin_analysis.origin_extracted = true;
-                                                    chromeCTAnalysis.origin_analysis.origin_url =
-                                                        originData;
-                                                    chromeCTAnalysis.origin_analysis.origin_domain =
-                                                        this.extractDomainFromOrigin(originData);
-                                                    chromeCTAnalysis.origin_analysis.origin_scheme =
-                                                        this.extractSchemeFromOrigin(originData);
-                                                    chromeCTAnalysis.origin_analysis.bypass_action =
-                                                        'origin_validation_override';
+                                                    chromeCTAnalysis.origin_analysis.origin_url
+                                                        = originData;
+                                                    chromeCTAnalysis.origin_analysis.origin_domain
+                                                        = this.extractDomainFromOrigin(originData);
+                                                    chromeCTAnalysis.origin_analysis.origin_scheme
+                                                        = this.extractSchemeFromOrigin(originData);
+                                                    chromeCTAnalysis.origin_analysis.bypass_action
+                                                        = 'origin_validation_override';
                                                 } catch (originError) {
-                                                    chromeCTAnalysis.origin_analysis.extraction_error =
-                                                        originError.message;
+                                                    chromeCTAnalysis.origin_analysis.extraction_error
+                                                        = originError.message;
                                                 }
                                             }
 
@@ -8060,25 +8140,25 @@ Object.assign(CertificatePinningBypass, {
                                                 try {
                                                     const sctBuffer = sct_data.readByteArray(512); // Read SCT data
                                                     chromeCTAnalysis.sct_data_analysis.sct_extracted = true;
-                                                    chromeCTAnalysis.sct_data_analysis.sct_size =
-                                                        sctBuffer ? sctBuffer.byteLength : 0;
-                                                    chromeCTAnalysis.sct_data_analysis.sct_version =
-                                                        this.extractSctVersion(sctBuffer);
-                                                    chromeCTAnalysis.sct_data_analysis.log_id =
-                                                        this.extractLogId(sctBuffer);
-                                                    chromeCTAnalysis.sct_data_analysis.timestamp =
-                                                        this.extractSctTimestamp(sctBuffer);
-                                                    chromeCTAnalysis.sct_data_analysis.signature_algorithm =
-                                                        this.extractSctSignatureAlgorithm(
+                                                    chromeCTAnalysis.sct_data_analysis.sct_size
+                                                        = sctBuffer ? sctBuffer.byteLength : 0;
+                                                    chromeCTAnalysis.sct_data_analysis.sct_version
+                                                        = this.extractSctVersion(sctBuffer);
+                                                    chromeCTAnalysis.sct_data_analysis.log_id
+                                                        = this.extractLogId(sctBuffer);
+                                                    chromeCTAnalysis.sct_data_analysis.timestamp
+                                                        = this.extractSctTimestamp(sctBuffer);
+                                                    chromeCTAnalysis.sct_data_analysis.signature_algorithm
+                                                        = this.extractSctSignatureAlgorithm(
                                                             sctBuffer
                                                         );
-                                                    chromeCTAnalysis.sct_data_analysis.signature_data =
-                                                        this.extractSctSignature(sctBuffer);
-                                                    chromeCTAnalysis.sct_data_analysis.bypass_action =
-                                                        'sct_validation_neutralization';
+                                                    chromeCTAnalysis.sct_data_analysis.signature_data
+                                                        = this.extractSctSignature(sctBuffer);
+                                                    chromeCTAnalysis.sct_data_analysis.bypass_action
+                                                        = 'sct_validation_neutralization';
                                                 } catch (sctError) {
-                                                    chromeCTAnalysis.sct_data_analysis.extraction_error =
-                                                        sctError.message;
+                                                    chromeCTAnalysis.sct_data_analysis.extraction_error
+                                                        = sctError.message;
                                                 }
                                             }
 
@@ -8086,7 +8166,7 @@ Object.assign(CertificatePinningBypass, {
                                                 type: 'bypass',
                                                 target: 'certificate_pinning_bypass',
                                                 action: 'chrome_ct_monitor_bypassed',
-                                                pattern: pattern,
+                                                pattern,
                                                 chrome_ct_analysis: chromeCTAnalysis,
                                                 bypass_effectiveness: 'high',
                                                 security_implications:
@@ -8095,19 +8175,19 @@ Object.assign(CertificatePinningBypass, {
                                             this.state
                                                 .certificateTransparencyGossipMonitorLogBypassEvents++;
                                             // Skip CT monitoring
-                                        }.bind(this),
+                                        },
                                         'void',
                                         ['pointer', 'pointer']
                                     )
                                 );
-                            } catch (e) {
+                            } catch (error) {
                                 // Comprehensive Chrome CT monitor pattern matching error forensics
                                 const chromeCTPatternMatchingErrorForensics = {
                                     timestamp: new Date().toISOString(),
                                     error_type: 'chrome_ct_monitor_pattern_matching',
-                                    error_message: e.message || 'unknown_error',
-                                    error_stack: e.stack || 'no_stack_trace',
-                                    error_name: e.name || 'unknown_exception',
+                                    error_message: error.message || 'unknown_error',
+                                    error_stack: error.stack || 'no_stack_trace',
+                                    error_name: error.name || 'unknown_exception',
                                     bypass_context:
                                         'chrome_certificate_transparency_monitor_pattern_matching',
                                     security_implications: [
@@ -8122,7 +8202,7 @@ Object.assign(CertificatePinningBypass, {
                                         browser_context:
                                             'chrome_certificate_transparency_native_function',
                                         error_classification:
-                                            this.classifyChromeCTPatternMatchingError(e),
+                                            this.classifyChromeCTPatternMatchingError(error),
                                         bypass_resilience: 'medium',
                                         recovery_possible: true,
                                         alternative_bypass_available: true,
@@ -8137,14 +8217,14 @@ Object.assign(CertificatePinningBypass, {
                         });
                     });
                 }
-            } catch (e) {
+            } catch (error) {
                 // Comprehensive Chrome CT monitor pattern enumeration outer error forensics
                 const chromeCTPatternEnumerationErrorForensics = {
                     timestamp: new Date().toISOString(),
                     error_type: 'chrome_ct_monitor_pattern_enumeration_outer',
-                    error_message: e.message || 'unknown_error',
-                    error_stack: e.stack || 'no_stack_trace',
-                    error_name: e.name || 'unknown_exception',
+                    error_message: error.message || 'unknown_error',
+                    error_stack: error.stack || 'no_stack_trace',
+                    error_name: error.name || 'unknown_exception',
                     bypass_context:
                         'chrome_certificate_transparency_monitor_pattern_enumeration_outer',
                     security_implications: [
@@ -8156,7 +8236,7 @@ Object.assign(CertificatePinningBypass, {
                     forensic_data: {
                         function_context: 'chromeCTMonitorPatternEnumerationOuterBypass',
                         browser_context: 'chrome_certificate_transparency_monitor_infrastructure',
-                        error_classification: this.classifyChromeCTPatternEnumerationError(e),
+                        error_classification: this.classifyChromeCTPatternEnumerationError(error),
                         bypass_resilience: 'high',
                         recovery_possible: true,
                         alternative_bypass_available: true,
@@ -8173,8 +8253,8 @@ Object.assign(CertificatePinningBypass, {
             // Hook Firefox CT monitoring
             if (typeof Components !== 'undefined') {
                 try {
-                    const ctMonitorService =
-                        Components.classes[
+                    const ctMonitorService
+                        = Components.classes[
                             '@mozilla.org/security/certificate-transparency-monitor;1'
                         ];
                     if (ctMonitorService) {
@@ -8188,7 +8268,7 @@ Object.assign(CertificatePinningBypass, {
                         ) {
                             const firefoxSctAnalysis = {
                                 timestamp: new Date().toISOString(),
-                                hostname: hostname,
+                                hostname,
                                 certificate_analysis: this.analyzeFirefoxCertificate(certificate),
                                 scts_analysis: this.analyzeFirefoxScts(scts),
                                 original_function_analysis:
@@ -8206,14 +8286,14 @@ Object.assign(CertificatePinningBypass, {
                             if (originalReportSct && typeof originalReportSct === 'function') {
                                 try {
                                     firefoxSctAnalysis.original_function_analysis.function_detected = true;
-                                    firefoxSctAnalysis.original_function_analysis.function_name =
-                                        originalReportSct.name || 'anonymous';
-                                    firefoxSctAnalysis.original_function_analysis.function_length =
-                                        originalReportSct.length;
-                                    firefoxSctAnalysis.original_function_analysis.function_string =
-                                        originalReportSct.toString().substring(0, 200);
-                                    firefoxSctAnalysis.original_function_analysis.bypass_action =
-                                        'original_function_neutralization';
+                                    firefoxSctAnalysis.original_function_analysis.function_name
+                                        = originalReportSct.name || 'anonymous';
+                                    firefoxSctAnalysis.original_function_analysis.function_length
+                                        = originalReportSct.length;
+                                    firefoxSctAnalysis.original_function_analysis.function_string
+                                        = originalReportSct.toString().slice(0, 200);
+                                    firefoxSctAnalysis.original_function_analysis.bypass_action
+                                        = 'original_function_neutralization';
 
                                     // Conditionally invoke original function for analysis if safe
                                     if (this.shouldAnalyzeOriginalFunction()) {
@@ -8224,18 +8304,18 @@ Object.assign(CertificatePinningBypass, {
                                                 scts,
                                                 hostname
                                             );
-                                            firefoxSctAnalysis.original_function_analysis.invocation_result =
-                                                analysisResult;
+                                            firefoxSctAnalysis.original_function_analysis.invocation_result
+                                                = analysisResult;
                                             firefoxSctAnalysis.original_function_analysis.invocation_successful = true;
                                         } catch (invocationError) {
-                                            firefoxSctAnalysis.original_function_analysis.invocation_error =
-                                                invocationError.message;
+                                            firefoxSctAnalysis.original_function_analysis.invocation_error
+                                                = invocationError.message;
                                             firefoxSctAnalysis.original_function_analysis.invocation_successful = false;
                                         }
                                     }
                                 } catch (analysisError) {
-                                    firefoxSctAnalysis.original_function_analysis.analysis_error =
-                                        analysisError.message;
+                                    firefoxSctAnalysis.original_function_analysis.analysis_error
+                                        = analysisError.message;
                                 }
                             }
 
@@ -8243,7 +8323,7 @@ Object.assign(CertificatePinningBypass, {
                                 type: 'bypass',
                                 target: 'certificate_pinning_bypass',
                                 action: 'firefox_ct_monitoring_bypassed',
-                                hostname: hostname,
+                                hostname,
                                 firefox_sct_analysis: firefoxSctAnalysis,
                                 bypass_effectiveness: 'high',
                                 security_implications: firefoxSctAnalysis.security_implications,
@@ -8252,14 +8332,14 @@ Object.assign(CertificatePinningBypass, {
                             // Skip CT monitoring
                         }.bind(this);
                     }
-                } catch (e) {
+                } catch (error) {
                     // Comprehensive Firefox CT monitoring integration error forensics
                     const firefoxCtMonitoringErrorForensics = {
                         timestamp: new Date().toISOString(),
                         error_type: 'firefox_ct_monitoring_integration',
-                        error_message: e.message || 'unknown_error',
-                        error_stack: e.stack || 'no_stack_trace',
-                        error_name: e.name || 'unknown_exception',
+                        error_message: error.message || 'unknown_error',
+                        error_stack: error.stack || 'no_stack_trace',
+                        error_name: error.name || 'unknown_exception',
                         bypass_context: 'firefox_certificate_transparency_monitor',
                         security_implications: [
                             'firefox_ct_bypass_failure',
@@ -8270,7 +8350,7 @@ Object.assign(CertificatePinningBypass, {
                         forensic_data: {
                             function_context: 'firefoxCtMonitoringBypass',
                             browser_context: 'firefox_certificate_transparency_service',
-                            error_classification: this.classifyFirefoxCtError(e),
+                            error_classification: this.classifyFirefoxCtError(error),
                             bypass_resilience: 'high',
                             recovery_possible: true,
                             alternative_bypass_available: true,
@@ -8317,27 +8397,27 @@ Object.assign(CertificatePinningBypass, {
                                 if (certificate) {
                                     try {
                                         conscryptGossipAnalysis.certificate_analysis.certificate_detected = true;
-                                        conscryptGossipAnalysis.certificate_analysis.certificate_class =
-                                            certificate.getClass().getName();
-                                        conscryptGossipAnalysis.certificate_analysis.certificate_type =
-                                            certificate.getType ? certificate.getType() : 'unknown';
-                                        conscryptGossipAnalysis.certificate_analysis.subject_dn =
-                                            certificate.getSubjectDN
+                                        conscryptGossipAnalysis.certificate_analysis.certificate_class
+                                            = certificate.getClass().getName();
+                                        conscryptGossipAnalysis.certificate_analysis.certificate_type
+                                            = certificate.getType ? certificate.getType() : 'unknown';
+                                        conscryptGossipAnalysis.certificate_analysis.subject_dn
+                                            = certificate.getSubjectDN
                                                 ? certificate.getSubjectDN().toString()
                                                 : 'unknown';
-                                        conscryptGossipAnalysis.certificate_analysis.issuer_dn =
-                                            certificate.getIssuerDN
+                                        conscryptGossipAnalysis.certificate_analysis.issuer_dn
+                                            = certificate.getIssuerDN
                                                 ? certificate.getIssuerDN().toString()
                                                 : 'unknown';
-                                        conscryptGossipAnalysis.certificate_analysis.serial_number =
-                                            certificate.getSerialNumber
+                                        conscryptGossipAnalysis.certificate_analysis.serial_number
+                                            = certificate.getSerialNumber
                                                 ? certificate.getSerialNumber().toString()
                                                 : 'unknown';
-                                        conscryptGossipAnalysis.certificate_analysis.bypass_action =
-                                            'conscrypt_certificate_validation_override';
+                                        conscryptGossipAnalysis.certificate_analysis.bypass_action
+                                            = 'conscrypt_certificate_validation_override';
                                     } catch (certError) {
-                                        conscryptGossipAnalysis.certificate_analysis.analysis_error =
-                                            certError.message;
+                                        conscryptGossipAnalysis.certificate_analysis.analysis_error
+                                            = certError.message;
                                     }
                                 }
 
@@ -8345,21 +8425,21 @@ Object.assign(CertificatePinningBypass, {
                                 if (gossipData) {
                                     try {
                                         conscryptGossipAnalysis.gossip_data_analysis.gossip_data_detected = true;
-                                        conscryptGossipAnalysis.gossip_data_analysis.gossip_data_class =
-                                            gossipData.getClass().getName();
+                                        conscryptGossipAnalysis.gossip_data_analysis.gossip_data_class
+                                            = gossipData.getClass().getName();
 
                                         // Extract gossip protocol data
                                         if (gossipData.getGossipEntries) {
                                             const entries = gossipData.getGossipEntries();
-                                            conscryptGossipAnalysis.gossip_data_analysis.entries_count =
-                                                entries ? entries.size() : 0;
+                                            conscryptGossipAnalysis.gossip_data_analysis.entries_count
+                                                = entries ? entries.size() : 0;
                                             conscryptGossipAnalysis.gossip_data_analysis.entries_extracted = true;
                                         }
 
                                         if (gossipData.getSignedTreeHead) {
                                             const sth = gossipData.getSignedTreeHead();
-                                            conscryptGossipAnalysis.gossip_data_analysis.signed_tree_head =
-                                                {
+                                            conscryptGossipAnalysis.gossip_data_analysis.signed_tree_head
+                                                = {
                                                     tree_size: sth.getTreeSize
                                                         ? sth.getTreeSize()
                                                         : 0,
@@ -8372,11 +8452,11 @@ Object.assign(CertificatePinningBypass, {
                                                 };
                                         }
 
-                                        conscryptGossipAnalysis.gossip_data_analysis.bypass_action =
-                                            'conscrypt_gossip_data_neutralization';
+                                        conscryptGossipAnalysis.gossip_data_analysis.bypass_action
+                                            = 'conscrypt_gossip_data_neutralization';
                                     } catch (gossipError) {
-                                        conscryptGossipAnalysis.gossip_data_analysis.analysis_error =
-                                            gossipError.message;
+                                        conscryptGossipAnalysis.gossip_data_analysis.analysis_error
+                                            = gossipError.message;
                                     }
                                 }
 
@@ -8393,14 +8473,14 @@ Object.assign(CertificatePinningBypass, {
                                 return true;
                             }.bind(this);
                         }
-                    } catch (e) {
+                    } catch (error) {
                         // Comprehensive Java CT gossip implementations error forensics
                         const javaCtGossipErrorForensics = {
                             timestamp: new Date().toISOString(),
                             error_type: 'java_ct_gossip_implementations',
-                            error_message: e.message || 'unknown_error',
-                            error_stack: e.stack || 'no_stack_trace',
-                            error_name: e.name || 'unknown_exception',
+                            error_message: error.message || 'unknown_error',
+                            error_stack: error.stack || 'no_stack_trace',
+                            error_name: error.name || 'unknown_exception',
                             bypass_context: 'java_certificate_transparency_gossip_validator',
                             security_implications: [
                                 'java_ct_gossip_bypass_failure',
@@ -8411,7 +8491,7 @@ Object.assign(CertificatePinningBypass, {
                             forensic_data: {
                                 function_context: 'javaCtGossipValidatorBypass',
                                 runtime_context: 'java_conscrypt_certificate_transparency',
-                                error_classification: this.classifyJavaCtGossipError(e),
+                                error_classification: this.classifyJavaCtGossipError(error),
                                 bypass_resilience: 'high',
                                 recovery_possible: true,
                                 alternative_bypass_available: true,
@@ -8438,7 +8518,7 @@ Object.assign(CertificatePinningBypass, {
                                 // Comprehensive Android CT certificate and SCTs monitoring analysis
                                 const androidCtMonitorAnalysis = {
                                     timestamp: new Date().toISOString(),
-                                    hostname: hostname,
+                                    hostname,
                                     certificate_analysis:
                                         this.analyzeAndroidCtCertificate(certificate),
                                     scts_analysis: this.analyzeAndroidCtScts(scts),
@@ -8456,25 +8536,25 @@ Object.assign(CertificatePinningBypass, {
                                 if (certificate) {
                                     try {
                                         androidCtMonitorAnalysis.certificate_analysis.certificate_detected = true;
-                                        androidCtMonitorAnalysis.certificate_analysis.certificate_class =
-                                            certificate.getClass().getName();
+                                        androidCtMonitorAnalysis.certificate_analysis.certificate_class
+                                            = certificate.getClass().getName();
 
                                         // Extract Android-specific certificate details
                                         if (certificate.getSubjectX500Principal) {
-                                            androidCtMonitorAnalysis.certificate_analysis.subject_principal =
-                                                certificate.getSubjectX500Principal().toString();
+                                            androidCtMonitorAnalysis.certificate_analysis.subject_principal
+                                                = certificate.getSubjectX500Principal().toString();
                                         }
                                         if (certificate.getIssuerX500Principal) {
-                                            androidCtMonitorAnalysis.certificate_analysis.issuer_principal =
-                                                certificate.getIssuerX500Principal().toString();
+                                            androidCtMonitorAnalysis.certificate_analysis.issuer_principal
+                                                = certificate.getIssuerX500Principal().toString();
                                         }
                                         if (certificate.getSerialNumber) {
-                                            androidCtMonitorAnalysis.certificate_analysis.serial_number =
-                                                certificate.getSerialNumber().toString();
+                                            androidCtMonitorAnalysis.certificate_analysis.serial_number
+                                                = certificate.getSerialNumber().toString();
                                         }
                                         if (certificate.getNotBefore && certificate.getNotAfter) {
-                                            androidCtMonitorAnalysis.certificate_analysis.validity_period =
-                                                {
+                                            androidCtMonitorAnalysis.certificate_analysis.validity_period
+                                                = {
                                                     not_before: certificate
                                                         .getNotBefore()
                                                         .toString(),
@@ -8482,11 +8562,11 @@ Object.assign(CertificatePinningBypass, {
                                                 };
                                         }
 
-                                        androidCtMonitorAnalysis.certificate_analysis.bypass_action =
-                                            'android_certificate_monitoring_bypass';
+                                        androidCtMonitorAnalysis.certificate_analysis.bypass_action
+                                            = 'android_certificate_monitoring_bypass';
                                     } catch (certError) {
-                                        androidCtMonitorAnalysis.certificate_analysis.analysis_error =
-                                            certError.message;
+                                        androidCtMonitorAnalysis.certificate_analysis.analysis_error
+                                            = certError.message;
                                     }
                                 }
 
@@ -8499,10 +8579,10 @@ Object.assign(CertificatePinningBypass, {
                                             const sctsCount = Array.isArray(scts)
                                                 ? scts.length
                                                 : scts.size();
-                                            androidCtMonitorAnalysis.scts_analysis.scts_count =
-                                                sctsCount;
-                                            androidCtMonitorAnalysis.scts_analysis.processed_scts =
-                                                [];
+                                            androidCtMonitorAnalysis.scts_analysis.scts_count
+                                                = sctsCount;
+                                            androidCtMonitorAnalysis.scts_analysis.processed_scts
+                                                = [];
 
                                             // Process individual SCTs
                                             for (let i = 0; i < Math.min(sctsCount, 10); i++) {
@@ -8525,8 +8605,8 @@ Object.assign(CertificatePinningBypass, {
                                                         signature_algorithm:
                                                             sct.getSignatureAlgorithm
                                                                 ? sct
-                                                                      .getSignatureAlgorithm()
-                                                                      .toString()
+                                                                    .getSignatureAlgorithm()
+                                                                    .toString()
                                                                 : 'unknown',
                                                         bypass_action:
                                                             'android_sct_validation_override',
@@ -8535,8 +8615,8 @@ Object.assign(CertificatePinningBypass, {
                                                         sctAnalysis
                                                     );
                                                 } catch (sctProcessingError) {
-                                                    androidCtMonitorAnalysis.scts_analysis.sct_processing_errors =
-                                                        androidCtMonitorAnalysis.scts_analysis
+                                                    androidCtMonitorAnalysis.scts_analysis.sct_processing_errors
+                                                        = androidCtMonitorAnalysis.scts_analysis
                                                             .sct_processing_errors || [];
                                                     androidCtMonitorAnalysis.scts_analysis.sct_processing_errors.push(
                                                         sctProcessingError.message
@@ -8545,11 +8625,11 @@ Object.assign(CertificatePinningBypass, {
                                             }
                                         }
 
-                                        androidCtMonitorAnalysis.scts_analysis.bypass_action =
-                                            'android_scts_monitoring_neutralization';
+                                        androidCtMonitorAnalysis.scts_analysis.bypass_action
+                                            = 'android_scts_monitoring_neutralization';
                                     } catch (sctsError) {
-                                        androidCtMonitorAnalysis.scts_analysis.analysis_error =
-                                            sctsError.message;
+                                        androidCtMonitorAnalysis.scts_analysis.analysis_error
+                                            = sctsError.message;
                                     }
                                 }
 
@@ -8557,7 +8637,7 @@ Object.assign(CertificatePinningBypass, {
                                     type: 'bypass',
                                     target: 'certificate_pinning_bypass',
                                     action: 'android_ct_monitoring_bypassed',
-                                    hostname: hostname,
+                                    hostname,
                                     android_ct_monitor_analysis: androidCtMonitorAnalysis,
                                     bypass_effectiveness: 'high',
                                     security_implications:
@@ -8566,14 +8646,14 @@ Object.assign(CertificatePinningBypass, {
                                 // Skip monitoring
                             };
                         }
-                    } catch (e) {
+                    } catch (error) {
                         // Comprehensive Android CT monitor integration error forensics
                         const androidCtMonitorErrorForensics = {
                             timestamp: new Date().toISOString(),
                             error_type: 'android_ct_monitor_integration',
-                            error_message: e.message || 'unknown_error',
-                            error_stack: e.stack || 'no_stack_trace',
-                            error_name: e.name || 'unknown_exception',
+                            error_message: error.message || 'unknown_error',
+                            error_stack: error.stack || 'no_stack_trace',
+                            error_name: error.name || 'unknown_exception',
                             bypass_context: 'android_certificate_transparency_monitor',
                             security_implications: [
                                 'android_ct_bypass_failure',
@@ -8584,7 +8664,7 @@ Object.assign(CertificatePinningBypass, {
                             forensic_data: {
                                 function_context: 'androidCtMonitorBypass',
                                 platform_context: 'android_security_net_config',
-                                error_classification: this.classifyAndroidCtError(e),
+                                error_classification: this.classifyAndroidCtError(error),
                                 bypass_resilience: 'high',
                                 recovery_possible: true,
                                 alternative_bypass_available: true,
@@ -8608,11 +8688,15 @@ Object.assign(CertificatePinningBypass, {
                 ];
 
                 distributedCtPatterns.forEach(pattern => {
-                    const sslBase =
-                        Module.findBaseAddress('libssl.so') ||
-                        Module.findBaseAddress('libssl.dylib');
+                    const sslBase
+                        = Module.findBaseAddress('libssl.so')
+                        || Module.findBaseAddress('libssl.dylib');
                     if (sslBase) {
-                        const matches = Memory.scanSync(sslBase, sslBase.add(0x1000000), pattern);
+                        const matches = Memory.scanSync(
+                            sslBase,
+                            sslBase.add(0x1_00_00_00),
+                            pattern
+                        );
                         matches.forEach(match => {
                             try {
                                 const distributedCtFunction = new NativeFunction(
@@ -8623,7 +8707,7 @@ Object.assign(CertificatePinningBypass, {
                                 Interceptor.replace(
                                     distributedCtFunction,
                                     new NativeCallback(
-                                        function (log_client, request, timeout) {
+                                        (log_client, request, timeout) => {
                                             // Comprehensive distributed CT verification analysis and bypass
                                             const distributedCtAnalysis = {
                                                 timestamp: new Date().toISOString(),
@@ -8646,31 +8730,31 @@ Object.assign(CertificatePinningBypass, {
                                             if (log_client && !log_client.isNull()) {
                                                 try {
                                                     distributedCtAnalysis.log_client_analysis.client_detected = true;
-                                                    distributedCtAnalysis.log_client_analysis.client_address =
-                                                        log_client.toString();
+                                                    distributedCtAnalysis.log_client_analysis.client_address
+                                                        = log_client.toString();
 
                                                     // Extract log client configuration data
                                                     const clientConfig = log_client.readPointer();
                                                     if (clientConfig && !clientConfig.isNull()) {
-                                                        distributedCtAnalysis.log_client_analysis.config_address =
-                                                            clientConfig.toString();
-                                                        distributedCtAnalysis.log_client_analysis.endpoint_url =
-                                                            this.extractLogClientEndpoint(
+                                                        distributedCtAnalysis.log_client_analysis.config_address
+                                                            = clientConfig.toString();
+                                                        distributedCtAnalysis.log_client_analysis.endpoint_url
+                                                            = this.extractLogClientEndpoint(
                                                                 clientConfig
                                                             );
-                                                        distributedCtAnalysis.log_client_analysis.client_version =
-                                                            this.extractLogClientVersion(
+                                                        distributedCtAnalysis.log_client_analysis.client_version
+                                                            = this.extractLogClientVersion(
                                                                 clientConfig
                                                             );
-                                                        distributedCtAnalysis.log_client_analysis.authentication_data =
-                                                            this.extractLogClientAuth(clientConfig);
+                                                        distributedCtAnalysis.log_client_analysis.authentication_data
+                                                            = this.extractLogClientAuth(clientConfig);
                                                     }
 
-                                                    distributedCtAnalysis.log_client_analysis.bypass_action =
-                                                        'log_client_neutralization';
+                                                    distributedCtAnalysis.log_client_analysis.bypass_action
+                                                        = 'log_client_neutralization';
                                                 } catch (clientError) {
-                                                    distributedCtAnalysis.log_client_analysis.extraction_error =
-                                                        clientError.message;
+                                                    distributedCtAnalysis.log_client_analysis.extraction_error
+                                                        = clientError.message;
                                                 }
                                             }
 
@@ -8678,59 +8762,59 @@ Object.assign(CertificatePinningBypass, {
                                             if (request && !request.isNull()) {
                                                 try {
                                                     distributedCtAnalysis.request_analysis.request_detected = true;
-                                                    distributedCtAnalysis.request_analysis.request_address =
-                                                        request.toString();
+                                                    distributedCtAnalysis.request_analysis.request_address
+                                                        = request.toString();
 
                                                     // Extract CT verification request data
                                                     const requestData = request.readByteArray(1024); // Read request data
                                                     if (requestData) {
-                                                        distributedCtAnalysis.request_analysis.request_size =
-                                                            requestData.byteLength;
-                                                        distributedCtAnalysis.request_analysis.request_type =
-                                                            this.extractCtRequestType(requestData);
-                                                        distributedCtAnalysis.request_analysis.certificate_chain =
-                                                            this.extractRequestCertificateChain(
+                                                        distributedCtAnalysis.request_analysis.request_size
+                                                            = requestData.byteLength;
+                                                        distributedCtAnalysis.request_analysis.request_type
+                                                            = this.extractCtRequestType(requestData);
+                                                        distributedCtAnalysis.request_analysis.certificate_chain
+                                                            = this.extractRequestCertificateChain(
                                                                 requestData
                                                             );
-                                                        distributedCtAnalysis.request_analysis.sct_requirements =
-                                                            this.extractSctRequirements(
+                                                        distributedCtAnalysis.request_analysis.sct_requirements
+                                                            = this.extractSctRequirements(
                                                                 requestData
                                                             );
-                                                        distributedCtAnalysis.request_analysis.validation_policy =
-                                                            this.extractValidationPolicy(
+                                                        distributedCtAnalysis.request_analysis.validation_policy
+                                                            = this.extractValidationPolicy(
                                                                 requestData
                                                             );
                                                     }
 
-                                                    distributedCtAnalysis.request_analysis.bypass_action =
-                                                        'ct_request_manipulation';
+                                                    distributedCtAnalysis.request_analysis.bypass_action
+                                                        = 'ct_request_manipulation';
                                                 } catch (requestError) {
-                                                    distributedCtAnalysis.request_analysis.extraction_error =
-                                                        requestError.message;
+                                                    distributedCtAnalysis.request_analysis.extraction_error
+                                                        = requestError.message;
                                                 }
                                             }
 
                                             // Process CT verification timeout for resilience bypass
                                             if (timeout !== null && timeout !== undefined) {
                                                 try {
-                                                    const timeoutValue =
-                                                        typeof timeout === 'number'
+                                                    const timeoutValue
+                                                        = typeof timeout === 'number'
                                                             ? timeout
                                                             : timeout.toInt32();
                                                     distributedCtAnalysis.timeout_analysis.timeout_detected = true;
-                                                    distributedCtAnalysis.timeout_analysis.timeout_value_ms =
-                                                        timeoutValue;
-                                                    distributedCtAnalysis.timeout_analysis.timeout_category =
-                                                        this.categorizeCtTimeout(timeoutValue);
-                                                    distributedCtAnalysis.timeout_analysis.bypass_strategy =
-                                                        this.optimizeTimeoutBypass(timeoutValue);
-                                                    distributedCtAnalysis.timeout_analysis.resilience_implications =
-                                                        this.assessTimeoutResilience(timeoutValue);
-                                                    distributedCtAnalysis.timeout_analysis.bypass_action =
-                                                        'timeout_manipulation_for_rapid_bypass';
+                                                    distributedCtAnalysis.timeout_analysis.timeout_value_ms
+                                                        = timeoutValue;
+                                                    distributedCtAnalysis.timeout_analysis.timeout_category
+                                                        = this.categorizeCtTimeout(timeoutValue);
+                                                    distributedCtAnalysis.timeout_analysis.bypass_strategy
+                                                        = this.optimizeTimeoutBypass(timeoutValue);
+                                                    distributedCtAnalysis.timeout_analysis.resilience_implications
+                                                        = this.assessTimeoutResilience(timeoutValue);
+                                                    distributedCtAnalysis.timeout_analysis.bypass_action
+                                                        = 'timeout_manipulation_for_rapid_bypass';
                                                 } catch (timeoutError) {
-                                                    distributedCtAnalysis.timeout_analysis.extraction_error =
-                                                        timeoutError.message;
+                                                    distributedCtAnalysis.timeout_analysis.extraction_error
+                                                        = timeoutError.message;
                                                 }
                                             }
 
@@ -8738,7 +8822,7 @@ Object.assign(CertificatePinningBypass, {
                                                 type: 'bypass',
                                                 target: 'certificate_pinning_bypass',
                                                 action: 'distributed_ct_verification_bypassed',
-                                                pattern: pattern,
+                                                pattern,
                                                 distributed_ct_analysis: distributedCtAnalysis,
                                                 bypass_effectiveness: 'high',
                                                 security_implications:
@@ -8747,19 +8831,19 @@ Object.assign(CertificatePinningBypass, {
                                             this.state
                                                 .certificateTransparencyGossipMonitorLogBypassEvents++;
                                             return 1; // Distributed verification success
-                                        }.bind(this),
+                                        },
                                         'int',
                                         ['pointer', 'pointer', 'int']
                                     )
                                 );
-                            } catch (e) {
+                            } catch (error) {
                                 // Comprehensive distributed CT log verification inner error forensics
                                 const distributedCtInnerErrorForensics = {
                                     timestamp: new Date().toISOString(),
                                     error_type: 'distributed_ct_log_verification_inner',
-                                    error_message: e.message || 'unknown_error',
-                                    error_stack: e.stack || 'no_stack_trace',
-                                    error_name: e.name || 'unknown_exception',
+                                    error_message: error.message || 'unknown_error',
+                                    error_stack: error.stack || 'no_stack_trace',
+                                    error_name: error.name || 'unknown_exception',
                                     bypass_context:
                                         'distributed_certificate_transparency_log_verification_inner',
                                     security_implications: [
@@ -8773,7 +8857,7 @@ Object.assign(CertificatePinningBypass, {
                                         infrastructure_context:
                                             'distributed_ct_log_client_verification',
                                         error_classification:
-                                            this.classifyDistributedCtInnerError(e),
+                                            this.classifyDistributedCtInnerError(error),
                                         bypass_resilience: 'medium',
                                         recovery_possible: true,
                                         alternative_bypass_available: true,
@@ -8788,14 +8872,14 @@ Object.assign(CertificatePinningBypass, {
                         });
                     }
                 });
-            } catch (e) {
+            } catch (error) {
                 // Comprehensive distributed CT log verification outer error forensics
                 const distributedCtOuterErrorForensics = {
                     timestamp: new Date().toISOString(),
                     error_type: 'distributed_ct_log_verification_outer',
-                    error_message: e.message || 'unknown_error',
-                    error_stack: e.stack || 'no_stack_trace',
-                    error_name: e.name || 'unknown_exception',
+                    error_message: error.message || 'unknown_error',
+                    error_stack: error.stack || 'no_stack_trace',
+                    error_name: error.name || 'unknown_exception',
                     bypass_context: 'distributed_certificate_transparency_log_verification_outer',
                     security_implications: [
                         'distributed_ct_outer_bypass_failure',
@@ -8806,7 +8890,7 @@ Object.assign(CertificatePinningBypass, {
                     forensic_data: {
                         function_context: 'distributedCtLogVerificationOuterBypass',
                         infrastructure_context: 'distributed_ct_log_verification_infrastructure',
-                        error_classification: this.classifyDistributedCtOuterError(e),
+                        error_classification: this.classifyDistributedCtOuterError(error),
                         bypass_resilience: 'high',
                         recovery_possible: true,
                         alternative_bypass_available: true,
@@ -8825,12 +8909,12 @@ Object.assign(CertificatePinningBypass, {
                 target: 'certificate_pinning_bypass',
                 action: 'ct_gossip_monitor_bypass_initialized',
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'certificate_pinning_bypass',
                 action: 'ct_gossip_monitor_bypass_failed',
-                error: e.message,
+                error: error.message,
             });
         }
     },

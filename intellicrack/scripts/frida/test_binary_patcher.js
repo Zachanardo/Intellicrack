@@ -41,7 +41,7 @@ const BinaryPatcherTests = {
     },
 
     // === TEST RUNNER ===
-    runAllTests: function () {
+    runAllTests() {
         send({
             type: 'info',
             target: 'binary_patcher_tests',
@@ -71,7 +71,7 @@ const BinaryPatcherTests = {
     },
 
     // === CORE TESTS ===
-    testCoreInitialization: function () {
+    testCoreInitialization() {
         const test = {
             name: 'Core Initialization',
             status: 'running',
@@ -89,25 +89,25 @@ const BinaryPatcherTests = {
 
             // Verify subsystems initialized
             if (
-                !BinaryPatcher.patchingEngine ||
-                !BinaryPatcher.architectures ||
-                !BinaryPatcher.formatHandlers
+                !BinaryPatcher.patchingEngine
+                || !BinaryPatcher.architectures
+                || !BinaryPatcher.formatHandlers
             ) {
                 throw new Error('Subsystems not initialized');
             }
 
             test.status = 'passed';
             this.testResults.passed++;
-        } catch (e) {
+        } catch (error) {
             test.status = 'failed';
-            test.error = e.message;
+            test.error = error.message;
             this.testResults.failed++;
         }
 
         this.testResults.tests.push(test);
     },
 
-    testArchitectureSupport: function () {
+    testArchitectureSupport() {
         const test = {
             name: 'Architecture Support',
             status: 'running',
@@ -125,13 +125,13 @@ const BinaryPatcherTests = {
                 }
 
                 // Test JMP generation
-                const jmp = archs.x86_64.generateJmp(ptr(0x1000), ptr(0x2000));
+                const jmp = archs.x86_64.generateJmp(ptr(0x10_00), ptr(0x20_00));
                 if (jmp.length < 5) {
                     throw new Error('x86-64 JMP generation failed');
                 }
 
                 // Test return patch
-                const ret = archs.x86_64.patchReturn(ptr(0x3000), 1);
+                const ret = archs.x86_64.patchReturn(ptr(0x30_00), 1);
                 if (!ret || ret.length === 0) {
                     throw new Error('x86-64 return patch failed');
                 }
@@ -145,7 +145,7 @@ const BinaryPatcherTests = {
                     throw new Error('ARM64 NOP generation failed');
                 }
 
-                const branch = archs.arm64.generateBranch(ptr(0x1000), ptr(0x2000));
+                const branch = archs.arm64.generateBranch(ptr(0x10_00), ptr(0x20_00));
                 if (branch.length < 4) {
                     throw new Error('ARM64 branch generation failed');
                 }
@@ -169,16 +169,16 @@ const BinaryPatcherTests = {
 
             test.status = 'passed';
             this.testResults.passed++;
-        } catch (e) {
+        } catch (error) {
             test.status = 'failed';
-            test.error = e.message;
+            test.error = error.message;
             this.testResults.failed++;
         }
 
         this.testResults.tests.push(test);
     },
 
-    testFormatHandlers: function () {
+    testFormatHandlers() {
         const test = {
             name: 'Format Handlers',
             status: 'running',
@@ -194,12 +194,12 @@ const BinaryPatcherTests = {
                 const view = new DataView(peBuffer);
 
                 // DOS header
-                view.setUint16(0, 0x5a4d, true); // MZ
-                view.setUint32(0x3c, 0x80, true); // PE offset
+                view.setUint16(0, 0x5A_4D, true); // MZ
+                view.setUint32(0x3C, 0x80, true); // PE offset
 
                 // PE header
-                view.setUint32(0x80, 0x00004550, true); // PE\0\0
-                view.setUint16(0x84, 0x014c, true); // Machine (i386)
+                view.setUint32(0x80, 0x00_00_45_50, true); // PE\0\0
+                view.setUint16(0x84, 0x01_4C, true); // Machine (i386)
                 view.setUint16(0x86, 1, true); // Number of sections
 
                 const headers = handlers.pe.parseHeaders(new Uint8Array(peBuffer));
@@ -215,7 +215,7 @@ const BinaryPatcherTests = {
                 const view = new DataView(elfBuffer);
 
                 // ELF magic
-                view.setUint32(0, 0x464c457f, false); // \x7FELF
+                view.setUint32(0, 0x46_4C_45_7F, false); // \x7FELF
                 elfBuffer[4] = 1; // 32-bit
                 elfBuffer[5] = 1; // Little endian
                 elfBuffer[6] = 1; // Version
@@ -233,7 +233,7 @@ const BinaryPatcherTests = {
                 const view = new DataView(machoBuffer);
 
                 // Mach-O magic
-                view.setUint32(0, 0xfeedface, false); // 32-bit
+                view.setUint32(0, 0xFE_ED_FA_CE, false); // 32-bit
                 view.setInt32(4, 7, true); // CPU type x86
 
                 const headers = handlers.macho.parseHeaders(new Uint8Array(machoBuffer));
@@ -244,16 +244,16 @@ const BinaryPatcherTests = {
 
             test.status = 'passed';
             this.testResults.passed++;
-        } catch (e) {
+        } catch (error) {
             test.status = 'failed';
-            test.error = e.message;
+            test.error = error.message;
             this.testResults.failed++;
         }
 
         this.testResults.tests.push(test);
     },
 
-    testSignaturePreservation: function () {
+    testSignaturePreservation() {
         const test = {
             name: 'Signature Preservation',
             status: 'running',
@@ -267,7 +267,7 @@ const BinaryPatcherTests = {
 
             const crc32 = sigPreserve.calculateChecksum(testData, 0, 4, 'crc32');
             if (typeof crc32 !== 'number') {
-                throw new Error('CRC32 calculation failed');
+                throw new TypeError('CRC32 calculation failed');
             }
 
             const sum32 = sigPreserve.calculateChecksum(testData, 0, 4, 'sum32');
@@ -277,7 +277,7 @@ const BinaryPatcherTests = {
 
             const xor32 = sigPreserve.calculateChecksum(testData, 0, 4, 'xor32');
             if (typeof xor32 !== 'number') {
-                throw new Error('XOR32 calculation failed');
+                throw new TypeError('XOR32 calculation failed');
             }
 
             // Test CRC table generation
@@ -288,16 +288,16 @@ const BinaryPatcherTests = {
 
             test.status = 'passed';
             this.testResults.passed++;
-        } catch (e) {
+        } catch (error) {
             test.status = 'failed';
-            test.error = e.message;
+            test.error = error.message;
             this.testResults.failed++;
         }
 
         this.testResults.tests.push(test);
     },
 
-    testAntiDetection: function () {
+    testAntiDetection() {
         const test = {
             name: 'Anti-Detection',
             status: 'running',
@@ -308,7 +308,7 @@ const BinaryPatcherTests = {
 
             // Test polymorphic generation
             const originalPatch = {
-                data: [0x89, 0xc0], // MOV EAX, EAX
+                data: [0x89, 0xC0], // MOV EAX, EAX
             };
 
             const variants = antiDetect.polymorphic.generateVariants(originalPatch);
@@ -323,23 +323,23 @@ const BinaryPatcherTests = {
             }
 
             // Test register substitution
-            const substituted = antiDetect.polymorphic.substituteRegisters([0x89, 0xc0]);
+            const substituted = antiDetect.polymorphic.substituteRegisters([0x89, 0xC0]);
             if (!substituted || substituted.length !== 2) {
                 throw new Error('Register substitution failed');
             }
 
             test.status = 'passed';
             this.testResults.passed++;
-        } catch (e) {
+        } catch (error) {
             test.status = 'failed';
-            test.error = e.message;
+            test.error = error.message;
             this.testResults.failed++;
         }
 
         this.testResults.tests.push(test);
     },
 
-    testPerformanceOptimization: function () {
+    testPerformanceOptimization() {
         const test = {
             name: 'Performance Optimization',
             status: 'running',
@@ -365,14 +365,14 @@ const BinaryPatcherTests = {
             // Test CPU optimizer
             const hasSimd = perf.cpuOptimizer.hasSIMD();
             if (typeof hasSimd !== 'boolean') {
-                throw new Error('SIMD detection failed');
+                throw new TypeError('SIMD detection failed');
             }
 
             test.status = 'passed';
             this.testResults.passed++;
-        } catch (e) {
+        } catch (error) {
             test.status = 'failed';
-            test.error = e.message;
+            test.error = error.message;
             this.testResults.failed++;
         }
 
@@ -380,7 +380,7 @@ const BinaryPatcherTests = {
     },
 
     // === ADVANCED TESTS ===
-    testMemoryResidentPatching: function () {
+    testMemoryResidentPatching() {
         const test = {
             name: 'Memory-Resident Patching',
             status: 'running',
@@ -397,24 +397,24 @@ const BinaryPatcherTests = {
 
             // Test version detection (simulated)
             const version = memResident.parseVersionBytes(new Uint8Array([1, 0, 2, 0, 3, 0, 4, 0]));
-            if (!version) {
-                // Version detection might fail on test data, this is expected
+            if (version) {
                 test.status = 'passed';
             } else {
+                // Version detection might fail on test data, this is expected
                 test.status = 'passed';
             }
 
             this.testResults.passed++;
-        } catch (e) {
+        } catch (error) {
             test.status = 'failed';
-            test.error = e.message;
+            test.error = error.message;
             this.testResults.failed++;
         }
 
         this.testResults.tests.push(test);
     },
 
-    testDistributedPatching: function () {
+    testDistributedPatching() {
         const test = {
             name: 'Distributed Patching',
             status: 'running',
@@ -437,21 +437,21 @@ const BinaryPatcherTests = {
             };
             const valid = distributed.multiNodeCoordination.validatePatchProposal(proposal);
             if (typeof valid !== 'boolean') {
-                throw new Error('Patch validation failed');
+                throw new TypeError('Patch validation failed');
             }
 
             test.status = 'passed';
             this.testResults.passed++;
-        } catch (e) {
+        } catch (error) {
             test.status = 'failed';
-            test.error = e.message;
+            test.error = error.message;
             this.testResults.failed++;
         }
 
         this.testResults.tests.push(test);
     },
 
-    testCloudNativePatching: function () {
+    testCloudNativePatching() {
         const test = {
             name: 'Cloud-Native Patching',
             status: 'running',
@@ -463,7 +463,7 @@ const BinaryPatcherTests = {
             // Test container detection
             const runtime = cloudNative.detectContainerRuntime();
             // Use runtime to validate container detection for bypass testing
-            testResults.containerRuntime = {
+            this.testResults.containerRuntime = {
                 detected: runtime !== null,
                 type: runtime || 'none',
                 timestamp: Date.now(),
@@ -479,16 +479,16 @@ const BinaryPatcherTests = {
 
             test.status = 'passed';
             this.testResults.passed++;
-        } catch (e) {
+        } catch (error) {
             test.status = 'failed';
-            test.error = e.message;
+            test.error = error.message;
             this.testResults.failed++;
         }
 
         this.testResults.tests.push(test);
     },
 
-    testBlockchainBypass: function () {
+    testBlockchainBypass() {
         const test = {
             name: 'Blockchain Bypass',
             status: 'running',
@@ -520,21 +520,21 @@ const BinaryPatcherTests = {
                 '0x1234567890123456789012345678901234567890'
             );
             if (typeof success !== 'boolean') {
-                throw new Error('Contract bypass setup failed');
+                throw new TypeError('Contract bypass setup failed');
             }
 
             test.status = 'passed';
             this.testResults.passed++;
-        } catch (e) {
+        } catch (error) {
             test.status = 'failed';
-            test.error = e.message;
+            test.error = error.message;
             this.testResults.failed++;
         }
 
         this.testResults.tests.push(test);
     },
 
-    testIoTPatching: function () {
+    testIoTPatching() {
         const test = {
             name: 'IoT Patching',
             status: 'running',
@@ -561,9 +561,9 @@ const BinaryPatcherTests = {
 
             test.status = 'passed';
             this.testResults.passed++;
-        } catch (e) {
+        } catch (error) {
             test.status = 'failed';
-            test.error = e.message;
+            test.error = error.message;
             this.testResults.failed++;
         }
 
@@ -571,7 +571,7 @@ const BinaryPatcherTests = {
     },
 
     // === INTEGRATION TESTS ===
-    testRealWorldScenarios: function () {
+    testRealWorldScenarios() {
         const test = {
             name: 'Real-World Scenarios',
             status: 'running',
@@ -593,12 +593,12 @@ const BinaryPatcherTests = {
             // Scenario 3: Export/Import patches
             const exported = BinaryPatcher.exportPatches();
             if (typeof exported !== 'string') {
-                throw new Error('Patch export failed');
+                throw new TypeError('Patch export failed');
             }
 
             // Scenario 4: Test patch verification
-            const testSuite =
-                BinaryPatcherAdvanced.advancedVerification.testFramework.createTestSuite(patchId, [
+            const testSuite
+                = BinaryPatcherAdvanced.advancedVerification.testFramework.createTestSuite(patchId, [
                     {
                         name: 'Test Functionality',
                         type: 'functionality',
@@ -617,9 +617,9 @@ const BinaryPatcherTests = {
 
             test.status = 'passed';
             this.testResults.passed++;
-        } catch (e) {
+        } catch (error) {
             test.status = 'failed';
-            test.error = e.message;
+            test.error = error.message;
             this.testResults.failed++;
         }
 
@@ -627,7 +627,7 @@ const BinaryPatcherTests = {
     },
 
     // === REPORT RESULTS ===
-    reportResults: function () {
+    reportResults() {
         const total = this.testResults.passed + this.testResults.failed + this.testResults.skipped;
         const passRate = total > 0 ? ((this.testResults.passed / total) * 100).toFixed(2) : 0;
 
@@ -636,7 +636,7 @@ const BinaryPatcherTests = {
             target: 'binary_patcher_tests',
             action: 'test_suite_completed',
             results: {
-                total: total,
+                total,
                 passed: this.testResults.passed,
                 failed: this.testResults.failed,
                 skipped: this.testResults.skipped,

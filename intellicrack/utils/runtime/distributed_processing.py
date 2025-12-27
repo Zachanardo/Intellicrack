@@ -1113,10 +1113,11 @@ def _check_gpu_backends() -> dict[str, Any]:
         if platforms := cl.get_platforms():
             backends["available"] = True
             backends["backend"] = "opencl"
-            device_list: list[str] = cast("list[str]", backends["devices"])
+            device_list: list[str] = []
             for platform in platforms:
                 devices = platform.get_devices()
                 device_list.extend([d.name for d in devices])
+            backends["devices"] = device_list
             return backends
     except ImportError:
         logger.debug("OpenCL backend not available: pyopencl not installed")

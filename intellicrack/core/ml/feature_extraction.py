@@ -610,7 +610,9 @@ class BinaryFeatureExtractor:
                     if isinstance(section_data_item, bytes):
                         offset_in_section = entry_point_rva - va
                         if offset_in_section < len(section_data_item):
-                            result["entry_point_data"] = section_data_item[offset_in_section : min(offset_in_section + 32, len(section_data_item))]
+                            result["entry_point_data"] = section_data_item[
+                                offset_in_section : min(offset_in_section + 32, len(section_data_item))
+                            ]
                         break
 
         try:

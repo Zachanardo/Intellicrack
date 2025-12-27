@@ -6,15 +6,22 @@ PDF export when matplotlib is unavailable. These tests prove the handler
 works for real binary analysis visualization scenarios.
 """
 
-import os
 import struct
-import tempfile
 from pathlib import Path
-from typing import Any
 
 import pytest
 
-from intellicrack.handlers import matplotlib_handler
+try:
+    from intellicrack.handlers import matplotlib_handler
+    MATPLOTLIB_HANDLER_AVAILABLE = True
+except ImportError:
+    matplotlib_handler = None
+    MATPLOTLIB_HANDLER_AVAILABLE = False
+
+pytestmark = pytest.mark.skipif(
+    not MATPLOTLIB_HANDLER_AVAILABLE,
+    reason="matplotlib_handler not available"
+)
 
 
 class TestMatplotlibHandlerAvailability:

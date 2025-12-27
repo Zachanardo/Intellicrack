@@ -26,25 +26,26 @@ from dataclasses import dataclass, field
 from types import ModuleType
 from typing import Any, cast
 
+
 try:
     import r2pipe as r2pipe_module
 except ImportError:
     r2pipe_module = None
 
 try:
-    import networkx as nx_module
+    import networkx as nx
 
     NETWORKX_AVAILABLE = True
 except ImportError:
-    nx_module = None
+    nx = None
     NETWORKX_AVAILABLE = False
 
 try:
     import matplotlib.patches as _mpatches_module
-    import matplotlib.pyplot as _plt_module
+    import matplotlib.pyplot as plt
 
     mpatches_module: ModuleType | None = _mpatches_module
-    plt_module: ModuleType | None = _plt_module
+    plt_module: ModuleType | None = plt
     MATPLOTLIB_AVAILABLE = True
 except ImportError:
     mpatches_module = None
@@ -530,13 +531,13 @@ class R2GraphGenerator:
             True if successful
 
         """
-        if not NETWORKX_AVAILABLE or not MATPLOTLIB_AVAILABLE or nx_module is None or plt_module is None or mpatches_module is None:
+        if not NETWORKX_AVAILABLE or not MATPLOTLIB_AVAILABLE or nx is None or plt_module is None or mpatches_module is None:
             self.logger.exception("NetworkX or Matplotlib not available for visualization")
             return False
 
         try:
             # Create NetworkX graph
-            G = nx_module.DiGraph()
+            G = nx.DiGraph()
 
             # Add nodes
             for node in graph_data.nodes:
@@ -549,15 +550,15 @@ class R2GraphGenerator:
             # Calculate layout
             pos: dict[Any, Any]
             if layout == "spring":
-                pos = nx_module.spring_layout(G, k=2, iterations=50)
+                pos = nx.spring_layout(G, k=2, iterations=50)
             elif layout == "circular":
-                pos = nx_module.circular_layout(G)
+                pos = nx.circular_layout(G)
             elif layout == "shell":
-                pos = nx_module.shell_layout(G)
+                pos = nx.shell_layout(G)
             elif layout == "kamada_kawai":
-                pos = nx_module.kamada_kawai_layout(G)
+                pos = nx.kamada_kawai_layout(G)
             else:
-                pos = nx_module.spring_layout(G)
+                pos = nx.spring_layout(G)
 
             # Create figure
             plt_module.figure(figsize=(12, 8))
@@ -565,15 +566,15 @@ class R2GraphGenerator:
 
             # Draw nodes
             node_colors: list[str] = [graph_data.nodes[i].color for i in range(len(graph_data.nodes))]
-            nx_module.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=500, alpha=0.9)
+            nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=500, alpha=0.9)
 
             # Draw edges
             edge_colors: list[str] = [e.color for e in graph_data.edges]
-            nx_module.draw_networkx_edges(G, pos, edge_color=edge_colors, arrows=True, arrowsize=20, alpha=0.6)
+            nx.draw_networkx_edges(G, pos, edge_color=edge_colors, arrows=True, arrowsize=20, alpha=0.6)
 
             # Draw labels
             labels: dict[str, str] = {node.id: node.label.split("\n")[0] for node in graph_data.nodes}
-            nx_module.draw_networkx_labels(G, pos, labels, font_size=8)
+            nx.draw_networkx_labels(G, pos, labels, font_size=8)
 
             # Add legend
             legend_elements: list[Any] = []

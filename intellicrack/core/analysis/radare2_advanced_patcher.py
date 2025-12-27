@@ -16,9 +16,10 @@ import logging
 import struct
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import r2pipe
+
 
 if TYPE_CHECKING:
     from r2pipe import open as R2Open

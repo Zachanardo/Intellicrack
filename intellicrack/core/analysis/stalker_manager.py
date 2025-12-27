@@ -27,12 +27,15 @@ import types
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
+
 
 if TYPE_CHECKING:
     import frida.core
 
 from intellicrack.utils.type_safety import validate_type
+
+
 try:
     import frida
 except ImportError:
@@ -137,14 +140,12 @@ class StalkerSession:
         """Log message via callback."""
         self.message_callback(f"[StalkerSession] {message}")
 
-    def _on_message(
-        self, message: frida.core.ScriptPayloadMessage | frida.core.ScriptErrorMessage, data: bytes | None
-    ) -> None:
+    def _on_message(self, message: frida.core.ScriptPayloadMessage | frida.core.ScriptErrorMessage, data: bytes | None) -> None:
         """Handle messages from Frida script."""
-        message_dict = cast(dict[str, Any], message)
+        message_dict = cast("dict[str, Any]", message)
         try:
             if message_dict.get("type") == "send":
-                payload = cast(dict[str, Any], message_dict.get("payload", {}))
+                payload = cast("dict[str, Any]", message_dict.get("payload", {}))
                 msg_type = payload.get("type", "unknown")
 
                 if msg_type == "status":

@@ -37,6 +37,7 @@ from typing import TYPE_CHECKING, Any
 
 from intellicrack.utils.logger import log_all_methods, logger
 
+
 if TYPE_CHECKING:
     from typing import TypeAlias
 

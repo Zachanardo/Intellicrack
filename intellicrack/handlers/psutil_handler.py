@@ -734,7 +734,7 @@ except ImportError as e:
             logger.debug(f"Failed to get disk usage for {path}: {e}")
             return DiskUsage()
 
-    def disk_partitions(all: bool = False) -> list[object]:  # noqa: A002
+    def disk_partitions(all: bool = False) -> list[object]:
         """Get disk partitions."""
 
         class DiskPartition:  # noqa: B903 - Must match psutil API for compatibility

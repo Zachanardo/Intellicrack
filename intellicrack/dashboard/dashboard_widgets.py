@@ -234,7 +234,7 @@ class LineChartWidget(DashboardWidget):
             height=self.config.height,
         )
 
-        return cast(dict[str, object], fig.to_dict())
+        return cast("dict[str, object]", fig.to_dict())
 
     def _render_matplotlib(self) -> dict[str, object]:
         """Render using Matplotlib.
@@ -327,7 +327,7 @@ class GaugeWidget(DashboardWidget):
                 ),
             )
             fig.update_layout(width=self.config.width, height=self.config.height)
-            return cast(dict[str, object], fig.to_dict())
+            return cast("dict[str, object]", fig.to_dict())
         json_result = self.render("json")
         return json_result if json_result is not None else None
 
@@ -475,7 +475,7 @@ class HeatmapWidget(DashboardWidget):
                 )
             )
             fig.update_layout(title=self.config.title, width=self.config.width, height=self.config.height)
-            return cast(dict[str, object], fig.to_dict())
+            return cast("dict[str, object]", fig.to_dict())
         json_result = self.render("json")
         return json_result if json_result is not None else None
 
@@ -505,8 +505,8 @@ class NetworkGraphWidget(DashboardWidget):
         if not isinstance(edges_obj, list):
             edges_obj = []
 
-        nodes: list[dict[str, object]] = cast(list[dict[str, object]], nodes_obj)
-        edges: list[dict[str, object]] = cast(list[dict[str, object]], edges_obj)
+        nodes: list[dict[str, object]] = [n for n in nodes_obj if isinstance(n, dict)]
+        edges: list[dict[str, object]] = [e for e in edges_obj if isinstance(e, dict)]
 
         if format == "json":
             return {
@@ -562,8 +562,7 @@ class NetworkGraphWidget(DashboardWidget):
         node_adjacencies: list[int] = []
         for node in nodes:
             node_id = node.get("id")
-            adjacencies = sum(bool(edge.get("source") == node_id or edge.get("target") == node_id)
-                          for edge in edges)
+            adjacencies = sum(bool(edge.get("source") == node_id or edge.get("target") == node_id) for edge in edges)
             node_adjacencies.append(adjacencies)
 
         node_trace = go.Scatter(
@@ -607,7 +606,7 @@ class NetworkGraphWidget(DashboardWidget):
             height=self.config.height,
         )
 
-        return cast(dict[str, object], fig.to_dict())
+        return cast("dict[str, object]", fig.to_dict())
 
 
 class TimelineWidget(DashboardWidget):
@@ -753,7 +752,7 @@ def create_widget(widget_id: str, widget_type: WidgetType, title: str, **kwargs:
     width = kwargs.get("width", 400)
     height = kwargs.get("height", 300)
     refresh_interval = kwargs.get("refresh_interval", 5.0)
-    data_source = kwargs.get("data_source", None)
+    data_source = kwargs.get("data_source")
     options = kwargs.get("options", {})
 
     if not isinstance(width, int):
@@ -764,8 +763,7 @@ def create_widget(widget_id: str, widget_type: WidgetType, title: str, **kwargs:
         refresh_interval = 5.0
     if not isinstance(data_source, str) and data_source is not None:
         data_source = None
-    if not isinstance(options, dict):
-        options = {}
+    validated_options: dict[str, object] = options if isinstance(options, dict) else {}
 
     config = WidgetConfig(
         widget_id=widget_id,
@@ -775,6 +773,6 @@ def create_widget(widget_id: str, widget_type: WidgetType, title: str, **kwargs:
         height=height,
         refresh_interval=float(refresh_interval),
         data_source=data_source,
-        options=cast(dict[str, object], options)
+        options=validated_options,
     )
     return WidgetFactory.create_widget(config)

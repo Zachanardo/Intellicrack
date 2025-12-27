@@ -60,7 +60,6 @@ class ModelLoadingDialog(BaseDialog):
 
     def setup_content(self, layout: QVBoxLayout) -> None:
         """Set up the UI content."""
-
         # Title
         title = QLabel("Background Model Loading Manager")
         title.setFont(QFont("Arial", 14, QFont.Weight.Bold))

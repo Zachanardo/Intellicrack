@@ -9,6 +9,7 @@ Licensed under GNU General Public License v3.0
 
 import os
 import struct
+from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import (
     QApplication,
@@ -41,8 +42,6 @@ from intellicrack.handlers.pyqt6_handler import (
     pyqtSignal,
     pyqtSlot,
 )
-
-from typing import Any
 
 from ...utils.logger import get_logger
 from .pe_file_model import BinaryFileModel, PEFileModel, create_file_model
@@ -844,10 +843,7 @@ class HexViewerWidget(QWidget):
         # Highlight in hex view if valid offset
         if offset is not None and size is not None:
             # Remove all temporary highlights
-            self.highlighted_regions = [
-                region for region in self.highlighted_regions
-                if len(region) == 3
-            ]
+            self.highlighted_regions = [region for region in self.highlighted_regions if len(region) == 3]
 
             # Add new temporary highlight
             highlight_color = QColor(100, 200, 255, 80)  # Light blue

@@ -733,7 +733,7 @@ class CertificateBypassOrchestrator:
                     "override",
                 ]
 
-                bypass_count = sum(any((indicator in s.lower() for indicator in bypass_indicators)) for s in cert_strings)
+                bypass_count = sum(any(indicator in s.lower() for indicator in bypass_indicators) for s in cert_strings)
 
                 if bypass_count > 0:
                     logger.debug("Found %s bypass indicators in strings", bypass_count)

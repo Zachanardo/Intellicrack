@@ -51,7 +51,7 @@ class ModelDiscoveryService:
         """
         self.cache_ttl = cache_ttl_seconds
         self._cached_models: dict[str, list[ModelInfo]] = {}
-        self._cache_timestamp = 0
+        self._cache_timestamp: float = 0.0
         self._provider_manager = get_provider_manager()
         self._config_manager = get_llm_config_manager()
 
@@ -145,9 +145,8 @@ class ModelDiscoveryService:
 
         """
         configured_models = self._config_manager.list_model_configs()
-        result = {"discovered": {}, "configured": configured_models}
         discovered_models = self.discover_all_models(force_refresh=force_refresh)
-        result["discovered"] = {
+        discovered_data: dict[str, list[dict[str, Any]]] = {
             provider: [
                 {
                     "id": model.id,
@@ -162,7 +161,7 @@ class ModelDiscoveryService:
             for provider, models in discovered_models.items()
         }
 
-        return result
+        return {"discovered": discovered_data, "configured": configured_models}
 
     def _initialize_providers(self) -> None:
         """Initialize provider clients with API keys from configuration."""

@@ -289,7 +289,7 @@ class ValidationAnalyzer:
                             )
 
         xor_chain_count = sum(
-            all((instructions[j].mnemonic == "xor" for j in range(i, min(i + 3, len(instructions))))) for i in range(len(instructions) - 3)
+            all(instructions[j].mnemonic == "xor" for j in range(i, min(i + 3, len(instructions)))) for i in range(len(instructions) - 3)
         )
         if xor_chain_count > 5:
             primitives.append(

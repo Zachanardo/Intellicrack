@@ -28,26 +28,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-
-if TYPE_CHECKING:
-    import types
-
-    from PyQt6.QtCore import QPoint
-    from PyQt6.QtGui import QCloseEvent
-
-HAS_FRIDA: bool = False
-frida_module: types.ModuleType | None = None
-try:
-    from intellicrack.handlers.frida_handler import (
-        HAS_FRIDA as _HAS_FRIDA,
-        frida as _frida_module,
-    )
-
-    HAS_FRIDA = _HAS_FRIDA
-    frida_module = _frida_module
-except ImportError:
-    pass
-
 from PyQt6.QtCore import QEventLoop, QSettings
 from PyQt6.QtWidgets import QAbstractItemView
 
@@ -89,6 +69,26 @@ from intellicrack.utils.logger import logger
 from ...core.frida_constants import HookCategory, ProtectionType
 from ..widgets.console_widget import ConsoleWidget
 from ..widgets.syntax_highlighters import JavaScriptHighlighter
+
+
+if TYPE_CHECKING:
+    import types
+
+    from PyQt6.QtCore import QPoint
+    from PyQt6.QtGui import QCloseEvent
+
+HAS_FRIDA: bool = False
+frida_module: types.ModuleType | None = None
+try:
+    from intellicrack.handlers.frida_handler import (
+        HAS_FRIDA as _HAS_FRIDA,
+        frida as _frida_module,
+    )
+
+    HAS_FRIDA = _HAS_FRIDA
+    frida_module = _frida_module
+except ImportError:
+    pass
 
 
 try:

@@ -24,8 +24,8 @@ import logging
 import os
 import sys
 import time
-from datetime import datetime
 from collections.abc import Callable
+from datetime import datetime
 from typing import Any
 
 
@@ -907,9 +907,9 @@ class AITerminalChat:
         available_backends: list[str]
         current_backend: str
         if self.llm_manager and hasattr(self.llm_manager, "list_model_configs"):
-            available_backends = [config for config in self.llm_manager.list_model_configs()]
+            available_backends = list(self.llm_manager.list_model_configs())
             loaded_configs = self.llm_manager.configs if hasattr(self.llm_manager, "configs") else {}
-            current_backend = list(loaded_configs.keys())[0] if loaded_configs else "default"
+            current_backend = next(iter(loaded_configs.keys())) if loaded_configs else "default"
         else:
             available_backends = ["openai", "anthropic", "google", "local", "ollama"]
             current_backend = "openai"

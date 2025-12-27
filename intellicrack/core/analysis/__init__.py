@@ -21,11 +21,15 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import TYPE_CHECKING
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
 
 from intellicrack.utils.logger import logger
 
+
 if TYPE_CHECKING:
+    from types import ModuleType
+
     from intellicrack.core.analysis.cfg_explorer import CFGExplorer
     from intellicrack.core.analysis.control_flow_deobfuscation import (
         BasicBlock,
@@ -51,17 +55,8 @@ if TYPE_CHECKING:
         TriggerPoint,
     )
     from intellicrack.core.analysis.similarity_searcher import SimilaritySearcher
-    from intellicrack.core.analysis.stalker_manager import (
-        APICallEvent,
-        CoverageEntry,
-        StalkerSession,
-        StalkerStats,
-        TraceEvent,
-    )
-    from intellicrack.core.analysis.starforce_analyzer import (
-        StarForceAnalysis,
-        StarForceAnalyzer,
-    )
+    from intellicrack.core.analysis.stalker_manager import APICallEvent, CoverageEntry, StalkerSession, StalkerStats, TraceEvent
+    from intellicrack.core.analysis.starforce_analyzer import StarForceAnalysis, StarForceAnalyzer
 
 
 logger.debug("Core analysis module loaded")
@@ -87,16 +82,18 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
-from types import ModuleType
-from typing import Any, Callable  # noqa: E402
-
 calculate_entropy: Callable[[bytes], float] | None
 analyze_binary_internal: Callable[[str, list[str] | None], list[str]] | None
 enhanced_deep_license_analysis: Callable[[str], dict[str, Any]] | None
 detect_packing: Callable[[str], dict[str, Any]] | None
 
 try:
-    from .core_analysis import analyze_binary_internal, calculate_entropy, detect_packing, enhanced_deep_license_analysis  # type: ignore[attr-defined]
+    from .core_analysis import (  # type: ignore[attr-defined]
+        analyze_binary_internal,
+        calculate_entropy,
+        detect_packing,
+        enhanced_deep_license_analysis,
+    )
 except ImportError as e:
     logger.error("Import error in __init__: %s", e)
     calculate_entropy = None

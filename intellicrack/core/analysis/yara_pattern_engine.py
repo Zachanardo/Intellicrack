@@ -19,6 +19,7 @@ from typing import Any, cast
 from intellicrack.utils.logger import logger
 from intellicrack.utils.type_safety import validate_type
 
+
 try:
     import yara
 

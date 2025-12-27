@@ -23,10 +23,11 @@ import logging
 import os
 import subprocess
 from pathlib import Path
-from typing import Any, TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
-from intellicrack.utils.type_safety import validate_type
 from intellicrack.handlers.pyqt6_handler import QDialog, QMessageBox, QObject, QWidget, pyqtSignal
+from intellicrack.utils.type_safety import validate_type
+
 
 if TYPE_CHECKING:
     from intellicrack.ai.qemu_manager import QEMUManager

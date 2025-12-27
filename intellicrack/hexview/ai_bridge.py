@@ -1278,7 +1278,9 @@ class AIBinaryBridge:
             logger.exception("Error parsing search response: %s", e)
             return []
 
-    def _calculate_analysis_confidence(self, patterns: list[dict[str, Any]], anomalies: list[dict[str, Any]], suspicious_strings: list[str]) -> float:
+    def _calculate_analysis_confidence(
+        self, patterns: list[dict[str, Any]], anomalies: list[dict[str, Any]], suspicious_strings: list[str]
+    ) -> float:
         """Calculate confidence score for analysis results."""
         confidence = 0.5  # Base confidence
 
@@ -1297,7 +1299,7 @@ class AIBinaryBridge:
             confidence += min(0.15, len(suspicious_strings) * 0.03)
             # Higher confidence for specific keywords
             critical_keywords = ["license", "trial", "expired", "debug", "crack"]
-            if critical_found := sum(any((k in s.lower() for k in critical_keywords)) for s in suspicious_strings):
+            if critical_found := sum(any(k in s.lower() for k in critical_keywords) for s in suspicious_strings):
                 confidence += min(0.1, critical_found * 0.05)
 
         return min(1.0, confidence)

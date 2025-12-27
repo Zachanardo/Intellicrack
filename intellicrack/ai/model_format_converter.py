@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Any, cast
 
 from intellicrack.handlers.numpy_handler import numpy as np
-from intellicrack.utils.type_safety import get_typed_item, validate_type
+from intellicrack.utils.type_safety import ensure_dict, get_kwarg_typed, get_typed_item, validate_type
 
 from ..utils.logger import get_logger
 
@@ -509,7 +509,12 @@ class ModelFormatConverter:
                 except Exception as e:
                     logger.debug("Could not apply GPU optimizations: %s", e)
 
-            metadata_val = cast("dict[str, str]", kwargs.get("metadata", {}))
+            metadata_raw = kwargs.get("metadata", {})
+            metadata_val: dict[str, str] = {}
+            if isinstance(metadata_raw, dict):
+                for k, v in metadata_raw.items():
+                    if isinstance(k, str) and isinstance(v, str):
+                        metadata_val[k] = v
 
             save_file(state_dict, str(output_path), metadata=metadata_val)
 
@@ -546,9 +551,9 @@ class ModelFormatConverter:
             return None
 
         try:
-            device_val = cast("str", kwargs.get("device", "cpu"))
+            device_val = get_kwarg_typed(kwargs, "device", str, "cpu")
             dtype_val = kwargs.get("dtype")
-            preserve_layout_val = cast("bool", kwargs.get("preserve_layout", True))
+            preserve_layout_val = get_kwarg_typed(kwargs, "preserve_layout", bool, True)
 
             state_dict: dict[str, Any] = {}
             with safe_open(str(source_path), framework="pt", device=device_val) as f:
@@ -610,7 +615,7 @@ class ModelFormatConverter:
 
                 concrete_func: Any = None
                 if hasattr(model, "signatures"):
-                    signature_key_val = cast("str", kwargs.get("signature_key", "serving_default"))
+                    signature_key_val = get_kwarg_typed(kwargs, "signature_key", str, "serving_default")
                     concrete_func = model.signatures[signature_key_val]
                 else:
                     input_spec_val = kwargs.get("input_spec")
@@ -626,7 +631,7 @@ class ModelFormatConverter:
 
                 output_path.parent.mkdir(parents=True, exist_ok=True)
 
-                opset_val = cast("int", kwargs.get("opset_version", 14))
+                opset_val = get_kwarg_typed(kwargs, "opset_version", int, 14)
                 model_proto, _ = tf2onnx.convert.from_function(
                     concrete_func,
                     opset=opset_val,

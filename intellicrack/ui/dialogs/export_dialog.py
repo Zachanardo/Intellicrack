@@ -468,7 +468,6 @@ class ExportDialog(BaseDialog):
 
     def setup_content(self, layout: QLayout) -> None:
         """Set up the user interface content."""
-
         # Check if we have results to export
         if not self.analysis_results:
             no_data_label = QLabel("No analysis results available for export.")

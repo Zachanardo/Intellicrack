@@ -84,11 +84,14 @@ try:
     from intellicrack.handlers.tensorflow_handler import tf as _tf
 
     tf = _tf
-    keras = tf.keras
-
-    HAS_TENSORFLOW = True
+    if tf is not None:
+        keras = tf.keras
+        HAS_TENSORFLOW = True
+    else:
+        HAS_TENSORFLOW = False
 except ImportError as e:
-    logger.exception("Import error in model_manager_module: %s", e)
+    logger.debug("TensorFlow not available: %s", e)
+    HAS_TENSORFLOW = False
 
 onnx: Any = None
 ort: Any = None
@@ -1369,7 +1372,7 @@ Interceptor.attach(IsDebuggerPresent, {
         data_slice = binary_data[:10000]
         for byte in data_slice:
             byte_counts[byte] += 1
-        features: list[float] = list(list(byte_counts / len(data_slice)))
+        features: list[float] = list(byte_counts / len(data_slice))
         for i in range(0, min(len(binary_data), 10000), 1000):
             chunk = binary_data[i : i + 1000]
             features.append(self._calculate_entropy(chunk))
@@ -2054,14 +2057,17 @@ Interceptor.attach(IsDebuggerPresent, {
                 try:
                     from types import ModuleType
 
-                    from intellicrack.handlers.tensorflow_handler import ensure_tensorflow_loaded, tf as tensorflow_module
+                    from intellicrack.handlers.tensorflow_handler import (
+                        ensure_tensorflow_loaded,
+                        tf as tensorflow_module,
+                    )
 
                     ensure_tensorflow_loaded()
                     if not isinstance(tensorflow_module, ModuleType):
                         logger.error("TensorFlow not available after initialization")
                         return False
 
-                    keras = cast(ModuleType, tensorflow_module.keras)
+                    keras = cast("ModuleType", tensorflow_module.keras)
                     from tensorflow.keras import layers
 
                     logger.info("Starting TensorFlow model training")

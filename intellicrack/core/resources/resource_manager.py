@@ -25,6 +25,7 @@ from typing import TYPE_CHECKING, Any, Literal, ParamSpec, cast
 
 from intellicrack.utils.type_safety import validate_type
 
+
 if TYPE_CHECKING:
     from subprocess import Popen as PopenGeneric
 else:
@@ -902,7 +903,7 @@ class ResourceContext:
         metadata["context_managed"] = True
 
         resource = ManagedResource(
-            resource_id=id(resource_handle),
+            resource_id=str(id(resource_handle)),
             resource_type=resource_type,
             cleanup_func=cleanup_func,
             metadata=metadata,
@@ -1079,7 +1080,7 @@ class FallbackHandler:
         if tool_name in self.fallback_registry:
             try:
                 fallback_func = validate_type(self.fallback_registry[tool_name], Any)
-                return fallback_func(*args, **kwargs)
+                return fallback_func(*args, **kwargs)  # type: ignore[operator,no-any-return]
             except Exception as e:
                 logger.exception("Fallback for %s failed: %s", tool_name, e)
                 return None
@@ -1214,7 +1215,7 @@ class FallbackHandler:
                     raise ImportError("pyelftools not available")
 
                 with open(binary_path, "rb") as f:
-                    elf_file: Any = validate_type(ELFFile, Any)(f)
+                    elf_file: Any = validate_type(ELFFile, Any)(f)  # type: ignore[operator]
 
                     if "-h" in (options or []):
                         result.extend((
@@ -1256,7 +1257,7 @@ class FallbackHandler:
 
             result: list[str] = []
             with open(binary_path, "rb") as f:
-                elf_file: Any = validate_type(ELFFile, Any)(f)
+                elf_file: Any = validate_type(ELFFile, Any)(f)  # type: ignore[operator]
 
                 if "-h" in (options or []):
                     # ELF header

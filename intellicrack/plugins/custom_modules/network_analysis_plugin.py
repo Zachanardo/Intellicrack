@@ -450,7 +450,7 @@ class NetworkAnalysisPlugin:
             ports, and network I/O statistics.
 
         """
-        results = [f"Starting network monitoring{f' for process: {str(target_process)}' if target_process else ''}..."]
+        results = [f"Starting network monitoring{f' for process: {target_process!s}' if target_process else ''}..."]
         try:
             import socket
 

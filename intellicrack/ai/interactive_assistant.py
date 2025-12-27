@@ -40,16 +40,71 @@ CLI_INTERFACE_NOT_AVAILABLE = "CLI interface not available"
 class CLIInterface(Protocol):
     """Protocol defining the interface for CLI interaction."""
 
-    def analyze_binary(self, binary_path: str, analyses: list[str] | None) -> dict[str, Any]: ...
+    def analyze_binary(self, binary_path: str, analyses: list[str] | None) -> dict[str, Any]:
+        """Analyze a binary file for protection mechanisms.
+
+        Args:
+            binary_path: Path to the binary file to analyze.
+            analyses: List of analysis types to perform, or None for all.
+
+        Returns:
+            Dictionary containing analysis results and detected protections.
+
+        """
+        ...
+
     def execute_command(
         self,
         args: list[str],
         title: str,
         description: str,
-    ) -> dict[str, Any]: ...
-    def suggest_patches(self, binary_path: str) -> dict[str, Any]: ...
-    def apply_patch(self, binary_path: str, patch_file: str) -> dict[str, Any]: ...
-    def print_info(self, message: str) -> None: ...
+    ) -> dict[str, Any]:
+        """Execute a CLI command with the given arguments.
+
+        Args:
+            args: Command-line arguments to execute.
+            title: Title for the command execution context.
+            description: Description of the command purpose.
+
+        Returns:
+            Dictionary containing command execution results.
+
+        """
+        ...
+
+    def suggest_patches(self, binary_path: str) -> dict[str, Any]:
+        """Generate patch suggestions for a binary's protection mechanisms.
+
+        Args:
+            binary_path: Path to the binary file to analyze for patches.
+
+        Returns:
+            Dictionary containing suggested patches and their locations.
+
+        """
+        ...
+
+    def apply_patch(self, binary_path: str, patch_file: str) -> dict[str, Any]:
+        """Apply a patch file to a binary.
+
+        Args:
+            binary_path: Path to the binary file to patch.
+            patch_file: Path to the patch definition file.
+
+        Returns:
+            Dictionary containing patch application results.
+
+        """
+        ...
+
+    def print_info(self, message: str) -> None:
+        """Print an informational message to the CLI output.
+
+        Args:
+            message: The message to display.
+
+        """
+        ...
 
 
 class ToolCategory(Enum):

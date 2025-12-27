@@ -25,6 +25,7 @@ from typing import Any
 
 from intellicrack.handlers.numpy_handler import numpy as np
 
+
 logger = logging.getLogger(__name__)
 
 XPU_DEVICE = "xpu:0"
@@ -77,8 +78,10 @@ if not CUDA_DISABLED:
     try:
         import pycuda.autoinit  # type: ignore[import-not-found,unused-ignore]
         import pycuda.driver as _cuda  # type: ignore[import-not-found,unused-ignore]
-        from pycuda import compiler as _compiler  # type: ignore[import-not-found,unused-ignore]
-        from pycuda import gpuarray as _gpuarray  # type: ignore[import-not-found,unused-ignore]
+        from pycuda import (
+            compiler as _compiler,  # type: ignore[import-not-found,unused-ignore]
+            gpuarray as _gpuarray,  # type: ignore[import-not-found,unused-ignore]
+        )
 
         cuda = _cuda
         compiler = _compiler

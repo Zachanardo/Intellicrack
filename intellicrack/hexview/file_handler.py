@@ -24,9 +24,12 @@ import mmap
 import os
 from collections import OrderedDict
 from collections.abc import Callable
-from io import BufferedRandom
 from pathlib import Path
-from typing import Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
+
+
+if TYPE_CHECKING:
+    from io import BufferedRandom
 
 
 logger = logging.getLogger("Intellicrack.HexView")

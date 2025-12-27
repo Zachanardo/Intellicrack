@@ -312,7 +312,9 @@ class IntellicrackApp(QMainWindow):
             self.logger.info("AI Coordination Layer initialized successfully")
 
             self.ai_orchestrator.event_bus.subscribe("task_complete", self._on_ai_task_complete_wrapper, "main_ui")
-            self.ai_orchestrator.event_bus.subscribe("coordinated_analysis_complete", self._on_coordinated_analysis_complete_wrapper, "main_ui")
+            self.ai_orchestrator.event_bus.subscribe(
+                "coordinated_analysis_complete", self._on_coordinated_analysis_complete_wrapper, "main_ui"
+            )
 
             self.logger.info("Exploitation Orchestrator initialized successfully")
             self.logger.info("IntellicrackApp initialization complete with agentic AI system.")
@@ -429,14 +431,16 @@ class IntellicrackApp(QMainWindow):
             if self.binary_path is None:
                 raise ValueError("No binary loaded - binary_path is required for Frida plugin execution")
             from intellicrack.plugins.plugin_system import AppProtocol as FridaAppProtocol
-            app_for_frida = cast(FridaAppProtocol, self)
+
+            app_for_frida = cast("FridaAppProtocol", self)
             return run_frida_plugin_from_file(app_for_frida, *args, **kwargs)
 
         def run_ghidra_plugin_wrapper(*args: Any, **kwargs: Any) -> Any:
             if self.binary_path is None:
                 raise ValueError("No binary loaded - binary_path is required for Ghidra plugin execution")
             from intellicrack.plugins.plugin_system import AppProtocol as GhidraAppProtocol
-            app_for_ghidra = cast(GhidraAppProtocol, self)
+
+            app_for_ghidra = cast("GhidraAppProtocol", self)
             return run_ghidra_plugin_from_file(app_for_ghidra, *args, **kwargs)
 
         self.run_frida_plugin_from_file_bound: Callable[..., Any] = run_frida_plugin_wrapper
@@ -459,19 +463,22 @@ class IntellicrackApp(QMainWindow):
             if not self.current_binary:
                 raise ValueError("No binary loaded - current_binary is required for Ghidra analysis")
             from intellicrack.core.analysis.ghidra_analyzer import MainAppProtocol as GhidraMainAppProtocol
-            app_for_ghidra_analysis = cast(GhidraMainAppProtocol, self)
+
+            app_for_ghidra_analysis = cast("GhidraMainAppProtocol", self)
             return run_advanced_ghidra_analysis(app_for_ghidra_analysis, *args, **kwargs)
 
         def run_dynamic_instrumentation_wrapper(*args: Any, **kwargs: Any) -> Any:
             if not self.current_binary:
                 raise ValueError("No binary loaded - current_binary is required for dynamic instrumentation")
             from intellicrack.core.analysis.dynamic_instrumentation import MainAppProtocol as DynInstrMainAppProtocol
-            app_for_dyn_instr = cast(DynInstrMainAppProtocol, self)
+
+            app_for_dyn_instr = cast("DynInstrMainAppProtocol", self)
             return run_dynamic_instrumentation(app_for_dyn_instr, *args, **kwargs)
 
         self.run_advanced_ghidra_analysis_bound: Callable[..., Any] = run_advanced_ghidra_analysis_wrapper
         self.run_symbolic_execution: Callable[..., Any] = partial(SymbolicExecution().run_symbolic_execution, self)
-        self.run_incremental_analysis_bound: Callable[..., Any] = partial(run_incremental_analysis, self)
+        self_any: Any = self
+        self.run_incremental_analysis_bound: Callable[..., Any] = partial(run_incremental_analysis, self_any)
         self.run_memory_optimized_analysis_ref: Callable[..., Any] = run_memory_optimized_analysis
         self.run_taint_analysis_bound: Callable[..., Any] = partial(run_taint_analysis, self)
         self.run_qemu_analysis_bound: Callable[..., dict[str, object]] = partial(run_qemu_analysis, self)

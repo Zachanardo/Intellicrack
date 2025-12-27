@@ -18,11 +18,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, cast
 
-from intellicrack.utils.type_safety import validate_type
 import lz4.frame
 import msgpack
 
 from intellicrack.core.analysis.ghidra_analyzer import GhidraAnalysisResult, GhidraDataType, GhidraFunction
+from intellicrack.utils.type_safety import validate_type
 
 
 @dataclass
@@ -228,7 +228,7 @@ class GhidraProjectManager:
         current_version: str = row[4]
         is_locked: int = row[5]
         settings_json: str | None = row[6]
-        metadata_json: str | None = row[7]
+        row[7]
 
         # Load versions
         cursor.execute(

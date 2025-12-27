@@ -179,7 +179,7 @@ class EntropyVisualizer(QWidget):
                 error_msg = f"Expected bytes data, got {type(data)}"
                 logger.error(error_msg)
                 raise TypeError(error_msg)
-            validated_data = cast(bytes | bytearray | memoryview, data)
+            validated_data = cast("bytes | bytearray | memoryview", data)
 
             if not validated_data:
                 error_msg = "Cannot process empty data"

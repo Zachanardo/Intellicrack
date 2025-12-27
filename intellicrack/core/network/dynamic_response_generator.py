@@ -450,7 +450,9 @@ class DynamicResponseGenerator:
         self.logger = logging.getLogger("IntellicrackLogger.ResponseGenerator")
 
         # Protocol handlers
-        self.handlers: dict[str, FlexLMProtocolHandler | HASPProtocolHandler | AdobeProtocolHandler | MicrosoftKMSHandler | AutodeskProtocolHandler] = {
+        self.handlers: dict[
+            str, FlexLMProtocolHandler | HASPProtocolHandler | AdobeProtocolHandler | MicrosoftKMSHandler | AutodeskProtocolHandler
+        ] = {
             "flexlm": FlexLMProtocolHandler(),
             "hasp": HASPProtocolHandler(),
             "adobe": AdobeProtocolHandler(),

@@ -42,7 +42,7 @@ def get_config() -> dict[str, Any]:
         except (json.JSONDecodeError, OSError):
             pass
 
-    env_mappings = {
+    env_mappings: dict[str, str | tuple[str, type[int]]] = {
         "DEV_TOOLS_WORKING_DIR": "working_dir",
         "DEV_TOOLS_TIMEOUT": ("timeout", int),
         "DEV_TOOLS_LONG_TIMEOUT": ("long_timeout", int),
@@ -60,7 +60,7 @@ def get_config() -> dict[str, Any]:
                     config[key] = converter(env_value)
                 except (ValueError, TypeError):
                     pass
-            else:
+            elif isinstance(mapping, str):
                 config[mapping] = env_value
 
     return config

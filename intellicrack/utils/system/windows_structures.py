@@ -22,7 +22,7 @@ import ctypes
 import ctypes.wintypes
 import logging
 import sys
-from typing import Any, TypeVar
+from typing import Any, TypeVar, cast
 
 
 logger = logging.getLogger(__name__)
@@ -354,7 +354,8 @@ def create_ssl_certificate_builder() -> object | None:
         from cryptography import x509
         from cryptography.x509.oid import NameOID
 
-        return (
+        return cast(
+            "object",
             x509
             .CertificateBuilder()
             .subject_name(
@@ -391,7 +392,7 @@ def create_ssl_certificate_builder() -> object | None:
                     ],
                 ),
                 critical=False,
-            )
+            ),
         )
     except ImportError as e:
         logger.exception("Import error in windows_structures: %s", e)

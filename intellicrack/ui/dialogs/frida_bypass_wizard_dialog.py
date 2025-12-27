@@ -13,7 +13,7 @@ from typing import Any
 
 import psutil
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
-from PyQt6.QtGui import QColor, QFont, QCloseEvent, QTextCursor
+from PyQt6.QtGui import QCloseEvent, QColor, QFont, QTextCursor
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -40,6 +40,7 @@ from PyQt6.QtWidgets import (
 )
 
 from intellicrack.core.frida_bypass_wizard import FridaBypassWizard
+
 
 logger = logging.getLogger(__name__)
 
@@ -338,10 +339,11 @@ class FridaBypassWizardDialog(QDialog):
         super().__init__(parent)
         try:
             from intellicrack.core.frida_manager import FridaManager
+
             frida_manager = FridaManager()
             self.wizard = FridaBypassWizard(frida_manager=frida_manager)
         except Exception:
-            self.wizard = FridaBypassWizard(frida_manager=None)  # type: ignore[arg-type]
+            self.wizard = FridaBypassWizard(frida_manager=None)
         self.worker_thread: FridaWorkerThread | None = None
         self.init_ui()
         self.load_settings()
@@ -1721,13 +1723,15 @@ setTimeout(function() {{
                 logger.exception("Failed to load settings: %s", e)
                 self.log_message(f"Failed to load settings: {e!s}", "orange")
 
-    def closeEvent(self, event: QCloseEvent) -> None:
+    def closeEvent(self, event: QCloseEvent | None) -> None:
         """Handle dialog close.
 
         Args:
             event: Close event from Qt framework.
 
         """
+        if event is None:
+            return
         if self.worker_thread is not None and self.worker_thread.isRunning():
             reply = QMessageBox.question(
                 self,

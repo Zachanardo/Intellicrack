@@ -669,7 +669,9 @@ else:
                 current_binary = self._state["current_binary"]
                 binary_path_value: str | None = None
                 if current_binary and isinstance(current_binary, dict):
-                    binary_path_value = cast("str", current_binary.get("path"))
+                    path_val = current_binary.get("path")
+                    if isinstance(path_val, str):
+                        binary_path_value = path_val
 
                 project_data: dict[str, Any] = {
                     "name": Path(project_path).stem,
@@ -808,7 +810,8 @@ else:
 
                 description = "N/A"
                 if isinstance(task_info, dict):
-                    description = cast("str", task_info.get("description", "N/A"))
+                    desc_val = task_info.get("description", "N/A")
+                    description = str(desc_val) if desc_val is not None else "N/A"
 
                 logger.error(
                     "Task failed: %s (%s) - %s",

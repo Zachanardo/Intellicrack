@@ -31,7 +31,7 @@ const ArxanBypass = {
         failed: 0,
     },
 
-    log: function (level, message) {
+    log(level, message) {
         const levels = { debug: 0, info: 1, warn: 2, error: 3 };
         const configLevel = levels[this.config.logLevel] || 1;
 
@@ -40,7 +40,7 @@ const ArxanBypass = {
         }
     },
 
-    bypassAntiDebug: function () {
+    bypassAntiDebug() {
         this.log('info', 'Installing anti-debugging bypasses...');
 
         const isDebuggerPresent = Module.findExportByName('kernel32.dll', 'IsDebuggerPresent');
@@ -56,10 +56,10 @@ const ArxanBypass = {
         );
         if (checkRemoteDebugger) {
             Interceptor.attach(checkRemoteDebugger, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.pbDebuggerPresent = args[1];
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.pbDebuggerPresent && !this.pbDebuggerPresent.isNull()) {
                         this.pbDebuggerPresent.writeU8(0);
                     }
@@ -73,11 +73,11 @@ const ArxanBypass = {
         const ntQueryInfo = Module.findExportByName('ntdll.dll', 'NtQueryInformationProcess');
         if (ntQueryInfo) {
             Interceptor.attach(ntQueryInfo, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.infoClass = args[1].toInt32();
                     this.info = args[2];
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.infoClass === 7 || this.infoClass === 30 || this.infoClass === 31) {
                         if (this.info && !this.info.isNull()) {
                             this.info.writePointer(ptr(0));
@@ -96,13 +96,13 @@ const ArxanBypass = {
         const ntSetInfo = Module.findExportByName('ntdll.dll', 'NtSetInformationThread');
         if (ntSetInfo) {
             Interceptor.attach(ntSetInfo, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const infoClass = args[1].toInt32();
                     if (infoClass === 0x11) {
                         this.shouldBlock = true;
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.shouldBlock) {
                         retval.replace(0);
                     }
@@ -123,8 +123,8 @@ const ArxanBypass = {
         }
 
         try {
-            const peb =
-                Process.pointerSize === 8
+            const peb
+                = Process.pointerSize === 8
                     ? ptr(Process.getCurrentThreadId()).readU64()
                     : ptr(Process.getCurrentThreadId()).readU32();
 
@@ -134,14 +134,14 @@ const ArxanBypass = {
                 beingDebugged.writeU8(0);
                 this.log('info', 'Patched PEB.BeingDebugged flag');
             }
-        } catch (e) {
-            this.log('debug', `Could not patch PEB directly: ${e.message}`);
+        } catch (error) {
+            this.log('debug', `Could not patch PEB directly: ${error.message}`);
         }
 
         this.log('info', 'Anti-debugging bypass complete');
     },
 
-    bypassIntegrityChecks: function () {
+    bypassIntegrityChecks() {
         this.log('info', 'Installing integrity check bypasses...');
 
         const cryptHashData = Module.findExportByName('Advapi32.dll', 'CryptHashData');
@@ -196,10 +196,10 @@ const ArxanBypass = {
         );
         if (certVerifyChain) {
             Interceptor.attach(certVerifyChain, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.pPolicyStatus = args[3];
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.pPolicyStatus && !this.pPolicyStatus.isNull()) {
                         this.pPolicyStatus.writeU32(0);
                         this.pPolicyStatus.add(4).writeU32(0);
@@ -214,15 +214,15 @@ const ArxanBypass = {
         const memcmp = Module.findExportByName(null, 'memcmp');
         if (memcmp) {
             Interceptor.attach(memcmp, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.size = args[2].toInt32();
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (
-                        this.size === 16 ||
-                        this.size === 20 ||
-                        this.size === 32 ||
-                        this.size === 64
+                        this.size === 16
+                        || this.size === 20
+                        || this.size === 32
+                        || this.size === 64
                     ) {
                         retval.replace(0);
                     }
@@ -235,16 +235,16 @@ const ArxanBypass = {
         const checkSumMapped = Module.findExportByName('Imagehlp.dll', 'CheckSumMappedFile');
         if (checkSumMapped) {
             Interceptor.attach(checkSumMapped, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.headerSum = args[2];
                     this.checkSum = args[3];
                 },
-                onLeave: function (_retval) {
+                onLeave(_retval) {
                     if (this.headerSum && !this.headerSum.isNull()) {
-                        this.headerSum.writeU32(0x12345678);
+                        this.headerSum.writeU32(0x12_34_56_78);
                     }
                     if (this.checkSum && !this.checkSum.isNull()) {
-                        this.checkSum.writeU32(0x12345678);
+                        this.checkSum.writeU32(0x12_34_56_78);
                     }
                 },
             });
@@ -255,7 +255,7 @@ const ArxanBypass = {
         this.log('info', 'Integrity check bypass complete');
     },
 
-    bypassLicenseValidation: function () {
+    bypassLicenseValidation() {
         this.log('info', 'Installing license validation bypasses...');
 
         const licensePatterns = [
@@ -289,13 +289,13 @@ const ArxanBypass = {
 
                             foundLicenseFuncs++;
                             this.log('debug', `Bypassed license function: ${exp.name}`);
-                        } catch (e) {
-                            this.log('debug', `Could not hook ${exp.name}: ${e.message}`);
+                        } catch (error) {
+                            this.log('debug', `Could not hook ${exp.name}: ${error.message}`);
                         }
                     }
                 });
-            } catch (e) {
-                this.log('debug', `Error enumerating exports for ${module.name}: ${e.message}`);
+            } catch (error) {
+                this.log('debug', `Error enumerating exports for ${module.name}: ${error.message}`);
             }
         });
 
@@ -309,11 +309,11 @@ const ArxanBypass = {
         const regQuery = Module.findExportByName('Advapi32.dll', 'RegQueryValueExA');
         if (regQuery) {
             Interceptor.attach(regQuery, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.valueName = args[1].readUtf8String();
                     this.data = args[3];
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.valueName?.toLowerCase().includes('license')) {
                         if (this.data && !this.data.isNull()) {
                             this.data.writeUtf8String('BYPASSED-LICENSE-KEY-ARXAN');
@@ -329,13 +329,13 @@ const ArxanBypass = {
         this.log('info', 'License validation bypass complete');
     },
 
-    bypassRASP: function () {
+    bypassRASP() {
         this.log('info', 'Installing RASP mechanism bypasses...');
 
         const virtualProtect = Module.findExportByName('kernel32.dll', 'VirtualProtect');
         if (virtualProtect) {
             Interceptor.attach(virtualProtect, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.address = args[0];
                     this.size = args[1];
                     this.newProtect = args[2];
@@ -375,15 +375,14 @@ const ArxanBypass = {
         const raiseException = Module.findExportByName('kernel32.dll', 'RaiseException');
         if (raiseException) {
             Interceptor.attach(raiseException, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const exceptionCode = args[0].toInt32();
-                    if (exceptionCode === 0x80000003 || exceptionCode === 0xc0000005) {
+                    if (exceptionCode === 0x80_00_00_03 || exceptionCode === 0xC0_00_00_05) {
                         this.shouldBlock = true;
                     }
                 },
-                onLeave: function (_retval) {
-                    if (this.shouldBlock) {
-                    }
+                onLeave(_retval) {
+                    if (this.shouldBlock) {}
                 },
             });
             this.hooks.installed++;
@@ -418,7 +417,7 @@ const ArxanBypass = {
         this.log('info', 'RASP bypass complete');
     },
 
-    hookModuleLoads: function () {
+    hookModuleLoads() {
         this.log('info', 'Installing module load hooks...');
 
         const loadLibrary = Module.findExportByName('kernel32.dll', 'LoadLibraryA');
@@ -454,7 +453,7 @@ const ArxanBypass = {
         this.log('info', 'Module load hooks installed');
     },
 
-    patchInlineChecks: function () {
+    patchInlineChecks() {
         this.log('info', 'Scanning for inline integrity checks...');
 
         const modules = Process.enumerateModules();
@@ -462,9 +461,9 @@ const ArxanBypass = {
 
         modules.forEach(module => {
             if (
-                module.name.toLowerCase().includes('arxan') ||
-                module.name.toLowerCase().includes('guardit') ||
-                module.name.toLowerCase().includes('transform')
+                module.name.toLowerCase().includes('arxan')
+                || module.name.toLowerCase().includes('guardit')
+                || module.name.toLowerCase().includes('transform')
             ) {
                 this.log('info', `Found potential Arxan module: ${module.name}`);
 
@@ -475,15 +474,18 @@ const ArxanBypass = {
                     matches.forEach(match => {
                         try {
                             Memory.protect(match.address, 16, 'rwx');
-                            match.address.writeByteArray([0xb8, 0x01, 0x00, 0x00, 0x00, 0xc3]);
+                            match.address.writeByteArray([0xB8, 0x01, 0x00, 0x00, 0x00, 0xC3]);
                             patchCount++;
                             this.log('debug', `Patched CRC32 check at ${match.address}`);
-                        } catch (e) {
-                            this.log('debug', `Could not patch at ${match.address}: ${e.message}`);
+                        } catch (error) {
+                            this.log(
+                                'debug',
+                                `Could not patch at ${match.address}: ${error.message}`
+                            );
                         }
                     });
-                } catch (e) {
-                    this.log('debug', `Error scanning ${module.name}: ${e.message}`);
+                } catch (error) {
+                    this.log('debug', `Error scanning ${module.name}: ${error.message}`);
                 }
             }
         });
@@ -493,7 +495,7 @@ const ArxanBypass = {
         }
     },
 
-    init: function () {
+    init() {
         this.log('info', '=== Arxan TransformIT Bypass Starting ===');
 
         if (this.config.bypassAntiDebug) {

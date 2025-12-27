@@ -161,9 +161,7 @@ Provide only the JSON response, no explanations."""
             # Use AI generator for validation
             # For validation, we'll use a simple response format
             response = self.ai_generator.generate_script(
-                _prompt=validation_prompt,
-                base_script=script_content,
-                context={"validation": True}
+                _prompt=validation_prompt, base_script=script_content, context={"validation": True}
             )
 
             # Parse LLM response
@@ -532,7 +530,7 @@ class AIScriptEditor:
             modified_content = self.ai_generator.generate_script(
                 _prompt=ai_prompt,
                 base_script=original_content,
-                context={"edit_type": edit_request.edit_type.value, "preserve_functionality": edit_request.preserve_functionality}
+                context={"edit_type": edit_request.edit_type.value, "preserve_functionality": edit_request.preserve_functionality},
             )
 
             # Validate modified script
@@ -570,9 +568,7 @@ class AIScriptEditor:
                     parent_version_id = history[-2].edit_id
 
             version = self.version_manager.create_version(
-                content=modified_content,
-                edit_history=self.edit_history[script_path],
-                parent_version=parent_version_id
+                content=modified_content, edit_history=self.edit_history[script_path], parent_version=parent_version_id
             )
 
             # Save modified script if validation passed

@@ -17,12 +17,11 @@ try:
     import capstone
     import keystone
     import pefile
-
     DEPENDENCIES_AVAILABLE = True
 except ImportError:
     DEPENDENCIES_AVAILABLE = False
 
-if DEPENDENCIES_AVAILABLE:
+try:
     from intellicrack.core.patching.license_check_remover import (
         ControlFlowAnalyzer,
         PatchPointSelector,
@@ -30,6 +29,16 @@ if DEPENDENCIES_AVAILABLE:
         CheckType,
         LicenseCheck,
     )
+    MODULE_AVAILABLE = True
+except ImportError:
+    ControlFlowAnalyzer = None
+    PatchPointSelector = None
+    LicenseCheckRemover = None
+    CheckType = None
+    LicenseCheck = None
+    MODULE_AVAILABLE = False
+
+pytestmark = pytest.mark.skipif(not MODULE_AVAILABLE or not DEPENDENCIES_AVAILABLE, reason="Module or dependencies not available")
 
 
 @pytest.mark.skipif(not DEPENDENCIES_AVAILABLE, reason="Required dependencies not available")

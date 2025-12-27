@@ -98,7 +98,7 @@ class IPCMessage:
         data_dict["source"] = self.source.value
         data_dict["destination"] = self.destination.value if self.destination else None
         data_dict["message_type"] = self.message_type.value
-        return cast(bytes, msgpack.packb(data_dict))
+        return cast("bytes", msgpack.packb(data_dict))
 
     @classmethod
     def from_bytes(cls, data: bytes) -> "IPCMessage":

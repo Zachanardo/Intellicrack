@@ -91,11 +91,9 @@ class ProtectionAnalysisThread(QThread):
                     license_file_results = self.ai_file_tools.search_for_license_files(binary_dir)
 
                     if license_file_results.get("status") == "success":
-                        # Add license files to analysis object using setattr for dynamic attributes
                         files_found = license_file_results.get("files_found", [])
                         setattr(analysis, "license_files", files_found)
 
-                        # Also add summary info
                         license_summary = {
                             "total_found": len(files_found),
                             "search_directory": binary_dir,
@@ -399,9 +397,7 @@ class IntellicrackProtectionWidget(QWidget):
         license_files = getattr(analysis, "license_files", None)
         if license_files:
             summary_lines.extend(("", f"License Files Found: {len(license_files)}"))
-            summary_lines.extend(
-                f"   {file_info['name']} ({file_info.get('size_str', 'Unknown size')})" for file_info in license_files[:5]
-            )
+            summary_lines.extend(f"   {file_info['name']} ({file_info.get('size_str', 'Unknown size')})" for file_info in license_files[:5])
         self.summary_text.setText("\n".join(summary_lines))
 
     def display_technical_details(self, analysis: ProtectionAnalysis) -> None:
@@ -721,10 +717,8 @@ class IntellicrackProtectionWidget(QWidget):
 
                     QMessageBox.information(self, "License Files Found", "\n".join(message_lines))
 
-                    # Update the analysis object using setattr
                     setattr(self.current_analysis, "license_files", files_found)
 
-                    # Refresh display
                     self.display_summary(self.current_analysis)
                 else:
                     QMessageBox.information(self, "No License Files", f"No license files found in:\n{binary_dir}")

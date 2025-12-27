@@ -2094,10 +2094,10 @@ class DongleAPIHooker:
             sessions_dict = getattr(dongle, "_sessions", {})
             if isinstance(sessions_dict, dict):
                 sessions_dict[session_id] = {
-                "feature_id": feature_id,
-                "login_time": time.time(),
-                "vendor_code": vendor_code,
-            }
+                    "feature_id": feature_id,
+                    "login_time": time.time(),
+                    "vendor_code": vendor_code,
+                }
 
             if hasattr(dongle, "_current_session"):
                 dongle._current_session = session_id
@@ -2199,11 +2199,7 @@ class DongleAPIHooker:
 
         lpt_patterns = ["LPT1", "LPT2", "LPT3", "\\\\.\\LPT", "\\Device\\Parallel"]
         return next(
-            (
-                0x1000
-                for pattern in lpt_patterns
-                if pattern.upper() in str(filename).upper()
-            ),
+            (0x1000 for pattern in lpt_patterns if pattern.upper() in str(filename).upper()),
             -1,
         )
 
@@ -2479,12 +2475,7 @@ class HardwareDongleEmulator:
         try:
             if isinstance(dongle_type, str):
                 dongle_type_enum = next(
-                    (
-                        dt
-                        for dt in DongleType
-                        if dt.value.lower() == dongle_type.lower()
-                        or dt.name.lower() == dongle_type.lower()
-                    ),
+                    (dt for dt in DongleType if dt.value.lower() == dongle_type.lower() or dt.name.lower() == dongle_type.lower()),
                     None,
                 )
                 if dongle_type_enum is None:
@@ -2538,18 +2529,18 @@ class HardwareDongleEmulator:
             dongles_dict = export_data.get("dongles", {})
             if isinstance(dongles_dict, dict):
                 dongles_dict[dongle_id] = {
-                "spec": {
-                    "dongle_type": dongle.spec.dongle_type.value,
-                    "interface": dongle.spec.interface.value,
-                    "vendor_id": dongle.spec.vendor_id,
-                    "product_id": dongle.spec.product_id,
-                    "serial_number": dongle.spec.serial_number,
-                    "firmware_version": dongle.spec.firmware_version,
-                    "memory_size": dongle.spec.memory_size,
-                },
-                "memory": dongle.memory.data.hex(),
-                "active": dongle.active,
-            }
+                    "spec": {
+                        "dongle_type": dongle.spec.dongle_type.value,
+                        "interface": dongle.spec.interface.value,
+                        "vendor_id": dongle.spec.vendor_id,
+                        "product_id": dongle.spec.product_id,
+                        "serial_number": dongle.spec.serial_number,
+                        "firmware_version": dongle.spec.firmware_version,
+                        "memory_size": dongle.spec.memory_size,
+                    },
+                    "memory": dongle.memory.data.hex(),
+                    "active": dongle.active,
+                }
 
         with open(output_file, "w", encoding="utf-8") as f:
             json.dump(export_data, f, indent=2)

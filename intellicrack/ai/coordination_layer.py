@@ -64,7 +64,10 @@ except ImportError:
     _MODELMANAGER_AVAILABLE = False
 
 try:
-    from .orchestrator import AIEventBus as AIEventBusClass, AISharedContext as AISharedContextClass
+    from .orchestrator import (
+        AIEventBus as AIEventBusClass,
+        AISharedContext as AISharedContextClass,
+    )
 
     _ORCHESTRATOR_AVAILABLE = True
 except ImportError:
@@ -147,7 +150,7 @@ class AICoordinationLayer:
             self.event_bus = None
 
         # Initialize components
-        self.model_manager: "ModelManager | None" = None
+        self.model_manager: ModelManager | None = None
         self._llm_manager: Any = None
         self._initialize_components()
 

@@ -1,5 +1,7 @@
 """Parallel processing manager for multi-core analysis execution."""
 
+from __future__ import annotations
+
 import logging
 import math
 import multiprocessing

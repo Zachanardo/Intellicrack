@@ -44,7 +44,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta, timezone
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, TypedDict, cast
 
 import yaml
 from jsonschema import ValidationError, validate
@@ -153,6 +153,17 @@ class PluginMetadata:
             "configuration_schema": self.configuration_schema,
             "tags": self.tags,
         }
+
+
+class ScriptMetadataDict(TypedDict):
+    """TypedDict for script metadata during extraction."""
+
+    name: str
+    version: str
+    description: str
+    author: str
+    capabilities: list[str]
+    dependencies: list[str]
 
 
 @log_all_methods
@@ -1906,8 +1917,7 @@ class PluginManager:
         try:
             content = await asyncio.to_thread(lambda: script_file.read_text(encoding="utf-8"))
 
-            # Parse Java comments for metadata
-            metadata = {
+            metadata: ScriptMetadataDict = {
                 "name": script_file.stem,
                 "version": "1.0.0",
                 "description": f"Ghidra script: {script_file.name}",
@@ -1916,8 +1926,7 @@ class PluginManager:
                 "dependencies": [],
             }
 
-            # Look for metadata comments
-            for line in content.split("\n")[:50]:  # Check first 50 lines
+            for line in content.split("\n")[:50]:
                 line = line.strip()
                 if line.startswith("//") or line.startswith("*"):
                     if "@description" in line.lower():
@@ -1931,13 +1940,13 @@ class PluginManager:
                         metadata["capabilities"] = [cap.strip() for cap in caps]
 
             return PluginMetadata(
-                name=str(metadata["name"]),
-                version=str(metadata["version"]),
-                description=str(metadata["description"]),
+                name=metadata["name"],
+                version=metadata["version"],
+                description=metadata["description"],
                 component_type=ComponentType.GHIDRA_SCRIPT,
-                author=str(metadata["author"]),
-                capabilities=cast("list[str]", metadata["capabilities"]),
-                dependencies=cast("list[str]", metadata["dependencies"]),
+                author=metadata["author"],
+                capabilities=metadata["capabilities"],
+                dependencies=metadata["dependencies"],
                 supported_formats=[".exe", ".dll", ".elf", ".bin"],
             )
 
@@ -1950,8 +1959,7 @@ class PluginManager:
         try:
             content = await asyncio.to_thread(lambda: script_file.read_text(encoding="utf-8"))
 
-            # Parse JavaScript comments for metadata
-            metadata = {
+            metadata: ScriptMetadataDict = {
                 "name": script_file.stem,
                 "version": "1.0.0",
                 "description": f"Frida script: {script_file.name}",
@@ -1960,8 +1968,7 @@ class PluginManager:
                 "dependencies": [],
             }
 
-            # Look for metadata in comments or object properties
-            for line in content.split("\n")[:100]:  # Check first 100 lines
+            for line in content.split("\n")[:100]:
                 line = line.strip()
                 if line.startswith("//") or line.startswith("*"):
                     if "description:" in line.lower():
@@ -1971,19 +1978,18 @@ class PluginManager:
                     elif "version:" in line.lower():
                         metadata["version"] = line.split("version:")[-1].strip().strip("\"'")
                 elif "name:" in line and ("=" in line or ":" in line):
-                    # Try to extract from object property
                     if '"' in line or "'" in line:
                         if name_match := line.split("name:")[-1].strip().strip(",").strip("\"'"):
                             metadata["name"] = name_match
 
             return PluginMetadata(
-                name=str(metadata["name"]),
-                version=str(metadata["version"]),
-                description=str(metadata["description"]),
+                name=metadata["name"],
+                version=metadata["version"],
+                description=metadata["description"],
                 component_type=ComponentType.FRIDA_SCRIPT,
-                author=str(metadata["author"]),
-                capabilities=cast("list[str]", metadata["capabilities"]),
-                dependencies=cast("list[str]", metadata["dependencies"]),
+                author=metadata["author"],
+                capabilities=metadata["capabilities"],
+                dependencies=metadata["dependencies"],
                 supported_formats=[".exe", ".dll", ".so", ".dylib"],
             )
 
@@ -1996,8 +2002,7 @@ class PluginManager:
         try:
             content = await asyncio.to_thread(lambda: module_file.read_text(encoding="utf-8"))
 
-            # Parse docstring and comments
-            metadata: dict[str, Any] = {
+            metadata: ScriptMetadataDict = {
                 "name": module_file.stem,
                 "version": "1.0.0",
                 "description": f"Python module: {module_file.name}",
@@ -2005,10 +2010,7 @@ class PluginManager:
                 "capabilities": ["custom_analysis"],
                 "dependencies": [],
             }
-            capabilities_list: list[str] = cast("list[str]", metadata["capabilities"])
-            dependencies_list: list[str] = cast("list[str]", metadata["dependencies"])
 
-            # Extract from docstring
             if '"""' in content:
                 docstring = content.split('"""')[1] if content.count('"""') >= 2 else ""
                 lines = docstring.split("\n")
@@ -2018,27 +2020,26 @@ class PluginManager:
                         metadata["author"] = line.split("Author:")[-1].strip()
                     elif line.startswith("Version:"):
                         metadata["version"] = line.split("Version:")[-1].strip()
-                    elif not str(metadata["description"]).startswith("Python module:") and line:
+                    elif not metadata["description"].startswith("Python module:") and line:
                         metadata["description"] = line
 
-            # Look for imports to determine capabilities
             if "import torch" in content or "import tensorflow" in content:
-                capabilities_list.append("machine_learning")
+                metadata["capabilities"].append("machine_learning")
             if "import frida" in content:
-                capabilities_list.append("dynamic_analysis")
+                metadata["capabilities"].append("dynamic_analysis")
             if "cryptography" in content or "Crypto" in content:
-                capabilities_list.append("cryptography")
+                metadata["capabilities"].append("cryptography")
             if "license" in content.lower() or "bypass" in content.lower():
-                capabilities_list.append("license_bypass")
+                metadata["capabilities"].append("license_bypass")
 
             return PluginMetadata(
-                name=str(metadata["name"]),
-                version=str(metadata["version"]),
-                description=str(metadata["description"]),
+                name=metadata["name"],
+                version=metadata["version"],
+                description=metadata["description"],
                 component_type=ComponentType.CUSTOM_MODULE,
-                author=str(metadata["author"]),
-                capabilities=capabilities_list,
-                dependencies=dependencies_list,
+                author=metadata["author"],
+                capabilities=metadata["capabilities"],
+                dependencies=metadata["dependencies"],
                 supported_formats=[".exe", ".dll", ".so", ".dylib", ".bin"],
             )
 
@@ -2536,7 +2537,7 @@ class WorkflowEngine:
 
         except Exception as e:
             context["status"] = WorkflowStatus.FAILED
-            context["end_time"] = datetime.now(timezone.utc)
+            context["end_time"] = datetime.now(UTC)
             context["errors"].append(str(e))
 
             self.logger.exception("Workflow failed: %s - %s", execution_id, e)
@@ -2723,7 +2724,7 @@ class WorkflowEngine:
             context["step_results"][step.step_id] = result
 
             # Log performance
-            duration = (datetime.now(timezone.utc) - start_time).total_seconds()
+            duration = (datetime.now(UTC) - start_time).total_seconds()
             self.logger.info("Step %s completed in %.2fs", step.step_id, duration)
 
         except TimeoutError as timeout_error:
@@ -2773,9 +2774,7 @@ class WorkflowEngine:
                     "errors": workflow_record["errors"],
                     "start_time": workflow_record["start_time"].isoformat(),
                     "end_time": (workflow_record["end_time"].isoformat() if workflow_record["end_time"] else None),
-                    "duration": (
-                        (workflow_record["end_time"] or datetime.now(timezone.utc)) - workflow_record["start_time"]
-                    ).total_seconds(),
+                    "duration": ((workflow_record["end_time"] or datetime.now(UTC)) - workflow_record["start_time"]).total_seconds(),
                 }
                 for workflow_record in self.workflow_history
                 if workflow_record["execution_id"] == execution_id
@@ -3697,7 +3696,7 @@ class IntellicrackcoreEngine:
             return {
                 "success": False,
                 "error": str(e),
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
     def generate_frida_script(self, target: str, script_type: str) -> str:

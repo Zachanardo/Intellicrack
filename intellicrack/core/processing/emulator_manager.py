@@ -36,10 +36,18 @@ except ImportError as e:
     logger.error("Import error in emulator_manager: %s", e)
     from PyQt6.QtCore import QObject, pyqtSignal
 
+
 class QilingEmulatorProtocol(Protocol):
     """Protocol for QilingEmulator type checking."""
 
-    def __init__(self, binary_path: str) -> None: ...
+    def __init__(self, binary_path: str) -> None:
+        """Initialize the Qiling emulator with a binary.
+
+        Args:
+            binary_path: Path to the binary file to emulate.
+
+        """
+        ...
 
 
 class QemuEmulatorProtocol(Protocol):
@@ -47,9 +55,22 @@ class QemuEmulatorProtocol(Protocol):
 
     binary_path: str
 
-    def __init__(self, config: dict[str, Any]) -> None: ...
-    def start_system(self) -> None: ...
-    def stop_system(self) -> None: ...
+    def __init__(self, config: dict[str, Any]) -> None:
+        """Initialize the QEMU emulator with configuration.
+
+        Args:
+            config: Dictionary containing QEMU configuration parameters.
+
+        """
+        ...
+
+    def start_system(self) -> None:
+        """Start the QEMU virtual machine."""
+        ...
+
+    def stop_system(self) -> None:
+        """Stop the QEMU virtual machine."""
+        ...
 
 
 QEMU_AVAILABLE = False

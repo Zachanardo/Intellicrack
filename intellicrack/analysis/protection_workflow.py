@@ -35,13 +35,16 @@ C = TypeVar("C", bound=type[Any])
 
 try:
     from ..llm.llm_manager import LLMManager
+
     LLM_MANAGER_TYPE: type[LLMManager] | None = LLMManager
 except ImportError:
     LLM_MANAGER_TYPE = None
 
 try:
-    from ..protection.unified_protection_engine import UnifiedProtectionResult, UnifiedProtectionEngine, get_unified_engine
     from collections.abc import Callable as CallableType
+
+    from ..protection.unified_protection_engine import UnifiedProtectionEngine, UnifiedProtectionResult, get_unified_engine
+
     UNIFIED_PROTECTION_RESULT_TYPE: type[UnifiedProtectionResult] | None = UnifiedProtectionResult
     GET_UNIFIED_ENGINE_FUNC: CallableType[[], UnifiedProtectionEngine] | None = get_unified_engine
 except ImportError:
@@ -49,8 +52,10 @@ except ImportError:
     GET_UNIFIED_ENGINE_FUNC = None
 
 try:
-    from ..core.analysis.yara_pattern_engine import YaraPatternEngine, get_yara_engine, is_yara_available
     from collections.abc import Callable as CallableType
+
+    from ..core.analysis.yara_pattern_engine import YaraPatternEngine, get_yara_engine, is_yara_available
+
     GET_YARA_ENGINE_FUNC: CallableType[[], YaraPatternEngine | None] | None = get_yara_engine
     IS_YARA_AVAILABLE_FUNC: CallableType[[], bool] | None = is_yara_available
 except ImportError:
@@ -58,8 +63,10 @@ except ImportError:
     IS_YARA_AVAILABLE_FUNC = None
 
 try:
-    from ..core.analysis.firmware_analyzer import FirmwareAnalyzer, get_firmware_analyzer, is_binwalk_available
     from collections.abc import Callable as CallableType
+
+    from ..core.analysis.firmware_analyzer import FirmwareAnalyzer, get_firmware_analyzer, is_binwalk_available
+
     GET_FIRMWARE_ANALYZER_FUNC: CallableType[[], FirmwareAnalyzer | None] | None = get_firmware_analyzer
     IS_BINWALK_AVAILABLE_FUNC: CallableType[[], bool] | None = is_binwalk_available
 except ImportError:
@@ -67,8 +74,10 @@ except ImportError:
     IS_BINWALK_AVAILABLE_FUNC = None
 
 try:
-    from ..core.analysis.memory_forensics_engine import MemoryForensicsEngine, get_memory_forensics_engine, is_volatility3_available
     from collections.abc import Callable as CallableType
+
+    from ..core.analysis.memory_forensics_engine import MemoryForensicsEngine, get_memory_forensics_engine, is_volatility3_available
+
     GET_MEMORY_FORENSICS_ENGINE_FUNC: CallableType[[], MemoryForensicsEngine | None] | None = get_memory_forensics_engine
     IS_VOLATILITY3_AVAILABLE_FUNC: CallableType[[], bool] | None = is_volatility3_available
 except ImportError:
@@ -77,12 +86,14 @@ except ImportError:
 
 try:
     from ..scripting.frida_generator import FridaScriptGenerator
+
     FRIDA_SCRIPT_GENERATOR_TYPE: type[FridaScriptGenerator] | None = FridaScriptGenerator
 except ImportError:
     FRIDA_SCRIPT_GENERATOR_TYPE = None
 
 try:
     from ..scripting.ghidra_generator import GhidraScriptGenerator
+
     GHIDRA_SCRIPT_GENERATOR_TYPE: type[GhidraScriptGenerator] | None = GhidraScriptGenerator
 except ImportError:
     GHIDRA_SCRIPT_GENERATOR_TYPE = None
@@ -104,7 +115,7 @@ except ImportError:
         """
         return logging.getLogger(name)
 
-    def log_all_methods(cls: C) -> C:
+    def log_all_methods[C: type[Any]](cls: C) -> C:
         """Fallback decorator that does nothing.
 
         Args:
@@ -299,7 +310,12 @@ class ProtectionAnalysisWorkflow:
 
         try:
             # Volatility3 memory forensics (for memory dumps)
-            if self.memory_forensics and IS_VOLATILITY3_AVAILABLE_FUNC is not None and IS_VOLATILITY3_AVAILABLE_FUNC() and self._is_memory_dump(file_path):
+            if (
+                self.memory_forensics
+                and IS_VOLATILITY3_AVAILABLE_FUNC is not None
+                and IS_VOLATILITY3_AVAILABLE_FUNC()
+                and self._is_memory_dump(file_path)
+            ):
                 logger.debug("Running Volatility3 memory forensics...")
                 memory_result = self.memory_forensics.analyze_memory_dump(
                     dump_path=file_path,

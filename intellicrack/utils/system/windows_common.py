@@ -26,6 +26,7 @@ import sys
 from types import ModuleType
 from typing import Any
 
+
 logger: logging.Logger = logging.getLogger(__name__)
 
 WINDOWS_AVAILABLE: bool = False

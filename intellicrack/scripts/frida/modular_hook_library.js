@@ -68,7 +68,7 @@ const modularHookLibrary = {
             enableRetry: true,
             maxRetries: 3,
             retryDelay: 1000,
-            timeout: 30000,
+            timeout: 30_000,
         },
 
         // Performance optimization
@@ -113,7 +113,7 @@ const modularHookLibrary = {
         avgExecutionTime: 0,
     },
 
-    onAttach: function (pid) {
+    onAttach(pid) {
         send({
             type: 'status',
             target: 'hook_library',
@@ -124,7 +124,7 @@ const modularHookLibrary = {
         this.startTime = Date.now();
     },
 
-    run: function () {
+    run() {
         send({
             type: 'status',
             target: 'hook_library',
@@ -160,7 +160,7 @@ const modularHookLibrary = {
     },
 
     // === MODULE SYSTEM INITIALIZATION ===
-    initializeModuleSystem: function () {
+    initializeModuleSystem() {
         send({
             type: 'info',
             target: 'module_system',
@@ -196,7 +196,7 @@ const modularHookLibrary = {
         });
     },
 
-    createModuleLoader: function () {
+    createModuleLoader() {
         return {
             loadModule: this.loadModule.bind(this),
             unloadModule: this.unloadModule.bind(this),
@@ -208,7 +208,7 @@ const modularHookLibrary = {
         };
     },
 
-    createHookManager: function () {
+    createHookManager() {
         return {
             installHook: this.installHook.bind(this),
             uninstallHook: this.uninstallHook.bind(this),
@@ -221,7 +221,7 @@ const modularHookLibrary = {
         };
     },
 
-    createDependencyResolver: function () {
+    createDependencyResolver() {
         return {
             resolveDependencies: this.resolveDependencies.bind(this),
             checkDependencies: this.checkDependencies.bind(this),
@@ -233,7 +233,7 @@ const modularHookLibrary = {
     },
 
     // === BUILTIN MODULES REGISTRATION ===
-    registerBuiltinModules: function () {
+    registerBuiltinModules() {
         send({
             type: 'info',
             target: 'builtin_modules',
@@ -261,7 +261,7 @@ const modularHookLibrary = {
         });
     },
 
-    registerAntiDebugModules: function () {
+    registerAntiDebugModules() {
         send({
             type: 'info',
             target: 'antidebug_modules',
@@ -296,10 +296,10 @@ const modularHookLibrary = {
                     priority: 9,
                 },
             },
-            install: function () {
+            install() {
                 return this.installAntiDebugHooks();
             },
-            uninstall: function () {
+            uninstall() {
                 return this.uninstallAntiDebugHooks();
             },
         });
@@ -327,10 +327,10 @@ const modularHookLibrary = {
                     priority: 7,
                 },
             },
-            install: function () {
+            install() {
                 return this.installAdvancedAntiDebugHooks();
             },
-            uninstall: function () {
+            uninstall() {
                 return this.uninstallAdvancedAntiDebugHooks();
             },
         });
@@ -357,16 +357,16 @@ const modularHookLibrary = {
                     priority: 5,
                 },
             },
-            install: function () {
+            install() {
                 return this.installHardwareAntiDebugHooks();
             },
-            uninstall: function () {
+            uninstall() {
                 return this.uninstallHardwareAntiDebugHooks();
             },
         });
     },
 
-    registerLicensingModules: function () {
+    registerLicensingModules() {
         send({
             type: 'info',
             target: 'licensing_modules',
@@ -398,7 +398,7 @@ const modularHookLibrary = {
                     priority: 10,
                 },
             },
-            install: function () {
+            install() {
                 return this.installLocalLicenseHooks();
             },
         });
@@ -421,7 +421,7 @@ const modularHookLibrary = {
                     priority: 8,
                 },
             },
-            install: function () {
+            install() {
                 return this.installNetworkLicenseHooks();
             },
         });
@@ -447,13 +447,13 @@ const modularHookLibrary = {
                     priority: 9,
                 },
             },
-            install: function () {
+            install() {
                 return this.installCloudLicenseHooks();
             },
         });
     },
 
-    registerDrmModules: function () {
+    registerDrmModules() {
         send({
             type: 'info',
             target: 'drm_modules',
@@ -482,7 +482,7 @@ const modularHookLibrary = {
                     priority: 8,
                 },
             },
-            install: function () {
+            install() {
                 return this.installHDCPHooks();
             },
         });
@@ -508,7 +508,7 @@ const modularHookLibrary = {
                     priority: 8,
                 },
             },
-            install: function () {
+            install() {
                 return this.installPlayReadyHooks();
             },
         });
@@ -534,13 +534,13 @@ const modularHookLibrary = {
                     priority: 8,
                 },
             },
-            install: function () {
+            install() {
                 return this.installWidevineHooks();
             },
         });
     },
 
-    registerNetworkingModules: function () {
+    registerNetworkingModules() {
         send({
             type: 'info',
             target: 'networking_modules',
@@ -571,7 +571,7 @@ const modularHookLibrary = {
                     priority: 9,
                 },
             },
-            install: function () {
+            install() {
                 return this.installHTTPHooks();
             },
         });
@@ -598,7 +598,7 @@ const modularHookLibrary = {
                     priority: 9,
                 },
             },
-            install: function () {
+            install() {
                 return this.installHTTPSHooks();
             },
         });
@@ -622,13 +622,13 @@ const modularHookLibrary = {
                     priority: 9,
                 },
             },
-            install: function () {
+            install() {
                 return this.installDNSHooks();
             },
         });
     },
 
-    registerCryptographyModules: function () {
+    registerCryptographyModules() {
         send({
             type: 'info',
             target: 'crypto_modules',
@@ -660,7 +660,7 @@ const modularHookLibrary = {
                     priority: 7,
                 },
             },
-            install: function () {
+            install() {
                 return this.installBaseCryptoHooks();
             },
         });
@@ -686,7 +686,7 @@ const modularHookLibrary = {
                     priority: 8,
                 },
             },
-            install: function () {
+            install() {
                 return this.installSSLHooks();
             },
         });
@@ -712,7 +712,7 @@ const modularHookLibrary = {
                     priority: 9,
                 },
             },
-            install: function () {
+            install() {
                 return this.installJWTHooks();
             },
         });
@@ -738,13 +738,13 @@ const modularHookLibrary = {
                     priority: 9,
                 },
             },
-            install: function () {
+            install() {
                 return this.installOAuthHooks();
             },
         });
     },
 
-    registerVirtualizationModules: function () {
+    registerVirtualizationModules() {
         send({
             type: 'info',
             target: 'virtualization_modules',
@@ -773,7 +773,7 @@ const modularHookLibrary = {
                     priority: 8,
                 },
             },
-            install: function () {
+            install() {
                 return this.installVMwareBypassHooks();
             },
         });
@@ -799,13 +799,13 @@ const modularHookLibrary = {
                     priority: 8,
                 },
             },
-            install: function () {
+            install() {
                 return this.installVirtualBoxBypassHooks();
             },
         });
     },
 
-    registerIntegrityModules: function () {
+    registerIntegrityModules() {
         send({
             type: 'info',
             target: 'integrity_modules',
@@ -834,7 +834,7 @@ const modularHookLibrary = {
                     priority: 9,
                 },
             },
-            install: function () {
+            install() {
                 return this.installCodeIntegrityHooks();
             },
         });
@@ -860,13 +860,13 @@ const modularHookLibrary = {
                     priority: 8,
                 },
             },
-            install: function () {
+            install() {
                 return this.installMemoryIntegrityHooks();
             },
         });
     },
 
-    registerHardwareModules: function () {
+    registerHardwareModules() {
         send({
             type: 'info',
             target: 'hardware_modules',
@@ -898,7 +898,7 @@ const modularHookLibrary = {
                     priority: 8,
                 },
             },
-            install: function () {
+            install() {
                 return this.installBaseHardwareHooks();
             },
         });
@@ -921,13 +921,13 @@ const modularHookLibrary = {
                     priority: 9,
                 },
             },
-            install: function () {
+            install() {
                 return this.installTPMHooks();
             },
         });
     },
 
-    registerMemoryModules: function () {
+    registerMemoryModules() {
         send({
             type: 'info',
             target: 'memory_modules',
@@ -959,7 +959,7 @@ const modularHookLibrary = {
                     priority: 7,
                 },
             },
-            install: function () {
+            install() {
                 return this.installBaseMemoryHooks();
             },
         });
@@ -985,13 +985,13 @@ const modularHookLibrary = {
                     priority: 8,
                 },
             },
-            install: function () {
+            install() {
                 return this.installMemoryProtectionHooks();
             },
         });
     },
 
-    registerRegistryModules: function () {
+    registerRegistryModules() {
         send({
             type: 'info',
             target: 'registry_modules',
@@ -1023,7 +1023,7 @@ const modularHookLibrary = {
                     priority: 9,
                 },
             },
-            install: function () {
+            install() {
                 return this.installRegistryAccessHooks();
             },
         });
@@ -1049,14 +1049,14 @@ const modularHookLibrary = {
                     priority: 8,
                 },
             },
-            install: function () {
+            install() {
                 return this.installRegistrySpoofingHooks();
             },
         });
     },
 
     // === MODULE MANAGEMENT ===
-    registerModule: function (moduleId, moduleDefinition) {
+    registerModule(moduleId, moduleDefinition) {
         if (this.moduleRegistry.has(moduleId)) {
             send({
                 type: 'warning',
@@ -1094,7 +1094,7 @@ const modularHookLibrary = {
         return true;
     },
 
-    validateModuleDefinition: function (module) {
+    validateModuleDefinition(module) {
         // Required fields
         if (!module.name || !module.version || !module.category) {
             return false;
@@ -1114,7 +1114,7 @@ const modularHookLibrary = {
         return !(module.hooks && typeof module.hooks !== 'object');
     },
 
-    loadModule: function (moduleId, options) {
+    loadModule(moduleId, options) {
         send({
             type: 'info',
             target: 'hook_library',
@@ -1193,53 +1193,51 @@ const modularHookLibrary = {
                 module_id: moduleId,
             });
             return moduleInstance;
-        } catch (_e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'hook_library',
                 action: 'module_load_error',
                 module_id: moduleId,
-                error: e.message || e.toString(),
+                error: error.message || error.toString(),
             });
             this.stats.errors++;
             return null;
         }
     },
 
-    createModuleInstance: (moduleDefinition, options) => {
-        return {
-            id: moduleDefinition.id,
-            name: moduleDefinition.name,
-            version: moduleDefinition.version,
-            category: moduleDefinition.category,
-            dependencies: moduleDefinition.dependencies || [],
-            hooks: moduleDefinition.hooks || {},
-            status: 'loaded',
-            loadedAt: Date.now(),
-            options: options,
+    createModuleInstance: (moduleDefinition, options) => ({
+        id: moduleDefinition.id,
+        name: moduleDefinition.name,
+        version: moduleDefinition.version,
+        category: moduleDefinition.category,
+        dependencies: moduleDefinition.dependencies || [],
+        hooks: moduleDefinition.hooks || {},
+        status: 'loaded',
+        loadedAt: Date.now(),
+        options,
 
-            // Copy methods from definition
-            install: moduleDefinition.install || (() => true),
-            uninstall: moduleDefinition.uninstall || (() => true),
-            enable: moduleDefinition.enable || (() => true),
-            disable: moduleDefinition.disable || (() => true),
+        // Copy methods from definition
+        install: moduleDefinition.install || (() => true),
+        uninstall: moduleDefinition.uninstall || (() => true),
+        enable: moduleDefinition.enable || (() => true),
+        disable: moduleDefinition.disable || (() => true),
 
-            // Add management methods
-            getHooks: function () {
-                return Object.keys(this.hooks);
-            },
+        // Add management methods
+        getHooks() {
+            return Object.keys(this.hooks);
+        },
 
-            isInstalled: function () {
-                return this.status === 'installed';
-            },
+        isInstalled() {
+            return this.status === 'installed';
+        },
 
-            isEnabled: function () {
-                return this.status === 'enabled';
-            },
-        };
-    },
+        isEnabled() {
+            return this.status === 'enabled';
+        },
+    }),
 
-    unloadModule: function (moduleId) {
+    unloadModule(moduleId) {
         send({
             type: 'info',
             target: 'hook_library',
@@ -1277,20 +1275,20 @@ const modularHookLibrary = {
                 module_id: moduleId,
             });
             return true;
-        } catch (_e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'hook_library',
                 action: 'module_unload_error',
                 module_id: moduleId,
-                error: e.message || e.toString(),
+                error: error.message || error.toString(),
             });
             this.stats.errors++;
             return false;
         }
     },
 
-    reloadModule: function (moduleId) {
+    reloadModule(moduleId) {
         send({
             type: 'info',
             target: 'hook_library',
@@ -1302,7 +1300,7 @@ const modularHookLibrary = {
         return this.loadModule(moduleId);
     },
 
-    cacheModule: function (moduleId, moduleInstance) {
+    cacheModule(moduleId, moduleInstance) {
         if (this.moduleCache.size >= this.config.library.maxCacheSize) {
             // Remove oldest entry
             const oldestKey = this.moduleCache.keys().next().value;
@@ -1313,7 +1311,7 @@ const modularHookLibrary = {
     },
 
     // === HOOK MANAGEMENT ===
-    installHook: function (hookId, hookDefinition, moduleId) {
+    installHook(hookId, hookDefinition, moduleId) {
         send({
             type: 'info',
             target: 'hook_library',
@@ -1325,7 +1323,7 @@ const modularHookLibrary = {
             const hookInfo = {
                 id: hookId,
                 definition: hookDefinition,
-                moduleId: moduleId,
+                moduleId,
                 installedAt: Date.now(),
                 status: 'installed',
                 callCount: 0,
@@ -1350,20 +1348,20 @@ const modularHookLibrary = {
             }
 
             return false;
-        } catch (_e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'hook_library',
                 action: 'hook_install_error',
                 hook_id: hookId,
-                error: e.message || e.toString(),
+                error: error.message || error.toString(),
             });
             this.stats.errors++;
             return false;
         }
     },
 
-    createFridaHook: function (hookDefinition) {
+    createFridaHook(hookDefinition) {
         const { strategy } = hookDefinition;
         const target = hookDefinition.target || hookDefinition.module;
 
@@ -1379,36 +1377,42 @@ const modularHookLibrary = {
 
         try {
             switch (strategy) {
-                case 'replace_return':
+                case 'replace_return': {
                     return this.createReplaceReturnHook(hookDefinition);
+                }
 
-                case 'intercept_and_modify':
+                case 'intercept_and_modify': {
                     return this.createInterceptModifyHook(hookDefinition);
+                }
 
-                case 'monitor_and_log':
+                case 'monitor_and_log': {
                     return this.createMonitorLogHook(hookDefinition);
+                }
 
-                case 'spoof_values':
+                case 'spoof_values': {
                     return this.createSpoofValuesHook(hookDefinition);
+                }
 
-                case 'block_requests':
+                case 'block_requests': {
                     return this.createBlockRequestsHook(hookDefinition);
+                }
 
-                default:
+                default: {
                     send({
                         type: 'warning',
                         target: 'hook_library',
                         action: 'unknown_hook_strategy',
-                        strategy: strategy,
+                        strategy,
                     });
                     return null;
+                }
             }
-        } catch (_e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'hook_library',
                 action: 'frida_hook_creation_error',
-                error: e.message || e.toString(),
+                error: error.message || error.toString(),
             });
             return null;
         }
@@ -1451,12 +1455,12 @@ const modularHookLibrary = {
         }
 
         return Interceptor.attach(targetFunc, {
-            onEnter: function (args) {
+            onEnter(args) {
                 this.args = args;
                 this.hookDef = hookDefinition;
             },
 
-            onLeave: function (retval) {
+            onLeave(retval) {
                 if (this.hookDef.modifyReturn) {
                     retval.replace(this.hookDef.modifyReturn);
                 }
@@ -1482,7 +1486,7 @@ const modularHookLibrary = {
                 for (let i = 0; i < Math.min(args.length || 4, 4); i++) {
                     try {
                         argValues.push(args[i].toString());
-                    } catch (_e) {
+                    } catch {
                         argValues.push('<unavailable>');
                     }
                 }
@@ -1542,7 +1546,7 @@ const modularHookLibrary = {
         });
     },
 
-    uninstallHook: function (hookId) {
+    uninstallHook(hookId) {
         send({
             type: 'info',
             target: 'hook_library',
@@ -1575,20 +1579,20 @@ const modularHookLibrary = {
                 hook_id: hookId,
             });
             return true;
-        } catch (_e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'hook_library',
                 action: 'hook_uninstall_error',
                 hook_id: hookId,
-                error: e.message || e.toString(),
+                error: error.message || error.toString(),
             });
             return false;
         }
     },
 
     // === HOOK GROUPS AND CHAINS ===
-    createHookGroup: function (groupId, hookIds, options) {
+    createHookGroup(groupId, hookIds, options) {
         send({
             type: 'info',
             target: 'hook_library',
@@ -1608,7 +1612,7 @@ const modularHookLibrary = {
         return group;
     },
 
-    executeHookGroup: function (groupId) {
+    executeHookGroup(groupId) {
         send({
             type: 'info',
             target: 'hook_library',
@@ -1633,18 +1637,18 @@ const modularHookLibrary = {
             const hookInfo = this.activeHooks.get(hookId);
 
             if (hookInfo) {
-                results.push({ hookId: hookId, status: 'executed' });
+                results.push({ hookId, status: 'executed' });
                 hookInfo.callCount++;
                 this.stats.hooksExecuted++;
             } else {
-                results.push({ hookId: hookId, status: 'not_found' });
+                results.push({ hookId, status: 'not_found' });
             }
         }
 
         return results;
     },
 
-    createHookChain: function (chainId, hookIds, options) {
+    createHookChain(chainId, hookIds, options) {
         send({
             type: 'info',
             target: 'hook_library',
@@ -1664,7 +1668,7 @@ const modularHookLibrary = {
         return chain;
     },
 
-    executeHookChain: function (chainId) {
+    executeHookChain(chainId) {
         send({
             type: 'info',
             target: 'hook_library',
@@ -1692,15 +1696,15 @@ const modularHookLibrary = {
             if (hookInfo) {
                 // Check if previous hooks succeeded (if required)
                 if (chain.options.stopOnFailure && results.some(r => r.status === 'failed')) {
-                    results.push({ hookId: hookId, status: 'skipped' });
+                    results.push({ hookId, status: 'skipped' });
                     continue;
                 }
 
-                results.push({ hookId: hookId, status: 'executed' });
+                results.push({ hookId, status: 'executed' });
                 hookInfo.callCount++;
                 this.stats.hooksExecuted++;
             } else {
-                results.push({ hookId: hookId, status: 'not_found' });
+                results.push({ hookId, status: 'not_found' });
             }
         }
 
@@ -1708,7 +1712,7 @@ const modularHookLibrary = {
     },
 
     // === DEPENDENCY MANAGEMENT ===
-    setupDependencyManager: function () {
+    setupDependencyManager() {
         send({
             type: 'info',
             target: 'dependency_manager',
@@ -1721,7 +1725,7 @@ const modularHookLibrary = {
         }
     },
 
-    buildDependencyGraph: function () {
+    buildDependencyGraph() {
         send({
             type: 'info',
             target: 'dependency_manager',
@@ -1748,11 +1752,11 @@ const modularHookLibrary = {
         }
     },
 
-    detectCircularDependencies: function () {
+    detectCircularDependencies() {
         const visited = new Set();
         const recursionStack = new Set();
 
-        for (let moduleId of this.dependencyGraph.keys()) {
+        for (const moduleId of this.dependencyGraph.keys()) {
             if (this.hasCycle(moduleId, visited, recursionStack)) {
                 return true;
             }
@@ -1761,7 +1765,7 @@ const modularHookLibrary = {
         return false;
     },
 
-    hasCycle: function (moduleId, visited, recursionStack) {
+    hasCycle(moduleId, visited, recursionStack) {
         if (recursionStack.has(moduleId)) {
             return true;
         }
@@ -1774,8 +1778,7 @@ const modularHookLibrary = {
         recursionStack.add(moduleId);
 
         const dependencies = this.dependencyGraph.get(moduleId) || [];
-        for (let i = 0; i < dependencies.length; i++) {
-            const dep = dependencies[i];
+        for (const dep of dependencies) {
             if (this.hasCycle(dep, visited, recursionStack)) {
                 return true;
             }
@@ -1785,19 +1788,19 @@ const modularHookLibrary = {
         return false;
     },
 
-    resolveDependencies: function (moduleId) {
+    resolveDependencies(moduleId) {
         const resolved = [];
         const resolving = new Set();
 
         return this.resolveDependenciesRecursive(moduleId, resolved, resolving);
     },
 
-    resolveDependenciesRecursive: function (moduleId, resolved, resolving) {
+    resolveDependenciesRecursive(moduleId, resolved, resolving) {
         if (resolving.has(moduleId)) {
             throw new Error(`Circular dependency detected: ${moduleId}`);
         }
 
-        if (resolved.indexOf(moduleId) !== -1) {
+        if (resolved.includes(moduleId)) {
             return resolved;
         }
 
@@ -1818,7 +1821,7 @@ const modularHookLibrary = {
     },
 
     // === HOOK EXECUTOR ===
-    setupHookExecutor: function () {
+    setupHookExecutor() {
         send({
             type: 'info',
             target: 'hook_executor',
@@ -1836,7 +1839,7 @@ const modularHookLibrary = {
     },
 
     // === PERFORMANCE MONITORING ===
-    setupPerformanceMonitor: function () {
+    setupPerformanceMonitor() {
         send({
             type: 'info',
             target: 'performance_monitor',
@@ -1847,11 +1850,11 @@ const modularHookLibrary = {
         if (this.config.debug.measurePerformance) {
             setInterval(() => {
                 this.updatePerformanceMetrics();
-            }, 30000); // Update every 30 seconds
+            }, 30_000); // Update every 30 seconds
         }
     },
 
-    updatePerformanceMetrics: function () {
+    updatePerformanceMetrics() {
         const totalTime = 0;
         let totalExecutions = 0;
 
@@ -1869,7 +1872,7 @@ const modularHookLibrary = {
     },
 
     // === LIBRARY SERVICES ===
-    startLibraryServices: function () {
+    startLibraryServices() {
         send({
             type: 'status',
             target: 'library_services',
@@ -1893,7 +1896,7 @@ const modularHookLibrary = {
         }
     },
 
-    autoLoadModules: function () {
+    autoLoadModules() {
         send({
             type: 'info',
             target: 'auto_loader',
@@ -1911,8 +1914,7 @@ const modularHookLibrary = {
             'registry.access',
         ];
 
-        for (let i = 0; i < essentialModules.length; i++) {
-            const moduleId = essentialModules[i];
+        for (const moduleId of essentialModules) {
             if (this.moduleRegistry.has(moduleId)) {
                 this.loadModule(moduleId);
             }
@@ -1937,7 +1939,7 @@ const modularHookLibrary = {
         });
     },
 
-    startPerformanceMonitoring: function () {
+    startPerformanceMonitoring() {
         send({
             type: 'info',
             target: 'performance_monitoring',
@@ -1947,10 +1949,10 @@ const modularHookLibrary = {
 
         setInterval(() => {
             this.logPerformanceMetrics();
-        }, 60000); // Log every minute
+        }, 60_000); // Log every minute
     },
 
-    logPerformanceMetrics: function () {
+    logPerformanceMetrics() {
         send({
             type: 'info',
             target: 'modular_hook_library',
@@ -1964,19 +1966,19 @@ const modularHookLibrary = {
     },
 
     // === API METHODS ===
-    getModuleInfo: function (moduleId) {
+    getModuleInfo(moduleId) {
         return this.moduleRegistry.get(moduleId);
     },
 
-    getLoadedModules: function () {
-        return Array.from(this.loadedModules.keys());
+    getLoadedModules() {
+        return [...this.loadedModules.keys()];
     },
 
-    getActiveHooks: function () {
-        return Array.from(this.activeHooks.keys());
+    getActiveHooks() {
+        return [...this.activeHooks.keys()];
     },
 
-    getModulesByCategory: function (category) {
+    getModulesByCategory(category) {
         const modules = [];
         this.moduleRegistry.forEach((module, moduleId) => {
             if (module.category === category) {
@@ -1986,12 +1988,12 @@ const modularHookLibrary = {
         return modules;
     },
 
-    getStatistics: function () {
-        return Object.assign({}, this.stats);
+    getStatistics() {
+        return { ...this.stats };
     },
 
     // === INSTALLATION SUMMARY ===
-    installSummary: function () {
+    installSummary() {
         setTimeout(() => {
             send({
                 type: 'status',
@@ -2021,12 +2023,12 @@ const modularHookLibrary = {
                 activeFeatures.push('Lazy Loading');
             }
 
-            for (var i = 0; i < activeFeatures.length; i++) {
+            for (const feature of activeFeatures) {
                 send({
                     type: 'info',
                     target: 'hook_library',
                     action: 'active_feature_listed',
-                    feature: activeFeatures[i],
+                    feature,
                 });
             }
 
@@ -2037,16 +2039,14 @@ const modularHookLibrary = {
                 section: 'categories',
             });
 
-            const categories = Object.keys(this.config.categories);
-            for (var i = 0; i < categories.length; i++) {
-                var category = categories[i];
+            for (const category of Object.keys(this.config.categories)) {
                 if (this.config.categories[category]) {
                     const moduleCount = this.getModulesByCategory(category).length;
                     send({
                         type: 'info',
                         target: 'hook_library',
                         action: 'category_module_count',
-                        category: category,
+                        category,
                         module_count: moduleCount,
                     });
                 }
@@ -2190,8 +2190,8 @@ const modularHookLibrary = {
                 action: 'runtime_statistic',
                 metric: 'cache_hit_rate',
                 value: `${(
-                    (this.stats.cacheHits / (this.stats.cacheHits + this.stats.cacheMisses)) *
-                    100
+                    (this.stats.cacheHits / (this.stats.cacheHits + this.stats.cacheMisses))
+                    * 100
                 ).toFixed(1)}%`,
             });
 
@@ -2214,16 +2214,15 @@ const modularHookLibrary = {
                 modulesByCategory[module.category].push(moduleId);
             });
 
-            for (var category in modulesByCategory) {
+            for (const category of Object.keys(modulesByCategory)) {
                 send({
                     type: 'info',
                     target: 'modular_hook_library',
                     action: 'module_category',
-                    category: category,
+                    category,
                 });
                 const modules = modulesByCategory[category];
-                for (var i = 0; i < modules.length; i++) {
-                    var moduleId = modules[i];
+                for (const moduleId of modules) {
                     const isLoaded = this.loadedModules.has(moduleId);
                     const status = isLoaded ? 'loaded' : 'available';
                     send({
@@ -2231,7 +2230,7 @@ const modularHookLibrary = {
                         target: 'modular_hook_library',
                         action: 'module_status',
                         module_id: moduleId,
-                        status: status,
+                        status,
                     });
                 }
             }
@@ -2255,7 +2254,7 @@ const modularHookLibrary = {
     },
 
     // === ENHANCEMENT FUNCTIONS (2025) - BATCH 1 - PRODUCTION-READY ===
-    initializeAdvancedModularOrchestration: function () {
+    initializeAdvancedModularOrchestration() {
         const orchestrator = {
             interceptorBatch: null,
             activeInterceptors: new Map(),
@@ -2285,13 +2284,13 @@ const modularHookLibrary = {
                     transaction.endTime = Date.now();
                     transaction.duration = transaction.endTime - transaction.startTime;
                     return true;
-                } catch (_e) {
+                } catch (error) {
                     send({
                         type: 'error',
                         target: 'hook_library',
                         action: 'hook_transaction_commit_failed',
                         transaction_id: transactionId,
-                        error: e.toString(),
+                        error: error.toString(),
                     });
                     this.rollbackHookTransaction(transactionId);
                     return false;
@@ -2316,12 +2315,12 @@ const modularHookLibrary = {
         // Thread-aware hook distribution
         orchestrator.attachToThread = function (tid, target, callbacks) {
             const interceptor = Interceptor.attach(target, {
-                onEnter: function (args) {
+                onEnter(args) {
                     if ((this.threadId === tid || tid === 0) && callbacks.onEnter) {
                         callbacks.onEnter.call(this, args);
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if ((this.threadId === tid || tid === 0) && callbacks.onLeave) {
                         callbacks.onLeave.call(this, retval);
                     }
@@ -2349,10 +2348,10 @@ const modularHookLibrary = {
 
             // Monitor new module loads
             Interceptor.attach(Module.findExportByName(null, 'dlopen'), {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.path = args[0].readUtf8String();
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (retval.toInt32() !== 0 && this.path) {
                         self.moduleLoadCallbacks.forEach(function (callback) {
                             callback(this.path, retval);
@@ -2365,10 +2364,10 @@ const modularHookLibrary = {
             const loadLibrary = Module.findExportByName('kernel32.dll', 'LoadLibraryW');
             if (loadLibrary) {
                 Interceptor.attach(loadLibrary, {
-                    onEnter: function (args) {
+                    onEnter(args) {
                         this.libName = args[0].readUtf16String();
                     },
-                    onLeave: function (retval) {
+                    onLeave(retval) {
                         if (retval.toInt32() !== 0 && this.libName) {
                             self.moduleLoadCallbacks.forEach(function (callback) {
                                 callback(this.libName, retval);
@@ -2381,9 +2380,9 @@ const modularHookLibrary = {
 
         // Performance tracking for hooks
         orchestrator.measureHookPerformance = (hookId, callback) =>
-            function () {
+            function (...args) {
                 const start = Date.now();
-                const result = callback.apply(this, arguments);
+                const result = Reflect.apply(callback, this, args);
                 const duration = Date.now() - start;
 
                 if (!self.moduleOrchestrator.performanceMetrics.has(hookId)) {
@@ -2408,7 +2407,7 @@ const modularHookLibrary = {
         orchestrator.monitorModuleLoads();
     },
 
-    setupIntelligentHookComposition: function () {
+    setupIntelligentHookComposition() {
         const composer = {
             compositions: new Map(),
             chainedHooks: new Map(),
@@ -2419,7 +2418,7 @@ const modularHookLibrary = {
         // Create real hook chains with shared context
         composer.createHookChain = function (chainId, hookConfigs) {
             const sharedContext = {
-                chainId: chainId,
+                chainId,
                 results: [],
                 flags: {},
                 data: {},
@@ -2441,7 +2440,7 @@ const modularHookLibrary = {
                 }
 
                 const hookCallbacks = {
-                    onEnter: function (args) {
+                    onEnter(args) {
                         // Access previous hook results via shared context
                         const ctx = composer.sharedContexts.get(chainId);
                         this.hookIndex = index;
@@ -2459,7 +2458,7 @@ const modularHookLibrary = {
 
                         // Store arguments for potential modification
                         this.originalArgs = [];
-                        for (let j = 0; j < config.argCount || 4; j++) {
+                        for (let j = 0; j < (config.argCount || 4); j++) {
                             this.originalArgs.push(args[j]);
                         }
 
@@ -2476,7 +2475,7 @@ const modularHookLibrary = {
                             config.onEnter.call(this, args, ctx);
                         }
                     },
-                    onLeave: function (retval) {
+                    onLeave(retval) {
                         if (this.skip) {
                             return;
                         }
@@ -2486,7 +2485,7 @@ const modularHookLibrary = {
                         // Store result for next hooks in chain
                         ctx.results[index] = {
                             function: config.function,
-                            retval: retval,
+                            retval,
                             args: this.originalArgs,
                             timestamp: Date.now(),
                         };
@@ -2516,8 +2515,8 @@ const modularHookLibrary = {
                 const interceptor = Interceptor.attach(target, hookCallbacks);
                 chain.push({
                     id: config.function,
-                    interceptor: interceptor,
-                    config: config,
+                    interceptor,
+                    config,
                 });
             });
 
@@ -2543,7 +2542,7 @@ const modularHookLibrary = {
                 if (deps?.target) {
                     Interceptor.attach(deps.target, deps.callbacks);
                     chainContext.results.push({
-                        hookId: hookId,
+                        hookId,
                         executed: true,
                         timestamp: Date.now(),
                     });
@@ -2554,10 +2553,9 @@ const modularHookLibrary = {
         // Create composite hook with multiple behaviors
         composer.createCompositeHook = (target, behaviors) => {
             const composite = {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.behaviors = [];
-                    for (let i = 0; i < behaviors.length; i++) {
-                        const behavior = behaviors[i];
+                    for (const behavior of behaviors) {
                         if (behavior.condition && !behavior.condition(args)) {
                             continue;
                         }
@@ -2565,12 +2563,12 @@ const modularHookLibrary = {
                             const result = behavior.onEnter.call(this, args);
                             this.behaviors.push({
                                 id: behavior.id,
-                                result: result,
+                                result,
                             });
                         }
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     for (let i = 0; i < this.behaviors.length; i++) {
                         const behaviorResult = this.behaviors[i];
                         const behavior = behaviors.find(b => b.id === behaviorResult.id);
@@ -2607,11 +2605,11 @@ const modularHookLibrary = {
                     module: 'kernel32.dll',
                     function: 'CheckRemoteDebuggerPresent',
                     requires: ['debuggerCheckBypassed'],
-                    onEnter: function (args, ctx) {
+                    onEnter(args, ctx) {
                         this.pDebuggerPresent = args[1];
                         ctx.flags.remoteDebuggerChecked = true;
                     },
-                    onLeave: function (retval, ctx) {
+                    onLeave(retval, ctx) {
                         if (this.pDebuggerPresent) {
                             this.pDebuggerPresent.writeU8(0);
                         }
@@ -2622,12 +2620,12 @@ const modularHookLibrary = {
                 {
                     module: 'ntdll.dll',
                     function: 'NtQueryInformationProcess',
-                    onEnter: function (args, ctx) {
+                    onEnter(args, ctx) {
                         this.infoClass = args[1].toInt32();
                         this.buffer = args[2];
                         ctx.flags.queryInformationHooked = true;
                     },
-                    onLeave: function (retval, ctx) {
+                    onLeave(retval, ctx) {
                         if (this.infoClass === 7 && this.buffer) {
                             // ProcessDebugPort
                             this.buffer.writeU32(0);
@@ -2647,7 +2645,7 @@ const modularHookLibrary = {
         composer.setupAntiDetectionChain();
     },
 
-    initializeAdaptiveLoadBalancer: function () {
+    initializeAdaptiveLoadBalancer() {
         const balancer = {
             threadMetrics: new Map(),
             hookDistribution: new Map(),
@@ -2705,13 +2703,13 @@ const modularHookLibrary = {
                             startTime: Date.now(),
                             eventsBuffer: events,
                         });
-                    } catch (_e) {
+                    } catch (error) {
                         send({
                             type: 'debug',
                             target: 'hook_library',
                             action: 'stalker_attach_failed',
                             thread_id: thread.id,
-                            error: e.toString(),
+                            error: error.toString(),
                         });
                     }
                 }
@@ -2739,16 +2737,16 @@ const modularHookLibrary = {
                 const target = Module.findExportByName(hookConfig.module, hookConfig.function);
                 if (target) {
                     const interceptor = Interceptor.attach(target, {
-                        onEnter: function (args) {
+                        onEnter(args) {
                             if (this.threadId === bestThread) {
-                                const _startTime = Date.now(); // Reserved for performance tracking
+                                const startTime = Date.now();
                                 if (hookConfig.onEnter) {
                                     hookConfig.onEnter.call(this, args);
                                 }
                                 this.enterTime = startTime;
                             }
                         },
-                        onLeave: function (retval) {
+                        onLeave(retval) {
                             if (this.threadId === bestThread && this.enterTime) {
                                 const duration = Date.now() - this.enterTime;
                                 const metrics = balancer.threadMetrics.get(bestThread);
@@ -2756,7 +2754,7 @@ const modularHookLibrary = {
                                     metrics.executionTime += duration;
                                     metrics.hooks.push({
                                         function: hookConfig.function,
-                                        duration: duration,
+                                        duration,
                                     });
                                 }
                                 if (hookConfig.onLeave) {
@@ -2800,7 +2798,7 @@ const modularHookLibrary = {
                             migrations.push({
                                 from: tid,
                                 to: targetThread,
-                                hook: hooks[hooks.length - 1],
+                                hook: hooks.at(-1),
                             });
                         }
                     }
@@ -2830,7 +2828,7 @@ const modularHookLibrary = {
 
                 // Clean up finished Stalker sessions
                 balancer.stalkerSessions.forEach((session, tid) => {
-                    if (Date.now() - session.startTime > 60000) {
+                    if (Date.now() - session.startTime > 60_000) {
                         // Refresh every minute
                         Stalker.detach(tid);
                         balancer.stalkerSessions.delete(tid);
@@ -2844,7 +2842,7 @@ const modularHookLibrary = {
         balancer.optimizeHookPlacement();
     },
 
-    setupQuantumResistantModuleEncryption: function () {
+    setupQuantumResistantModuleEncryption() {
         const encryption = {
             protectedCode: new Map(),
             codeSignatures: new Map(),
@@ -2854,18 +2852,18 @@ const modularHookLibrary = {
 
         // ChaCha20-Poly1305 implementation for real encryption
         encryption.chacha20Block = (key, counter, nonce) => {
-            const constants = [0x61707865, 0x3320646e, 0x79622d32, 0x6b206574];
+            const constants = [0x61_70_78_65, 0x33_20_64_6E, 0x79_62_2D_32, 0x6B_20_65_74];
             const state = new Uint32Array(16);
 
             // Initialize state
-            for (var i = 0; i < 4; i++) {
+            for (let i = 0; i < 4; i++) {
                 state[i] = constants[i];
             }
-            for (var i = 0; i < 8; i++) {
+            for (let i = 0; i < 8; i++) {
                 state[4 + i] = key[i];
             }
             state[12] = counter;
-            for (var i = 0; i < 3; i++) {
+            for (let i = 0; i < 3; i++) {
                 state[13 + i] = nonce[i];
             }
 
@@ -2882,7 +2880,7 @@ const modularHookLibrary = {
             }
 
             // 20 rounds
-            for (var i = 0; i < 10; i++) {
+            for (let i = 0; i < 10; i++) {
                 quarterRound(0, 4, 8, 12);
                 quarterRound(1, 5, 9, 13);
                 quarterRound(2, 6, 10, 14);
@@ -2902,29 +2900,29 @@ const modularHookLibrary = {
             const nonce = new Uint32Array(3);
 
             // Generate unique key for each module
-            for (var i = 0; i < 8; i++) {
-                key[i] = Math.floor(Math.random() * 0xffffffff);
+            for (let i = 0; i < 8; i++) {
+                key[i] = Math.floor(Math.random() * 0xFF_FF_FF_FF);
             }
-            for (var i = 0; i < 3; i++) {
-                nonce[i] = Math.floor(Math.random() * 0xffffffff);
+            for (let i = 0; i < 3; i++) {
+                nonce[i] = Math.floor(Math.random() * 0xFF_FF_FF_FF);
             }
 
-            this.encryptionKeys.set(moduleId, { key: key, nonce: nonce });
+            this.encryptionKeys.set(moduleId, { key, nonce });
 
             // Convert code to bytes
             const codeBytes = [];
-            for (var i = 0; i < code.length; i++) {
-                codeBytes.push(code.charCodeAt(i));
+            for (let i = 0; i < code.length; i++) {
+                codeBytes.push(code.codePointAt(i) || 0);
             }
 
             // Encrypt with ChaCha20
             const encrypted = [];
-            const counter = 0;
-            for (var i = 0; i < codeBytes.length; i += 64) {
+            let counter = 0;
+            for (let i = 0; i < codeBytes.length; i += 64) {
                 const keystream = this.chacha20Block(key, counter++, nonce);
                 for (let j = 0; j < 64 && i + j < codeBytes.length; j++) {
                     encrypted.push(
-                        codeBytes[i + j] ^ ((keystream[Math.floor(j / 4)] >>> ((j % 4) * 8)) & 0xff)
+                        codeBytes[i + j] ^ ((keystream[Math.floor(j / 4)] >>> ((j % 4) * 8)) & 0xFF)
                     );
                 }
             }
@@ -2941,12 +2939,12 @@ const modularHookLibrary = {
                 // Calculate checksum for integrity
                 let checksum = 0;
                 for (let i = 0; i < size; i++) {
-                    checksum = (checksum + address.add(i).readU8()) & 0xffffffff;
+                    checksum = (checksum + address.add(i).readU8()) & 0xFF_FF_FF_FF;
                 }
 
                 this.codeSignatures.set(address.toString(), {
-                    checksum: checksum,
-                    size: size,
+                    checksum,
+                    size,
                     timestamp: Date.now(),
                 });
 
@@ -2954,7 +2952,7 @@ const modularHookLibrary = {
                 this.monitorCodeIntegrity(address, size, checksum);
 
                 return true;
-            } catch (_e) {
+            } catch {
                 return false;
             }
         };
@@ -2965,7 +2963,8 @@ const modularHookLibrary = {
                 try {
                     let currentChecksum = 0;
                     for (let i = 0; i < size; i++) {
-                        currentChecksum = (currentChecksum + address.add(i).readU8()) & 0xffffffff;
+                        currentChecksum
+                            = (currentChecksum + address.add(i).readU8()) & 0xFF_FF_FF_FF;
                     }
 
                     if (currentChecksum !== expectedChecksum) {
@@ -2981,7 +2980,7 @@ const modularHookLibrary = {
                         // Restore protected code if possible
                         self.restoreProtectedCode(address);
                     }
-                } catch (_e) {
+                } catch {
                     clearInterval(checkInterval);
                 }
             }, 1000); // Check every second
@@ -2991,7 +2990,7 @@ const modularHookLibrary = {
         encryption.storeEncryptedModule = function (moduleId, code) {
             const encrypted = this.encryptHookCode(code, moduleId);
             this.protectedCode.set(moduleId, {
-                encrypted: encrypted,
+                encrypted,
                 originalLength: code.length,
                 timestamp: Date.now(),
             });
@@ -3008,19 +3007,19 @@ const modularHookLibrary = {
 
             // Decrypt code
             const decrypted = [];
-            const counter = 0;
+            let counter = 0;
             for (let i = 0; i < protectedData.encrypted.length; i += 64) {
                 const keystream = this.chacha20Block(keys.key, counter++, keys.nonce);
                 for (let j = 0; j < 64 && i + j < protectedData.encrypted.length; j++) {
                     decrypted.push(
-                        protectedData.encrypted[i + j] ^
-                            ((keystream[Math.floor(j / 4)] >>> ((j % 4) * 8)) & 0xff)
+                        protectedData.encrypted[i + j]
+                            ^ ((keystream[Math.floor(j / 4)] >>> ((j % 4) * 8)) & 0xFF)
                     );
                 }
             }
 
             // Convert back to string
-            const code = String.fromCharCode.apply(null, decrypted);
+            const code = String.fromCodePoint.apply(null, decrypted);
 
             // Allocate protected memory for code
             const codeSize = protectedData.originalLength;
@@ -3050,7 +3049,7 @@ const modularHookLibrary = {
         });
     },
 
-    initializeAIAssistedDependencyResolution: function () {
+    initializeAIAssistedDependencyResolution() {
         const resolver = {
             importTable: new Map(),
             exportTable: new Map(),
@@ -3090,7 +3089,11 @@ const modularHookLibrary = {
                     }
                     resolver.importTable.get(moduleName).add(imp.module);
                 });
-            } catch (_e) {}
+            } catch (error) {
+                console.log(
+                    `[ModularHookLibrary] Error enumerating imports for ${moduleName}: ${error.message || error}`
+                );
+            }
 
             // Get real exports
             try {
@@ -3108,7 +3111,11 @@ const modularHookLibrary = {
                     }
                     resolver.exportTable.get(moduleName).add(exp.name);
                 });
-            } catch (_e) {}
+            } catch (error) {
+                console.log(
+                    `[ModularHookLibrary] Error enumerating exports for ${moduleName}: ${error.message || error}`
+                );
+            }
 
             return dependencies;
         };
@@ -3142,7 +3149,7 @@ const modularHookLibrary = {
 
                 const imports = resolver.importTable.get(module);
                 if (imports) {
-                    for (let dep of imports) {
+                    for (const dep of imports) {
                         if (!visited.has(dep)) {
                             if (hasCycle(dep)) {
                                 return true;
@@ -3229,13 +3236,13 @@ const modularHookLibrary = {
 
             return common.length > 0
                 ? {
-                      hasConflict: true,
-                      commonDependents: common,
-                      severity: common.length / Math.max(deps1.length, deps2.length),
-                  }
+                    hasConflict: true,
+                    commonDependents: common,
+                    severity: common.length / Math.max(deps1.length, deps2.length),
+                }
                 : {
-                      hasConflict: false,
-                  };
+                    hasConflict: false,
+                };
         };
 
         this.dependencyResolver = resolver;
@@ -3243,7 +3250,7 @@ const modularHookLibrary = {
     },
 
     // Enhancement Function 6: Advanced Conflict Mitigation
-    setupAdvancedConflictMitigation: function () {
+    setupAdvancedConflictMitigation() {
         const conflictResolver = {
             hookConflicts: new Map(),
             priorityQueue: [],
@@ -3268,11 +3275,15 @@ const modularHookLibrary = {
                         type: 'interceptor',
                     });
                 }
-            } catch (_e) {}
+            } catch (error) {
+                console.log(
+                    `[ModularHookLibrary] Error parsing instruction at ${targetAddr}: ${error.message || error}`
+                );
+            }
 
             // Check global hook registry
-            if (typeof global.fridaHooks !== 'undefined') {
-                for (let hookId in global.fridaHooks) {
+            if (global.fridaHooks !== undefined) {
+                for (const hookId of Object.keys(global.fridaHooks)) {
                     const hook = global.fridaHooks[hookId];
                     if (hook.address?.equals(targetAddr)) {
                         conflicts.push({
@@ -3306,16 +3317,16 @@ const modularHookLibrary = {
             const chain = [];
             const currentPriority = newHook.priority || 0;
 
-            for (let i = 0; i < conflicts.length; i++) {
-                if (conflicts[i].priority >= currentPriority) {
-                    chain.push(conflicts[i].id);
+            for (const conflict of conflicts) {
+                if (conflict.priority >= currentPriority) {
+                    chain.push(conflict.id);
                 } else {
                     // Lower priority hooks get displaced
-                    this.displaceHook(conflicts[i].id);
+                    this.displaceHook(conflict.id);
                 }
             }
 
-            return { action: 'chain', chain: chain };
+            return { action: 'chain', chain };
         };
 
         // Hook displacement and relocation
@@ -3327,16 +3338,16 @@ const modularHookLibrary = {
             const hook = global.fridaHooks[hookId];
             const alternativeAddrs = this.findAlternatives(hook.address);
 
-            for (let i = 0; i < alternativeAddrs.length; i++) {
-                if (this.detectConflicts(alternativeAddrs[i]).length === 0) {
+            for (const alternativeAddr of alternativeAddrs) {
+                if (this.detectConflicts(alternativeAddr).length === 0) {
                     // Relocate hook to alternative address
                     hook.originalAddress = hook.address;
-                    hook.address = alternativeAddrs[i];
+                    hook.address = alternativeAddr;
                     hook.displaced = true;
 
                     // Re-install at new location
                     if (hook.installer) {
-                        hook.installer(alternativeAddrs[i]);
+                        hook.installer(alternativeAddr);
                     }
                     break;
                 }
@@ -3344,7 +3355,7 @@ const modularHookLibrary = {
         };
 
         // Find alternative hook points
-        conflictResolver.findAlternatives = _addr => {
+        conflictResolver.findAlternatives = addr => {
             const alternatives = [];
             const func = DebugSymbol.getFunctionByName(DebugSymbol.fromAddress(addr).name);
 
@@ -3402,7 +3413,7 @@ const modularHookLibrary = {
     },
 
     // Enhancement Function 7: Predictive Hook Optimization
-    initializePredictiveHookOptimization: function () {
+    initializePredictiveHookOptimization() {
         const optimizer = {
             callFrequency: new Map(),
             executionPaths: new Map(),
@@ -3412,7 +3423,7 @@ const modularHookLibrary = {
 
         // Profile function call frequency using Stalker
         optimizer.profileCallFrequency = () => {
-            const _frequency = new Map();
+            const frequency = new Map();
             const _startTime = Date.now(); // Reserved for performance tracking
 
             Process.enumerateThreads()
@@ -3436,7 +3447,11 @@ const modularHookLibrary = {
                                 });
                             },
                         });
-                    } catch (_e) {}
+                    } catch (error) {
+                        console.log(
+                            `[ModularHookLibrary] Error following thread ${thread.id}: ${error.message || error}`
+                        );
+                    }
                 });
 
             // Profile for 100ms
@@ -3446,7 +3461,11 @@ const modularHookLibrary = {
                     .forEach(thread => {
                         try {
                             Stalker.unfollow(thread.id);
-                        } catch (_e) {}
+                        } catch (error) {
+                            console.log(
+                                `[ModularHookLibrary] Error unfollowing thread ${thread.id}: ${error.message || error}`
+                            );
+                        }
                     });
 
                 // Identify hot and cold paths
@@ -3539,17 +3558,17 @@ const modularHookLibrary = {
 
                         // Look for patterns indicating security checks
                         const patterns = [
-                            [0x48, 0x83, 0xec], // sub rsp, XX (stack frame)
-                            [0x48, 0x89, 0x5c, 0x24], // mov [rsp+XX], rbx (save registers)
-                            [0xe8], // call
-                            [0xff, 0x15], // call [rip+XX]
+                            [0x48, 0x83, 0xEC], // sub rsp, XX (stack frame)
+                            [0x48, 0x89, 0x5C, 0x24], // mov [rsp+XX], rbx (save registers)
+                            [0xE8], // call
+                            [0xFF, 0x15], // call [rip+XX]
                         ];
 
                         for (let i = 0; i < bytes.length - 4; i++) {
-                            for (let j = 0; j < patterns.length; j++) {
+                            for (const [j, pattern] of patterns.entries()) {
                                 let match = true;
-                                for (let k = 0; k < patterns[j].length; k++) {
-                                    if (bytes[i + k] !== patterns[j][k]) {
+                                for (const [k, element] of pattern.entries()) {
+                                    if (bytes[i + k] !== element) {
                                         match = false;
                                         break;
                                     }
@@ -3582,7 +3601,7 @@ const modularHookLibrary = {
     },
 
     // Enhancement Function 8: Dynamic Module Evolution
-    setupDynamicModuleEvolution: function () {
+    setupDynamicModuleEvolution() {
         const evolution = {
             moduleGenerations: new Map(),
             mutationHistory: [],
@@ -3592,7 +3611,7 @@ const modularHookLibrary = {
         // Generate evolved hook variants using code mutation
         evolution.evolveHook = function (originalHook, targetAddr) {
             let generation = this.moduleGenerations.get(targetAddr.toString()) || 0;
-            const evolved = Object.assign({}, originalHook);
+            const evolved = { ...originalHook };
 
             // Apply mutations based on generation
             if (generation > 0) {
@@ -3639,7 +3658,7 @@ const modularHookLibrary = {
                     // Generation 2: Add decoy operations
                     if (generation >= 2) {
                         const decoy = Memory.alloc(16);
-                        Memory.writeU32(decoy, Math.random() * 0xffffffff);
+                        Memory.writeU32(decoy, Math.random() * 0xFF_FF_FF_FF);
                         Memory.readU32(decoy);
                     }
 
@@ -3651,18 +3670,18 @@ const modularHookLibrary = {
                             if (isDebugged) {
                                 // Apply evasion
                                 this.context.pc = this.context.pc.add(4);
-                                return;
+                                return undefined;
                             }
                         }
                     }
 
                     // Call original with mutations
                     return callback.call(this, args);
-                } catch (_e) {
+                } catch (error) {
                     // Mutation error recovery
                     evolution.mutationHistory.push({
-                        generation: generation,
-                        error: e.toString(),
+                        generation,
+                        error: error.toString(),
                         timestamp: Date.now(),
                     });
 
@@ -3670,6 +3689,7 @@ const modularHookLibrary = {
                     if (generation > 0) {
                         return evolution.mutateCallback(callback, generation - 1).call(this, args);
                     }
+                    return undefined;
                 }
             };
         };
@@ -3688,7 +3708,7 @@ const modularHookLibrary = {
                 // Add exception handling
                 try {
                     return original.call(this, args);
-                } catch (_e) {
+                } catch {
                     // Graceful degradation
                     return Memory.alloc(8);
                 }
@@ -3731,7 +3751,7 @@ const modularHookLibrary = {
         };
 
         // Collect runtime metrics
-        evolution.collectMetrics = _addr => {
+        evolution.collectMetrics = addr => {
             const metrics = {
                 calls: 0,
                 failures: 0,
@@ -3741,11 +3761,11 @@ const modularHookLibrary = {
             // Sample execution for metrics
             const _startTime = Date.now(); // Reserved for performance tracking
             const sampler = Interceptor.attach(addr, {
-                onEnter: function () {
+                onEnter() {
                     this.startTime = Date.now();
                     metrics.calls++;
                 },
-                onLeave: function (ret) {
+                onLeave(ret) {
                     if (ret.toInt32() < 0) {
                         metrics.failures++;
                     }
@@ -3773,7 +3793,7 @@ const modularHookLibrary = {
     },
 
     // Enhancement Function 9: Advanced Versioning System
-    initializeAdvancedVersioningSystem: function () {
+    initializeAdvancedVersioningSystem() {
         const versioning = {
             versions: new Map(),
             branches: new Map(),
@@ -3834,7 +3854,7 @@ const modularHookLibrary = {
 
             // Create branch-specific hook copy
             if (global.fridaHooks?.[hookId]) {
-                const branchedHook = Object.assign({}, global.fridaHooks[hookId]);
+                const branchedHook = { ...global.fridaHooks[hookId] };
                 branchedHook.branch = branchName;
                 global.fridaHooks[`${hookId}_${branchName}`] = branchedHook;
             }
@@ -3859,8 +3879,8 @@ const modularHookLibrary = {
 
                 target.commits.forEach(targetCommit => {
                     if (
-                        commit.hookId === targetCommit.hookId &&
-                        commit.address === targetCommit.address
+                        commit.hookId === targetCommit.hookId
+                        && commit.address === targetCommit.address
                     ) {
                         hasConflict = true;
                         conflicts.push({
@@ -3922,11 +3942,14 @@ const modularHookLibrary = {
             if (commit.code) {
                 try {
                     // Evaluate code in context
+                    // eslint-disable-next-line no-new-func -- Required for dynamic hook code execution
                     const func = new Function(`return ${commit.code}`);
                     const newHook = func();
                     Object.assign(hook, newHook);
-                } catch (_e) {
-                    // Silent fail on bad code
+                } catch (error) {
+                    console.log(
+                        `[ModularHookLibrary] Error evaluating commit code: ${error.message || error}`
+                    );
                 }
             }
 
@@ -3949,13 +3972,23 @@ const modularHookLibrary = {
                 // Restore state
                 if (snapshot.state.onEnter) {
                     try {
+                        // eslint-disable-next-line no-new-func -- Required for deserializing hook callbacks
                         hook.onEnter = new Function('args', snapshot.state.onEnter);
-                    } catch (_e) {}
+                    } catch (error) {
+                        console.log(
+                            `[ModularHookLibrary] Error restoring onEnter for ${hookId}: ${error.message || error}`
+                        );
+                    }
                 }
                 if (snapshot.state.onLeave) {
                     try {
+                        // eslint-disable-next-line no-new-func -- Required for deserializing hook callbacks
                         hook.onLeave = new Function('retval', snapshot.state.onLeave);
-                    } catch (_e) {}
+                    } catch (error) {
+                        console.log(
+                            `[ModularHookLibrary] Error restoring onLeave for ${hookId}: ${error.message || error}`
+                        );
+                    }
                 }
 
                 // Restore metadata
@@ -3974,16 +4007,16 @@ const modularHookLibrary = {
         // Version increment logic
         versioning.incrementVersion = function () {
             const parts = this.currentVersion.split('.');
-            parts[2] = (parseInt(parts[2], 10) + 1).toString();
+            parts[2] = (Number.parseInt(parts[2], 10) + 1).toString();
 
             // Handle overflow
-            if (parseInt(parts[2], 10) > 99) {
+            if (Number.parseInt(parts[2], 10) > 99) {
                 parts[2] = '0';
-                parts[1] = (parseInt(parts[1], 10) + 1).toString();
+                parts[1] = (Number.parseInt(parts[1], 10) + 1).toString();
             }
-            if (parseInt(parts[1], 10) > 99) {
+            if (Number.parseInt(parts[1], 10) > 99) {
                 parts[1] = '0';
-                parts[0] = (parseInt(parts[0], 10) + 1).toString();
+                parts[0] = (Number.parseInt(parts[0], 10) + 1).toString();
             }
 
             this.currentVersion = parts.join('.');
@@ -4000,7 +4033,7 @@ const modularHookLibrary = {
 
             // Snapshot all hooks
             if (global.fridaHooks) {
-                for (let hookId in global.fridaHooks) {
+                for (const hookId of Object.keys(global.fridaHooks)) {
                     checkpoint.hooks[hookId] = this.createSnapshot(hookId);
                 }
             }
@@ -4018,7 +4051,7 @@ const modularHookLibrary = {
     },
 
     // Enhancement Function 10: Intelligent Performance Orchestrator
-    setupIntelligentPerformanceOrchestrator: function () {
+    setupIntelligentPerformanceOrchestrator() {
         const orchestrator = {
             performanceMetrics: new Map(),
             optimizationQueue: [],
@@ -4065,7 +4098,7 @@ const modularHookLibrary = {
 
             // Estimate based on allocated memory regions
             Process.enumerateRanges('rw-').forEach(range => {
-                if (range.file?.path && range.file.path.indexOf('frida') !== -1) {
+                if (range.file?.path && range.file.path.includes('frida')) {
                     usage += range.size;
                 }
             });
@@ -4075,16 +4108,15 @@ const modularHookLibrary = {
 
         // Get CPU usage estimate
         orchestrator.getCpuUsage = () => {
-            const _startTime = Date.now(); // Reserved for performance tracking
+            const startTime = Date.now();
             let iterations = 0;
 
-            // Benchmark loop
             while (Date.now() - startTime < 10) {
                 iterations++;
             }
 
             // Compare to baseline (pre-calibrated)
-            const baseline = 100000;
+            const baseline = 100_000;
             const usage = Math.max(0, 100 - (iterations / baseline) * 100);
 
             return Math.min(100, usage);
@@ -4099,7 +4131,7 @@ const modularHookLibrary = {
 
             // Compress hook storage
             if (global.fridaHooks) {
-                for (let hookId in global.fridaHooks) {
+                for (const hookId of Object.keys(global.fridaHooks)) {
                     const hook = global.fridaHooks[hookId];
 
                     // Remove unnecessary properties
@@ -4124,7 +4156,7 @@ const modularHookLibrary = {
         orchestrator.optimizeCpu = () => {
             // Throttle high-frequency hooks
             if (global.fridaHooks) {
-                for (let hookId in global.fridaHooks) {
+                for (const hookId of Object.keys(global.fridaHooks)) {
                     const hook = global.fridaHooks[hookId];
 
                     if (hook.frequency && hook.frequency > 1000) {
@@ -4135,7 +4167,7 @@ const modularHookLibrary = {
                         hook.onEnter = function (args) {
                             const now = Date.now();
                             if (now - lastCall < 10) {
-                                return; // Throttle to 100Hz
+                                return undefined; // Throttle to 100Hz
                             }
                             lastCall = now;
                             return original.call(this, args);
@@ -4154,7 +4186,11 @@ const modularHookLibrary = {
                             Stalker.unfollow(thread.id);
                         }
                     }
-                } catch (_e) {}
+                } catch (error) {
+                    console.log(
+                        `[ModularHookLibrary] Error checking Stalker capacity for thread ${thread.id}: ${error.message || error}`
+                    );
+                }
             });
         };
 
@@ -4167,7 +4203,7 @@ const modularHookLibrary = {
             // Identify redundant hooks
             const hookMap = new Map();
 
-            for (let hookId in global.fridaHooks) {
+            for (const hookId of Object.keys(global.fridaHooks)) {
                 const hook = global.fridaHooks[hookId];
                 const key = hook.address ? hook.address.toString() : hookId;
 
@@ -4205,16 +4241,20 @@ const modularHookLibrary = {
             // Create merged callback
             masterHook.onEnter = function (args) {
                 const results = [];
-                for (let i = 0; i < callbacks.length; i++) {
+                for (const callback of callbacks) {
                     try {
-                        results.push(callbacks[i].call(this, args));
-                    } catch (_e) {}
+                        results.push(callback.call(this, args));
+                    } catch (error) {
+                        console.log(
+                            `[ModularHookLibrary] Error in merged callback: ${error.message || error}`
+                        );
+                    }
                 }
                 return results[0]; // Return first result
             };
 
             // Remove redundant hooks
-            for (var i = 1; i < hookIds.length; i++) {
+            for (let i = 1; i < hookIds.length; i++) {
                 delete global.fridaHooks[hookIds[i]];
             }
         };
@@ -4224,13 +4264,17 @@ const modularHookLibrary = {
             let source = func.toString();
 
             // Remove comments and whitespace
-            source = source.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, '');
-            source = source.replace(/\s+/g, ' ');
+            source = source.replaceAll(/\/\*[\S\s]*?\*\/|\/\/.*/g, '');
+            source = source.replaceAll(/\s+/g, ' ');
 
             // Recreate function
             try {
+                // eslint-disable-next-line no-new-func -- Required for function compression
                 return new Function(`return ${source}`)();
-            } catch (_e) {
+            } catch (error) {
+                console.log(
+                    `[ModularHookLibrary] Function compression failed: ${error.message || error}`
+                );
                 return func; // Return original if compression fails
             }
         };

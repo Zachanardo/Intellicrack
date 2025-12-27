@@ -477,7 +477,7 @@ traitlets==5.14.3
 transformers==4.57.3
 trove_classifiers==2025.12.1.14
 twine==6.2.0
-ty==0.0.5
+ty
 typer==0.20.1
 typing_inspect==0.9.0
 typing_inspection==0.4.2

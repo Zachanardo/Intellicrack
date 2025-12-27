@@ -21,20 +21,36 @@ from pathlib import Path
 from typing import List, Dict, Any
 import time
 
-# Import the memory forensics engine and related classes
-from intellicrack.core.analysis.memory_forensics_engine import (
-    MemoryForensicsEngine,
-    MemoryAnalysisResult,
-    MemoryArtifactType,
-    AnalysisProfile,
-    MemoryProcess,
-    MemoryModule,
-    NetworkConnection,
-    MemoryString,
-    get_memory_forensics_engine,
-    is_volatility3_available,
-    analyze_memory_dump_file
-)
+try:
+    from intellicrack.core.analysis.memory_forensics_engine import (
+        MemoryForensicsEngine,
+        MemoryAnalysisResult,
+        MemoryArtifactType,
+        AnalysisProfile,
+        MemoryProcess,
+        MemoryModule,
+        NetworkConnection,
+        MemoryString,
+        get_memory_forensics_engine,
+        is_volatility3_available,
+        analyze_memory_dump_file
+    )
+    MEMORY_FORENSICS_ENGINE_AVAILABLE = True
+except ImportError:
+    MemoryForensicsEngine = None
+    MemoryAnalysisResult = None
+    MemoryArtifactType = None
+    AnalysisProfile = None
+    MemoryProcess = None
+    MemoryModule = None
+    NetworkConnection = None
+    MemoryString = None
+    get_memory_forensics_engine = None
+    is_volatility3_available = None
+    analyze_memory_dump_file = None
+    MEMORY_FORENSICS_ENGINE_AVAILABLE = False
+
+pytestmark = pytest.mark.skipif(not MEMORY_FORENSICS_ENGINE_AVAILABLE, reason="memory_forensics_engine module not available")
 
 
 class TestMemoryForensicsEngineInitialization:

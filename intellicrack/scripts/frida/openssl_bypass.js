@@ -18,8 +18,8 @@ let is_boringssl = false;
 function log(message, level = 'info') {
     const entry = {
         timestamp: new Date().toISOString(),
-        level: level,
-        message: message,
+        level,
+        message,
     };
     send({ type: 'log', data: entry });
     activity.push(entry);
@@ -65,7 +65,7 @@ function findOpenSSLModule() {
 
                 return module;
             }
-        } catch (_e) {}
+        } catch {}
     }
 
     return null;
@@ -73,9 +73,7 @@ function findOpenSSLModule() {
 
 openssl_module = findOpenSSLModule();
 
-if (!openssl_module) {
-    logError('OpenSSL module not found');
-} else {
+if (openssl_module) {
     try {
         const SSL_CTX_set_verify = Module.findExportByName(
             openssl_module.name,
@@ -83,7 +81,7 @@ if (!openssl_module) {
         );
         if (SSL_CTX_set_verify) {
             Interceptor.attach(SSL_CTX_set_verify, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const ctx = args[0];
                     const mode = args[1].toInt32();
                     const callback = args[2];
@@ -98,7 +96,7 @@ if (!openssl_module) {
                     this.originalMode = mode;
                     this.ctx = ctx;
                 },
-                onLeave: function (_retval) {
+                onLeave(_retval) {
                     log(
                         `SSL_CTX_set_verify: Forced mode to SSL_VERIFY_NONE for context ${this.ctx}`
                     );
@@ -106,15 +104,15 @@ if (!openssl_module) {
             });
             log('Successfully hooked SSL_CTX_set_verify');
         }
-    } catch (e) {
-        logError(`Failed to hook SSL_CTX_set_verify: ${e.message}`);
+    } catch (error) {
+        logError(`Failed to hook SSL_CTX_set_verify: ${error.message}`);
     }
 
     try {
         const SSL_set_verify = Module.findExportByName(openssl_module.name, 'SSL_set_verify');
         if (SSL_set_verify) {
             Interceptor.attach(SSL_set_verify, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const ssl = args[0];
                     const mode = args[1].toInt32();
                     const _callback = args[2];
@@ -128,14 +126,14 @@ if (!openssl_module) {
 
                     this.ssl = ssl;
                 },
-                onLeave: function (_retval) {
+                onLeave(_retval) {
                     log(`SSL_set_verify: Forced mode to SSL_VERIFY_NONE for SSL ${this.ssl}`);
                 },
             });
             log('Successfully hooked SSL_set_verify');
         }
-    } catch (e) {
-        logError(`Failed to hook SSL_set_verify: ${e.message}`);
+    } catch (error) {
+        logError(`Failed to hook SSL_set_verify: ${error.message}`);
     }
 
     try {
@@ -145,11 +143,11 @@ if (!openssl_module) {
         );
         if (SSL_get_verify_result) {
             Interceptor.attach(SSL_get_verify_result, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const ssl = args[0];
                     this.ssl = ssl;
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     const originalResult = retval.toInt32();
 
                     if (originalResult !== X509_V_OK) {
@@ -175,8 +173,8 @@ if (!openssl_module) {
             });
             log('Successfully hooked SSL_get_verify_result');
         }
-    } catch (e) {
-        logError(`Failed to hook SSL_get_verify_result: ${e.message}`);
+    } catch (error) {
+        logError(`Failed to hook SSL_get_verify_result: ${error.message}`);
     }
 
     try {
@@ -195,7 +193,7 @@ if (!openssl_module) {
             );
 
             Interceptor.attach(SSL_CTX_set_cert_verify_callback, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const ctx = args[0];
                     const callback = args[1];
                     const _arg = args[2];
@@ -209,7 +207,7 @@ if (!openssl_module) {
                     this.ctx = ctx;
                     this.originalCallback = callback;
                 },
-                onLeave: function (_retval) {
+                onLeave(_retval) {
                     log(
                         `SSL_CTX_set_cert_verify_callback: Callback replaced for context ${this.ctx}`
                     );
@@ -217,8 +215,8 @@ if (!openssl_module) {
             });
             log('Successfully hooked SSL_CTX_set_cert_verify_callback');
         }
-    } catch (e) {
-        logError(`Failed to hook SSL_CTX_set_cert_verify_callback: ${e.message}`);
+    } catch (error) {
+        logError(`Failed to hook SSL_CTX_set_cert_verify_callback: ${error.message}`);
     }
 
     try {
@@ -239,13 +237,13 @@ if (!openssl_module) {
                     if (!CAfile.isNull()) {
                         try {
                             cafile_str = CAfile.readCString();
-                        } catch (_e) {}
+                        } catch {}
                     }
 
                     if (!CApath.isNull()) {
                         try {
                             capath_str = CApath.readCString();
-                        } catch (_e) {}
+                        } catch {}
                     }
 
                     log(
@@ -262,19 +260,19 @@ if (!openssl_module) {
             });
             log('Successfully hooked SSL_CTX_load_verify_locations');
         }
-    } catch (e) {
-        logError(`Failed to hook SSL_CTX_load_verify_locations: ${e.message}`);
+    } catch (error) {
+        logError(`Failed to hook SSL_CTX_load_verify_locations: ${error.message}`);
     }
 
     try {
         const X509_verify_cert = Module.findExportByName(openssl_module.name, 'X509_verify_cert');
         if (X509_verify_cert) {
             Interceptor.attach(X509_verify_cert, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const ctx = args[0];
                     this.ctx = ctx;
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     const result = retval.toInt32();
                     if (result !== 1) {
                         log(`X509_verify_cert: Failed with result=${result}, forcing success (1)`);
@@ -294,16 +292,16 @@ if (!openssl_module) {
                                 set_error(this.ctx, X509_V_OK);
                                 log('X509_verify_cert: Set error to X509_V_OK in context');
                             }
-                        } catch (e) {
-                            logError(`Failed to set X509 error: ${e.message}`);
+                        } catch (error) {
+                            logError(`Failed to set X509 error: ${error.message}`);
                         }
                     }
                 },
             });
             log('Successfully hooked X509_verify_cert');
         }
-    } catch (e) {
-        logError(`Failed to hook X509_verify_cert: ${e.message}`);
+    } catch (error) {
+        logError(`Failed to hook X509_verify_cert: ${error.message}`);
     }
 
     try {
@@ -313,7 +311,7 @@ if (!openssl_module) {
         );
         if (X509_STORE_CTX_get_error) {
             Interceptor.attach(X509_STORE_CTX_get_error, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.ctx = args[0];
                 },
                 onLeave: retval => {
@@ -328,8 +326,8 @@ if (!openssl_module) {
             });
             log('Successfully hooked X509_STORE_CTX_get_error');
         }
-    } catch (e) {
-        logError(`Failed to hook X509_STORE_CTX_get_error: ${e.message}`);
+    } catch (error) {
+        logError(`Failed to hook X509_STORE_CTX_get_error: ${error.message}`);
     }
 
     try {
@@ -349,8 +347,8 @@ if (!openssl_module) {
             });
             log('Successfully hooked SSL_CTX_set_verify_depth');
         }
-    } catch (e) {
-        logError(`Failed to hook SSL_CTX_set_verify_depth: ${e.message}`);
+    } catch (error) {
+        logError(`Failed to hook SSL_CTX_set_verify_depth: ${error.message}`);
     }
 
     try {
@@ -370,8 +368,8 @@ if (!openssl_module) {
             });
             log('Successfully hooked SSL_set_verify_depth');
         }
-    } catch (e) {
-        logError(`Failed to hook SSL_set_verify_depth: ${e.message}`);
+    } catch (error) {
+        logError(`Failed to hook SSL_set_verify_depth: ${error.message}`);
     }
 
     if (is_boringssl) {
@@ -406,8 +404,8 @@ if (!openssl_module) {
                 });
                 log('Successfully hooked SSL_set_custom_verify (BoringSSL)');
             }
-        } catch (e) {
-            logError(`Failed to hook SSL_set_custom_verify: ${e.message}`);
+        } catch (error) {
+            logError(`Failed to hook SSL_set_custom_verify: ${error.message}`);
         }
 
         try {
@@ -443,8 +441,8 @@ if (!openssl_module) {
                 });
                 log('Successfully hooked SSL_CTX_set_custom_verify (BoringSSL)');
             }
-        } catch (e) {
-            logError(`Failed to hook SSL_CTX_set_custom_verify: ${e.message}`);
+        } catch (error) {
+            logError(`Failed to hook SSL_CTX_set_custom_verify: ${error.message}`);
         }
     }
 
@@ -452,20 +450,20 @@ if (!openssl_module) {
         const SSL_connect = Module.findExportByName(openssl_module.name, 'SSL_connect');
         if (SSL_connect) {
             Interceptor.attach(SSL_connect, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const ssl = args[0];
                     this.ssl = ssl;
                     this.startTime = Date.now();
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     const result = retval.toInt32();
                     const duration = Date.now() - this.startTime;
 
                     const connInfo = {
                         timestamp: new Date().toISOString(),
                         ssl: this.ssl.toString(),
-                        result: result,
-                        duration: duration,
+                        result,
+                        duration,
                         success: result === 1,
                     };
 
@@ -480,9 +478,11 @@ if (!openssl_module) {
             });
             log('Successfully hooked SSL_connect');
         }
-    } catch (e) {
-        logError(`Failed to hook SSL_connect: ${e.message}`);
+    } catch (error) {
+        logError(`Failed to hook SSL_connect: ${error.message}`);
     }
+} else {
+    logError('OpenSSL module not found');
 }
 
 rpc.exports = {

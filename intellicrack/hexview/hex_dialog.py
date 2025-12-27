@@ -782,7 +782,8 @@ class HexViewerDialog(QDialog):
             QMessageBox.warning(self, "No File", "Please open a file first.")
             return
 
-        dialog = StatisticsDialog(self, self.hex_viewer)
+        viewer_any: Any = self.hex_viewer
+        dialog = StatisticsDialog(self, viewer_any)
         dialog.exec()
 
     def show_export_dialog(self) -> None:
@@ -793,7 +794,8 @@ class HexViewerDialog(QDialog):
             QMessageBox.warning(self, "No File", "Please open a file first.")
             return
 
-        dialog = ExportDialog(self, self.hex_viewer)
+        viewer_any: Any = self.hex_viewer
+        dialog = ExportDialog(self, viewer_any)
         dialog.exec()
 
     def show_print_dialog(self) -> None:

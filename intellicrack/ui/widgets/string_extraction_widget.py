@@ -10,7 +10,6 @@ Licensed under GNU General Public License v3.0
 
 import os
 import re
-
 from typing import Any
 
 from PyQt6.QtCore import QPoint, Qt, QThread, pyqtSignal, pyqtSlot

@@ -6,6 +6,7 @@ This file is part of Intellicrack.
 
 from typing import Any, TypeVar, cast
 
+
 T = TypeVar("T")
 
 
@@ -43,20 +44,17 @@ def get_typed_item(
         raise KeyError(f"Key '{key}' not found in data")
 
     val = data[key]
-    
+
     # Handle None if expected_type allows it?
     # Python's isinstance(None, int) is False.
     # We will be strict: if expected_type is int, val must be int.
     if not isinstance(val, expected_type):
-         # Allow float to int conversion for loose matching if strictly needed?
-         # No, explicit is better.
-         # Special case: bool is subclass of int, so isinstance(True, int) is True.
-         # We might want to allow it or not. For now standard isinstance is fine.
-         raise TypeError(f"Expected key '{key}' to be {expected_type.__name__}, got {type(val).__name__}")
-    
+        raise TypeError(f"Expected key '{key}' to be {expected_type.__name__}, got {type(val).__name__}")
+
     return val
 
-def validate_type(value: Any, expected_type: type[T], name: str = "value") -> T:
+
+def validate_type[T](value: Any, expected_type: type[T], name: str = "value") -> T:
     """Validate that a value is of the expected type.
 
     Args:
@@ -73,4 +71,71 @@ def validate_type(value: Any, expected_type: type[T], name: str = "value") -> T:
     """
     if not isinstance(value, expected_type):
         raise TypeError(f"Expected '{name}' to be {expected_type.__name__}, got {type(value).__name__}")
+    return value
+
+
+def get_kwarg_typed(
+    kwargs: dict[str, object],
+    key: str,
+    expected_type: type[T],
+    default: T,
+) -> T:
+    """Safely extract a typed value from kwargs with validation.
+
+    Args:
+        kwargs: The keyword arguments dict
+        key: Key to retrieve
+        expected_type: Expected type of the value
+        default: Default value if key is missing (also determines type)
+
+    Returns:
+        The validated value or default.
+
+    Raises:
+        TypeError: If value exists but is not of expected_type.
+
+    """
+    value = kwargs.get(key, default)
+    if value is default:
+        return default
+    if not isinstance(value, expected_type):
+        raise TypeError(f"Kwarg '{key}' expected {expected_type.__name__}, got {type(value).__name__}")
+    return value
+
+
+def ensure_dict(value: object, name: str = "value") -> dict[str, Any]:
+    """Ensure a value is a dict, raising TypeError if not.
+
+    Args:
+        value: Value to check
+        name: Name for error message
+
+    Returns:
+        The value as a dict.
+
+    Raises:
+        TypeError: If value is not a dict.
+
+    """
+    if not isinstance(value, dict):
+        raise TypeError(f"Expected '{name}' to be dict, got {type(value).__name__}")
+    return cast("dict[str, Any]", value)
+
+
+def ensure_list(value: object, name: str = "value") -> list[Any]:
+    """Ensure a value is a list, raising TypeError if not.
+
+    Args:
+        value: Value to check
+        name: Name for error message
+
+    Returns:
+        The value as a list.
+
+    Raises:
+        TypeError: If value is not a list.
+
+    """
+    if not isinstance(value, list):
+        raise TypeError(f"Expected '{name}' to be list, got {type(value).__name__}")
     return value

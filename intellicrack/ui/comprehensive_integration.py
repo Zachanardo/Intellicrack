@@ -220,7 +220,6 @@ class ComprehensiveR2Integration:
                     tab_widget.addTab(r2_widget, "Radare2 Analysis")
                     tab_widget.addTab(enhanced_dashboard, "Enhanced Analysis")
 
-            # Store references using setattr for dynamic attribute assignment
             if hasattr(main_app, "__dict__"):
                 setattr(main_app, "r2_widget", r2_widget)
                 setattr(main_app, "enhanced_dashboard", enhanced_dashboard)
@@ -254,7 +253,6 @@ class ComprehensiveR2Integration:
         try:
             self.logger.info("Integrating with generic widget application")
 
-            # Create a tab widget if it doesn't exist
             if not hasattr(main_app, "tab_widget") and hasattr(main_app, "__dict__"):
                 tab_widget_obj = QTabWidget()
                 setattr(main_app, "tab_widget", tab_widget_obj)
@@ -558,7 +556,6 @@ class ComprehensiveR2Integration:
 
                 setattr(main_app, "start_radare2_analysis", start_r2_analysis)
 
-                # Add configuration method
                 def show_r2_config() -> None:
                     if self.ui_manager:
                         self.ui_manager.show_configuration()

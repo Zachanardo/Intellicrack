@@ -1,0 +1,4681 @@
+[
+    {
+        "path": "intellicrack\\cli\\pipeline.py",
+        "line": 52,
+        "func_name": "PipelineData.to_json",
+        "type_comments": ["() -> str"],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\cli\\pipeline.py",
+        "line": 63,
+        "func_name": "from_json",
+        "type_comments": ["(str) -> intellicrack.cli.pipeline.PipelineData"],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\cli\\pipeline.py",
+        "line": 77,
+        "func_name": "PipelineStage.__init__",
+        "type_comments": ["(str) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 3
+    },
+    {
+        "path": "intellicrack\\cli\\progress_manager.py",
+        "line": 101,
+        "func_name": "ProgressManager.__init__",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\cli\\terminal_dashboard.py",
+        "line": 103,
+        "func_name": "TerminalDashboard.__init__",
+        "type_comments": ["(float) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\cli\\terminal_dashboard.py",
+        "line": 175,
+        "func_name": "TerminalDashboard.update_analysis_stats",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\core\\config_manager.py",
+        "line": 66,
+        "func_name": "__new__",
+        "type_comments": ["() -> intellicrack.core.config_manager.IntellicrackConfig"],
+        "samples": 23
+    },
+    {
+        "path": "intellicrack\\core\\config_manager.py",
+        "line": 78,
+        "func_name": "IntellicrackConfig.__init__",
+        "type_comments": [
+            "() -> pyannotate_runtime.collect_types.NoReturnType",
+            "() -> pyannotate_runtime.collect_types.UnknownType"
+        ],
+        "samples": 23
+    },
+    {
+        "path": "intellicrack\\core\\config_manager.py",
+        "line": 115,
+        "func_name": "IntellicrackConfig._get_intellicrack_root",
+        "type_comments": ["() -> pathlib.WindowsPath"],
+        "samples": 4
+    },
+    {
+        "path": "intellicrack\\core\\config_manager.py",
+        "line": 134,
+        "func_name": "IntellicrackConfig._get_user_config_dir",
+        "type_comments": ["() -> pathlib.WindowsPath"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\core\\config_manager.py",
+        "line": 145,
+        "func_name": "IntellicrackConfig._ensure_directories_exist",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 4
+    },
+    {
+        "path": "intellicrack\\core\\config_manager.py",
+        "line": 159,
+        "func_name": "IntellicrackConfig._load_layered_config",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 4
+    },
+    {
+        "path": "intellicrack\\core\\config_manager.py",
+        "line": 211,
+        "func_name": "IntellicrackConfig._load_config",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\core\\config_manager.py",
+        "line": 226,
+        "func_name": "IntellicrackConfig._load_defaults_from_file",
+        "type_comments": ["(pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\core\\config_manager.py",
+        "line": 245,
+        "func_name": "IntellicrackConfig._merge_user_config",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\core\\config_manager.py",
+        "line": 261,
+        "func_name": "IntellicrackConfig._merge_runtime_state",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\core\\config_manager.py",
+        "line": 277,
+        "func_name": "IntellicrackConfig._deep_merge",
+        "type_comments": [
+            "(Dict[str, Union[Dict[str, Union[List, List[str], bool, int, str]], bool]], Dict[str, Union[Dict[str, Union[bool, str]], bool]]) -> pyannotate_runtime.collect_types.UnknownType",
+            "(Dict[str, Union[Dict[str, Union[Dict[str, Dict[str, Union[bool, str]]], bool, int, str]], bool, int]], Dict[str, str]) -> pyannotate_runtime.collect_types.UnknownType",
+            "(Dict[str, Dict[str, Union[bool, int, str]]], Dict[str, Union[bool, int, str]]) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(Dict[str, Union[bool, str]], Dict[str, Union[bool, str]]) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(Dict[str, Union[List, bool]], Dict[str, Union[List, bool]]) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 5
+    },
+    {
+        "path": "intellicrack\\core\\config_manager.py",
+        "line": 331,
+        "func_name": "IntellicrackConfig._create_default_config",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 3
+    },
+    {
+        "path": "intellicrack\\core\\config_manager.py",
+        "line": 360,
+        "func_name": "IntellicrackConfig.get",
+        "type_comments": [
+            "(str, None) -> List[str]",
+            "(str, Dict) -> Dict",
+            "(str, Dict) -> Dict[str, str]",
+            "(str, Dict) -> Dict[str, Union[List, bool, float, str]]",
+            "(str, Dict) -> Dict[str, Union[Dict[str, Union[List[str], int]], List[str]]]",
+            "(str, None) -> Dict[str, Dict[str, Union[List[str], bool, int]]]",
+            "(str, None) -> int",
+            "(str, None) -> Dict[str, Union[bool, int]]"
+        ],
+        "samples": 22
+    },
+    {
+        "path": "intellicrack\\core\\config_manager.py",
+        "line": 398,
+        "func_name": "IntellicrackConfig.set",
+        "type_comments": [
+            "(str, Dict[str, Union[List[str], bool, int]], None) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(str, List[str], None) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(str, Dict[str, Dict[str, Union[List[str], bool, int]]], None) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(str, Dict[str, Union[bool, int, str]], None) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(str, Dict[str, Union[bool, int]], None) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(str, Dict[str, Union[List[str], bool, str]], None) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 8
+    },
+    {
+        "path": "intellicrack\\core\\config_manager.py",
+        "line": 440,
+        "func_name": "IntellicrackConfig._save_config",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 11
+    },
+    {
+        "path": "intellicrack\\core\\config_manager.py",
+        "line": 456,
+        "func_name": "IntellicrackConfig._expand_environment_variables",
+        "type_comments": [
+            "(List[str]) -> List[str]",
+            "(Dict[str, Union[List, bool, float, str]]) -> Dict[str, Union[List, bool, float, str]]",
+            "(Dict[str, str]) -> Dict[str, str]",
+            "(Dict[str, Dict[str, Union[List[str], bool, int]]]) -> Dict[str, Dict[str, Union[List[str], bool, int]]]",
+            "(Dict[str, Union[Dict[str, Union[List[str], int]], List[str]]]) -> Dict[str, Union[Dict[str, Union[List[str], int]], List[str]]]",
+            "(int) -> int",
+            "(Dict[str, Union[bool, int]]) -> Dict[str, Union[bool, int]]",
+            "(bool) -> bool"
+        ],
+        "samples": 19
+    },
+    {
+        "path": "intellicrack\\core\\config_manager.py",
+        "line": 544,
+        "func_name": "IntellicrackConfig._upgrade_config_if_needed",
+        "type_comments": [
+            "() -> pyannotate_runtime.collect_types.NoReturnType",
+            "() -> pyannotate_runtime.collect_types.UnknownType"
+        ],
+        "samples": 6
+    },
+    {
+        "path": "intellicrack\\core\\config_manager.py",
+        "line": 736,
+        "func_name": "get_config",
+        "type_comments": ["() -> intellicrack.core.config_manager.IntellicrackConfig"],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\core\\ml\\feature_extraction.py",
+        "line": 33,
+        "func_name": "BinaryFeatureExtractor",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\core\\ml\\incremental_learner.py",
+        "line": 40,
+        "func_name": "TrainingSample",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\core\\ml\\incremental_learner.py",
+        "line": 53,
+        "func_name": "LearningSession",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\core\\ml\\incremental_learner.py",
+        "line": 66,
+        "func_name": "IncrementalLearner",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\core\\ml\\ml_integration.py",
+        "line": 30,
+        "func_name": "MLAnalysisIntegration",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\core\\ml\\protection_classifier.py",
+        "line": 38,
+        "func_name": "ClassificationResult",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\core\\ml\\protection_classifier.py",
+        "line": 49,
+        "func_name": "ProtectionClassifier",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\core\\ml\\sample_database.py",
+        "line": 51,
+        "func_name": "SampleDatabase",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\core\\trial_reset_engine.py",
+        "line": 53,
+        "func_name": "TrialResetEngine.__init__",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 54
+    },
+    {
+        "path": "intellicrack\\core\\trial_reset_engine.py",
+        "line": 60,
+        "func_name": "_initialize_trial_locations",
+        "type_comments": ["() -> Dict[str, List[str]]"],
+        "samples": 54
+    },
+    {
+        "path": "intellicrack\\core\\trial_reset_engine.py",
+        "line": 105,
+        "func_name": "_initialize_detection_patterns",
+        "type_comments": ["() -> Dict[str, Union[List[bytes], List[str]]]"],
+        "samples": 54
+    },
+    {
+        "path": "intellicrack\\core\\trial_reset_engine.py",
+        "line": 170,
+        "func_name": "_initialize_reset_strategies",
+        "type_comments": [
+            "() -> Dict[str, Union[method, unittest.mock.MagicMock]]",
+            "() -> Dict[str, Union[method, unittest.mock.MagicMock]]",
+            "() -> Dict[str, method]"
+        ],
+        "samples": 54
+    },
+    {
+        "path": "intellicrack\\core\\trial_reset_engine.py",
+        "line": 185,
+        "func_name": "scan_for_trial",
+        "type_comments": ["(str) -> intellicrack.core.trial_reset_engine.TrialInfo"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\core\\trial_reset_engine.py",
+        "line": 234,
+        "func_name": "_scan_registry_for_trial",
+        "type_comments": ["(str) -> List", "(str) -> List[str]"],
+        "samples": 3
+    },
+    {
+        "path": "intellicrack\\core\\trial_reset_engine.py",
+        "line": 299,
+        "func_name": "_scan_for_hidden_registry_keys",
+        "type_comments": ["(str) -> List[str]", "(str) -> List"],
+        "samples": 4
+    },
+    {
+        "path": "intellicrack\\core\\trial_reset_engine.py",
+        "line": 336,
+        "func_name": "_scan_files_for_trial",
+        "type_comments": ["(str) -> List[str]"],
+        "samples": 3
+    },
+    {
+        "path": "intellicrack\\core\\trial_reset_engine.py",
+        "line": 377,
+        "func_name": "_scan_alternate_data_streams",
+        "type_comments": ["(str) -> List"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\core\\trial_reset_engine.py",
+        "line": 382,
+        "func_name": "WIN32_STREAM_ID",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\core\\trial_reset_engine.py",
+        "line": 390,
+        "func_name": "STREAM_INFO_LEVELS",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\core\\trial_reset_engine.py",
+        "line": 394,
+        "func_name": "WIN32_FIND_STREAM_DATA",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\core\\trial_reset_engine.py",
+        "line": 592,
+        "func_name": "_scan_for_encrypted_trial_files",
+        "type_comments": ["(str) -> List[str]"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\core\\trial_reset_engine.py",
+        "line": 631,
+        "func_name": "_detect_trial_type",
+        "type_comments": [
+            "(intellicrack.core.trial_reset_engine.TrialInfo) -> intellicrack.core.trial_reset_engine.TrialType"
+        ],
+        "samples": 4
+    },
+    {
+        "path": "intellicrack\\core\\trial_reset_engine.py",
+        "line": 657,
+        "func_name": "_extract_trial_details",
+        "type_comments": [
+            "(intellicrack.core.trial_reset_engine.TrialInfo) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\core\\trial_reset_engine.py",
+        "line": 720,
+        "func_name": "_parse_date",
+        "type_comments": ["(str) -> datetime.datetime", "(int) -> datetime.datetime"],
+        "samples": 8
+    },
+    {
+        "path": "intellicrack\\core\\trial_reset_engine.py",
+        "line": 737,
+        "func_name": "_check_trial_expired",
+        "type_comments": [
+            "(intellicrack.core.trial_reset_engine.TrialInfo) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(intellicrack.core.trial_reset_engine.TrialInfo) -> bool"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\core\\trial_reset_engine.py",
+        "line": 759,
+        "func_name": "_find_related_processes",
+        "type_comments": ["(str) -> List[str]"],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\core\\trial_reset_engine.py",
+        "line": 777,
+        "func_name": "reset_trial",
+        "type_comments": ["(intellicrack.core.trial_reset_engine.TrialInfo, str) -> bool"],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\core\\trial_reset_engine.py",
+        "line": 795,
+        "func_name": "_kill_processes",
+        "type_comments": ["(List[str]) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\core\\trial_reset_engine.py",
+        "line": 812,
+        "func_name": "_clean_uninstall_reset",
+        "type_comments": ["(intellicrack.core.trial_reset_engine.TrialInfo) -> bool"],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\core\\trial_reset_engine.py",
+        "line": 843,
+        "func_name": "_delete_registry_key",
+        "type_comments": ["(str) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\core\\trial_reset_engine.py",
+        "line": 870,
+        "func_name": "_delete_file_securely",
+        "type_comments": ["(str) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\core\\trial_reset_engine.py",
+        "line": 1105,
+        "func_name": "_registry_clean_reset",
+        "type_comments": ["(intellicrack.core.trial_reset_engine.TrialInfo) -> bool"],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\core\\trial_reset_engine.py",
+        "line": 1119,
+        "func_name": "_reset_registry_values",
+        "type_comments": ["(str) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\core\\trial_reset_engine.py",
+        "line": 1148,
+        "func_name": "_file_wipe_reset",
+        "type_comments": ["(intellicrack.core.trial_reset_engine.TrialInfo) -> bool"],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\core\\trial_reset_engine.py",
+        "line": 1162,
+        "func_name": "_reset_file_content",
+        "type_comments": ["(str) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 3
+    },
+    {
+        "path": "intellicrack\\core\\trial_reset_engine.py",
+        "line": 1194,
+        "func_name": "_guid_regeneration_reset",
+        "type_comments": [
+            "(intellicrack.core.trial_reset_engine.TrialInfo) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\core\\trial_reset_engine.py",
+        "line": 1219,
+        "func_name": "_update_guid_in_key",
+        "type_comments": ["(str) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\core\\trial_reset_engine.py",
+        "line": 1302,
+        "func_name": "TimeManipulator.__init__",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 58
+    },
+    {
+        "path": "intellicrack\\core\\trial_reset_engine.py",
+        "line": 1307,
+        "func_name": "reset_trial_time",
+        "type_comments": [
+            "(intellicrack.core.trial_reset_engine.TrialInfo) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\core\\trial_reset_engine.py",
+        "line": 1359,
+        "func_name": "freeze_time_for_app",
+        "type_comments": [
+            "(str, datetime.datetime) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\core\\trial_reset_engine.py",
+        "line": 1372,
+        "func_name": "find_process_by_name",
+        "type_comments": ["(str) -> List"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\core\\trial_reset_engine.py",
+        "line": 1754,
+        "func_name": "automated_trial_reset",
+        "type_comments": [
+            "(str) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(str) -> bool"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\dashboard\\websocket_stream.py",
+        "line": 98,
+        "func_name": "WebSocketEventStream.__init__",
+        "type_comments": ["(str, int) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\handlers\\torch_handler.py",
+        "line": 210,
+        "func_name": "FallbackTensor.__init__",
+        "type_comments": [
+            "(List[float], None, None) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\hexview\\checksums.py",
+        "line": 21,
+        "func_name": "calculate_crc16",
+        "type_comments": ["(bytes, int, int) -> int"],
+        "samples": 3
+    },
+    {
+        "path": "intellicrack\\hexview\\checksums.py",
+        "line": 44,
+        "func_name": "calculate_crc32",
+        "type_comments": ["(bytes) -> int"],
+        "samples": 5
+    },
+    {
+        "path": "intellicrack\\hexview\\checksums.py",
+        "line": 87,
+        "func_name": "calculate_sha256",
+        "type_comments": ["(bytes) -> str"],
+        "samples": 5
+    },
+    {
+        "path": "intellicrack\\hexview\\checksums.py",
+        "line": 102,
+        "func_name": "calculate_sha512",
+        "type_comments": ["(bytes) -> str"],
+        "samples": 3
+    },
+    {
+        "path": "intellicrack\\hexview\\file_compare.py",
+        "line": 68,
+        "func_name": "BinaryComparer.__init__",
+        "type_comments": ["(int) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 7
+    },
+    {
+        "path": "intellicrack\\hexview\\file_compare.py",
+        "line": 88,
+        "func_name": "BinaryComparer.compare_files",
+        "type_comments": [
+            "(str, str) -> List[intellicrack.hexview.file_compare.DifferenceBlock]",
+            "(str, str) -> List"
+        ],
+        "samples": 7
+    },
+    {
+        "path": "intellicrack\\hexview\\file_compare.py",
+        "line": 132,
+        "func_name": "BinaryComparer._compare_streams",
+        "type_comments": [
+            "(_io.BufferedReader, _io.BufferedReader, int, int) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 7
+    },
+    {
+        "path": "intellicrack\\hexview\\file_compare.py",
+        "line": 189,
+        "func_name": "BinaryComparer._determine_diff_type",
+        "type_comments": ["(bytes, bytes) -> intellicrack.hexview.file_compare.DifferenceType"],
+        "samples": 5
+    },
+    {
+        "path": "intellicrack\\ml\\binary_feature_extractor.py",
+        "line": 83,
+        "func_name": "BinaryFeatureExtractor.__init__",
+        "type_comments": ["(str) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 19
+    },
+    {
+        "path": "intellicrack\\ml\\binary_feature_extractor.py",
+        "line": 100,
+        "func_name": "BinaryFeatureExtractor._load_binary",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 19
+    },
+    {
+        "path": "intellicrack\\ml\\binary_feature_extractor.py",
+        "line": 142,
+        "func_name": "BinaryFeatureExtractor._init_disassembler",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 18
+    },
+    {
+        "path": "intellicrack\\ml\\binary_feature_extractor.py",
+        "line": 150,
+        "func_name": "BinaryFeatureExtractor.extract_opcode_histogram",
+        "type_comments": ["(bool) -> numpy.ndarray"],
+        "samples": 13
+    },
+    {
+        "path": "intellicrack\\ml\\binary_feature_extractor.py",
+        "line": 270,
+        "func_name": "BinaryFeatureExtractor.build_control_flow_graph",
+        "type_comments": ["() -> Dict[str, Union[float, int]]"],
+        "samples": 12
+    },
+    {
+        "path": "intellicrack\\ml\\binary_feature_extractor.py",
+        "line": 315,
+        "func_name": "BinaryFeatureExtractor._extract_basic_blocks",
+        "type_comments": ["() -> List"],
+        "samples": 12
+    },
+    {
+        "path": "intellicrack\\ml\\binary_feature_extractor.py",
+        "line": 383,
+        "func_name": "BinaryFeatureExtractor.extract_api_sequences",
+        "type_comments": ["() -> numpy.ndarray"],
+        "samples": 12
+    },
+    {
+        "path": "intellicrack\\ml\\binary_feature_extractor.py",
+        "line": 459,
+        "func_name": "BinaryFeatureExtractor._extract_imports",
+        "type_comments": ["() -> List", "() -> List[str]"],
+        "samples": 12
+    },
+    {
+        "path": "intellicrack\\ml\\binary_feature_extractor.py",
+        "line": 479,
+        "func_name": "BinaryFeatureExtractor.calculate_section_entropy",
+        "type_comments": ["() -> numpy.ndarray"],
+        "samples": 12
+    },
+    {
+        "path": "intellicrack\\ml\\binary_feature_extractor.py",
+        "line": 507,
+        "func_name": "BinaryFeatureExtractor._calculate_entropy",
+        "type_comments": ["(bytes) -> numpy.float64"],
+        "samples": 40
+    },
+    {
+        "path": "intellicrack\\ml\\binary_feature_extractor.py",
+        "line": 528,
+        "func_name": "BinaryFeatureExtractor.extract_string_features",
+        "type_comments": ["() -> numpy.ndarray"],
+        "samples": 12
+    },
+    {
+        "path": "intellicrack\\ml\\binary_feature_extractor.py",
+        "line": 578,
+        "func_name": "BinaryFeatureExtractor._extract_strings",
+        "type_comments": ["(bytes, int, str) -> List[str]"],
+        "samples": 19
+    },
+    {
+        "path": "intellicrack\\ml\\binary_feature_extractor.py",
+        "line": 621,
+        "func_name": "BinaryFeatureExtractor.extract_all_features",
+        "type_comments": ["() -> Dict[str, numpy.ndarray]"],
+        "samples": 11
+    },
+    {
+        "path": "intellicrack\\ml\\binary_feature_extractor.py",
+        "line": 631,
+        "func_name": "BinaryFeatureExtractor._cfg_to_vector",
+        "type_comments": ["(Dict[str, Union[float, int]]) -> numpy.ndarray"],
+        "samples": 11
+    },
+    {
+        "path": "intellicrack\\ml\\binary_feature_extractor.py",
+        "line": 646,
+        "func_name": "extract_features_for_ml",
+        "type_comments": ["(str) -> numpy.ndarray"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\ml\\license_protection_neural_network.py",
+        "line": 69,
+        "func_name": "LicenseProtectionType",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\ml\\license_protection_neural_network.py",
+        "line": 94,
+        "func_name": "LicenseFeatures",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\ml\\license_protection_neural_network.py",
+        "line": 133,
+        "func_name": "LicenseProtectionCNN",
+        "type_comments": ["() -> cell"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\ml\\license_protection_neural_network.py",
+        "line": 136,
+        "func_name": "LicenseProtectionCNN.__init__",
+        "type_comments": ["(int, int) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\ml\\license_protection_neural_network.py",
+        "line": 182,
+        "func_name": "LicenseProtectionCNN._initialize_weights",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\ml\\license_protection_neural_network.py",
+        "line": 200,
+        "func_name": "LicenseProtectionCNN._load_pretrained_weights",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\ml\\license_protection_neural_network.py",
+        "line": 269,
+        "func_name": "LicenseProtectionTransformer",
+        "type_comments": ["() -> cell"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\ml\\license_protection_neural_network.py",
+        "line": 272,
+        "func_name": "LicenseProtectionTransformer.__init__",
+        "type_comments": ["(int, int, int) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\ml\\license_protection_neural_network.py",
+        "line": 312,
+        "func_name": "LicenseProtectionTransformer._initialize_weights",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\ml\\license_protection_neural_network.py",
+        "line": 329,
+        "func_name": "LicenseProtectionTransformer._load_pretrained_weights",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\ml\\license_protection_neural_network.py",
+        "line": 351,
+        "func_name": "LicenseProtectionTransformer._create_positional_encoding",
+        "type_comments": ["(int, int) -> torch.Tensor"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\ml\\license_protection_neural_network.py",
+        "line": 388,
+        "func_name": "HybridLicenseAnalyzer",
+        "type_comments": ["() -> cell"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\ml\\license_protection_neural_network.py",
+        "line": 391,
+        "func_name": "HybridLicenseAnalyzer.__init__",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\ml\\license_protection_neural_network.py",
+        "line": 430,
+        "func_name": "HybridLicenseAnalyzer._initialize_weights",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\ml\\license_protection_neural_network.py",
+        "line": 465,
+        "func_name": "HybridLicenseAnalyzer._load_pretrained_weights",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\ml\\license_protection_neural_network.py",
+        "line": 487,
+        "func_name": "HybridLicenseAnalyzer._create_gnn_branch",
+        "type_comments": ["() -> torch.nn.modules.container.Sequential"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\ml\\license_protection_neural_network.py",
+        "line": 537,
+        "func_name": "LicenseDataset",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\ml\\license_protection_neural_network.py",
+        "line": 1052,
+        "func_name": "ProtectionLoss",
+        "type_comments": ["() -> cell"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\ml\\license_protection_neural_network.py",
+        "line": 1162,
+        "func_name": "LicenseProtectionTrainer",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\ml\\license_protection_neural_network.py",
+        "line": 1465,
+        "func_name": "LicenseProtectionPredictor",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\ml\\license_protection_neural_network.py",
+        "line": 1468,
+        "func_name": "LicenseProtectionPredictor.__init__",
+        "type_comments": ["(None) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\ml\\license_protection_neural_network.py",
+        "line": 1649,
+        "func_name": "get_license_predictor",
+        "type_comments": [
+            "(None) -> intellicrack.ml.license_protection_neural_network.LicenseProtectionPredictor"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\ml\\pattern_evolution_tracker.py",
+        "line": 392,
+        "func_name": "secure_pickle_dumps",
+        "type_comments": ["(List[str]) -> bytes", "(bytes) -> bytes", "(str) -> bytes"],
+        "samples": 17
+    },
+    {
+        "path": "intellicrack\\ml\\pattern_evolution_tracker.py",
+        "line": 479,
+        "func_name": "PatternGene.__post_init__",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 119
+    },
+    {
+        "path": "intellicrack\\ml\\pattern_evolution_tracker.py",
+        "line": 484,
+        "func_name": "PatternGene.generate_id",
+        "type_comments": ["() -> str"],
+        "samples": 116
+    },
+    {
+        "path": "intellicrack\\ml\\pattern_evolution_tracker.py",
+        "line": 489,
+        "func_name": "PatternGene.mutate",
+        "type_comments": [
+            "(intellicrack.ml.pattern_evolution_tracker.MutationType, float) -> intellicrack.ml.pattern_evolution_tracker.PatternGene"
+        ],
+        "samples": 10
+    },
+    {
+        "path": "intellicrack\\ml\\pattern_evolution_tracker.py",
+        "line": 503,
+        "func_name": "PatternGene._apply_mutation",
+        "type_comments": [
+            "(bytes, intellicrack.ml.pattern_evolution_tracker.MutationType, float) -> bytes",
+            "(str, intellicrack.ml.pattern_evolution_tracker.MutationType, float) -> str",
+            "(List[str], intellicrack.ml.pattern_evolution_tracker.MutationType, float) -> List[str]"
+        ],
+        "samples": 10
+    },
+    {
+        "path": "intellicrack\\ml\\pattern_evolution_tracker.py",
+        "line": 529,
+        "func_name": "PatternGene._mutate_byte_sequence",
+        "type_comments": [
+            "(bytes, intellicrack.ml.pattern_evolution_tracker.MutationType, float) -> bytes"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\ml\\pattern_evolution_tracker.py",
+        "line": 557,
+        "func_name": "PatternGene._mutate_api_sequence",
+        "type_comments": [
+            "(List[str], intellicrack.ml.pattern_evolution_tracker.MutationType, float) -> List[str]"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\ml\\pattern_evolution_tracker.py",
+        "line": 602,
+        "func_name": "PatternGene._mutate_string_pattern",
+        "type_comments": [
+            "(str, intellicrack.ml.pattern_evolution_tracker.MutationType, float) -> str"
+        ],
+        "samples": 3
+    },
+    {
+        "path": "intellicrack\\ml\\pattern_evolution_tracker.py",
+        "line": 620,
+        "func_name": "PatternGene._mutate_opcode_sequence",
+        "type_comments": [
+            "(List[str], intellicrack.ml.pattern_evolution_tracker.MutationType, float) -> List[str]"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\ml\\pattern_evolution_tracker.py",
+        "line": 665,
+        "func_name": "PatternGene.crossover",
+        "type_comments": [
+            "(intellicrack.ml.pattern_evolution_tracker.PatternGene, None) -> Tuple[intellicrack.ml.pattern_evolution_tracker.PatternGene, intellicrack.ml.pattern_evolution_tracker.PatternGene]"
+        ],
+        "samples": 11
+    },
+    {
+        "path": "intellicrack\\ml\\pattern_evolution_tracker.py",
+        "line": 709,
+        "func_name": "QLearningAgent.__init__",
+        "type_comments": [
+            "(int, int, float, float, float, float, float) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 14
+    },
+    {
+        "path": "intellicrack\\ml\\pattern_evolution_tracker.py",
+        "line": 748,
+        "func_name": "QLearningAgent.remember",
+        "type_comments": [
+            "(numpy.ndarray, int, float, numpy.ndarray, bool) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 4
+    },
+    {
+        "path": "intellicrack\\ml\\pattern_evolution_tracker.py",
+        "line": 752,
+        "func_name": "QLearningAgent.learn",
+        "type_comments": ["(int) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 4
+    },
+    {
+        "path": "intellicrack\\ml\\pattern_evolution_tracker.py",
+        "line": 778,
+        "func_name": "PatternStorage.__init__",
+        "type_comments": ["(str) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 14
+    },
+    {
+        "path": "intellicrack\\ml\\pattern_evolution_tracker.py",
+        "line": 787,
+        "func_name": "PatternStorage._init_database",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 14
+    },
+    {
+        "path": "intellicrack\\ml\\pattern_evolution_tracker.py",
+        "line": 841,
+        "func_name": "PatternStorage.save_pattern",
+        "type_comments": [
+            "(intellicrack.ml.pattern_evolution_tracker.PatternGene) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 17
+    },
+    {
+        "path": "intellicrack\\ml\\pattern_evolution_tracker.py",
+        "line": 882,
+        "func_name": "PatternStorage.load_pattern",
+        "type_comments": ["(str) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 10
+    },
+    {
+        "path": "intellicrack\\ml\\pattern_evolution_tracker.py",
+        "line": 921,
+        "func_name": "PatternStorage.get_top_patterns",
+        "type_comments": ["(intellicrack.ml.pattern_evolution_tracker.PatternType, int) -> List"],
+        "samples": 65
+    },
+    {
+        "path": "intellicrack\\ml\\pattern_evolution_tracker.py",
+        "line": 994,
+        "func_name": "PatternMatcher.__init__",
+        "type_comments": ["(int, int) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 14
+    },
+    {
+        "path": "intellicrack\\ml\\pattern_evolution_tracker.py",
+        "line": 1003,
+        "func_name": "PatternMatcher.add_pattern",
+        "type_comments": [
+            "(intellicrack.ml.pattern_evolution_tracker.PatternGene) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 116
+    },
+    {
+        "path": "intellicrack\\ml\\pattern_evolution_tracker.py",
+        "line": 1020,
+        "func_name": "PatternMatcher.match",
+        "type_comments": ["(bytes, intellicrack.ml.pattern_evolution_tracker.PatternType) -> List"],
+        "samples": 20
+    },
+    {
+        "path": "intellicrack\\ml\\pattern_evolution_tracker.py",
+        "line": 1147,
+        "func_name": "PatternEvolutionTracker.__init__",
+        "type_comments": [
+            "(str, int, int, float, float) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 14
+    },
+    {
+        "path": "intellicrack\\ml\\pattern_evolution_tracker.py",
+        "line": 1210,
+        "func_name": "PatternEvolutionTracker._initialize_populations",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 14
+    },
+    {
+        "path": "intellicrack\\ml\\pattern_evolution_tracker.py",
+        "line": 1233,
+        "func_name": "PatternEvolutionTracker._generate_random_patterns",
+        "type_comments": [
+            "(intellicrack.ml.pattern_evolution_tracker.PatternType, int) -> List[intellicrack.ml.pattern_evolution_tracker.PatternGene]"
+        ],
+        "samples": 65
+    },
+    {
+        "path": "intellicrack\\ml\\pattern_evolution_tracker.py",
+        "line": 1312,
+        "func_name": "PatternEvolutionTracker._calculate_pattern_similarity",
+        "type_comments": [
+            "(intellicrack.ml.pattern_evolution_tracker.PatternGene, intellicrack.ml.pattern_evolution_tracker.PatternGene) -> float"
+        ],
+        "samples": 21
+    },
+    {
+        "path": "intellicrack\\ml\\pattern_evolution_tracker.py",
+        "line": 1342,
+        "func_name": "PatternEvolutionTracker._calculate_basic_similarity",
+        "type_comments": [
+            "(intellicrack.ml.pattern_evolution_tracker.PatternGene, intellicrack.ml.pattern_evolution_tracker.PatternGene) -> float"
+        ],
+        "samples": 21
+    },
+    {
+        "path": "intellicrack\\ml\\pattern_evolution_tracker.py",
+        "line": 1372,
+        "func_name": "PatternEvolutionTracker.detect_pattern_mutations",
+        "type_comments": ["(intellicrack.ml.pattern_evolution_tracker.PatternGene) -> List"],
+        "samples": 9
+    },
+    {
+        "path": "intellicrack\\ml\\pattern_evolution_tracker.py",
+        "line": 1392,
+        "func_name": "PatternEvolutionTracker.cluster_into_families",
+        "type_comments": [
+            "(intellicrack.ml.pattern_evolution_tracker.PatternType, float) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\ml\\pattern_evolution_tracker.py",
+        "line": 1467,
+        "func_name": "PatternEvolutionTracker.evolve_generation",
+        "type_comments": ["(None) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\ml\\pattern_evolution_tracker.py",
+        "line": 1555,
+        "func_name": "PatternEvolutionTracker._evaluate_fitness",
+        "type_comments": [
+            "(intellicrack.ml.pattern_evolution_tracker.PatternGene) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(intellicrack.ml.pattern_evolution_tracker.PatternGene) -> float"
+        ],
+        "samples": 17
+    },
+    {
+        "path": "intellicrack\\ml\\pattern_evolution_tracker.py",
+        "line": 1600,
+        "func_name": "PatternEvolutionTracker._tournament_selection",
+        "type_comments": [
+            "(List[intellicrack.ml.pattern_evolution_tracker.PatternGene], int) -> intellicrack.ml.pattern_evolution_tracker.PatternGene"
+        ],
+        "samples": 14
+    },
+    {
+        "path": "intellicrack\\ml\\pattern_evolution_tracker.py",
+        "line": 1605,
+        "func_name": "PatternEvolutionTracker.detect",
+        "type_comments": ["(bytes, None) -> Dict[str, Union[List, float]]"],
+        "samples": 4
+    },
+    {
+        "path": "intellicrack\\ml\\pattern_evolution_tracker.py",
+        "line": 1645,
+        "func_name": "PatternEvolutionTracker._update_q_learning",
+        "type_comments": [
+            "(bytes, Dict[str, Union[List, float]]) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 4
+    },
+    {
+        "path": "intellicrack\\ml\\pattern_evolution_tracker.py",
+        "line": 1662,
+        "func_name": "PatternEvolutionTracker._extract_state_features",
+        "type_comments": ["(bytes) -> numpy.ndarray"],
+        "samples": 4
+    },
+    {
+        "path": "intellicrack\\ml\\pattern_evolution_tracker.py",
+        "line": 1722,
+        "func_name": "PatternEvolutionTracker.export_patterns",
+        "type_comments": ["(str, None) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\ml\\pattern_evolution_tracker.py",
+        "line": 1753,
+        "func_name": "PatternEvolutionTracker.import_patterns",
+        "type_comments": ["(str) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\ml\\pattern_evolution_tracker.py",
+        "line": 1807,
+        "func_name": "PatternEvolutionTracker.get_statistics",
+        "type_comments": ["() -> Dict[str, Union[float, int]]"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\ml\\pattern_evolution_tracker.py",
+        "line": 1849,
+        "func_name": "PatternEvolutionTracker.shutdown",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 7
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py",
+        "line": 228,
+        "func_name": "CertificateManager.__init__",
+        "type_comments": [
+            "(intellicrack.plugins.custom_modules.cloud_license_interceptor.InterceptorConfig) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py",
+        "line": 452,
+        "func_name": "RequestClassifier.__init__",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py",
+        "line": 689,
+        "func_name": "AuthenticationManager.__init__",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py",
+        "line": 696,
+        "func_name": "_generate_signing_keys",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py",
+        "line": 886,
+        "func_name": "ResponseModifier.__init__",
+        "type_comments": [
+            "(intellicrack.plugins.custom_modules.cloud_license_interceptor.AuthenticationManager) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py",
+        "line": 1178,
+        "func_name": "CacheManager.__init__",
+        "type_comments": [
+            "(intellicrack.plugins.custom_modules.cloud_license_interceptor.InterceptorConfig) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py",
+        "line": 1366,
+        "func_name": "_cleanup_loop",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.UnknownType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py",
+        "line": 1404,
+        "func_name": "LocalLicenseServer.__init__",
+        "type_comments": [
+            "(intellicrack.plugins.custom_modules.cloud_license_interceptor.AuthenticationManager) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py",
+        "line": 1413,
+        "func_name": "_initialize_licenses",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py",
+        "line": 1561,
+        "func_name": "CloudLicenseInterceptor.__init__",
+        "type_comments": ["(None) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\hardware_dongle_emulator.py",
+        "line": 98,
+        "func_name": "DongleSpec.__post_init__",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 10
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\hardware_dongle_emulator.py",
+        "line": 867,
+        "func_name": "USBDongleDriver.__init__",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\hardware_dongle_emulator.py",
+        "line": 1092,
+        "func_name": "ParallelPortEmulator.__init__",
+        "type_comments": ["(int) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\hardware_dongle_emulator.py",
+        "line": 1105,
+        "func_name": "_init_port_access",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\hardware_dongle_emulator.py",
+        "line": 1714,
+        "func_name": "DongleRegistryManager.__init__",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\hardware_dongle_emulator.py",
+        "line": 1790,
+        "func_name": "DongleAPIHooker.__init__",
+        "type_comments": [
+            "(intellicrack.plugins.custom_modules.hardware_dongle_emulator.HardwareDongleEmulator) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\hardware_dongle_emulator.py",
+        "line": 2315,
+        "func_name": "HardwareDongleEmulator.__init__",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\hardware_dongle_emulator.py",
+        "line": 2327,
+        "func_name": "HardwareDongleEmulator._load_predefined_dongles",
+        "type_comments": [
+            "() -> Dict[intellicrack.plugins.custom_modules.hardware_dongle_emulator.DongleType, intellicrack.plugins.custom_modules.hardware_dongle_emulator.DongleSpec]"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py",
+        "line": 330,
+        "func_name": "CryptoManager.__init__",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py",
+        "line": 408,
+        "func_name": "FlexLMEmulator.__init__",
+        "type_comments": [
+            "(intellicrack.plugins.custom_modules.license_server_emulator.CryptoManager) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py",
+        "line": 518,
+        "func_name": "FlexLMEmulator._generate_vendor_keys",
+        "type_comments": ["() -> Dict[str, Union[bytes, int]]"],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py",
+        "line": 708,
+        "func_name": "HASPEmulator.__init__",
+        "type_comments": [
+            "(intellicrack.plugins.custom_modules.license_server_emulator.CryptoManager) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py",
+        "line": 731,
+        "func_name": "HASPEmulator._derive_master_key",
+        "type_comments": ["() -> bytes"],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py",
+        "line": 738,
+        "func_name": "HASPEmulator._initialize_real_hasp_memory",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py",
+        "line": 982,
+        "func_name": "MicrosoftKMSEmulator.__init__",
+        "type_comments": [
+            "(intellicrack.plugins.custom_modules.license_server_emulator.CryptoManager) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py",
+        "line": 1017,
+        "func_name": "AdobeEmulator.__init__",
+        "type_comments": [
+            "(intellicrack.plugins.custom_modules.license_server_emulator.CryptoManager) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py",
+        "line": 1075,
+        "func_name": "DatabaseManager.__init__",
+        "type_comments": ["(str) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py",
+        "line": 1084,
+        "func_name": "DatabaseManager._create_tables",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py",
+        "line": 1092,
+        "func_name": "DatabaseManager._seed_default_licenses",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py",
+        "line": 1190,
+        "func_name": "HardwareFingerprintGenerator.__init__",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py",
+        "line": 1497,
+        "func_name": "ProtocolAnalyzer.__init__",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 4
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py",
+        "line": 1503,
+        "func_name": "ProtocolAnalyzer._initialize_patterns",
+        "type_comments": [
+            "() -> Dict[str, Dict[str, Union[bytes, int, intellicrack.plugins.custom_modules.license_server_emulator.LicenseType, str]]]"
+        ],
+        "samples": 4
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py",
+        "line": 1540,
+        "func_name": "ProtocolAnalyzer._initialize_signatures",
+        "type_comments": [
+            "() -> Dict[bytes, intellicrack.plugins.custom_modules.license_server_emulator.LicenseType]"
+        ],
+        "samples": 4
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py",
+        "line": 1726,
+        "func_name": "BinaryKeyExtractor.__init__",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py",
+        "line": 4965,
+        "func_name": "ProtocolStateMachine.__init__",
+        "type_comments": [
+            "(intellicrack.plugins.custom_modules.license_server_emulator.BinaryKeyExtractor) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py",
+        "line": 5368,
+        "func_name": "ProxyInterceptor.__init__",
+        "type_comments": [
+            "(Dict[str, Optional[Union[bool, int, str]]]) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py",
+        "line": 6613,
+        "func_name": "LicenseServerEmulator.__init__",
+        "type_comments": ["(None) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py",
+        "line": 6654,
+        "func_name": "LicenseServerEmulator._setup_middleware",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py",
+        "line": 6665,
+        "func_name": "LicenseServerEmulator._setup_routes",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\utils\\exploitation\\logger.py",
+        "line": 63,
+        "func_name": "_sanitize_message",
+        "type_comments": ["(str) -> str"],
+        "samples": 145
+    },
+    {
+        "path": "intellicrack\\utils\\exploitation\\logger.py",
+        "line": 71,
+        "func_name": "_sanitize_context",
+        "type_comments": [
+            "(Dict[str, Union[List[str], int]]) -> Dict[str, Union[List[str], int]]",
+            "(Dict[str, Union[bool, int, str]]) -> Dict[str, Union[bool, int, str]]",
+            "(Dict[str, Union[List[str], str]]) -> Dict[str, Union[List[str], str]]",
+            "(Dict[str, Union[bool, str]]) -> Dict[str, Union[bool, str]]",
+            "(Dict[str, Union[int, str]]) -> Dict[str, Union[int, str]]",
+            "(Dict[str, Union[bool, int]]) -> Dict[str, Union[bool, int]]",
+            "(Dict[str, Union[List[str], bool]]) -> Dict[str, Union[List[str], bool]]",
+            "(Dict[str, str]) -> Dict[str, str]"
+        ],
+        "samples": 82
+    },
+    {
+        "path": "intellicrack\\utils\\exploitation\\logger.py",
+        "line": 89,
+        "func_name": "_serialize_context",
+        "type_comments": [
+            "(Dict[str, Union[bool, int, str]]) -> str",
+            "(Dict[str, Union[int, str]]) -> str",
+            "(Dict[str, Union[bool, str]]) -> str",
+            "(Dict[str, Union[List[str], str]]) -> str",
+            "(Dict[str, Union[List[str], int]]) -> str",
+            "(Dict[str, Union[bool, int]]) -> str",
+            "(Dict[str, Union[List[str], bool]]) -> str",
+            "(Dict[str, str]) -> str"
+        ],
+        "samples": 82
+    },
+    {
+        "path": "intellicrack\\utils\\exploitation\\logger.py",
+        "line": 91,
+        "func_name": "default_serializer",
+        "type_comments": ["(object) -> str"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\utils\\exploitation\\logger.py",
+        "line": 102,
+        "func_name": "_write_to_file",
+        "type_comments": [
+            "(str, None) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(str, None) -> pyannotate_runtime.collect_types.UnknownType"
+        ],
+        "samples": 90
+    },
+    {
+        "path": "intellicrack\\utils\\exploitation\\logger.py",
+        "line": 116,
+        "func_name": "_write_to_console",
+        "type_comments": ["(str) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\utils\\exploitation\\logger.py",
+        "line": 125,
+        "func_name": "_level_to_syslog_severity",
+        "type_comments": ["(str) -> int"],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\utils\\exploitation\\logger.py",
+        "line": 140,
+        "func_name": "_write_to_network",
+        "type_comments": [
+            "(str, Dict[str, str], str) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(str, None, str) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\utils\\exploitation\\logger.py",
+        "line": 194,
+        "func_name": "_init_database",
+        "type_comments": ["(pathlib.WindowsPath) -> sqlite3.Connection"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\utils\\exploitation\\logger.py",
+        "line": 218,
+        "func_name": "_get_db_connection",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\utils\\exploitation\\logger.py",
+        "line": 234,
+        "func_name": "_write_to_database",
+        "type_comments": ["(str, None, str, str) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\utils\\exploitation\\logger.py",
+        "line": 275,
+        "func_name": "log_message",
+        "type_comments": [
+            "(str, str, Dict[str, Union[int, str]], str, bool, bool, None) -> pyannotate_runtime.collect_types.UnknownType",
+            "(str, str, Dict[str, Union[List[str], int]], str, bool, bool, None) -> bool",
+            "(str, str, None, str, bool, bool, None) -> bool",
+            "(str, str, Dict[str, Union[bool, int, str]], str, bool, bool, None) -> bool",
+            "(str, str, Dict[str, Union[List[str], str]], str, bool, bool, None) -> bool",
+            "(str, str, Dict[str, Union[bool, str]], str, bool, bool, None) -> bool",
+            "(str, str, Dict[str, Union[bool, int]], str, bool, bool, None) -> bool",
+            "(str, str, Dict[str, Union[int, str]], str, bool, bool, None) -> bool"
+        ],
+        "samples": 94
+    },
+    {
+        "path": "intellicrack\\utils\\exploitation\\payload_result_handler.py",
+        "line": 34,
+        "func_name": "process_payload_result",
+        "type_comments": [
+            "(Dict[str, bool], method, None) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(Dict[str, Union[Dict[str, Union[float, int]], bool, bytes]], method, None) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(Dict[str, Union[Dict[str, Union[List[bytes], float, int]], bool, bytes, float]], method, None) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(Dict[str, Union[bool, str]], method, None) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(Dict[str, Union[Dict[str, Union[float, int]], bool, bytes]], method, method) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(Dict[str, Union[bool, str]], method, method) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(Dict[str, Union[Dict[str, Union[List, float, int]], bool, bytes, float]], method, None) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(Dict[str, Union[Dict[str, Union[List[bytes], float, int]], bool, bytes]], method, method) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 17
+    },
+    {
+        "path": "intellicrack\\utils\\font_manager.py",
+        "line": 37,
+        "func_name": "FontManager.__init__",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\utils\\font_manager.py",
+        "line": 47,
+        "func_name": "FontManager._load_config",
+        "type_comments": ["() -> Dict[str, Union[Dict[str, Union[List[str], int]], List[str]]]"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\utils\\font_manager.py",
+        "line": 81,
+        "func_name": "FontManager.load_application_fonts",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\utils\\font_manager.py",
+        "line": 97,
+        "func_name": "FontManager.get_monospace_font",
+        "type_comments": ["(int) -> PyQt6.QtGui.QFont", "(None) -> PyQt6.QtGui.QFont"],
+        "samples": 2
+    },
+    {
+        "path": "intellicrack\\utils\\font_manager.py",
+        "line": 121,
+        "func_name": "FontManager.get_ui_font",
+        "type_comments": ["(None) -> PyQt6.QtGui.QFont"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\utils\\font_manager.py",
+        "line": 146,
+        "func_name": "get_font_manager",
+        "type_comments": ["() -> intellicrack.utils.font_manager.FontManager"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\utils\\logger.py",
+        "line": 76,
+        "func_name": "wrapper",
+        "type_comments": [
+            "(*intellicrack.plugins.custom_modules.cloud_license_interceptor.CacheManager) -> pyannotate_runtime.collect_types.UnknownType",
+            "(*intellicrack.core.trial_reset_engine.TrialResetEngine) -> Dict[str, List[str]]",
+            "(*intellicrack.core.trial_reset_engine.TrialResetEngine) -> Dict[str, Union[List[bytes], List[str]]]",
+            "(*intellicrack.core.trial_reset_engine.TrialResetEngine) -> Dict[str, method]",
+            "(*Union[intellicrack.core.trial_reset_engine.TrialResetEngine, str]) -> List",
+            "(*intellicrack.plugins.custom_modules.cloud_license_interceptor.AuthenticationManager) -> None",
+            "(*intellicrack.plugins.custom_modules.cloud_license_interceptor.LocalLicenseServer) -> None",
+            "(*intellicrack.plugins.custom_modules.hardware_dongle_emulator.ParallelPortEmulator) -> None"
+        ],
+        "samples": 219
+    },
+    {
+        "path": "intellicrack\\utils\\logger.py",
+        "line": 97,
+        "func_name": "safe_repr",
+        "type_comments": [
+            "(intellicrack.plugins.custom_modules.cloud_license_interceptor.CacheManager, int) -> str",
+            "(intellicrack.plugins.custom_modules.hardware_dongle_emulator.ParallelPortEmulator, int) -> str",
+            "(intellicrack.plugins.custom_modules.cloud_license_interceptor.LocalLicenseServer, int) -> str",
+            "(None, int) -> str",
+            "(intellicrack.plugins.custom_modules.cloud_license_interceptor.AuthenticationManager, int) -> str",
+            "(intellicrack.core.trial_reset_engine.TrialResetEngine, int) -> str",
+            "(Dict[str, List[str]], int) -> str",
+            "(Dict[str, Union[List[bytes], List[str]]], int) -> str"
+        ],
+        "samples": 294
+    },
+    {
+        "path": "intellicrack\\utils\\resource_helper.py",
+        "line": 25,
+        "func_name": "get_resource_path",
+        "type_comments": ["(str) -> str"],
+        "samples": 1
+    },
+    {
+        "path": "intellicrack\\utils\\type_safety.py",
+        "line": 13,
+        "func_name": "get_typed_item",
+        "type_comments": [
+            "(Dict[str, int], str, type, int) -> int",
+            "(Dict[str, Union[bool, int, str]], str, type, None) -> int",
+            "(Dict[str, Union[bool, int, str]], str, type, None) -> str",
+            "(Dict[str, int], str, type, str) -> str",
+            "(Dict[str, int], str, type, None) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(Dict[str, str], str, type, None) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(Dict[str, Union[bool, int, str]], str, type, None) -> bool"
+        ],
+        "samples": 7
+    },
+    {
+        "path": "intellicrack\\utils\\type_safety.py",
+        "line": 59,
+        "func_name": "validate_type",
+        "type_comments": [
+            "(List[int], type, str) -> List[int]",
+            "(Dict[str, int], type, str) -> Dict[str, int]",
+            "(int, type, str) -> int",
+            "(str, type, str) -> str",
+            "(int, type, str) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(str, type, str) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 6
+    },
+    {
+        "path": "intellicrack\\utils\\type_safety.py",
+        "line": 79,
+        "func_name": "get_kwarg_typed",
+        "type_comments": [
+            "(Dict[str, str], str, type, int) -> int",
+            "(Dict[str, Union[int, str]], str, type, int) -> int",
+            "(Dict[str, Union[int, str]], str, type, str) -> str",
+            "(Dict[str, str], str, type, str) -> str",
+            "(Dict[str, Union[int, str]], str, type, str) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(Dict[str, Union[int, str]], str, type, bool) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(Dict[str, str], str, type, bool) -> bool"
+        ],
+        "samples": 7
+    },
+    {
+        "path": "intellicrack\\utils\\type_safety.py",
+        "line": 110,
+        "func_name": "ensure_dict",
+        "type_comments": [
+            "(Dict, str) -> Dict",
+            "(Dict[str, Union[int, str]], str) -> Dict[str, Union[int, str]]",
+            "(List[int], str) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(str, str) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(None, str) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(int, str) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 6
+    },
+    {
+        "path": "intellicrack\\utils\\type_safety.py",
+        "line": 129,
+        "func_name": "ensure_list",
+        "type_comments": [
+            "(List, str) -> List",
+            "(List[Union[int, str]], str) -> List[Union[int, str]]",
+            "(Dict[str, int], str) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(Tuple[int, int, int], str) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(str, str) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(Set[int], str) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 6
+    },
+    {
+        "path": "tests\\base_test.py",
+        "line": 39,
+        "func_name": "IntellicrackTestBase.assert_real_output",
+        "type_comments": [
+            "(Dict[str, Union[List, bool, float, str]], str) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(Dict[str, Dict[str, Union[Dict[str, Dict[str, Union[bool, str]]], bool, int, str]]], str) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(Dict[str, str], str) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(Dict, str) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(Dict[str, Union[Dict[str, Union[List[str], int]], List[str]]], str) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(Dict[str, Dict[str, Union[List[str], bool, int]]], str) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(Dict[str, Union[bool, int]], str) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(Dict[str, Union[bool, int, str]], str) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 17
+    },
+    {
+        "path": "tests\\conftest.py",
+        "line": 84,
+        "func_name": "pytest_runtest_call",
+        "type_comments": [
+            "(_pytest.python.Function) -> Iterator",
+            "(_pytest.unittest.TestCaseFunction) -> Iterator"
+        ],
+        "samples": 390
+    },
+    {
+        "path": "tests\\unit\\cli\\test_cli_modules.py",
+        "line": 43,
+        "func_name": "TestPipelineDataFlowEffectiveness.test_pipeline_data_serialization_integrity",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\cli\\test_cli_modules.py",
+        "line": 79,
+        "func_name": "TestPipelineDataFlowEffectiveness.test_pipeline_data_deserialization_accuracy",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\cli\\test_cli_modules.py",
+        "line": 98,
+        "func_name": "TestPipelineDataFlowEffectiveness.test_pipeline_data_round_trip_preservation",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\cli\\test_cli_modules.py",
+        "line": 134,
+        "func_name": "TestPipelineStageProcessingEffectiveness.test_custom_stage_processes_data_correctly",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\cli\\test_cli_modules.py",
+        "line": 138,
+        "func_name": "LicenseKeyExtractorStage",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\cli\\test_cli_modules.py",
+        "line": 139,
+        "func_name": "LicenseKeyExtractorStage.process",
+        "type_comments": [
+            "(intellicrack.cli.pipeline.PipelineData) -> intellicrack.cli.pipeline.PipelineData"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\cli\\test_cli_modules.py",
+        "line": 178,
+        "func_name": "TestPipelineStageProcessingEffectiveness.test_pipeline_stage_chaining",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\cli\\test_cli_modules.py",
+        "line": 179,
+        "func_name": "ProtectionDetectorStage",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\cli\\test_cli_modules.py",
+        "line": 180,
+        "func_name": "ProtectionDetectorStage.process",
+        "type_comments": [
+            "(intellicrack.cli.pipeline.PipelineData) -> intellicrack.cli.pipeline.PipelineData"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\cli\\test_cli_modules.py",
+        "line": 195,
+        "func_name": "BypassGeneratorStage",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\cli\\test_cli_modules.py",
+        "line": 196,
+        "func_name": "BypassGeneratorStage.process",
+        "type_comments": [
+            "(intellicrack.cli.pipeline.PipelineData) -> intellicrack.cli.pipeline.PipelineData"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\cli\\test_cli_modules.py",
+        "line": 241,
+        "func_name": "TestTerminalDashboardEffectiveness.test_system_metrics_accuracy",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\cli\\test_cli_modules.py",
+        "line": 259,
+        "func_name": "TestTerminalDashboardEffectiveness.test_analysis_stats_tracking",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\cli\\test_cli_modules.py",
+        "line": 282,
+        "func_name": "TestTerminalDashboardEffectiveness.test_session_info_updates",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\cli\\test_cli_modules.py",
+        "line": 303,
+        "func_name": "TestTerminalDashboardEffectiveness.test_dashboard_metric_retrieval",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\cli\\test_cli_modules.py",
+        "line": 322,
+        "func_name": "TestTerminalDashboardEffectiveness.test_dashboard_analysis_stats_updates",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\cli\\test_cli_modules.py",
+        "line": 342,
+        "func_name": "TestProgressManagerEffectiveness.test_progress_tracking_accuracy",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\cli\\test_cli_modules.py",
+        "line": 370,
+        "func_name": "TestProgressManagerEffectiveness.test_multiple_task_tracking",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\cli\\test_cli_modules.py",
+        "line": 414,
+        "func_name": "TestOutputFormattingEffectiveness.test_json_output_validity",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\cli\\test_cli_modules.py",
+        "line": 443,
+        "func_name": "TestOutputFormattingEffectiveness.test_csv_output_structure",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\cli\\test_cli_modules.py",
+        "line": 466,
+        "func_name": "TestOutputFormattingEffectiveness.test_text_report_formatting",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\cli\\test_cli_modules.py",
+        "line": 487,
+        "func_name": "TestBatchProcessingEffectiveness.test_batch_analysis_completion",
+        "type_comments": ["(pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\cli\\test_cli_modules.py",
+        "line": 522,
+        "func_name": "TestBatchProcessingEffectiveness.test_concurrent_processing_results",
+        "type_comments": ["(pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\cli\\test_cli_modules.py",
+        "line": 547,
+        "func_name": "TestBatchProcessingEffectiveness.test_batch_result_aggregation",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_backward_compatibility.py",
+        "line": 52,
+        "func_name": "RealConfigMigrationTester.__init__",
+        "type_comments": ["(str) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 10
+    },
+    {
+        "path": "tests\\unit\\core\\test_backward_compatibility.py",
+        "line": 339,
+        "func_name": "TestBackwardCompatibility.setUp",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 10
+    },
+    {
+        "path": "tests\\unit\\core\\test_config_get_set_operations.py",
+        "line": 38,
+        "func_name": "TestConfigGetSetOperations.setUp",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 13
+    },
+    {
+        "path": "tests\\unit\\core\\test_config_manager.py",
+        "line": 40,
+        "func_name": "TestIntellicrackConfig.create_test_config",
+        "type_comments": [
+            "(None) -> Dict[str, Union[Dict[str, Union[bool, int, str]], bool, str]]"
+        ],
+        "samples": 7
+    },
+    {
+        "path": "tests\\unit\\core\\test_config_manager.py",
+        "line": 56,
+        "func_name": "TestIntellicrackConfig.test_config_initialization_real",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_config_manager.py",
+        "line": 71,
+        "func_name": "TestIntellicrackConfig.test_json_schema_validation_real",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_config_manager.py",
+        "line": 93,
+        "func_name": "TestIntellicrackConfig.test_auto_fix_config_real",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_config_manager.py",
+        "line": 125,
+        "func_name": "TestIntellicrackConfig.test_environment_variable_expansion_real",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_config_manager.py",
+        "line": 160,
+        "func_name": "TestIntellicrackConfig.test_safe_config_merging_real",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_config_manager.py",
+        "line": 197,
+        "func_name": "TestIntellicrackConfig.test_atomic_config_saves_real",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_config_manager.py",
+        "line": 238,
+        "func_name": "TestIntellicrackConfig.test_configuration_versioning_real",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_config_manager.py",
+        "line": 266,
+        "func_name": "TestIntellicrackConfig.test_section_access_methods_real",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_config_manager.py",
+        "line": 305,
+        "func_name": "TestIntellicrackConfig.test_section_update_with_validation_real",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_config_manager.py",
+        "line": 342,
+        "func_name": "TestIntellicrackConfig.test_change_notification_system_real",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_config_manager.py",
+        "line": 390,
+        "func_name": "TestIntellicrackConfig.test_migration_detection_real",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_config_manager.py",
+        "line": 426,
+        "func_name": "TestIntellicrackConfig.test_thread_safety_real",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_config_manager.py",
+        "line": 435,
+        "func_name": "worker_thread",
+        "type_comments": ["(int) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 5
+    },
+    {
+        "path": "tests\\unit\\core\\test_config_manager.py",
+        "line": 474,
+        "func_name": "TestIntellicrackConfig.test_config_backup_and_restore_real",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_config_manager.py",
+        "line": 515,
+        "func_name": "TestIntellicrackConfig.test_comprehensive_integration_real",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_config_manager.py",
+        "line": 604,
+        "func_name": "TestIntellicrackConfig.test_intellicrack_config_json_migration_real",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_config_manager.py",
+        "line": 732,
+        "func_name": "TestConfigManagerSingleton.test_singleton_behavior_real",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_config_manager.py",
+        "line": 755,
+        "func_name": "TestConfigManagerSingleton.test_thread_safe_singleton_real",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_config_manager.py",
+        "line": 763,
+        "func_name": "create_instance",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.UnknownType"],
+        "samples": 4
+    },
+    {
+        "path": "tests\\unit\\core\\test_config_schema_validation.py",
+        "line": 37,
+        "func_name": "TestConfigSchemaValidation.test_qemu_testing_section_real",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_config_schema_validation.py",
+        "line": 67,
+        "func_name": "TestConfigSchemaValidation.test_font_configuration_section_real",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_config_schema_validation.py",
+        "line": 100,
+        "func_name": "TestConfigSchemaValidation.test_environment_section_real",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_config_schema_validation.py",
+        "line": 134,
+        "func_name": "TestConfigSchemaValidation.test_secrets_section_real",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_config_schema_validation.py",
+        "line": 166,
+        "func_name": "TestConfigSchemaValidation.test_llm_configuration_section_real",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_config_schema_validation.py",
+        "line": 206,
+        "func_name": "TestConfigSchemaValidation.test_cli_configuration_section_real",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_config_schema_validation.py",
+        "line": 248,
+        "func_name": "TestConfigSchemaValidation.test_vm_framework_section_real",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_config_schema_validation.py",
+        "line": 298,
+        "func_name": "TestConfigSchemaValidation.test_runtime_configuration_real",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_config_schema_validation.py",
+        "line": 318,
+        "func_name": "TestConfigSchemaValidation.test_api_cache_configuration_real",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_config_schema_validation.py",
+        "line": 338,
+        "func_name": "TestConfigSchemaValidation.test_security_extended_fields_real",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_config_schema_validation.py",
+        "line": 380,
+        "func_name": "TestConfigSchemaValidation.test_ui_preferences_extended_real",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_config_schema_validation.py",
+        "line": 416,
+        "func_name": "TestConfigSchemaValidation.test_comprehensive_schema_validation_real",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_migration_methods.py",
+        "line": 736,
+        "func_name": "TestMigrationMethods.setUp",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 9
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 26,
+        "func_name": "TestTrialResetEngineInitialization.test_init_initializes_all_components",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 36,
+        "func_name": "TestTrialResetEngineInitialization.test_initialize_trial_locations_returns_correct_structure",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 47,
+        "func_name": "TestTrialResetEngineInitialization.test_initialize_trial_locations_includes_registry_paths",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 59,
+        "func_name": "TestTrialResetEngineInitialization.test_initialize_trial_locations_includes_file_paths",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 72,
+        "func_name": "TestTrialResetEngineInitialization.test_initialize_trial_locations_includes_hidden_paths",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 82,
+        "func_name": "TestTrialResetEngineInitialization.test_initialize_trial_locations_includes_alternate_streams",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 91,
+        "func_name": "TestTrialResetEngineInitialization.test_initialize_detection_patterns_includes_registry_values",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 117,
+        "func_name": "TestTrialResetEngineInitialization.test_initialize_detection_patterns_includes_file_patterns",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 142,
+        "func_name": "TestTrialResetEngineInitialization.test_initialize_detection_patterns_includes_timestamp_files",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 152,
+        "func_name": "TestTrialResetEngineInitialization.test_initialize_detection_patterns_includes_encrypted_markers",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 162,
+        "func_name": "TestTrialResetEngineInitialization.test_initialize_reset_strategies_maps_all_strategies",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 186,
+        "func_name": "test_scan_registry_for_trial_finds_existing_keys",
+        "type_comments": [
+            "(unittest.mock.MagicMock, unittest.mock.MagicMock) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 199,
+        "func_name": "test_scan_registry_matches_trial_values",
+        "type_comments": [
+            "(unittest.mock.MagicMock, unittest.mock.MagicMock, unittest.mock.MagicMock) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 209,
+        "func_name": "enum_value_side_effect",
+        "type_comments": [
+            "(unittest.mock.MagicMock, int) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 5
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 224,
+        "func_name": "test_scan_registry_handles_access_errors",
+        "type_comments": [
+            "(unittest.mock.MagicMock) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 234,
+        "func_name": "test_scan_for_hidden_registry_keys_generates_encodings",
+        "type_comments": [
+            "(unittest.mock.MagicMock, unittest.mock.MagicMock) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 247,
+        "func_name": "test_scan_for_hidden_registry_keys_searches_clsid",
+        "type_comments": [
+            "(unittest.mock.MagicMock, unittest.mock.MagicMock) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 268,
+        "func_name": "test_scan_files_for_trial_searches_common_locations",
+        "type_comments": [
+            "(unittest.mock.MagicMock, unittest.mock.MagicMock, unittest.mock.MagicMock, unittest.mock.MagicMock) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 290,
+        "func_name": "test_scan_files_matches_file_patterns",
+        "type_comments": [
+            "(unittest.mock.MagicMock, unittest.mock.MagicMock, unittest.mock.MagicMock, unittest.mock.MagicMock) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 316,
+        "func_name": "test_scan_files_handles_permission_errors",
+        "type_comments": [
+            "(unittest.mock.MagicMock, unittest.mock.MagicMock, unittest.mock.MagicMock) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 331,
+        "func_name": "test_scan_alternate_data_streams_uses_windows_apis",
+        "type_comments": [
+            "(unittest.mock.MagicMock) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 341,
+        "func_name": "test_scan_for_encrypted_trial_files_detects_markers",
+        "type_comments": [
+            "(unittest.mock.MagicMock, unittest.mock.MagicMock) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 357,
+        "func_name": "TestTrialDetection.test_detect_trial_type_returns_time_based",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 378,
+        "func_name": "TestTrialDetection.test_detect_trial_type_returns_usage_based",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 399,
+        "func_name": "TestTrialDetection.test_detect_trial_type_returns_hybrid",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 420,
+        "func_name": "TestTrialDetection.test_detect_trial_type_returns_feature_limited",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 441,
+        "func_name": "test_extract_trial_details_from_registry",
+        "type_comments": [
+            "(unittest.mock.MagicMock, unittest.mock.MagicMock) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 472,
+        "func_name": "TestTrialDetection.test_parse_date_converts_unix_timestamp",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 482,
+        "func_name": "TestTrialDetection.test_parse_date_parses_string_formats",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 498,
+        "func_name": "TestTrialDetection.test_parse_date_returns_fallback_for_invalid",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 505,
+        "func_name": "TestTrialDetection.test_check_trial_expired_for_time_based",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 527,
+        "func_name": "TestTrialDetection.test_check_trial_expired_for_usage_based",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 548,
+        "func_name": "test_find_related_processes_by_name",
+        "type_comments": [
+            "(unittest.mock.MagicMock) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 560,
+        "func_name": "test_find_related_processes_by_path",
+        "type_comments": [
+            "(unittest.mock.MagicMock) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 576,
+        "func_name": "test_reset_trial_validates_strategy",
+        "type_comments": [
+            "(unittest.mock.MagicMock, unittest.mock.MagicMock) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 603,
+        "func_name": "test_reset_trial_calls_kill_processes_first",
+        "type_comments": [
+            "(unittest.mock.MagicMock, unittest.mock.MagicMock) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 628,
+        "func_name": "test_kill_processes_terminates_gracefully",
+        "type_comments": [
+            "(unittest.mock.MagicMock) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 640,
+        "func_name": "test_kill_processes_kills_if_terminate_fails",
+        "type_comments": [
+            "(unittest.mock.MagicMock) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 653,
+        "func_name": "test_clean_uninstall_reset_deletes_all_traces",
+        "type_comments": [
+            "(unittest.mock.MagicMock, unittest.mock.MagicMock, unittest.mock.MagicMock, unittest.mock.MagicMock, unittest.mock.MagicMock) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 694,
+        "func_name": "test_delete_registry_key_parses_path_correctly",
+        "type_comments": [
+            "(unittest.mock.MagicMock) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 703,
+        "func_name": "test_delete_file_securely_overwrites_with_random_data",
+        "type_comments": [
+            "(unittest.mock.MagicMock, unittest.mock.MagicMock, unittest.mock.MagicMock, unittest.mock.MagicMock, unittest.mock.MagicMock) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 727,
+        "func_name": "test_registry_clean_reset_falls_back_to_value_reset",
+        "type_comments": [
+            "(unittest.mock.MagicMock, unittest.mock.MagicMock) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 753,
+        "func_name": "test_reset_registry_values_resets_trial_data",
+        "type_comments": [
+            "(unittest.mock.MagicMock, unittest.mock.MagicMock) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 765,
+        "func_name": "test_file_wipe_reset_falls_back_to_content_reset",
+        "type_comments": [
+            "(unittest.mock.MagicMock, unittest.mock.MagicMock) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 791,
+        "func_name": "test_reset_file_content_resets_xml_files",
+        "type_comments": [
+            "(unittest.mock.MagicMock, unittest.mock.MagicMock) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 801,
+        "func_name": "test_reset_file_content_resets_json_files",
+        "type_comments": [
+            "(unittest.mock.MagicMock, unittest.mock.MagicMock) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 810,
+        "func_name": "test_reset_file_content_resets_ini_files",
+        "type_comments": [
+            "(unittest.mock.MagicMock, unittest.mock.MagicMock) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 819,
+        "func_name": "test_guid_regeneration_reset_generates_new_uuid",
+        "type_comments": [
+            "(unittest.mock.MagicMock, unittest.mock.MagicMock, unittest.mock.MagicMock) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 847,
+        "func_name": "test_update_guid_in_key_updates_guid_values",
+        "type_comments": [
+            "(unittest.mock.MagicMock, unittest.mock.MagicMock, unittest.mock.MagicMock) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 866,
+        "func_name": "TestTimeManipulator.test_init_initializes_tracking_structures",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 874,
+        "func_name": "test_reset_trial_time_saves_original_time",
+        "type_comments": [
+            "(unittest.mock.MagicMock) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 898,
+        "func_name": "test_reset_trial_time_calculates_target_time",
+        "type_comments": [
+            "(unittest.mock.MagicMock) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 924,
+        "func_name": "test_freeze_time_for_app_injects_hooks",
+        "type_comments": [
+            "(unittest.mock.MagicMock, unittest.mock.MagicMock, unittest.mock.MagicMock) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 943,
+        "func_name": "test_scan_for_trial_returns_trial_info",
+        "type_comments": [
+            "(unittest.mock.MagicMock, unittest.mock.MagicMock, unittest.mock.MagicMock, unittest.mock.MagicMock, unittest.mock.MagicMock, unittest.mock.MagicMock) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 981,
+        "func_name": "test_automated_reset_scans_and_resets",
+        "type_comments": [
+            "(unittest.mock.MagicMock, unittest.mock.MagicMock) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 1006,
+        "func_name": "test_automated_reset_returns_false_for_no_data",
+        "type_comments": [
+            "(unittest.mock.MagicMock) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 1031,
+        "func_name": "test_registry_based_trial_reset",
+        "type_comments": [
+            "(unittest.mock.MagicMock, unittest.mock.MagicMock) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 1057,
+        "func_name": "test_file_based_trial_reset",
+        "type_comments": [
+            "(unittest.mock.MagicMock, unittest.mock.MagicMock, unittest.mock.MagicMock, unittest.mock.MagicMock, unittest.mock.MagicMock) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\core\\test_trial_reset_engine.py",
+        "line": 1094,
+        "func_name": "test_hybrid_trial_reset",
+        "type_comments": [
+            "(unittest.mock.MagicMock, unittest.mock.MagicMock, unittest.mock.MagicMock, unittest.mock.MagicMock, unittest.mock.MagicMock) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\dashboard\\test_dashboard_modules.py",
+        "line": 57,
+        "func_name": "TestLiveDataPipelineEffectiveness.test_pipeline_processes_and_stores_events",
+        "type_comments": ["(pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\dashboard\\test_dashboard_modules.py",
+        "line": 86,
+        "func_name": "TestLiveDataPipelineEffectiveness.test_pipeline_event_retrieval_accuracy",
+        "type_comments": ["(pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\dashboard\\test_dashboard_modules.py",
+        "line": 121,
+        "func_name": "TestLiveDataPipelineEffectiveness.test_pipeline_callback_execution",
+        "type_comments": ["(pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\dashboard\\test_dashboard_modules.py",
+        "line": 155,
+        "func_name": "TestVisualizationRendererEffectiveness.test_graph_rendering_produces_output",
+        "type_comments": ["(pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\dashboard\\test_dashboard_modules.py",
+        "line": 186,
+        "func_name": "TestVisualizationRendererEffectiveness.test_heatmap_generation",
+        "type_comments": ["(pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\dashboard\\test_dashboard_modules.py",
+        "line": 206,
+        "func_name": "TestVisualizationRendererEffectiveness.test_metrics_chart_rendering",
+        "type_comments": ["(pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\dashboard\\test_dashboard_modules.py",
+        "line": 232,
+        "func_name": "TestRealTimeDashboardEffectiveness.test_dashboard_tracks_analysis_events",
+        "type_comments": ["(pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\dashboard\\test_dashboard_modules.py",
+        "line": 275,
+        "func_name": "TestRealTimeDashboardEffectiveness.test_dashboard_metrics_accuracy",
+        "type_comments": ["(pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\dashboard\\test_dashboard_modules.py",
+        "line": 318,
+        "func_name": "TestWebSocketEventStreamEffectiveness.test_event_publishing",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\dashboard\\test_dashboard_modules.py",
+        "line": 354,
+        "func_name": "TestDashboardManagerEffectiveness.test_manager_widget_data_flow",
+        "type_comments": ["(pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\dashboard\\test_dashboard_modules.py",
+        "line": 392,
+        "func_name": "TestIntegrationEffectiveness.test_full_dashboard_pipeline",
+        "type_comments": ["(pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_handlers_comprehensive.py",
+        "line": 20,
+        "func_name": "TestPEFileHandler.test_pefile_handler_imports",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_handlers_comprehensive.py",
+        "line": 27,
+        "func_name": "TestPEFileHandler.test_pe_constants_available",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_handlers_comprehensive.py",
+        "line": 43,
+        "func_name": "TestLIEFHandler.test_lief_handler_imports",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_handlers_comprehensive.py",
+        "line": 50,
+        "func_name": "TestLIEFHandler.test_lief_architecture_constants",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_handlers_comprehensive.py",
+        "line": 60,
+        "func_name": "TestLIEFHandler.test_fallback_section_creation",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_handlers_comprehensive.py",
+        "line": 78,
+        "func_name": "TestLIEFHandler.test_fallback_symbol_creation",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_handlers_comprehensive.py",
+        "line": 98,
+        "func_name": "TestCapstoneHandler.test_capstone_handler_imports",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_handlers_comprehensive.py",
+        "line": 105,
+        "func_name": "TestCapstoneHandler.test_capstone_architecture_constants",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_handlers_comprehensive.py",
+        "line": 119,
+        "func_name": "TestKeystoneHandler.test_keystone_handler_imports",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_handlers_comprehensive.py",
+        "line": 126,
+        "func_name": "TestKeystoneHandler.test_keystone_architecture_constants",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_handlers_comprehensive.py",
+        "line": 140,
+        "func_name": "TestNumpyHandler.test_numpy_handler_imports",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_handlers_comprehensive.py",
+        "line": 147,
+        "func_name": "TestNumpyHandler.test_fallback_array_operations",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_handlers_comprehensive.py",
+        "line": 158,
+        "func_name": "TestNumpyHandler.test_fallback_array_math_operations",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_handlers_comprehensive.py",
+        "line": 176,
+        "func_name": "TestRequestsHandler.test_requests_handler_imports",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_handlers_comprehensive.py",
+        "line": 183,
+        "func_name": "TestRequestsHandler.test_fallback_session_creation",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_handlers_comprehensive.py",
+        "line": 199,
+        "func_name": "TestPsutilHandler.test_psutil_handler_imports",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_handlers_comprehensive.py",
+        "line": 206,
+        "func_name": "TestPsutilHandler.test_process_enumeration_fallback",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_handlers_comprehensive.py",
+        "line": 219,
+        "func_name": "TestSQLite3Handler.test_sqlite3_handler_imports",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_handlers_comprehensive.py",
+        "line": 226,
+        "func_name": "TestSQLite3Handler.test_sqlite3_connection_creation",
+        "type_comments": ["(pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_handlers_comprehensive.py",
+        "line": 245,
+        "func_name": "TestAiohttpHandler.test_aiohttp_handler_imports",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_handlers_comprehensive.py",
+        "line": 252,
+        "func_name": "TestAiohttpHandler.test_fallback_client_session",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_handlers_comprehensive.py",
+        "line": 267,
+        "func_name": "TestTensorflowHandler.test_tensorflow_handler_imports",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_handlers_comprehensive.py",
+        "line": 278,
+        "func_name": "TestTorchHandler.test_torch_handler_imports",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_handlers_comprehensive.py",
+        "line": 285,
+        "func_name": "TestTorchHandler.test_fallback_tensor_creation",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_handlers_comprehensive.py",
+        "line": 299,
+        "func_name": "TestPyQt6Handler.test_pyqt6_handler_imports",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_handlers_comprehensive.py",
+        "line": 310,
+        "func_name": "TestTkinterHandler.test_tkinter_handler_imports",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_handlers_comprehensive.py",
+        "line": 321,
+        "func_name": "TestWMIHandler.test_wmi_handler_imports",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_handlers_comprehensive.py",
+        "line": 332,
+        "func_name": "TestOpenCLHandler.test_opencl_handler_imports",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_handlers_comprehensive.py",
+        "line": 343,
+        "func_name": "TestPDFKitHandler.test_pdfkit_handler_imports",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_handlers_comprehensive.py",
+        "line": 354,
+        "func_name": "TestPyElfToolsHandler.test_pyelftools_handler_imports",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_handlers_comprehensive.py",
+        "line": 366,
+        "func_name": "TestHandlerIntegration.test_binary_analysis_with_fallbacks",
+        "type_comments": ["(pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_handlers_comprehensive.py",
+        "line": 379,
+        "func_name": "TestHandlerIntegration.test_disassembly_with_fallback",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 34,
+        "func_name": "TestKeystoneAvailability.test_keystone_imported_successfully",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 39,
+        "func_name": "TestKeystoneAvailability.test_architecture_constants_defined",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 45,
+        "func_name": "TestKeystoneAvailability.test_mode_constants_defined",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 56,
+        "func_name": "TestX86Assembly.test_assembles_simple_mov_instruction",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 67,
+        "func_name": "TestX86Assembly.test_assembles_add_instruction",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 77,
+        "func_name": "TestX86Assembly.test_assembles_conditional_jump",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 87,
+        "func_name": "TestX86Assembly.test_assembles_call_instruction",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 97,
+        "func_name": "TestX86Assembly.test_assembles_push_pop",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 107,
+        "func_name": "TestX86Assembly.test_assembles_nop_instruction",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 117,
+        "func_name": "TestX86Assembly.test_assembles_ret_instruction",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 127,
+        "func_name": "TestX86Assembly.test_assembles_multiple_instructions",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 150,
+        "func_name": "TestX64Assembly.test_assembles_x64_mov_instruction",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 160,
+        "func_name": "TestX64Assembly.test_assembles_x64_add_instruction",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 170,
+        "func_name": "TestX64Assembly.test_assembles_x64_syscall",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 180,
+        "func_name": "TestX64Assembly.test_assembles_x64_extended_registers",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 190,
+        "func_name": "TestX64Assembly.test_assembles_x64_memory_operations",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 203,
+        "func_name": "TestARMAssembly.test_assembles_arm_mov_instruction",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 214,
+        "func_name": "TestARMAssembly.test_assembles_arm_add_instruction",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 224,
+        "func_name": "TestARMAssembly.test_assembles_arm_branch",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 234,
+        "func_name": "TestARMAssembly.test_assembles_arm_load_store",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 250,
+        "func_name": "TestARMThumbMode.test_assembles_thumb_mov",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 261,
+        "func_name": "TestARMThumbMode.test_assembles_thumb_add",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 270,
+        "func_name": "TestARMThumbMode.test_thumb_produces_compact_code",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 285,
+        "func_name": "TestARM64Assembly.test_assembles_arm64_mov",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 295,
+        "func_name": "TestARM64Assembly.test_assembles_arm64_add",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 305,
+        "func_name": "TestARM64Assembly.test_assembles_arm64_branch",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 315,
+        "func_name": "TestARM64Assembly.test_assembles_arm64_load_store",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 329,
+        "func_name": "TestErrorHandling.test_raises_on_invalid_syntax",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 336,
+        "func_name": "TestErrorHandling.test_raises_on_invalid_register",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 343,
+        "func_name": "TestErrorHandling.test_handles_empty_input",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 355,
+        "func_name": "TestComplexAssembly.test_assembles_function_prologue",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 370,
+        "func_name": "TestComplexAssembly.test_assembles_function_epilogue",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 384,
+        "func_name": "TestComplexAssembly.test_assembles_loop_structure",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 400,
+        "func_name": "TestComplexAssembly.test_assembles_shellcode",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 422,
+        "func_name": "TestPatchGeneration.test_generates_nop_sled",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 436,
+        "func_name": "TestPatchGeneration.test_generates_unconditional_jump",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 445,
+        "func_name": "TestPatchGeneration.test_inverts_conditional_jump",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 456,
+        "func_name": "TestPatchGeneration.test_generates_return_value_patch",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 474,
+        "func_name": "TestPerformance.test_batch_assembly_performance",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 496,
+        "func_name": "TestPerformance.test_large_code_assembly",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 516,
+        "func_name": "TestArchitectureSwitch.test_switches_from_x86_to_arm",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\handlers\\test_keystone_handler_production.py",
+        "line": 526,
+        "func_name": "TestArchitectureSwitch.test_switches_between_modes",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\hexview\\test_hexview_functionality.py",
+        "line": 40,
+        "func_name": "TestChecksumEffectiveness.test_crc32_known_values",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\hexview\\test_hexview_functionality.py",
+        "line": 49,
+        "func_name": "TestChecksumEffectiveness.test_crc32_empty_data",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\hexview\\test_hexview_functionality.py",
+        "line": 58,
+        "func_name": "TestChecksumEffectiveness.test_crc32_deterministic",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\hexview\\test_hexview_functionality.py",
+        "line": 67,
+        "func_name": "TestChecksumEffectiveness.test_crc16_known_values",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\hexview\\test_hexview_functionality.py",
+        "line": 76,
+        "func_name": "TestChecksumEffectiveness.test_crc16_deterministic",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\hexview\\test_hexview_functionality.py",
+        "line": 85,
+        "func_name": "TestChecksumEffectiveness.test_sha256_known_values",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\hexview\\test_hexview_functionality.py",
+        "line": 96,
+        "func_name": "TestChecksumEffectiveness.test_sha256_deterministic",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\hexview\\test_hexview_functionality.py",
+        "line": 105,
+        "func_name": "TestChecksumEffectiveness.test_sha256_different_inputs",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\hexview\\test_hexview_functionality.py",
+        "line": 115,
+        "func_name": "TestChecksumEffectiveness.test_sha512_output_length",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\hexview\\test_hexview_functionality.py",
+        "line": 125,
+        "func_name": "TestChecksumEffectiveness.test_sha512_deterministic",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\hexview\\test_hexview_functionality.py",
+        "line": 138,
+        "func_name": "TestDataInspectorEffectiveness.test_interpret_uint32_little_endian",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\hexview\\test_hexview_functionality.py",
+        "line": 147,
+        "func_name": "TestDataInspectorEffectiveness.test_interpret_uint32_big_endian",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\hexview\\test_hexview_functionality.py",
+        "line": 156,
+        "func_name": "TestDataInspectorEffectiveness.test_interpret_int32_signed",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\hexview\\test_hexview_functionality.py",
+        "line": 165,
+        "func_name": "TestDataInspectorEffectiveness.test_interpret_uint64_little_endian",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\hexview\\test_hexview_functionality.py",
+        "line": 174,
+        "func_name": "TestDataInspectorEffectiveness.test_interpret_float32",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\hexview\\test_hexview_functionality.py",
+        "line": 183,
+        "func_name": "TestDataInspectorEffectiveness.test_interpret_float64",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\hexview\\test_hexview_functionality.py",
+        "line": 192,
+        "func_name": "TestDataInspectorEffectiveness.test_interpret_ascii_string",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\hexview\\test_hexview_functionality.py",
+        "line": 201,
+        "func_name": "TestDataInspectorEffectiveness.test_interpret_utf8_string",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\hexview\\test_hexview_functionality.py",
+        "line": 210,
+        "func_name": "TestDataInspectorEffectiveness.test_interpret_utf16_le_string",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\hexview\\test_hexview_functionality.py",
+        "line": 223,
+        "func_name": "TestFileComparisonEffectiveness.test_identical_files_no_differences",
+        "type_comments": ["(pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\hexview\\test_hexview_functionality.py",
+        "line": 238,
+        "func_name": "TestFileComparisonEffectiveness.test_detect_single_byte_modification",
+        "type_comments": ["(pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\hexview\\test_hexview_functionality.py",
+        "line": 263,
+        "func_name": "TestFileComparisonEffectiveness.test_detect_multiple_modifications",
+        "type_comments": ["(pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\hexview\\test_hexview_functionality.py",
+        "line": 283,
+        "func_name": "TestFileComparisonEffectiveness.test_detect_size_difference",
+        "type_comments": ["(pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\hexview\\test_hexview_functionality.py",
+        "line": 299,
+        "func_name": "TestFileComparisonEffectiveness.test_compare_binary_with_known_patch",
+        "type_comments": ["(pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\hexview\\test_hexview_functionality.py",
+        "line": 333,
+        "func_name": "TestLargeFileHandlingEffectiveness.test_handle_1mb_file",
+        "type_comments": ["(pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\hexview\\test_hexview_functionality.py",
+        "line": 350,
+        "func_name": "TestLargeFileHandlingEffectiveness.test_checksum_large_file",
+        "type_comments": ["(pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\hexview\\test_hexview_functionality.py",
+        "line": 365,
+        "func_name": "TestLargeFileHandlingEffectiveness.test_compare_large_identical_files",
+        "type_comments": ["(pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\hexview\\test_hexview_functionality.py",
+        "line": 381,
+        "func_name": "TestLargeFileHandlingEffectiveness.test_compare_large_files_with_difference",
+        "type_comments": ["(pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\hexview\\test_hexview_functionality.py",
+        "line": 405,
+        "func_name": "TestProtectionPatternDetectionEffectiveness.test_detect_vmprotect_section_pattern",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\hexview\\test_hexview_functionality.py",
+        "line": 413,
+        "func_name": "TestProtectionPatternDetectionEffectiveness.test_detect_themida_section_pattern",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\hexview\\test_hexview_functionality.py",
+        "line": 421,
+        "func_name": "TestProtectionPatternDetectionEffectiveness.test_detect_upx_signature",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\hexview\\test_hexview_functionality.py",
+        "line": 429,
+        "func_name": "TestProtectionPatternDetectionEffectiveness.test_detect_license_key_pattern",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\hexview\\test_hexview_functionality.py",
+        "line": 437,
+        "func_name": "TestProtectionPatternDetectionEffectiveness.test_detect_rsa_public_key_marker",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ml\\test_ml_modules.py",
+        "line": 80,
+        "func_name": "TestBinaryFeatureExtractor.test_extractor_initialization",
+        "type_comments": ["(str) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ml\\test_ml_modules.py",
+        "line": 88,
+        "func_name": "TestBinaryFeatureExtractor.test_extract_opcode_histogram_on_notepad",
+        "type_comments": ["(str) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ml\\test_ml_modules.py",
+        "line": 100,
+        "func_name": "TestBinaryFeatureExtractor.test_extract_opcode_histogram_on_dll",
+        "type_comments": ["(str) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ml\\test_ml_modules.py",
+        "line": 108,
+        "func_name": "TestBinaryFeatureExtractor.test_build_control_flow_graph_on_calc",
+        "type_comments": ["(str) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ml\\test_ml_modules.py",
+        "line": 121,
+        "func_name": "TestBinaryFeatureExtractor.test_extract_api_sequences_on_notepad",
+        "type_comments": ["(str) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ml\\test_ml_modules.py",
+        "line": 130,
+        "func_name": "TestBinaryFeatureExtractor.test_calculate_section_entropy_on_system_dll",
+        "type_comments": ["(str) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ml\\test_ml_modules.py",
+        "line": 144,
+        "func_name": "TestBinaryFeatureExtractor.test_extract_string_features_on_binary",
+        "type_comments": ["(str) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ml\\test_ml_modules.py",
+        "line": 153,
+        "func_name": "TestBinaryFeatureExtractor.test_extract_all_features_on_notepad",
+        "type_comments": ["(str) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ml\\test_ml_modules.py",
+        "line": 165,
+        "func_name": "TestBinaryFeatureExtractor.test_extract_all_features_on_calc",
+        "type_comments": ["(str) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ml\\test_ml_modules.py",
+        "line": 175,
+        "func_name": "TestBinaryFeatureExtractor.test_feature_extraction_on_multiple_binaries",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ml\\test_ml_modules.py",
+        "line": 197,
+        "func_name": "TestBinaryFeatureExtractor.test_factory_function_extract_features_for_ml",
+        "type_comments": ["(str) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ml\\test_ml_modules.py",
+        "line": 204,
+        "func_name": "TestBinaryFeatureExtractor.test_feature_extraction_error_handling_nonexistent",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ml\\test_ml_modules.py",
+        "line": 217,
+        "func_name": "TestBinaryFeatureExtractor.test_feature_extraction_on_large_dll",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ml\\test_ml_modules.py",
+        "line": 239,
+        "func_name": "TestPatternEvolutionTracker.test_tracker_initialization",
+        "type_comments": ["(pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ml\\test_ml_modules.py",
+        "line": 255,
+        "func_name": "TestPatternEvolutionTracker.test_detect_patterns_in_binary_data",
+        "type_comments": [
+            "(pathlib.WindowsPath, str) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ml\\test_ml_modules.py",
+        "line": 272,
+        "func_name": "TestPatternEvolutionTracker.test_evolve_generation",
+        "type_comments": ["(pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ml\\test_ml_modules.py",
+        "line": 283,
+        "func_name": "TestPatternEvolutionTracker.test_cluster_patterns_into_families",
+        "type_comments": ["(pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ml\\test_ml_modules.py",
+        "line": 297,
+        "func_name": "TestPatternEvolutionTracker.test_analyze_temporal_evolution",
+        "type_comments": ["(pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ml\\test_ml_modules.py",
+        "line": 310,
+        "func_name": "TestPatternEvolutionTracker.test_pattern_export_and_import",
+        "type_comments": ["(pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ml\\test_ml_modules.py",
+        "line": 333,
+        "func_name": "TestPatternEvolutionTracker.test_pattern_feedback_mechanism",
+        "type_comments": ["(pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ml\\test_ml_modules.py",
+        "line": 344,
+        "func_name": "TestPatternEvolutionTracker.test_get_statistics",
+        "type_comments": ["(pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ml\\test_ml_modules.py",
+        "line": 358,
+        "func_name": "TestPatternEvolutionTracker.test_detect_pattern_mutations",
+        "type_comments": [
+            "(pathlib.WindowsPath, str) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ml\\test_ml_modules.py",
+        "line": 381,
+        "func_name": "TestPatternEvolutionTracker.test_cluster_patterns_advanced",
+        "type_comments": ["(pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ml\\test_ml_modules.py",
+        "line": 398,
+        "func_name": "TestPatternEvolutionTracker.test_real_world_pattern_evolution_scenario",
+        "type_comments": [
+            "(pathlib.WindowsPath, str) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ml\\test_ml_modules.py",
+        "line": 425,
+        "func_name": "TestNeuralNetworkIntegration.test_license_protection_types_enum",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ml\\test_ml_modules.py",
+        "line": 432,
+        "func_name": "TestNeuralNetworkIntegration.test_license_features_dataclass",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ml\\test_ml_modules.py",
+        "line": 448,
+        "func_name": "TestNeuralNetworkIntegration.test_hybrid_license_analyzer_initialization",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ml\\test_ml_modules.py",
+        "line": 465,
+        "func_name": "TestNeuralNetworkIntegration.test_license_predictor_singleton",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ml\\test_ml_modules.py",
+        "line": 481,
+        "func_name": "TestCoreMLFeatureExtraction.test_core_feature_extractor_availability",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ml\\test_ml_modules.py",
+        "line": 487,
+        "func_name": "TestCoreMLFeatureExtraction.test_core_feature_extractor_on_real_binary",
+        "type_comments": ["(str) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ml\\test_ml_modules.py",
+        "line": 503,
+        "func_name": "TestMLIntegration.test_feature_extractor_to_pattern_tracker",
+        "type_comments": [
+            "(pathlib.WindowsPath, str) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ml\\test_ml_modules.py",
+        "line": 524,
+        "func_name": "TestMLIntegration.test_end_to_end_ml_pipeline",
+        "type_comments": [
+            "(pathlib.WindowsPath, str) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\plugins\\test_plugin_system.py",
+        "line": 136,
+        "func_name": "TestAntiAntiDebugSuiteEffectiveness.test_bypass_effectiveness_on_known_pattern",
+        "type_comments": ["(pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\plugins\\test_plugin_system.py",
+        "line": 220,
+        "func_name": "TestHardwareDongleEmulatorEffectiveness.test_emulator_responds_to_challenge",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\plugins\\test_plugin_system.py",
+        "line": 241,
+        "func_name": "TestHardwareDongleEmulatorEffectiveness.test_multiple_dongle_types",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\plugins\\test_plugin_system.py",
+        "line": 260,
+        "func_name": "TestLicenseServerEmulatorEffectiveness.test_server_handles_activation_request",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\plugins\\test_plugin_system.py",
+        "line": 284,
+        "func_name": "TestLicenseServerEmulatorEffectiveness.test_server_generates_valid_license",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\plugins\\test_plugin_system.py",
+        "line": 306,
+        "func_name": "TestCloudLicenseInterceptorEffectiveness.test_interceptor_captures_requests",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\plugins\\test_plugin_system.py",
+        "line": 321,
+        "func_name": "TestCloudLicenseInterceptorEffectiveness.test_interceptor_modifies_response",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\plugins\\test_plugin_system.py",
+        "line": 346,
+        "func_name": "TestVMProtectionUnwrapperEffectiveness.test_unwrapper_detects_virtualized_code",
+        "type_comments": ["(pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\plugins\\test_plugin_system.py",
+        "line": 383,
+        "func_name": "TestPluginSystemEffectiveness.test_plugin_discovery_and_loading",
+        "type_comments": ["(pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\plugins\\test_plugin_system.py",
+        "line": 414,
+        "func_name": "TestPluginSystemEffectiveness.test_plugin_execution_returns_results",
+        "type_comments": ["(pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_plugin_caching.py",
+        "line": 42,
+        "func_name": "MockIntellicrackApp.__init__",
+        "type_comments": ["(str) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 2
+    },
+    {
+        "path": "tests\\unit\\ui\\test_plugin_caching.py",
+        "line": 47,
+        "func_name": "MockIntellicrackApp._load_cache_data",
+        "type_comments": [
+            "(pathlib.WindowsPath) -> Dict[str, Union[Dict[str, Union[List, List[Dict[str, Union[int, str]]]]], str]]",
+            "(pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(pathlib.WindowsPath) -> Dict[str, Union[Dict[str, List[Dict[str, str]]], str]]",
+            "(pathlib.WindowsPath) -> Dict[str, Union[Dict[str, Union[List, List[Dict[str, str]]]], str]]"
+        ],
+        "samples": 21
+    },
+    {
+        "path": "tests\\unit\\ui\\test_plugin_caching.py",
+        "line": 69,
+        "func_name": "MockIntellicrackApp._check_file_modifications",
+        "type_comments": [
+            "(str, Dict[str, float]) -> Tuple[bool, Dict[str, float]]",
+            "(str, Dict[str, float]) -> Tuple[bool, Dict]",
+            "(str, Dict) -> Tuple[bool, Dict]"
+        ],
+        "samples": 13
+    },
+    {
+        "path": "tests\\unit\\ui\\test_plugin_caching.py",
+        "line": 98,
+        "func_name": "MockIntellicrackApp._validate_plugin_directory_cache",
+        "type_comments": [
+            "(str, str, Dict[str, Union[Dict[str, List[Dict[str, str]]], str]]) -> bool",
+            "(str, str, Dict[str, Union[Dict[str, Union[List, List[Dict[str, str]]]], str]]) -> bool",
+            "(str, str, Dict[str, Union[Dict[str, Union[List, List[Dict[str, Union[int, str]]]]], str]]) -> bool"
+        ],
+        "samples": 14
+    },
+    {
+        "path": "tests\\unit\\ui\\test_plugin_caching.py",
+        "line": 120,
+        "func_name": "MockIntellicrackApp.load_available_plugins",
+        "type_comments": [
+            "() -> Dict[str, List]",
+            "() -> Dict[str, List[Dict[str, str]]]",
+            "() -> Dict[str, Union[List, List[Dict[str, str]]]]"
+        ],
+        "samples": 21
+    },
+    {
+        "path": "tests\\unit\\ui\\test_plugin_caching.py",
+        "line": 138,
+        "func_name": "is_path_safe",
+        "type_comments": ["(str, str) -> bool"],
+        "samples": 2
+    },
+    {
+        "path": "tests\\unit\\ui\\test_plugin_caching.py",
+        "line": 148,
+        "func_name": "is_cache_valid",
+        "type_comments": [
+            "() -> pyannotate_runtime.collect_types.NoReturnType",
+            "() -> Tuple[bool, Dict[str, Union[Dict[str, Union[List, List[Dict[str, str]]]], str]]]"
+        ],
+        "samples": 21
+    },
+    {
+        "path": "tests\\unit\\ui\\test_plugin_caching.py",
+        "line": 307,
+        "func_name": "create_real_plugin_file",
+        "type_comments": ["(str, str, str) -> str"],
+        "samples": 22
+    },
+    {
+        "path": "tests\\unit\\ui\\test_plugin_caching.py",
+        "line": 343,
+        "func_name": "TestPluginCaching.test_initial_scan_creates_cache",
+        "type_comments": [
+            "(ui.test_plugin_caching.MockIntellicrackApp, str, pathlib.WindowsPath, _pytest.logging.LogCaptureFixture) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_plugin_caching.py",
+        "line": 368,
+        "func_name": "TestPluginCaching.test_second_call_uses_cache",
+        "type_comments": [
+            "(ui.test_plugin_caching.MockIntellicrackApp, str, pathlib.WindowsPath, _pytest.logging.LogCaptureFixture) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_plugin_caching.py",
+        "line": 389,
+        "func_name": "TestPluginCaching.test_cache_invalidation_on_file_modification",
+        "type_comments": [
+            "(ui.test_plugin_caching.MockIntellicrackApp, str, pathlib.WindowsPath, _pytest.logging.LogCaptureFixture) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_plugin_caching.py",
+        "line": 415,
+        "func_name": "TestPluginCaching.test_cache_invalidation_on_file_addition",
+        "type_comments": [
+            "(ui.test_plugin_caching.MockIntellicrackApp, str, pathlib.WindowsPath, _pytest.logging.LogCaptureFixture) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_plugin_caching.py",
+        "line": 440,
+        "func_name": "TestPluginCaching.test_cache_invalidation_on_file_deletion",
+        "type_comments": [
+            "(ui.test_plugin_caching.MockIntellicrackApp, str, pathlib.WindowsPath, _pytest.logging.LogCaptureFixture) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_plugin_caching.py",
+        "line": 466,
+        "func_name": "TestPluginCaching.test_corrupted_cache_graceful_fallback",
+        "type_comments": [
+            "(ui.test_plugin_caching.MockIntellicrackApp, str, pathlib.WindowsPath, _pytest.logging.LogCaptureFixture) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_plugin_caching.py",
+        "line": 489,
+        "func_name": "TestPluginCaching.test_empty_plugin_directories",
+        "type_comments": [
+            "(ui.test_plugin_caching.MockIntellicrackApp, str, pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_plugin_caching.py",
+        "line": 496,
+        "func_name": "TestPluginCaching.test_mixed_valid_and_invalid_files",
+        "type_comments": [
+            "(ui.test_plugin_caching.MockIntellicrackApp, str, pathlib.WindowsPath, _pytest.logging.LogCaptureFixture) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_plugin_caching.py",
+        "line": 513,
+        "func_name": "TestPluginCaching.test_cache_persists_across_instances",
+        "type_comments": [
+            "(str, pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_plugin_caching.py",
+        "line": 530,
+        "func_name": "TestPluginCaching.test_plugin_metadata_accuracy",
+        "type_comments": [
+            "(ui.test_plugin_caching.MockIntellicrackApp, str, pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_plugin_caching.py",
+        "line": 550,
+        "func_name": "TestPluginCaching.test_all_supported_extensions",
+        "type_comments": [
+            "(ui.test_plugin_caching.MockIntellicrackApp, str, pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_plugin_caching.py",
+        "line": 573,
+        "func_name": "TestPluginCaching.test_malicious_cache_path_rejected",
+        "type_comments": [
+            "(ui.test_plugin_caching.MockIntellicrackApp, str, pathlib.WindowsPath, _pytest.logging.LogCaptureFixture) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_plugin_caching.py",
+        "line": 632,
+        "func_name": "TestPluginCaching.test_concurrent_cache_access",
+        "type_comments": [
+            "(str, pathlib.WindowsPath) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_plugin_caching.py",
+        "line": 689,
+        "func_name": "TestPluginCaching.test_cache_invalidation_on_directory_deletion",
+        "type_comments": [
+            "(ui.test_plugin_caching.MockIntellicrackApp, str, pathlib.WindowsPath, _pytest.logging.LogCaptureFixture) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_settings_tab_accent_color.py",
+        "line": 34,
+        "func_name": "TestAccentColorFunctionality.test_replace_default_accent_color_uppercase",
+        "type_comments": [
+            "(PyQt6.QtWidgets.QApplication) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_settings_tab_accent_color.py",
+        "line": 60,
+        "func_name": "TestAccentColorFunctionality.test_replace_default_accent_color_lowercase",
+        "type_comments": [
+            "(PyQt6.QtWidgets.QApplication) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_settings_tab_accent_color.py",
+        "line": 86,
+        "func_name": "TestAccentColorFunctionality.test_replace_mixed_case_accent_colors",
+        "type_comments": [
+            "(PyQt6.QtWidgets.QApplication) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_settings_tab_accent_color.py",
+        "line": 112,
+        "func_name": "TestAccentColorFunctionality.test_replace_custom_accent_color",
+        "type_comments": [
+            "(PyQt6.QtWidgets.QApplication) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_settings_tab_accent_color.py",
+        "line": 135,
+        "func_name": "TestAccentColorFunctionality.test_preserve_non_accent_colors",
+        "type_comments": [
+            "(PyQt6.QtWidgets.QApplication) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_settings_tab_accent_color.py",
+        "line": 162,
+        "func_name": "TestAccentColorFunctionality.test_multiple_accent_color_changes",
+        "type_comments": [
+            "(PyQt6.QtWidgets.QApplication) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_settings_tab_accent_color.py",
+        "line": 190,
+        "func_name": "TestAccentColorFunctionality.test_case_insensitive_regex_replacement",
+        "type_comments": [
+            "(PyQt6.QtWidgets.QApplication) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_settings_tab_accent_color.py",
+        "line": 214,
+        "func_name": "TestAccentColorFunctionality.test_empty_stylesheet_accent_color_application",
+        "type_comments": [
+            "(PyQt6.QtWidgets.QApplication) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_settings_tab_accent_color.py",
+        "line": 227,
+        "func_name": "TestAccentColorFunctionality.test_complex_stylesheet_with_multiple_accent_occurrences",
+        "type_comments": [
+            "(PyQt6.QtWidgets.QApplication) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_settings_tab_accent_color.py",
+        "line": 256,
+        "func_name": "TestAccentColorFunctionality.test_special_characters_in_color_values",
+        "type_comments": [
+            "(PyQt6.QtWidgets.QApplication) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_settings_tab_animations.py",
+        "line": 33,
+        "func_name": "TestAnimationFunctionality.test_enable_animations_injects_transition_css",
+        "type_comments": [
+            "(PyQt6.QtWidgets.QApplication) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_settings_tab_animations.py",
+        "line": 59,
+        "func_name": "TestAnimationFunctionality.test_disable_animations_injects_zero_duration_css",
+        "type_comments": [
+            "(PyQt6.QtWidgets.QApplication) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_settings_tab_animations.py",
+        "line": 81,
+        "func_name": "TestAnimationFunctionality.test_marker_detection_prevents_duplicate_injection",
+        "type_comments": [
+            "(PyQt6.QtWidgets.QApplication) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_settings_tab_animations.py",
+        "line": 98,
+        "func_name": "TestAnimationFunctionality.test_remove_disable_marker_when_enabling",
+        "type_comments": [
+            "(PyQt6.QtWidgets.QApplication) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_settings_tab_animations.py",
+        "line": 124,
+        "func_name": "TestAnimationFunctionality.test_remove_enable_marker_when_disabling",
+        "type_comments": [
+            "(PyQt6.QtWidgets.QApplication) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_settings_tab_animations.py",
+        "line": 151,
+        "func_name": "TestAnimationFunctionality.test_toggle_animations_multiple_times",
+        "type_comments": [
+            "(PyQt6.QtWidgets.QApplication) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_settings_tab_animations.py",
+        "line": 187,
+        "func_name": "TestAnimationFunctionality.test_stylesheet_modification_preserves_existing_styles",
+        "type_comments": [
+            "(PyQt6.QtWidgets.QApplication) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_settings_tab_animations.py",
+        "line": 204,
+        "func_name": "TestAnimationFunctionality.test_empty_stylesheet_animation_injection",
+        "type_comments": [
+            "(PyQt6.QtWidgets.QApplication) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_settings_tab_animations.py",
+        "line": 218,
+        "func_name": "TestAnimationFunctionality.test_complex_stylesheet_marker_removal",
+        "type_comments": [
+            "(PyQt6.QtWidgets.QApplication) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_settings_tab_tooltips.py",
+        "line": 57,
+        "func_name": "TestTooltipFunctionality.test_disable_tooltips_stores_and_clears",
+        "type_comments": [
+            "(PyQt6.QtWidgets.QApplication, List[Union[PyQt6.QtWidgets.QLabel, PyQt6.QtWidgets.QPushButton]]) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_settings_tab_tooltips.py",
+        "line": 74,
+        "func_name": "TestTooltipFunctionality.test_enable_tooltips_restores_originals",
+        "type_comments": [
+            "(PyQt6.QtWidgets.QApplication, List[Union[PyQt6.QtWidgets.QLabel, PyQt6.QtWidgets.QPushButton]]) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_settings_tab_tooltips.py",
+        "line": 92,
+        "func_name": "TestTooltipFunctionality.test_null_widget_handling",
+        "type_comments": [
+            "(PyQt6.QtWidgets.QApplication) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_settings_tab_tooltips.py",
+        "line": 108,
+        "func_name": "TestTooltipFunctionality.test_weak_reference_cleanup",
+        "type_comments": [
+            "(PyQt6.QtWidgets.QApplication) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_settings_tab_tooltips.py",
+        "line": 129,
+        "func_name": "TestTooltipFunctionality.test_tooltip_persistence_across_enable_disable_cycles",
+        "type_comments": [
+            "(PyQt6.QtWidgets.QApplication, List[Union[PyQt6.QtWidgets.QLabel, PyQt6.QtWidgets.QPushButton]]) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_settings_tab_tooltips.py",
+        "line": 147,
+        "func_name": "TestTooltipFunctionality.test_tooltip_duration_settings",
+        "type_comments": [
+            "(PyQt6.QtWidgets.QApplication, List[Union[PyQt6.QtWidgets.QLabel, PyQt6.QtWidgets.QPushButton]]) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_settings_tab_tooltips.py",
+        "line": 157,
+        "func_name": "TestTooltipFunctionality.test_empty_tooltip_widgets_not_stored",
+        "type_comments": [
+            "(PyQt6.QtWidgets.QApplication, List[Union[PyQt6.QtWidgets.QLabel, PyQt6.QtWidgets.QPushButton]]) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\ui\\test_settings_tab_tooltips.py",
+        "line": 169,
+        "func_name": "TestTooltipFunctionality.test_complex_widget_hierarchy",
+        "type_comments": [
+            "(PyQt6.QtWidgets.QApplication) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_logger.py",
+        "line": 34,
+        "func_name": "TestExploitationLogger.setUp",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 13
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_logger.py",
+        "line": 45,
+        "func_name": "TestExploitationLogger.tearDown",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 13
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_logger.py",
+        "line": 50,
+        "func_name": "TestExploitationLogger.test_basic_message_logging",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_logger.py",
+        "line": 66,
+        "func_name": "TestExploitationLogger.test_security_research_log_levels",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_logger.py",
+        "line": 86,
+        "func_name": "TestExploitationLogger.test_exploitation_context_logging",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_logger.py",
+        "line": 127,
+        "func_name": "TestExploitationLogger.test_multiple_output_destinations",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_logger.py",
+        "line": 141,
+        "func_name": "TestExploitationLogger.test_timestamp_functionality",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_logger.py",
+        "line": 160,
+        "func_name": "TestExploitationLogger.test_structured_output_formats",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_logger.py",
+        "line": 184,
+        "func_name": "TestExploitationLogger.test_high_frequency_logging_performance",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_logger.py",
+        "line": 220,
+        "func_name": "TestExploitationLogger.test_concurrent_logging_thread_safety",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_logger.py",
+        "line": 230,
+        "func_name": "worker_thread",
+        "type_comments": ["(int) -> pyannotate_runtime.collect_types.UnknownType"],
+        "samples": 4
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_logger.py",
+        "line": 263,
+        "func_name": "TestExploitationLogger.test_security_data_sanitization",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_logger.py",
+        "line": 301,
+        "func_name": "TestExploitationLogger.test_binary_analysis_workflow_integration",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_logger.py",
+        "line": 366,
+        "func_name": "TestExploitationLogger.test_error_handling_and_resilience",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_logger.py",
+        "line": 413,
+        "func_name": "TestExploitationLogger.test_configuration_and_customization",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_logger.py",
+        "line": 445,
+        "func_name": "TestExploitationLogger.test_real_world_exploitation_scenarios",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_logger.py",
+        "line": 548,
+        "func_name": "TestExploitationLoggerIntegration.test_intellicrack_framework_integration",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_logger.py",
+        "line": 581,
+        "func_name": "TestExploitationLoggerIntegration.test_external_tool_integration",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_payload_result_handler.py",
+        "line": 40,
+        "func_name": "TestPayloadResultHandler.output_capture_func",
+        "type_comments": ["(str) -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 55
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_payload_result_handler.py",
+        "line": 44,
+        "func_name": "TestPayloadResultHandler.save_callback_capture",
+        "type_comments": [
+            "(bytes, Dict[str, Union[float, int]]) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(bytes, Dict[str, Union[List[bytes], float, int]]) -> pyannotate_runtime.collect_types.NoReturnType",
+            "(bytes, Dict[str, Union[List, float, int]]) -> pyannotate_runtime.collect_types.NoReturnType"
+        ],
+        "samples": 4
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_payload_result_handler.py",
+        "line": 48,
+        "func_name": "TestPayloadResultHandler.test_successful_payload_processing_minimal_metadata",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_payload_result_handler.py",
+        "line": 72,
+        "func_name": "TestPayloadResultHandler.test_successful_payload_processing_full_metadata",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_payload_result_handler.py",
+        "line": 107,
+        "func_name": "TestPayloadResultHandler.test_successful_payload_with_save_callback",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_payload_result_handler.py",
+        "line": 132,
+        "func_name": "TestPayloadResultHandler.test_failed_payload_with_error_message",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_payload_result_handler.py",
+        "line": 147,
+        "func_name": "TestPayloadResultHandler.test_failed_payload_without_error_message",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_payload_result_handler.py",
+        "line": 161,
+        "func_name": "TestPayloadResultHandler.test_save_callback_not_called_on_failure",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_payload_result_handler.py",
+        "line": 175,
+        "func_name": "TestPayloadResultHandler.test_none_save_callback_handling",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_payload_result_handler.py",
+        "line": 195,
+        "func_name": "TestPayloadResultHandler.test_partial_optional_metadata_fields",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_payload_result_handler.py",
+        "line": 222,
+        "func_name": "TestPayloadResultHandler.test_zero_values_in_metadata",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_payload_result_handler.py",
+        "line": 250,
+        "func_name": "TestPayloadResultHandler.test_large_payload_handling",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_payload_result_handler.py",
+        "line": 276,
+        "func_name": "TestPayloadResultHandler.test_high_entropy_payload",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_payload_result_handler.py",
+        "line": 301,
+        "func_name": "TestPayloadResultHandler.test_edge_case_empty_bad_chars_list",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_payload_result_handler.py",
+        "line": 322,
+        "func_name": "TestPayloadResultHandler.test_metadata_formatting_precision",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_payload_result_handler.py",
+        "line": 346,
+        "func_name": "TestPayloadResultHandler.test_multiple_calls_state_independence",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_payload_result_handler.py",
+        "line": 387,
+        "func_name": "TestPayloadResultHandler.test_real_world_msfvenom_like_result",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_payload_result_handler.py",
+        "line": 420,
+        "func_name": "TestPayloadResultHandler.test_exploitation_framework_integration",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_runner.py",
+        "line": 16,
+        "func_name": "test_imports",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_runner.py",
+        "line": 30,
+        "func_name": "test_create_analysis_button",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\exploitation\\test_runner.py",
+        "line": 44,
+        "func_name": "test_exploit_handlers",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\test_font_loading.py",
+        "line": 27,
+        "func_name": "test_font_loading",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\test_type_safety.py",
+        "line": 17,
+        "func_name": "test_validate_type_success",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\test_type_safety.py",
+        "line": 25,
+        "func_name": "test_validate_type_failure",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\test_type_safety.py",
+        "line": 34,
+        "func_name": "test_get_typed_item_success",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\test_type_safety.py",
+        "line": 43,
+        "func_name": "test_get_typed_item_default",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\test_type_safety.py",
+        "line": 51,
+        "func_name": "test_get_typed_item_key_error",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\test_type_safety.py",
+        "line": 59,
+        "func_name": "test_get_typed_item_type_error",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\test_type_safety.py",
+        "line": 70,
+        "func_name": "TestGetKwargTyped.test_returns_value_when_correct_type",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\test_type_safety.py",
+        "line": 77,
+        "func_name": "TestGetKwargTyped.test_returns_default_when_key_missing",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\test_type_safety.py",
+        "line": 84,
+        "func_name": "TestGetKwargTyped.test_raises_typeerror_when_wrong_type",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\test_type_safety.py",
+        "line": 94,
+        "func_name": "TestGetKwargTyped.test_returns_default_when_value_is_default",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\test_type_safety.py",
+        "line": 103,
+        "func_name": "TestEnsureDict.test_returns_dict_unchanged",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\test_type_safety.py",
+        "line": 110,
+        "func_name": "TestEnsureDict.test_works_with_empty_dict",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\test_type_safety.py",
+        "line": 115,
+        "func_name": "TestEnsureDict.test_raises_typeerror_for_non_dict",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\test_type_safety.py",
+        "line": 126,
+        "func_name": "TestEnsureDict.test_custom_name_in_error_message",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\test_type_safety.py",
+        "line": 135,
+        "func_name": "TestEnsureList.test_returns_list_unchanged",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\test_type_safety.py",
+        "line": 142,
+        "func_name": "TestEnsureList.test_works_with_empty_list",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\test_type_safety.py",
+        "line": 147,
+        "func_name": "TestEnsureList.test_raises_typeerror_for_non_list",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    },
+    {
+        "path": "tests\\unit\\utils\\test_type_safety.py",
+        "line": 158,
+        "func_name": "TestEnsureList.test_custom_name_in_error_message",
+        "type_comments": ["() -> pyannotate_runtime.collect_types.NoReturnType"],
+        "samples": 1
+    }
+]

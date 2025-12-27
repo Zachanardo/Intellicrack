@@ -64,8 +64,8 @@ class TerminalManager:
         if getattr(self, "_initialized", False):
             return
 
-        self._terminal_widget: "TerminalSessionWidget | None" = None
-        self._main_app: "IntellicrackApp | None" = None
+        self._terminal_widget: TerminalSessionWidget | None = None
+        self._main_app: IntellicrackApp | None = None
         self._sessions: dict[str, Any] = {}
         self._logger: logging.Logger = logging.getLogger(__name__)
 

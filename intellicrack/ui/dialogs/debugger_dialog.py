@@ -23,7 +23,6 @@ import os
 import queue
 from typing import Any, cast
 
-from intellicrack.utils.type_safety import get_typed_item, validate_type
 from intellicrack.handlers.pyqt6_handler import (
     QAction,
     QCloseEvent,
@@ -60,6 +59,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QWidget,
     pyqtSignal,
 )
+from intellicrack.utils.type_safety import get_typed_item, validate_type
 
 from ...tools.plugin_debugger import DebuggerState, DebuggerThread, PluginDebugger
 

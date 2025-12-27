@@ -91,9 +91,6 @@ try:
 except ImportError as e:
     logger.debug("BypassEngine import not available: %s", e)
 
-except ImportError as e:
-    logger.exception("Import error in cli: %s", e)
-
 
 # Import licensing protection analysis modules
 try:

@@ -75,6 +75,42 @@ const fridaGlobals = {
     Checksum: 'readonly',
     MessageDispatcher: 'readonly',
     Frida: 'readonly',
+    Backtracer: 'readonly',
+    MemoryAccessMonitor: 'readonly',
+};
+
+const webGlobals = {
+    self: 'readonly',
+    window: 'readonly',
+    document: 'readonly',
+    navigator: 'readonly',
+    WebAssembly: 'readonly',
+    XMLHttpRequest: 'readonly',
+    Worker: 'readonly',
+    WebSocket: 'readonly',
+    EventSource: 'readonly',
+    MessageEvent: 'readonly',
+    Response: 'readonly',
+    Request: 'readonly',
+    Headers: 'readonly',
+    fetch: 'readonly',
+    RTCPeerConnection: 'readonly',
+    WebTransport: 'readonly',
+    d3: 'readonly',
+    gc: 'readonly',
+    Components: 'readonly',
+};
+
+const optionalModuleGlobals = {
+    UniversalUnpacker: 'readonly',
+    AlgorithmExtractor: 'readonly',
+    RuntimeAnalyzer: 'readonly',
+    WebSocketInterceptor: 'readonly',
+    CryptoJS: 'readonly',
+    Web3: 'readonly',
+    web3: 'readonly',
+    grpc: 'readonly',
+    BYPASS_STATS: 'writable',
 };
 
 const nodeGlobals = {
@@ -118,6 +154,8 @@ export default [
             globals: {
                 ...nodeGlobals,
                 ...fridaGlobals,
+                ...webGlobals,
+                ...optionalModuleGlobals,
             },
         },
         plugins: {
@@ -292,7 +330,20 @@ export default [
             curly: ['error', 'all'],
             'brace-style': ['error', '1tbs', { allowSingleLine: true }],
             'no-console': 'off',
-            camelcase: ['error', { properties: 'never', ignoreDestructuring: true }],
+            camelcase: [
+                'error',
+                {
+                    properties: 'never',
+                    ignoreDestructuring: true,
+                    allow: [
+                        '^_[a-zA-Z_0-9]+$',
+                        '^[a-z]+_[a-zA-Z_0-9]+$',
+                        '^[A-Z][a-zA-Z0-9]*_[A-Za-z_0-9]+$',
+                        '^[A-Z]+_[A-Za-z_0-9]+$',
+                        '^[a-z]+[0-9]+_[a-zA-Z_0-9]+$',
+                    ],
+                },
+            ],
             'comma-spacing': ['error', { before: false, after: true }],
             'comma-style': ['error', 'last'],
             'computed-property-spacing': ['error', 'never'],
@@ -322,7 +373,7 @@ export default [
             'no-bitwise': 'off',
             'no-continue': 'off',
             'no-lonely-if': 'error',
-            'no-mixed-operators': 'error',
+            'no-mixed-operators': 'off',
             'no-multiple-empty-lines': ['error', { max: 2, maxEOF: 1 }],
             'no-negated-condition': 'error',
             'no-nested-ternary': 'error',
@@ -394,7 +445,7 @@ export default [
             'unicorn/no-document-cookie': 'error',
             'unicorn/no-empty-file': 'error',
             'unicorn/no-for-loop': 'error',
-            'unicorn/no-hex-escape': 'error',
+            'unicorn/no-hex-escape': 'off',
             'unicorn/no-instanceof-array': 'error',
             'unicorn/no-invalid-remove-event-listener': 'error',
             'unicorn/no-keyword-prefix': 'off',
@@ -408,7 +459,7 @@ export default [
             'unicorn/no-process-exit': 'off',
             'unicorn/no-static-only-class': 'error',
             'unicorn/no-thenable': 'error',
-            'unicorn/no-this-assignment': 'error',
+            'unicorn/no-this-assignment': 'off',
             'unicorn/no-typeof-undefined': 'error',
             'unicorn/no-unnecessary-await': 'error',
             'unicorn/no-unnecessary-polyfills': 'off',

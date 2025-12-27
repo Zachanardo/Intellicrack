@@ -310,7 +310,11 @@ class ArxanDetector:
 
                         for arxan_section in self.ARXAN_SECTION_NAMES:
                             if arxan_section in section_name.lower():
-                                section_str = section_name_raw if isinstance(section_name_raw, str) else section_name_raw.decode("utf-8", errors="ignore")
+                                section_str = (
+                                    section_name_raw
+                                    if isinstance(section_name_raw, str)
+                                    else section_name_raw.decode("utf-8", errors="ignore")
+                                )
                                 sections.append(section_str)
                                 found_count += 1
                                 self.logger.debug("Found Arxan section: %s", section_str)
@@ -350,7 +354,15 @@ class ArxanDetector:
                     if hasattr(binary, "imported_functions"):
                         for func in binary.imported_functions:
                             func_name_raw = func.name
-                            func_name = func_name_raw if isinstance(func_name_raw, str) else (func_name_raw.decode("utf-8", errors="ignore") if isinstance(func_name_raw, bytes) else str(func_name_raw))
+                            func_name = (
+                                func_name_raw
+                                if isinstance(func_name_raw, str)
+                                else (
+                                    func_name_raw.decode("utf-8", errors="ignore")
+                                    if isinstance(func_name_raw, bytes)
+                                    else str(func_name_raw)
+                                )
+                            )
 
                             if func_name in self.ARXAN_API_PATTERNS:
                                 if func_name not in import_hints:

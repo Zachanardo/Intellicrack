@@ -773,11 +773,12 @@ class ICPReportGenerator:
             Human readable file size string with units (B, KB, MB, GB, TB).
 
         """
+        size_f: float = float(size)
         for unit in ["B", "KB", "MB", "GB"]:
-            if size < 1024.0:
-                return f"{size:.2f} {unit}"
-            size /= 1024.0
-        return f"{size:.2f} TB"
+            if size_f < 1024.0:
+                return f"{size_f:.2f} {unit}"
+            size_f /= 1024.0
+        return f"{size_f:.2f} TB"
 
     def _format_details(self, details: object) -> str:
         """Format details object for display in reports.

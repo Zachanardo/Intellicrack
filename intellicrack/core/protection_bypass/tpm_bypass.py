@@ -23,7 +23,9 @@ if TYPE_CHECKING:
     from types import ModuleType
 
 
-def _import_crypto() -> tuple[bool, type[Any] | None, type[Any] | None, type[Any] | None, Any | None, type[Any] | None, Any | None, Any | None, Any | None, Any | None]:
+def _import_crypto() -> tuple[
+    bool, type[Any] | None, type[Any] | None, type[Any] | None, Any | None, type[Any] | None, Any | None, Any | None, Any | None, Any | None
+]:
     """Import cryptography modules safely."""
     try:
         from cryptography.hazmat.primitives import hashes

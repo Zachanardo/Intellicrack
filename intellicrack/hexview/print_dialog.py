@@ -87,13 +87,9 @@ class PrintOptionsDialog(QDialog):
         self.selection_check.toggled.connect(self.on_range_changed)
 
         # Check if there's a selection
-        if (
-            self.hex_viewer
-            and hasattr(self.hex_viewer, "selection_start")
-            and hasattr(self.hex_viewer, "selection_end")
-        ):
-            selection_start: Any = getattr(self.hex_viewer, "selection_start")
-            selection_end: Any = getattr(self.hex_viewer, "selection_end")
+        if self.hex_viewer and hasattr(self.hex_viewer, "selection_start") and hasattr(self.hex_viewer, "selection_end"):
+            selection_start: Any = self.hex_viewer.selection_start
+            selection_end: Any = self.hex_viewer.selection_end
             if selection_start != -1 and selection_end != -1:
                 self.selection_check.setEnabled(True)
                 selection_size = selection_end - selection_start
@@ -297,15 +293,15 @@ class PrintOptionsDialog(QDialog):
         if self.selection_check.isChecked() and self.selection_check.isEnabled():
             # Print selection
             if hasattr(self.hex_viewer, "selection_start") and hasattr(self.hex_viewer, "selection_end"):
-                start: Any = getattr(self.hex_viewer, "selection_start")
-                end: Any = getattr(self.hex_viewer, "selection_end")
+                start: Any = self.hex_viewer.selection_start
+                end: Any = self.hex_viewer.selection_end
                 if start != -1 and end != -1:
-                    handler: Any = getattr(self.hex_viewer, "file_handler")
+                    handler: Any = self.hex_viewer.file_handler
                     data: bytes = handler.read_data(start, end - start)
                     return (data, start)
         else:
             # Print all or page range
-            handler_all: Any = getattr(self.hex_viewer, "file_handler")
+            handler_all: Any = self.hex_viewer.file_handler
             file_size: int = handler_all.file_size
             data_all: bytes = handler_all.read_data(0, file_size)
             return (data_all, 0)
@@ -463,11 +459,11 @@ class PrintOptionsDialog(QDialog):
         # Get filename
         filename = "Untitled"
         if self.hex_viewer and hasattr(self.hex_viewer, "file_handler"):
-            file_handler: Any = getattr(self.hex_viewer, "file_handler")
+            file_handler: Any = self.hex_viewer.file_handler
             if hasattr(file_handler, "file_path"):
                 import os
 
-                file_path: str = getattr(file_handler, "file_path")
+                file_path: str = file_handler.file_path
                 filename = os.path.basename(file_path)
 
         text = text.replace("%filename%", filename)

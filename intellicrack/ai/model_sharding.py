@@ -887,7 +887,7 @@ class ModelShardingManager:
             return result if result is not None else sample_input
         if hasattr(sample_input, "to") and self.device_count > 0:
             gpu_type_str = str(self.gpu_type)
-            device_type = gpu_type_str.split("_")[0] if "_" in gpu_type_str else "cuda"
+            device_type = gpu_type_str.split("_", maxsplit=1)[0] if "_" in gpu_type_str else "cuda"
             return sample_input.to(device_type)
         return sample_input
 

@@ -75,9 +75,9 @@ try:
     DFS = DFS_class
     ANGR_AVAILABLE = True
 except ImportError:
-    angr = cast(type[Any], None)
-    claripy = cast(type[Any], None)
-    DFS = cast(type[Any], None)
+    angr = cast("type[Any]", None)
+    claripy = cast("type[Any]", None)
+    DFS = cast("type[Any]", None)
     ANGR_AVAILABLE = False
 
 

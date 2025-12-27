@@ -511,22 +511,26 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             # Create capture object
             # Use either custom filter or the one from config
             config_filter = self.config.get("filter")
-            display_filter = capture_filter or (config_filter if isinstance(config_filter, str) else None) or (
-                # FlexLM ports
-                "tcp.port == 27000-27009 or tcp.port == 2080 or tcp.port == 8224 or "
-                # HASP/Sentinel ports
-                "tcp.port == 1947 or tcp.port == 6001 or "
-                # CodeMeter ports
-                "tcp.port == 22350 or tcp.port == 22351 or "
-                # Common web license ports
-                "tcp.port == 80 or tcp.port == 443 or tcp.port == 8080 or "
-                # Known application license ports
-                "tcp.port == 1234 or tcp.port == 5093 or tcp.port == 49684 or "
-                # DNS lookups for license validation
-                'dns.qry.name contains "license" or dns.qry.name contains "activation" or '
-                # HTTP license-related requests
-                '(http and (http.request.uri contains "license" or http.request.uri contains "activation" or '
-                'http.request.uri contains "validate" or http.request.uri contains "auth"))'
+            display_filter = (
+                capture_filter
+                or (config_filter if isinstance(config_filter, str) else None)
+                or (
+                    # FlexLM ports
+                    "tcp.port == 27000-27009 or tcp.port == 2080 or tcp.port == 8224 or "
+                    # HASP/Sentinel ports
+                    "tcp.port == 1947 or tcp.port == 6001 or "
+                    # CodeMeter ports
+                    "tcp.port == 22350 or tcp.port == 22351 or "
+                    # Common web license ports
+                    "tcp.port == 80 or tcp.port == 443 or tcp.port == 8080 or "
+                    # Known application license ports
+                    "tcp.port == 1234 or tcp.port == 5093 or tcp.port == 49684 or "
+                    # DNS lookups for license validation
+                    'dns.qry.name contains "license" or dns.qry.name contains "activation" or '
+                    # HTTP license-related requests
+                    '(http and (http.request.uri contains "license" or http.request.uri contains "activation" or '
+                    'http.request.uri contains "validate" or http.request.uri contains "auth"))'
+                )
             )
 
             capture_options["display_filter"] = display_filter
@@ -556,7 +560,9 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
 
             # Start capturing with appropriate method based on parameters
             max_packets_config = self.config.get("max_packets", 10000)
-            max_packets: int | float = packet_count if packet_count is not None else (max_packets_config if isinstance(max_packets_config, int) else float("inf"))
+            max_packets: int | float = (
+                packet_count if packet_count is not None else (max_packets_config if isinstance(max_packets_config, int) else float("inf"))
+            )
             capture_start_time = time.time()
 
             # Process packets
@@ -1226,9 +1232,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
         if not self.packets:
             return 0.0
 
-        if timestamps := [
-            float(pkt["timestamp"]) for pkt in self.packets if "timestamp" in pkt
-        ]:
+        if timestamps := [float(pkt["timestamp"]) for pkt in self.packets if "timestamp" in pkt]:
             return float(max(timestamps) - min(timestamps))
         return 0.0
 

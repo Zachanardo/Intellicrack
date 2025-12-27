@@ -28,12 +28,17 @@ import threading
 import time
 from collections.abc import Callable
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from intellicrack.handlers.numpy_handler import HAS_NUMPY
 from intellicrack.handlers.pyqt6_handler import HAS_PYQT, QFileDialog
 from intellicrack.utils.logger import logger
 
 from ..logger import setup_logger
+
+
+if TYPE_CHECKING:
+    from PyQt6.QtGui import QGuiApplication
 
 
 """
@@ -1211,15 +1216,18 @@ def center_on_screen(widget: object) -> None:
 
     from typing import cast
 
-    from PyQt6.QtGui import QGuiApplication, QScreen
-    from PyQt6.QtWidgets import QApplication as QApp, QWidget
+    from PyQt6.QtGui import QScreen
+    from PyQt6.QtWidgets import (
+        QApplication as QApp,
+        QWidget,
+    )
 
     if not isinstance(widget, QWidget):
         return
 
     if app := QApp.instance():
         if app is not None:
-            gui_app = cast(QGuiApplication, app)
+            gui_app = cast("QGuiApplication", app)
             if screens := gui_app.screens():
                 primary_screen = screens[0]
                 screen_rect = primary_screen.geometry()

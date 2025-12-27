@@ -36,6 +36,7 @@ from queue import Empty, PriorityQueue, Queue
 from typing import Any, cast
 
 from intellicrack.utils.type_safety import get_typed_item, validate_type
+
 from ..utils.logger import get_logger
 from .learning_engine import get_learning_engine
 from .llm_backends import LLMManager

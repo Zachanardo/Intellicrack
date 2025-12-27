@@ -52,13 +52,15 @@ OPENCL_VERSION: str | None = None
 
 try:
     import pyopencl as cl_module
-    from pyopencl import Buffer as OpenCLBuffer
-    from pyopencl import Context as OpenCLContext
-    from pyopencl import Device as OpenCLDevice
-    from pyopencl import Platform as OpenCLPlatform
-    from pyopencl import Program as OpenCLProgram
-    from pyopencl import create_some_context as opencl_create_some_context
-    from pyopencl import get_platforms as opencl_get_platforms
+    from pyopencl import (
+        Buffer as OpenCLBuffer,
+        Context as OpenCLContext,
+        Device as OpenCLDevice,
+        Platform as OpenCLPlatform,
+        Program as OpenCLProgram,
+        create_some_context as opencl_create_some_context,
+        get_platforms as opencl_get_platforms,
+    )
 
     try:
         from pyopencl import CommandQueue as OpenCLQueue
@@ -77,9 +79,7 @@ try:
     Queue: type[Any] = OpenCLQueue
     Platform: type[Any] = OpenCLPlatform
 
-    def create_some_context(
-        interactive: bool | None = None, answers: list[str] | None = None
-    ) -> Any:
+    def create_some_context(interactive: bool | None = None, answers: list[str] | None = None) -> Any:
         """Create OpenCL context with optional interactivity control."""
         return opencl_create_some_context(interactive=interactive, answers=answers)
 
@@ -101,9 +101,7 @@ except ImportError as e:
     Queue = FallbackQueue
     Platform = FallbackPlatform
 
-    def create_some_context(
-        interactive: bool | None = None, answers: list[str] | None = None
-    ) -> Any:
+    def create_some_context(interactive: bool | None = None, answers: list[str] | None = None) -> Any:
         """Fallback context creation."""
         return FallbackContext()
 

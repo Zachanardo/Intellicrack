@@ -43,6 +43,7 @@ from intellicrack.handlers.pyqt6_handler import (
     pyqtSignal,
 )
 
+
 if hasattr(QAbstractItemView, "SelectionBehavior"):
     SelectRows = QAbstractItemView.SelectionBehavior.SelectRows
     NoEditTriggers = QAbstractItemView.EditTrigger.NoEditTriggers

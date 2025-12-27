@@ -20,13 +20,9 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from intellicrack.utils.analysis import analysis_exporter
-    from intellicrack.utils.analysis import binary_analysis
-    from intellicrack.utils.analysis import entropy_utils
-    from intellicrack.utils.analysis import pattern_search
-
 # Import analysis utilities
+from intellicrack.utils.analysis import analysis_exporter, binary_analysis, entropy_utils, pattern_search
+
 from .analysis_exporter import AnalysisExporter
 from .binary_analysis import (
     analyze_binary,

@@ -35,6 +35,7 @@ import keystone
 from intellicrack.handlers.numpy_handler import numpy as np
 from intellicrack.utils.logger import logger
 
+
 try:
     import unicorn
 
@@ -731,7 +732,7 @@ class VMEmulator:
         """Execute register operations."""
         if "MOV" in instruction.mnemonic:
             if len(self.context.stack) >= 2:
-                dest = self.context.stack.pop()
+                self.context.stack.pop()
                 src = self.context.stack.pop()
                 # Destination should be an integer in stack-based VM
                 # This represents the value, not a register name

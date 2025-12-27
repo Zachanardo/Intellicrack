@@ -24,10 +24,13 @@ This module consolidates PE parsing patterns to reduce code duplication.
 import io
 import logging
 import struct
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from PIL import Image
-from PIL.ImageFile import ImageFile
+
+
+if TYPE_CHECKING:
+    from PIL.ImageFile import ImageFile
 
 
 logger = logging.getLogger(__name__)

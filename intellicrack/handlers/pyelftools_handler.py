@@ -1418,22 +1418,22 @@ except ImportError as e:
     # DWARF constants
     DW_TAG_compile_unit = 0x11
 
-    ELFFile = cast(type[Any], FallbackELFFile)  # type: ignore[misc]
-    Section = cast(type[Any], FallbackSection)  # type: ignore[misc]
-    StringTableSection = cast(type[Any], FallbackStringTableSection)  # type: ignore[misc]
-    SymbolTableSection = cast(type[Any], FallbackSymbolTableSection)  # type: ignore[misc]
-    Symbol = cast(type[Any], FallbackSymbol)  # type: ignore[misc]
-    RelocationSection = cast(type[Any], FallbackRelocationSection)  # type: ignore[misc]
-    Relocation = cast(type[Any], FallbackRelocation)  # type: ignore[misc]
-    DynamicSection = cast(type[Any], FallbackDynamicSection)  # type: ignore[misc]
-    Dynamic = cast(type[Any], FallbackDynamic)  # type: ignore[misc]
-    NoteSection = cast(type[Any], FallbackNoteSection)  # type: ignore[misc]
-    Segment = cast(type[Any], FallbackSegment)  # type: ignore[misc]
-    InterpSegment = cast(type[Any], FallbackInterpSegment)  # type: ignore[misc]
-    NoteSegment = cast(type[Any], FallbackNoteSegment)  # type: ignore[misc]
-    DynamicSegment = cast(type[Any], FallbackSegment)  # type: ignore[misc]
-    DWARFInfo = cast(type[Any], FallbackDWARFInfo)  # type: ignore[misc]
-    DIE = cast(type[Any], FallbackDIE)  # type: ignore[misc]
+    ELFFile = cast("type[Any]", FallbackELFFile)  # type: ignore[misc]
+    Section = cast("type[Any]", FallbackSection)  # type: ignore[misc]
+    StringTableSection = cast("type[Any]", FallbackStringTableSection)  # type: ignore[misc]
+    SymbolTableSection = cast("type[Any]", FallbackSymbolTableSection)  # type: ignore[misc]
+    Symbol = cast("type[Any]", FallbackSymbol)  # type: ignore[misc]
+    RelocationSection = cast("type[Any]", FallbackRelocationSection)  # type: ignore[misc]
+    Relocation = cast("type[Any]", FallbackRelocation)  # type: ignore[misc]
+    DynamicSection = cast("type[Any]", FallbackDynamicSection)  # type: ignore[misc]
+    Dynamic = cast("type[Any]", FallbackDynamic)  # type: ignore[misc]
+    NoteSection = cast("type[Any]", FallbackNoteSection)  # type: ignore[misc]
+    Segment = cast("type[Any]", FallbackSegment)  # type: ignore[misc]
+    InterpSegment = cast("type[Any]", FallbackInterpSegment)  # type: ignore[misc]
+    NoteSegment = cast("type[Any]", FallbackNoteSegment)  # type: ignore[misc]
+    DynamicSegment = cast("type[Any]", FallbackSegment)  # type: ignore[misc]
+    DWARFInfo = cast("type[Any]", FallbackDWARFInfo)  # type: ignore[misc]
+    DIE = cast("type[Any]", FallbackDIE)  # type: ignore[misc]
 
     # Create module references for compatibility
     class FallbackElftools:

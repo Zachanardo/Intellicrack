@@ -28,8 +28,8 @@ from collections.abc import Callable, Generator, Iterable, Mapping, MutableMappi
 from http.cookiejar import CookieJar
 from typing import Any, cast
 
-from intellicrack.utils.type_safety import get_typed_item, validate_type
 from intellicrack.utils.logger import logger
+from intellicrack.utils.type_safety import get_typed_item, validate_type
 
 
 """

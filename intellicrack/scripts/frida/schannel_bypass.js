@@ -1,9 +1,9 @@
-const ISC_REQ_MANUAL_CRED_VALIDATION = 0x00080000;
-const ISC_REQ_USE_SUPPLIED_CREDS = 0x00000080;
+const ISC_REQ_MANUAL_CRED_VALIDATION = 0x00_08_00_00;
+const ISC_REQ_USE_SUPPLIED_CREDS = 0x00_00_00_80;
 const SECPKG_ATTR_REMOTE_CERT_CONTEXT = 0x53;
 const _SECPKG_ATTR_STREAM_SIZES = 0x04;
-const _SECPKG_ATTR_CONNECTION_INFO = 0x5a;
-const SEC_E_OK = 0x00000000;
+const _SECPKG_ATTR_CONNECTION_INFO = 0x5A;
+const SEC_E_OK = 0x00_00_00_00;
 
 const sessions = [];
 const certificates = [];
@@ -13,8 +13,8 @@ const MAX_LOG = 1000;
 function log(message, level = 'info') {
     const entry = {
         timestamp: new Date().toISOString(),
-        level: level,
-        message: message,
+        level,
+        message,
     };
     send({ type: 'log', data: entry });
     activity.push(entry);
@@ -28,18 +28,16 @@ function logError(message) {
 }
 
 const sspicli = Process.findModuleByName('sspicli.dll') || Process.findModuleByName('secur32.dll');
-if (!sspicli) {
-    logError('Schannel module (sspicli.dll/secur32.dll) not found');
-} else {
+if (sspicli) {
     log(`Schannel module found at: ${sspicli.base}`);
 
     try {
-        const InitializeSecurityContext =
-            Module.findExportByName(sspicli.name, 'InitializeSecurityContextW') ||
-            Module.findExportByName(sspicli.name, 'InitializeSecurityContextA');
+        const InitializeSecurityContext
+            = Module.findExportByName(sspicli.name, 'InitializeSecurityContextW')
+            || Module.findExportByName(sspicli.name, 'InitializeSecurityContextA');
         if (InitializeSecurityContext) {
             Interceptor.attach(InitializeSecurityContext, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const _phCredential = args[0];
                     const _phContext = args[1];
                     const pszTargetName = args[2];
@@ -57,19 +55,19 @@ if (!sspicli) {
                     if (!pszTargetName.isNull()) {
                         try {
                             targetName = pszTargetName.readUtf16String();
-                        } catch (_e) {
+                        } catch {
                             try {
                                 targetName = pszTargetName.readAnsiString();
-                            } catch (_e2) {
+                            } catch {
                                 targetName = '<unable to read>';
                             }
                         }
                     }
 
                     const originalFlags = fContextReq.toInt32();
-                    const modifiedFlags =
-                        (originalFlags | ISC_REQ_MANUAL_CRED_VALIDATION) &
-                        ~ISC_REQ_USE_SUPPLIED_CREDS;
+                    const modifiedFlags
+                        = (originalFlags | ISC_REQ_MANUAL_CRED_VALIDATION)
+                        & ~ISC_REQ_USE_SUPPLIED_CREDS;
                     args[3] = ptr(modifiedFlags);
 
                     log(
@@ -81,17 +79,17 @@ if (!sspicli) {
                     this.modifiedFlags = modifiedFlags;
                     this.phNewContext = phNewContext;
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     const result = retval.toInt32();
                     log(`InitializeSecurityContext: Returned 0x${result.toString(16)}`);
 
-                    if (result === SEC_E_OK || result === 0x00090312) {
+                    if (result === SEC_E_OK || result === 0x00_09_03_12) {
                         const sessionInfo = {
                             timestamp: new Date().toISOString(),
                             targetName: this.targetName,
                             originalFlags: this.originalFlags,
                             modifiedFlags: this.modifiedFlags,
-                            result: result,
+                            result,
                         };
                         sessions.push(sessionInfo);
                         if (sessions.length > MAX_LOG) {
@@ -103,17 +101,17 @@ if (!sspicli) {
             });
             log('Successfully hooked InitializeSecurityContext');
         }
-    } catch (e) {
-        logError(`Failed to hook InitializeSecurityContext: ${e.message}`);
+    } catch (error) {
+        logError(`Failed to hook InitializeSecurityContext: ${error.message}`);
     }
 
     try {
-        const QueryContextAttributes =
-            Module.findExportByName(sspicli.name, 'QueryContextAttributesW') ||
-            Module.findExportByName(sspicli.name, 'QueryContextAttributesA');
+        const QueryContextAttributes
+            = Module.findExportByName(sspicli.name, 'QueryContextAttributesW')
+            || Module.findExportByName(sspicli.name, 'QueryContextAttributesA');
         if (QueryContextAttributes) {
             Interceptor.attach(QueryContextAttributes, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const _phContext = args[0];
                     const ulAttribute = args[1].toInt32();
                     const pBuffer = args[2];
@@ -126,7 +124,7 @@ if (!sspicli) {
                         this.wantsCert = true;
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     const result = retval.toInt32();
 
                     if (this.wantsCert && result === SEC_E_OK) {
@@ -144,14 +142,16 @@ if (!sspicli) {
 
                                 let certData = null;
                                 if (
-                                    !pbCertEncoded.isNull() &&
-                                    cbCertEncoded > 0 &&
-                                    cbCertEncoded < 0x10000
+                                    !pbCertEncoded.isNull()
+                                    && cbCertEncoded > 0
+                                    && cbCertEncoded < 0x1_00_00
                                 ) {
                                     try {
                                         certData = pbCertEncoded.readByteArray(cbCertEncoded);
-                                    } catch (e) {
-                                        logError(`Failed to read certificate data: ${e.message}`);
+                                    } catch (error) {
+                                        logError(
+                                            `Failed to read certificate data: ${error.message}`
+                                        );
                                     }
                                 }
 
@@ -162,7 +162,7 @@ if (!sspicli) {
                                     encodingType: dwCertEncodingType,
                                     encodedSize: cbCertEncoded,
                                     certData: certData
-                                        ? Array.from(new Uint8Array(certData)).slice(0, 256)
+                                        ? [...new Uint8Array(certData)].slice(0, 256)
                                         : null,
                                     bypassed: true,
                                 };
@@ -175,8 +175,8 @@ if (!sspicli) {
                                 );
                                 send({ type: 'certificate', data: interceptedCert });
                             }
-                        } catch (e) {
-                            logError(`Failed to process certificate context: ${e.message}`);
+                        } catch (error) {
+                            logError(`Failed to process certificate context: ${error.message}`);
                         }
                     }
 
@@ -190,8 +190,8 @@ if (!sspicli) {
             });
             log('Successfully hooked QueryContextAttributes');
         }
-    } catch (e) {
-        logError(`Failed to hook QueryContextAttributes: ${e.message}`);
+    } catch (error) {
+        logError(`Failed to hook QueryContextAttributes: ${error.message}`);
     }
 
     try {
@@ -227,15 +227,15 @@ if (!sspicli) {
             });
             log('Successfully hooked AcceptSecurityContext');
         }
-    } catch (e) {
-        logError(`Failed to hook AcceptSecurityContext: ${e.message}`);
+    } catch (error) {
+        logError(`Failed to hook AcceptSecurityContext: ${error.message}`);
     }
 
     try {
         const EncryptMessage = Module.findExportByName(sspicli.name, 'EncryptMessage');
         if (EncryptMessage) {
             Interceptor.attach(EncryptMessage, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.phContext = args[0];
                 },
                 onLeave: retval => {
@@ -249,15 +249,15 @@ if (!sspicli) {
             });
             log('Successfully hooked EncryptMessage');
         }
-    } catch (e) {
-        logError(`Failed to hook EncryptMessage: ${e.message}`);
+    } catch (error) {
+        logError(`Failed to hook EncryptMessage: ${error.message}`);
     }
 
     try {
         const DecryptMessage = Module.findExportByName(sspicli.name, 'DecryptMessage');
         if (DecryptMessage) {
             Interceptor.attach(DecryptMessage, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.phContext = args[0];
                 },
                 onLeave: retval => {
@@ -271,8 +271,8 @@ if (!sspicli) {
             });
             log('Successfully hooked DecryptMessage');
         }
-    } catch (e) {
-        logError(`Failed to hook DecryptMessage: ${e.message}`);
+    } catch (error) {
+        logError(`Failed to hook DecryptMessage: ${error.message}`);
     }
 
     try {
@@ -297,9 +297,11 @@ if (!sspicli) {
                 log('Successfully hooked SslCrackCertificate');
             }
         }
-    } catch (e) {
-        logError(`Failed to hook SslCrackCertificate: ${e.message}`);
+    } catch (error) {
+        logError(`Failed to hook SslCrackCertificate: ${error.message}`);
     }
+} else {
+    logError('Schannel module (sspicli.dll/secur32.dll) not found');
 }
 
 rpc.exports = {

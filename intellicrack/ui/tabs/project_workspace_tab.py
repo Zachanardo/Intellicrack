@@ -41,6 +41,7 @@ from intellicrack.handlers.pyqt6_handler import (
 
 from .base_tab import BaseTab
 
+
 logger = logging.getLogger(__name__)
 
 

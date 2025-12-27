@@ -79,7 +79,7 @@ const advancedAntiDebugBypass = {
     rdtscMultiplier: 1,
     qpcBase: null,
 
-    initialize: function () {
+    initialize() {
         send({
             type: 'status',
             message: 'Advanced Anti-Debug Bypass initializing',
@@ -98,7 +98,7 @@ const advancedAntiDebugBypass = {
         });
     },
 
-    run: function () {
+    run() {
         this.initialize();
 
         send({
@@ -120,7 +120,7 @@ const advancedAntiDebugBypass = {
         this.installationSummary();
     },
 
-    hookKernelFunctions: function () {
+    hookKernelFunctions() {
         send({
             type: 'info',
             message: 'Installing kernel-level hooks',
@@ -134,7 +134,7 @@ const advancedAntiDebugBypass = {
         this.hookNtYieldExecution();
     },
 
-    hookNtQueryInformationProcessAdvanced: function () {
+    hookNtQueryInformationProcessAdvanced() {
         if (!this.config.kernelHooks.ntQueryInformationProcess) {
             return;
         }
@@ -142,7 +142,7 @@ const advancedAntiDebugBypass = {
         const ntQueryInfo = Module.findExportByName('ntdll.dll', 'NtQueryInformationProcess');
         if (ntQueryInfo) {
             Interceptor.attach(ntQueryInfo, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.processHandle = args[0];
                     this.infoClass = args[1].toInt32();
                     this.processInfo = args[2];
@@ -150,10 +150,10 @@ const advancedAntiDebugBypass = {
                     this.returnLength = args[4];
                 },
 
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (retval.toInt32() === 0 && this.processInfo && !this.processInfo.isNull()) {
                         switch (this.infoClass) {
-                            case 7:
+                            case 7: {
                                 this.processInfo.writePointer(ptr(0));
                                 send({
                                     type: 'bypass',
@@ -162,8 +162,9 @@ const advancedAntiDebugBypass = {
                                     action: 'zeroed',
                                 });
                                 break;
+                            }
 
-                            case 30:
+                            case 30: {
                                 this.processInfo.writePointer(ptr(0));
                                 send({
                                     type: 'bypass',
@@ -172,8 +173,9 @@ const advancedAntiDebugBypass = {
                                     action: 'zeroed',
                                 });
                                 break;
+                            }
 
-                            case 31:
+                            case 31: {
                                 this.processInfo.writeU32(1);
                                 send({
                                     type: 'bypass',
@@ -182,8 +184,9 @@ const advancedAntiDebugBypass = {
                                     action: 'spoofed',
                                 });
                                 break;
+                            }
 
-                            case 0x29:
+                            case 0x29: {
                                 this.processInfo.writeU32(0);
                                 send({
                                     type: 'bypass',
@@ -192,8 +195,9 @@ const advancedAntiDebugBypass = {
                                     action: 'disabled',
                                 });
                                 break;
+                            }
 
-                            case 0x1f:
+                            case 0x1F: {
                                 this.processInfo.writeU32(0);
                                 send({
                                     type: 'bypass',
@@ -202,6 +206,12 @@ const advancedAntiDebugBypass = {
                                     action: 'zeroed',
                                 });
                                 break;
+                            }
+
+                            default: {
+                                // Unhandled info class - no action needed
+                                break;
+                            }
                         }
                     }
                 },
@@ -211,7 +221,7 @@ const advancedAntiDebugBypass = {
         }
     },
 
-    hookNtSetInformationThreadAdvanced: function () {
+    hookNtSetInformationThreadAdvanced() {
         if (!this.config.kernelHooks.ntSetInformationThread) {
             return;
         }
@@ -248,7 +258,7 @@ const advancedAntiDebugBypass = {
         }
     },
 
-    hookNtQuerySystemInformationAdvanced: function () {
+    hookNtQuerySystemInformationAdvanced() {
         if (!this.config.kernelHooks.ntQuerySystemInformation) {
             return;
         }
@@ -256,14 +266,14 @@ const advancedAntiDebugBypass = {
         const ntQuerySysInfo = Module.findExportByName('ntdll.dll', 'NtQuerySystemInformation');
         if (ntQuerySysInfo) {
             Interceptor.attach(ntQuerySysInfo, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.systemInfoClass = args[0].toInt32();
                     this.systemInfo = args[1];
                     this.systemInfoLength = args[2].toInt32();
                     this.returnLength = args[3];
                 },
 
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (retval.toInt32() === 0 && this.systemInfo && !this.systemInfo.isNull()) {
                         if (this.systemInfoClass === 0x23) {
                             this.systemInfo.writeU8(0);
@@ -292,7 +302,7 @@ const advancedAntiDebugBypass = {
         }
     },
 
-    hookNtCloseAntiDebug: function () {
+    hookNtCloseAntiDebug() {
         if (!this.config.kernelHooks.ntClose) {
             return;
         }
@@ -300,9 +310,9 @@ const advancedAntiDebugBypass = {
         const ntClose = Module.findExportByName('ntdll.dll', 'NtClose');
         if (ntClose) {
             Interceptor.attach(ntClose, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const handle = args[0];
-                    if (handle.isNull() || handle.toInt32() === 0xffffffff) {
+                    if (handle.isNull() || handle.toInt32() === 0xFF_FF_FF_FF) {
                         send({
                             type: 'bypass',
                             target: 'NtClose',
@@ -313,7 +323,7 @@ const advancedAntiDebugBypass = {
                     }
                 },
 
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.skipOriginal) {
                         retval.replace(ptr(0));
                     }
@@ -324,7 +334,7 @@ const advancedAntiDebugBypass = {
         }
     },
 
-    hookNtYieldExecution: function () {
+    hookNtYieldExecution() {
         if (!this.config.kernelHooks.ntYieldExecution) {
             return;
         }
@@ -337,7 +347,7 @@ const advancedAntiDebugBypass = {
         }
     },
 
-    hookTimingFunctions: function () {
+    hookTimingFunctions() {
         send({
             type: 'info',
             message: 'Installing timing neutralization hooks',
@@ -351,7 +361,7 @@ const advancedAntiDebugBypass = {
         this.hookSleepFunctions();
     },
 
-    hookRdtsc: function () {
+    hookRdtsc() {
         if (!this.config.timingNeutralization.rdtscEmulation) {
             return;
         }
@@ -374,7 +384,9 @@ const advancedAntiDebugBypass = {
                         writer.flush();
                     });
                     patchCount++;
-                } catch (_e) {}
+                } catch {
+                    // Memory region may be protected or unmapped - silently skip
+                }
             });
 
             if (patchCount > 0) {
@@ -387,7 +399,7 @@ const advancedAntiDebugBypass = {
             }
 
             this.hooksInstalled.RDTSC = true;
-        } catch (_e) {
+        } catch {
             send({
                 type: 'warning',
                 target: 'RDTSC',
@@ -396,7 +408,7 @@ const advancedAntiDebugBypass = {
         }
     },
 
-    hookRdtscp: function () {
+    hookRdtscp() {
         if (!this.config.timingNeutralization.rdtscpEmulation) {
             return;
         }
@@ -419,7 +431,9 @@ const advancedAntiDebugBypass = {
                         writer.flush();
                     });
                     patchCount++;
-                } catch (_e) {}
+                } catch {
+                    // Memory region may be protected or unmapped - silently skip
+                }
             });
 
             if (patchCount > 0) {
@@ -432,7 +446,7 @@ const advancedAntiDebugBypass = {
             }
 
             this.hooksInstalled.RDTSCP = true;
-        } catch (_e) {
+        } catch {
             send({
                 type: 'warning',
                 target: 'RDTSCP',
@@ -441,7 +455,7 @@ const advancedAntiDebugBypass = {
         }
     },
 
-    hookQueryPerformanceCounter: function () {
+    hookQueryPerformanceCounter() {
         if (!this.config.timingNeutralization.qpcNormalization) {
             return;
         }
@@ -451,7 +465,7 @@ const advancedAntiDebugBypass = {
             const self = this;
 
             Interceptor.attach(qpc, {
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (retval.toInt32() !== 0 && this.context.rcx && !this.context.rcx.isNull()) {
                         const currentValue = this.context.rcx.readU64();
                         const normalizedValue = self.normalizeQpcValue(currentValue);
@@ -472,7 +486,7 @@ const advancedAntiDebugBypass = {
         }
     },
 
-    hookGetTickCount: function () {
+    hookGetTickCount() {
         if (!this.config.timingNeutralization.qpcNormalization) {
             return;
         }
@@ -522,7 +536,7 @@ const advancedAntiDebugBypass = {
         }
     },
 
-    hookSleepFunctions: function () {
+    hookSleepFunctions() {
         if (!this.config.timingNeutralization.sleepAcceleration) {
             return;
         }
@@ -539,7 +553,7 @@ const advancedAntiDebugBypass = {
                             target: 'Sleep',
                             action: 'accelerated',
                             original: dwMilliseconds,
-                            accelerated: accelerated,
+                            accelerated,
                         });
                     },
                     'void',
@@ -551,7 +565,7 @@ const advancedAntiDebugBypass = {
         }
     },
 
-    hookHypervisorDetection: function () {
+    hookHypervisorDetection() {
         send({
             type: 'info',
             message: 'Installing hypervisor detection bypass',
@@ -562,7 +576,7 @@ const advancedAntiDebugBypass = {
         this.hookVmxInstructions();
     },
 
-    hookCpuid: function () {
+    hookCpuid() {
         if (!this.config.hypervisorDetection.spoofCpuid) {
             return;
         }
@@ -580,8 +594,8 @@ const advancedAntiDebugBypass = {
             matches.forEach(match => {
                 try {
                     Interceptor.attach(match.address, {
-                        onLeave: function (_retval) {
-                            if (this.context.eax === 0x40000000) {
+                        onLeave(_retval) {
+                            if (this.context.eax === 0x40_00_00_00) {
                                 this.context.ebx = 0;
                                 this.context.ecx = 0;
                                 this.context.edx = 0;
@@ -596,7 +610,9 @@ const advancedAntiDebugBypass = {
                         },
                     });
                     patchCount++;
-                } catch (_e) {}
+                } catch {
+                    // Memory region may be protected or unmapped - silently skip
+                }
             });
 
             if (patchCount > 0) {
@@ -609,7 +625,7 @@ const advancedAntiDebugBypass = {
             }
 
             this.hooksInstalled.CPUID = true;
-        } catch (_e) {
+        } catch {
             send({
                 type: 'warning',
                 target: 'CPUID',
@@ -618,7 +634,7 @@ const advancedAntiDebugBypass = {
         }
     },
 
-    hookVmxInstructions: function () {
+    hookVmxInstructions() {
         if (!this.config.hypervisorDetection.hideVmxInstructions) {
             return;
         }
@@ -632,7 +648,7 @@ const advancedAntiDebugBypass = {
         this.hooksInstalled.VMX = true;
     },
 
-    hookScyllaHideResistant: function () {
+    hookScyllaHideResistant() {
         send({
             type: 'info',
             message: 'Installing ScyllaHide-resistant techniques',
@@ -643,7 +659,7 @@ const advancedAntiDebugBypass = {
         this.hookProcessHollowing();
     },
 
-    hookInlineHookDetection: function () {
+    hookInlineHookDetection() {
         if (!this.config.scyllaHideResistant.inlineHookDetection) {
             return;
         }
@@ -657,7 +673,7 @@ const advancedAntiDebugBypass = {
         this.hooksInstalled.InlineHookDetection = true;
     },
 
-    hookProcessHollowing: function () {
+    hookProcessHollowing() {
         if (!this.config.scyllaHideResistant.processHollowing) {
             return;
         }
@@ -680,7 +696,7 @@ const advancedAntiDebugBypass = {
         }
     },
 
-    hookIntegrityChecks: function () {
+    hookIntegrityChecks() {
         send({
             type: 'info',
             message: 'Installing integrity check bypass',
@@ -691,7 +707,7 @@ const advancedAntiDebugBypass = {
         this.hookMemoryChecksum();
     },
 
-    hookCrc32Checks: function () {
+    hookCrc32Checks() {
         const rtlComputeCrc32 = Module.findExportByName('ntdll.dll', 'RtlComputeCrc32');
         if (rtlComputeCrc32) {
             Interceptor.attach(rtlComputeCrc32, {
@@ -709,18 +725,18 @@ const advancedAntiDebugBypass = {
         }
     },
 
-    hookMemoryChecksum: function () {
+    hookMemoryChecksum() {
         const virtualProtect = Module.findExportByName('kernel32.dll', 'VirtualProtect');
         if (virtualProtect) {
             Interceptor.attach(virtualProtect, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.address = args[0];
                     this.size = args[1].toInt32();
                     this.newProtect = args[2].toInt32();
                     this.oldProtect = args[3];
                 },
 
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (retval.toInt32() !== 0) {
                         send({
                             type: 'info',
@@ -737,7 +753,7 @@ const advancedAntiDebugBypass = {
         }
     },
 
-    hookExceptionHandling: function () {
+    hookExceptionHandling() {
         send({
             type: 'info',
             message: 'Installing exception handling bypass',
@@ -748,7 +764,7 @@ const advancedAntiDebugBypass = {
         this.hookUnhandledExceptionFilter();
     },
 
-    hookVectoredExceptionHandlers: function () {
+    hookVectoredExceptionHandlers() {
         const addVeh = Module.findExportByName('kernel32.dll', 'AddVectoredExceptionHandler');
         if (addVeh) {
             Interceptor.attach(addVeh, {
@@ -767,7 +783,7 @@ const advancedAntiDebugBypass = {
         }
     },
 
-    hookUnhandledExceptionFilter: function () {
+    hookUnhandledExceptionFilter() {
         const setUnhandled = Module.findExportByName('kernel32.dll', 'SetUnhandledExceptionFilter');
         if (setUnhandled) {
             Interceptor.replace(
@@ -791,7 +807,7 @@ const advancedAntiDebugBypass = {
         }
     },
 
-    manipulatePebDeep: function () {
+    manipulatePebDeep() {
         if (!this.config.scyllaHideResistant.deepPebManipulation) {
             return;
         }
@@ -804,9 +820,9 @@ const advancedAntiDebugBypass = {
 
         setTimeout(() => {
             try {
-                const teb =
-                    Process.getCurrentThread().context.gs_base ||
-                    Process.getCurrentThread().context.fs_base;
+                const teb
+                    = Process.getCurrentThread().context.gs_base
+                    || Process.getCurrentThread().context.fs_base;
 
                 if (teb && !teb.isNull()) {
                     const peb = teb.add(0x60).readPointer();
@@ -814,7 +830,7 @@ const advancedAntiDebugBypass = {
                     if (peb && !peb.isNull()) {
                         peb.add(0x02).writeU8(0);
                         peb.add(0x68).writeU32(0);
-                        peb.add(0xbc).writeU32(0);
+                        peb.add(0xBC).writeU32(0);
 
                         const processHeap = peb.add(0x18).readPointer();
                         if (processHeap && !processHeap.isNull()) {
@@ -832,18 +848,18 @@ const advancedAntiDebugBypass = {
                         });
                     }
                 }
-            } catch (e) {
+            } catch (error) {
                 send({
                     type: 'warning',
                     target: 'PEB',
                     message: 'Deep PEB manipulation failed',
-                    error: e.message,
+                    error: error.message,
                 });
             }
         }, 100);
     },
 
-    hookTlsCallbacks: function () {
+    hookTlsCallbacks() {
         if (!this.config.scyllaHideResistant.tlsCallbackProtection) {
             return;
         }
@@ -857,7 +873,7 @@ const advancedAntiDebugBypass = {
         this.hooksInstalled.TLSCallbacks = true;
     },
 
-    hookMemoryOperations: function () {
+    hookMemoryOperations() {
         send({
             type: 'info',
             message: 'Installing memory operation hooks',
@@ -867,7 +883,7 @@ const advancedAntiDebugBypass = {
         const virtualQuery = Module.findExportByName('kernel32.dll', 'VirtualQuery');
         if (virtualQuery) {
             Interceptor.attach(virtualQuery, {
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (retval.toInt32() !== 0 && this.context.rdx && !this.context.rdx.isNull()) {
                         send({
                             type: 'info',
@@ -884,21 +900,21 @@ const advancedAntiDebugBypass = {
 
     readTsc: () => {
         try {
-            return Date.now() * 1000000;
-        } catch (_e) {
+            return Date.now() * 1_000_000;
+        } catch {
             return 0;
         }
     },
 
     readQpc: () => {
         try {
-            return uint64(Date.now() * 10000);
-        } catch (_e) {
+            return uint64(Date.now() * 10_000);
+        } catch {
             return null;
         }
     },
 
-    normalizeQpcValue: function (value) {
+    normalizeQpcValue(value) {
         if (this.qpcBase === null) {
             this.qpcBase = value;
             return value;
@@ -908,7 +924,7 @@ const advancedAntiDebugBypass = {
         return this.qpcBase.add(delta.mul(this.rdtscMultiplier));
     },
 
-    installationSummary: function () {
+    installationSummary() {
         const hookCount = Object.keys(this.hooksInstalled).length;
 
         send({
@@ -926,10 +942,10 @@ const advancedAntiDebugBypass = {
                 kernel: Object.keys(this.hooksInstalled).filter(k => k.startsWith('Nt')).length,
                 timing: Object.keys(this.hooksInstalled).filter(
                     k =>
-                        k.includes('RDTSC') ||
-                        k.includes('Qpc') ||
-                        k.includes('Tick') ||
-                        k.includes('Sleep')
+                        k.includes('RDTSC')
+                        || k.includes('Qpc')
+                        || k.includes('Tick')
+                        || k.includes('Sleep')
                 ).length,
                 hypervisor: Object.keys(this.hooksInstalled).filter(
                     k => k.includes('CPUID') || k.includes('VMX')

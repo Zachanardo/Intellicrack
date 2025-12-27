@@ -20,8 +20,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+from __future__ import annotations
+
 from collections.abc import Callable
-from typing import Any
 
 from intellicrack.utils.logger import logger
 
@@ -36,14 +37,19 @@ except ImportError as e:
 
 
 def add_extra_buttons(
-    header_layout: Any,
-    extra_buttons: list[tuple[str, Callable[..., Any]]],
-    widget_refs: dict[str, Any] | None = None,
-) -> dict[str, Any]:
+    header_layout: object,
+    extra_buttons: list[tuple[str, Callable[..., object]]],
+    widget_refs: dict[str, object] | None = None,
+) -> dict[str, object]:
     """Add extra buttons to a header layout with consistent styling.
 
+    This is an internal function that operates on Qt layouts directly.
+    The header_layout parameter is typed as object to avoid Protocol
+    compatibility issues with Qt's signature, but is expected to be
+    a QLayout at runtime.
+
     Args:
-        header_layout: Qt layout to add buttons to.
+        header_layout: Qt layout to add buttons to (typically QHBoxLayout).
         extra_buttons: List of (button_text, callback) tuples.
         widget_refs: Optional dict to store button references.
 
@@ -54,25 +60,29 @@ def add_extra_buttons(
     if not PYQT_AVAILABLE or not extra_buttons:
         return {}
 
-    buttons = {}
+    if not hasattr(header_layout, "addWidget"):
+        return {}
+
+    add_widget_method = getattr(header_layout, "addWidget")
+    buttons: dict[str, object] = {}
 
     for button_text, callback in extra_buttons:
         btn = QPushButton(button_text)
         btn.clicked.connect(callback)
 
-        # Apply special styling for Analyze Binary button
         if button_text == "Analyze Binary":
             btn.setStyleSheet("QPushButton { background-color: #2196F3; color: white; font-weight: bold; }")
 
-        header_layout.addWidget(btn)
+        add_widget_method(btn)
         buttons[button_text] = btn
 
-        # Store reference if widget_refs provided
         if widget_refs is not None:
             if button_text == "Analyze Binary":
                 widget_refs["analyze_btn"] = btn
             elif "extra_buttons" in widget_refs:
-                widget_refs["extra_buttons"][button_text] = btn
+                extra_buttons_dict = widget_refs["extra_buttons"]
+                if isinstance(extra_buttons_dict, dict):
+                    extra_buttons_dict[button_text] = btn
 
     return buttons
 

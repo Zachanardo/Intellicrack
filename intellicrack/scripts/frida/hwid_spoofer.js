@@ -30,12 +30,12 @@ send({
 const getVolumeInfo = Module.findExportByName('kernel32.dll', 'GetVolumeInformationW');
 if (getVolumeInfo) {
     Interceptor.attach(getVolumeInfo, {
-        onLeave: function (retval) {
+        onLeave(retval) {
             if (retval.toInt32() !== 0) {
                 // Modify volume serial number (5th parameter)
                 const serialPtr = this.context.r8;
                 if (serialPtr && !serialPtr.isNull()) {
-                    serialPtr.writeU32(0x12345678); // Spoofed serial
+                    serialPtr.writeU32(0x12_34_56_78); // Spoofed serial
                     send({
                         type: 'bypass',
                         target: 'volume_serial',
@@ -52,7 +52,7 @@ if (getVolumeInfo) {
 const getAdaptersInfo = Module.findExportByName('iphlpapi.dll', 'GetAdaptersInfo');
 if (getAdaptersInfo) {
     Interceptor.attach(getAdaptersInfo, {
-        onLeave: function (retval) {
+        onLeave(retval) {
             if (retval.toInt32() === 0) {
                 // NO_ERROR
                 const adapterInfo = this.context.rcx;
@@ -76,7 +76,7 @@ if (getAdaptersInfo) {
 const getSystemInfo = Module.findExportByName('kernel32.dll', 'GetSystemInfo');
 if (getSystemInfo) {
     Interceptor.attach(getSystemInfo, {
-        onLeave: function (retval) {
+        onLeave(retval) {
             // Ensure GetSystemInfo returns success
             if (retval && !retval.isNull() && retval.toInt32() === 0) {
                 // GetSystemInfo is void but we can check if it succeeded
@@ -108,13 +108,13 @@ if (getSystemInfo) {
 const regQueryValueExW = Module.findExportByName('advapi32.dll', 'RegQueryValueExW');
 if (regQueryValueExW) {
     Interceptor.attach(regQueryValueExW, {
-        onEnter: function (args) {
+        onEnter(args) {
             const valueName = args[1].readUtf16String();
             if (valueName?.includes('MachineGuid')) {
                 this.spoofGuid = true;
             }
         },
-        onLeave: function (retval) {
+        onLeave(retval) {
             if (this.spoofGuid && retval.toInt32() === 0) {
                 const buffer = this.context.r8; // lpData
                 if (buffer && !buffer.isNull()) {
@@ -169,7 +169,7 @@ class HwidSpooferEnhanced {
         const oleaut32 = Module.findExportByName('oleaut32.dll', 'VariantChangeType');
         if (oleaut32) {
             Interceptor.attach(oleaut32, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const variant = args[0];
                     if (variant && !variant.isNull()) {
                         try {
@@ -180,28 +180,28 @@ class HwidSpooferEnhanced {
                                 if (bstrPtr && !bstrPtr.isNull()) {
                                     const str = bstrPtr.readUtf16String();
                                     if (
-                                        str &&
-                                        (str.includes('Win32_') ||
-                                            str.includes('ROOT\\CIMV2') ||
-                                            str.includes('SELECT * FROM'))
+                                        str
+                                        && (str.includes('Win32_')
+                                            || str.includes('ROOT\\CIMV2')
+                                            || str.includes('SELECT * FROM'))
                                     ) {
                                         this.wmiQuery = str;
                                         this.spoofWmi = true;
                                     }
                                 }
                             }
-                        } catch (e) {
+                        } catch (error) {
                             send({
                                 type: 'debug',
                                 target: 'hwid_spoofer',
                                 action: 'wmi_query_read_failed',
                                 address: ptr.toString(),
-                                error: e.toString(),
+                                error: error.toString(),
                             });
                         }
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.spoofWmi && retval.toInt32() === 0) {
                         send({
                             type: 'bypass',
@@ -221,18 +221,17 @@ class HwidSpooferEnhanced {
         );
         if (setupapi) {
             Interceptor.attach(setupapi, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.property = args[2].toInt32();
                     this.buffer = args[4];
                     this.bufferSize = args[5];
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (retval.toInt32() !== 0 && this.buffer && !this.buffer.isNull()) {
-                        const { property } = this;
+                        const { property, buffer } = this;
                         if (property === 0 || property === 1 || property === 12) {
-                            // DeviceDesc, HardwareID, FriendlyName
                             const spoofedValue = 'Generic Hardware Device';
-                            this.buffer.writeUtf16String(spoofedValue);
+                            buffer.writeUtf16String(spoofedValue);
                             send({
                                 type: 'bypass',
                                 target: 'device_property',
@@ -260,19 +259,19 @@ class HwidSpooferEnhanced {
         const advapi32 = Module.findExportByName('advapi32.dll', 'RegOpenKeyExW');
         if (advapi32) {
             Interceptor.attach(advapi32, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const keyName = args[1].readUtf16String();
                     if (
-                        keyName &&
-                        (keyName.includes('TPM') ||
-                            keyName.includes('TBS') ||
-                            keyName.includes('Platform'))
+                        keyName
+                        && (keyName.includes('TPM')
+                            || keyName.includes('TBS')
+                            || keyName.includes('Platform'))
                     ) {
                         this.tpmQuery = true;
                         this.keyName = keyName;
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.tpmQuery && retval.toInt32() === 0) {
                         send({
                             type: 'bypass',
@@ -289,17 +288,17 @@ class HwidSpooferEnhanced {
         const kernel32 = Module.findExportByName('kernel32.dll', 'GetSystemFirmwareTable');
         if (kernel32) {
             Interceptor.attach(kernel32, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.firmwareProvider = args[0].toInt32();
                     this.firmwareId = args[1].toInt32();
                     this.buffer = args[2];
                     this.bufferSize = args[3].toInt32();
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (retval.toInt32() > 0 && this.buffer && !this.buffer.isNull()) {
                         // Spoof SMBIOS, ACPI, and other firmware tables
                         const spoofedData = new Uint8Array(this.bufferSize);
-                        spoofedData.fill(0xaa); // Generic pattern
+                        spoofedData.fill(0xAA); // Generic pattern
                         this.buffer.writeByteArray(spoofedData);
 
                         send({
@@ -319,13 +318,13 @@ class HwidSpooferEnhanced {
         const wbemprox = Module.findExportByName('wbemprox.dll', 'DllGetClassObject');
         if (wbemprox) {
             Interceptor.attach(wbemprox, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const clsid = args[0];
                     if (clsid && !clsid.isNull()) {
                         this.spoofTpmWmi = true;
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.spoofTpmWmi && retval.toInt32() === 0) {
                         send({
                             type: 'bypass',
@@ -351,7 +350,7 @@ class HwidSpooferEnhanced {
         const wmi32 = Module.findExportByName('wmi.dll', 'WmiQueryAllDataW');
         if (wmi32) {
             Interceptor.attach(wmi32, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const guidPtr = args[0];
                     if (guidPtr && !guidPtr.isNull()) {
                         try {
@@ -359,12 +358,12 @@ class HwidSpooferEnhanced {
                             if (guidStr?.includes('8086')) {
                                 this.smbiosQuery = true;
                             }
-                        } catch (e) {
-                            send(`[HWID] WMI query error: ${e.message}`);
+                        } catch (error) {
+                            send(`[HWID] WMI query error: ${error.message}`);
                         }
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.smbiosQuery && retval.toInt32() === 0) {
                         send({
                             type: 'bypass',
@@ -380,7 +379,7 @@ class HwidSpooferEnhanced {
         const ntdll = Module.findExportByName('ntdll.dll', 'NtQuerySystemInformation');
         if (ntdll) {
             Interceptor.attach(ntdll, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const infoClass = args[0].toInt32();
                     this.buffer = args[1];
                     this.bufferLength = args[2].toInt32();
@@ -390,20 +389,20 @@ class HwidSpooferEnhanced {
                         this.spoofSmbios = true;
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (
-                        this.spoofSmbios &&
-                        retval.toInt32() === 0 &&
-                        this.buffer &&
-                        !this.buffer.isNull()
+                        this.spoofSmbios
+                        && retval.toInt32() === 0
+                        && this.buffer
+                        && !this.buffer.isNull()
                     ) {
                         // Spoof SMBIOS structure with generic hardware info
                         const smbiosHeader = new Uint8Array([
                             0x53,
-                            0x4d,
+                            0x4D,
                             0x42,
                             0x49, // "SMBI"
-                            0x4f,
+                            0x4F,
                             0x53,
                             0x00,
                             0x00, // "OS\0\0"
@@ -434,25 +433,25 @@ class HwidSpooferEnhanced {
         const regQueryEx = Module.findExportByName('advapi32.dll', 'RegQueryValueExW');
         if (regQueryEx) {
             Interceptor.attach(regQueryEx, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const valueName = args[1].readUtf16String();
                     if (
-                        valueName &&
-                        (valueName.includes('Manufacturer') ||
-                            valueName.includes('Product') ||
-                            valueName.includes('Version'))
+                        valueName
+                        && (valueName.includes('Manufacturer')
+                            || valueName.includes('Product')
+                            || valueName.includes('Version'))
                     ) {
                         this.spoofManufacturer = true;
                         this.valueName = valueName;
                         this.dataBuffer = args[4];
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (
-                        this.spoofManufacturer &&
-                        retval.toInt32() === 0 &&
-                        this.dataBuffer &&
-                        !this.dataBuffer.isNull()
+                        this.spoofManufacturer
+                        && retval.toInt32() === 0
+                        && this.dataBuffer
+                        && !this.dataBuffer.isNull()
                     ) {
                         const spoofedValue = 'Generic Computer Inc.';
                         this.dataBuffer.writeUtf16String(spoofedValue);
@@ -483,10 +482,10 @@ class HwidSpooferEnhanced {
         const cpuidHook = Interceptor.attach(
             Module.findExportByName('kernel32.dll', 'IsProcessorFeaturePresent'),
             {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.feature = args[0].toInt32();
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     // Spoof specific CPU features
                     if (this.feature === 6 || this.feature === 10 || this.feature === 17) {
                         // PAE, XMMI64, NX
@@ -512,10 +511,10 @@ class HwidSpooferEnhanced {
         if (perfCounter) {
             let baseTime = 0;
             Interceptor.attach(perfCounter, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.counterPtr = args[0];
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (retval.toInt32() !== 0 && this.counterPtr && !this.counterPtr.isNull()) {
                         if (baseTime === 0) {
                             baseTime = this.counterPtr.readU64().toNumber();
@@ -539,17 +538,17 @@ class HwidSpooferEnhanced {
         const ntdll = Module.findExportByName('ntdll.dll', 'NtPowerInformation');
         if (ntdll) {
             Interceptor.attach(ntdll, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.infoLevel = args[0].toInt32();
                     this.outputBuffer = args[3];
                     this.outputLength = args[4].toInt32();
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (
-                        retval.toInt32() === 0 &&
-                        this.outputBuffer &&
-                        !this.outputBuffer.isNull() &&
-                        (this.infoLevel === 12 || this.infoLevel === 60)
+                        retval.toInt32() === 0
+                        && this.outputBuffer
+                        && !this.outputBuffer.isNull()
+                        && (this.infoLevel === 12 || this.infoLevel === 60)
                     ) {
                         const spoofedData = new Uint8Array(this.outputLength);
                         spoofedData.fill(0x42); // Generic pattern
@@ -573,15 +572,15 @@ class HwidSpooferEnhanced {
         );
         if (getCacheInfo) {
             Interceptor.attach(getCacheInfo, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.buffer = args[0];
                     this.returnLength = args[1];
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (retval.toInt32() !== 0 && this.buffer && !this.buffer.isNull()) {
                         // Spoof processor cache hierarchy
                         const spoofedInfo = new Uint8Array(48); // SYSTEM_LOGICAL_PROCESSOR_INFORMATION size
-                        spoofedInfo[0] = 0xff; // ProcessorMask
+                        spoofedInfo[0] = 0xFF; // ProcessorMask
                         spoofedInfo[8] = 1; // Relationship = RelationProcessorCore
                         spoofedInfo[12] = 2; // ProcessorCore.Flags
 
@@ -627,10 +626,10 @@ class HwidSpooferEnhanced {
         const dxgi = Module.findExportByName('dxgi.dll', 'CreateDXGIFactory1');
         if (dxgi) {
             Interceptor.attach(dxgi, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.factoryPtr = args[1];
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (retval.toInt32() === 0 && this.factoryPtr && !this.factoryPtr.isNull()) {
                         send({
                             type: 'bypass',
@@ -662,10 +661,10 @@ class HwidSpooferEnhanced {
         const nvapi = Module.findExportByName('nvapi64.dll', 'nvapi_QueryInterface');
         if (nvapi) {
             Interceptor.attach(nvapi, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.funcId = args[0].toInt32();
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (!retval.isNull()) {
                         send({
                             type: 'bypass',
@@ -698,24 +697,24 @@ class HwidSpooferEnhanced {
         const setupapi = Module.findExportByName('setupapi.dll', 'SetupDiEnumDeviceInfo');
         if (setupapi) {
             Interceptor.attach(setupapi, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.deviceInfoSet = args[0];
                     this.deviceIndex = args[1].toInt32();
                     this.deviceInfoData = args[2];
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (
-                        retval.toInt32() !== 0 &&
-                        this.deviceInfoData &&
-                        !this.deviceInfoData.isNull()
+                        retval.toInt32() !== 0
+                        && this.deviceInfoData
+                        && !this.deviceInfoData.isNull()
                     ) {
                         // Check if this is a GPU device and spoof its information
                         const classGuid = this.deviceInfoData.add(20); // ClassGuid offset
                         if (classGuid && !classGuid.isNull()) {
                             // Generic GPU class GUID spoofing
                             const spoofedGuid = new Uint8Array([
-                                0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80, 0x90, 0xa0, 0xb0,
-                                0xc0, 0xd0, 0xe0, 0xf0, 0x00,
+                                0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80, 0x90, 0xA0, 0xB0,
+                                0xC0, 0xD0, 0xE0, 0xF0, 0x00,
                             ]);
                             classGuid.writeByteArray(spoofedGuid);
 
@@ -745,7 +744,7 @@ class HwidSpooferEnhanced {
         const setupapi = Module.findExportByName('setupapi.dll', 'SetupDiGetClassDevsW');
         if (setupapi) {
             Interceptor.attach(setupapi, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const classGuid = args[0];
                     const enumerator = args[1];
                     this.flags = args[3].toInt32();
@@ -757,7 +756,7 @@ class HwidSpooferEnhanced {
                             this.deviceClass = guidBytes;
 
                             // Check for specific device classes to spoof
-                            const guidStr = Array.from(new Uint8Array(guidBytes))
+                            const guidStr = [...new Uint8Array(guidBytes)]
                                 .map(b => b.toString(16).padStart(2, '0'))
                                 .join('');
 
@@ -768,13 +767,13 @@ class HwidSpooferEnhanced {
                                 // Display adapter GUID
                                 this.displayDevice = true;
                             }
-                        } catch (e) {
+                        } catch (error) {
                             // GUID read failed - log error for debugging
                             send({
                                 type: 'debug',
                                 target: 'device_enumeration',
                                 action: 'guid_read_failed',
-                                error: e.toString(),
+                                error: error.toString(),
                             });
                         }
                     }
@@ -786,7 +785,7 @@ class HwidSpooferEnhanced {
                         }
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.usbEnumeration && !retval.equals(ptr(-1))) {
                         send({
                             type: 'bypass',
@@ -806,18 +805,18 @@ class HwidSpooferEnhanced {
         );
         if (getDeviceProperty) {
             Interceptor.attach(getDeviceProperty, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.deviceInfoSet = args[0];
                     this.deviceInfoData = args[1];
                     this.propertyKey = args[2];
                     this.propertyBuffer = args[4];
                     this.propertyBufferSize = args[5].toInt32();
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (
-                        retval.toInt32() !== 0 &&
-                        this.propertyBuffer &&
-                        !this.propertyBuffer.isNull()
+                        retval.toInt32() !== 0
+                        && this.propertyBuffer
+                        && !this.propertyBuffer.isNull()
                     ) {
                         // Spoof USB device properties
                         const spoofedProperty = 'Generic USB Device';
@@ -838,7 +837,7 @@ class HwidSpooferEnhanced {
         const winusb = Module.findExportByName('winusb.dll', 'WinUsb_Initialize');
         if (winusb) {
             Interceptor.attach(winusb, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.deviceHandle = args[0];
                     this.interfaceHandle = args[1];
                 },
@@ -858,23 +857,23 @@ class HwidSpooferEnhanced {
         const kernel32 = Module.findExportByName('kernel32.dll', 'DeviceIoControl');
         if (kernel32) {
             Interceptor.attach(kernel32, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.deviceHandle = args[0];
                     this.ioControlCode = args[1].toInt32();
                     this.outputBuffer = args[4];
                     this.outputBufferSize = args[5].toInt32();
 
                     // Check for USB-related IOCTL codes
-                    if ((this.ioControlCode & 0xffff0000) === 0x00220000) {
+                    if ((this.ioControlCode & 0xFF_FF_00_00) === 0x00_22_00_00) {
                         this.usbIoctl = true;
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (
-                        this.usbIoctl &&
-                        retval.toInt32() !== 0 &&
-                        this.outputBuffer &&
-                        !this.outputBuffer.isNull()
+                        this.usbIoctl
+                        && retval.toInt32() !== 0
+                        && this.outputBuffer
+                        && !this.outputBuffer.isNull()
                     ) {
                         // Spoof USB device descriptors
                         const spoofedDescriptor = new Uint8Array(this.outputBufferSize);
@@ -915,17 +914,17 @@ class HwidSpooferEnhanced {
         const user32 = Module.findExportByName('user32.dll', 'EnumDisplayDevicesW');
         if (user32) {
             Interceptor.attach(user32, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.deviceName = args[0];
                     this.deviceNum = args[1].toInt32();
                     this.displayDevice = args[2];
                     this.flags = args[3].toInt32();
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (
-                        retval.toInt32() !== 0 &&
-                        this.displayDevice &&
-                        !this.displayDevice.isNull()
+                        retval.toInt32() !== 0
+                        && this.displayDevice
+                        && !this.displayDevice.isNull()
                     ) {
                         // Spoof display device information
                         const deviceNameOffset = 4;
@@ -953,12 +952,12 @@ class HwidSpooferEnhanced {
         const enumDisplaySettings = Module.findExportByName('user32.dll', 'EnumDisplaySettingsW');
         if (enumDisplaySettings) {
             Interceptor.attach(enumDisplaySettings, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.deviceName = args[0];
                     this.modeNum = args[1].toInt32();
                     this.devMode = args[2];
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (retval.toInt32() !== 0 && this.devMode && !this.devMode.isNull()) {
                         // Spoof display mode settings
                         this.devMode.add(102).writeU32(1920); // dmPelsWidth
@@ -982,11 +981,11 @@ class HwidSpooferEnhanced {
         const getMonitorInfo = Module.findExportByName('user32.dll', 'GetMonitorInfoW');
         if (getMonitorInfo) {
             Interceptor.attach(getMonitorInfo, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.monitor = args[0];
                     this.monitorInfo = args[1];
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (retval.toInt32() !== 0 && this.monitorInfo && !this.monitorInfo.isNull()) {
                         // Spoof monitor boundaries and info
                         const rcMonitor = this.monitorInfo.add(4);
@@ -1018,28 +1017,35 @@ class HwidSpooferEnhanced {
         const gdi32 = Module.findExportByName('gdi32.dll', 'GetDeviceCaps');
         if (gdi32) {
             Interceptor.attach(gdi32, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.hdc = args[0];
                     this.index = args[1].toInt32();
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     const { index } = this;
                     if (index === 12 || index === 14 || index === 88 || index === 90) {
                         // HORZRES, VERTRES, HORZSIZE, VERTSIZE
                         let spoofedValue = 0;
                         switch (index) {
-                            case 12:
+                            case 12: {
                                 spoofedValue = 1920;
-                                break; // HORZRES
-                            case 14:
+                                break;
+                            } // HORZRES
+                            case 14: {
                                 spoofedValue = 1080;
-                                break; // VERTRES
-                            case 88:
+                                break;
+                            } // VERTRES
+                            case 88: {
                                 spoofedValue = 510;
-                                break; // HORZSIZE (mm)
-                            case 90:
+                                break;
+                            } // HORZSIZE (mm)
+                            case 90: {
                                 spoofedValue = 287;
-                                break; // VERTSIZE (mm)
+                                break;
+                            }
+                            default: {
+                                break;
+                            }
                         }
 
                         if (spoofedValue > 0) {
@@ -1071,17 +1077,17 @@ class HwidSpooferEnhanced {
         const iphlpapi = Module.findExportByName('iphlpapi.dll', 'GetAdaptersAddresses');
         if (iphlpapi) {
             Interceptor.attach(iphlpapi, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.family = args[0].toInt32();
                     this.flags = args[1].toInt32();
                     this.adapterAddresses = args[3];
                     this.sizePointer = args[4];
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (
-                        retval.toInt32() === 0 &&
-                        this.adapterAddresses &&
-                        !this.adapterAddresses.isNull()
+                        retval.toInt32() === 0
+                        && this.adapterAddresses
+                        && !this.adapterAddresses.isNull()
                     ) {
                         const addresses = this.adapterAddresses.readPointer();
                         if (addresses && !addresses.isNull()) {
@@ -1098,7 +1104,7 @@ class HwidSpooferEnhanced {
 
                             // Spoof physical address (MAC)
                             const physicalAddressPtr = addresses.add(24);
-                            const spoofedMac = new Uint8Array([0x00, 0x15, 0x5d, 0x01, 0x02, 0x03]);
+                            const spoofedMac = new Uint8Array([0x00, 0x15, 0x5D, 0x01, 0x02, 0x03]);
                             physicalAddressPtr.writeByteArray(spoofedMac);
                             addresses.add(32).writeU32(6); // PhysicalAddressLength
 
@@ -1118,12 +1124,12 @@ class HwidSpooferEnhanced {
         const getIfTable = Module.findExportByName('iphlpapi.dll', 'GetIfTable');
         if (getIfTable) {
             Interceptor.attach(getIfTable, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.ifTable = args[0];
                     this.sizePtr = args[1];
                     this.sort = args[2].toInt32();
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (retval.toInt32() === 0 && this.ifTable && !this.ifTable.isNull()) {
                         const table = this.ifTable.readPointer();
                         if (table && !table.isNull()) {
@@ -1131,13 +1137,13 @@ class HwidSpooferEnhanced {
                             if (numEntries > 0) {
                                 // Spoof first interface entry
                                 const firstEntry = table.add(4);
-                                firstEntry.add(4).writeU32(1000000000); // dwSpeed (1 Gbps)
+                                firstEntry.add(4).writeU32(1_000_000_000); // dwSpeed (1 Gbps)
                                 firstEntry.add(8).writeU32(1500); // dwMtu
                                 firstEntry.add(16).writeU32(6); // dwPhysAddrLen
 
                                 const macOffset = firstEntry.add(20);
                                 const spoofedMac = new Uint8Array([
-                                    0x00, 0x15, 0x5d, 0x01, 0x02, 0x03,
+                                    0x00, 0x15, 0x5D, 0x01, 0x02, 0x03,
                                 ]);
                                 macOffset.writeByteArray(spoofedMac);
 
@@ -1158,14 +1164,14 @@ class HwidSpooferEnhanced {
         const regOpenKey = Module.findExportByName('advapi32.dll', 'RegOpenKeyExW');
         if (regOpenKey) {
             Interceptor.attach(regOpenKey, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const keyName = args[1].readUtf16String();
                     if (keyName?.includes('NetworkCards')) {
                         this.networkCardQuery = true;
                         this.keyName = keyName;
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.networkCardQuery && retval.toInt32() === 0) {
                         send({
                             type: 'bypass',
@@ -1182,15 +1188,15 @@ class HwidSpooferEnhanced {
         const wlanapi = Module.findExportByName('wlanapi.dll', 'WlanEnumInterfaces');
         if (wlanapi) {
             Interceptor.attach(wlanapi, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.clientHandle = args[0];
                     this.interfaceList = args[2];
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (
-                        retval.toInt32() === 0 &&
-                        this.interfaceList &&
-                        !this.interfaceList.isNull()
+                        retval.toInt32() === 0
+                        && this.interfaceList
+                        && !this.interfaceList.isNull()
                     ) {
                         const listPtr = this.interfaceList.readPointer();
                         if (listPtr && !listPtr.isNull()) {
@@ -1211,29 +1217,29 @@ class HwidSpooferEnhanced {
                                             const originalDesc = originalDescPtr.readUtf16String();
 
                                             // Spoof wireless adapter description
-                                            const spoofedDesc =
-                                                'Generic 802.11 Wireless LAN Adapter';
-                                            const spoofedDescPtr =
-                                                Memory.allocUtf16String(spoofedDesc);
+                                            const spoofedDesc
+                                                = 'Generic 802.11 Wireless LAN Adapter';
+                                            const spoofedDescPtr
+                                                = Memory.allocUtf16String(spoofedDesc);
                                             descPtr.writePointer(spoofedDescPtr);
 
                                             this.originalDescription = originalDesc;
                                             this.spoofedDescription = spoofedDesc;
                                         }
-                                    } catch (e) {
+                                    } catch (error) {
                                         // Description manipulation failed - log error
                                         send({
                                             type: 'debug',
                                             target: 'wireless_interface',
                                             action: 'description_manipulation_failed',
-                                            error: e.toString(),
+                                            error: error.toString(),
                                         });
                                     }
                                 }
 
                                 // Generic WLAN GUID
                                 const spoofedGuid = new Uint8Array([
-                                    0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x11, 0x22,
+                                    0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0xDE, 0xF0, 0x11, 0x22,
                                     0x33, 0x44, 0x55, 0x66, 0x77, 0x88,
                                 ]);
                                 guidPtr.writeByteArray(spoofedGuid);
@@ -1266,14 +1272,14 @@ class HwidSpooferEnhanced {
         const kernel32 = Module.findExportByName('kernel32.dll', 'GlobalMemoryStatusEx');
         if (kernel32) {
             Interceptor.attach(kernel32, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.memoryStatus = args[0];
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (
-                        retval.toInt32() !== 0 &&
-                        this.memoryStatus &&
-                        !this.memoryStatus.isNull()
+                        retval.toInt32() !== 0
+                        && this.memoryStatus
+                        && !this.memoryStatus.isNull()
                     ) {
                         // Spoof memory statistics
                         const GB = 1024 * 1024 * 1024;
@@ -1307,17 +1313,17 @@ class HwidSpooferEnhanced {
         );
         if (getLogicalProcessorInfo) {
             Interceptor.attach(getLogicalProcessorInfo, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.relationshipType = args[0].toInt32();
                     this.buffer = args[1];
                     this.returnedLength = args[2];
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (
-                        retval.toInt32() !== 0 &&
-                        this.buffer &&
-                        !this.buffer.isNull() &&
-                        this.relationshipType === 3
+                        retval.toInt32() !== 0
+                        && this.buffer
+                        && !this.buffer.isNull()
+                        && this.relationshipType === 3
                     ) {
                         const cacheInfo = this.buffer.readPointer();
                         if (cacheInfo && !cacheInfo.isNull()) {
@@ -1344,13 +1350,13 @@ class HwidSpooferEnhanced {
         if (virtualAlloc) {
             let allocationCount = 0;
             Interceptor.attach(virtualAlloc, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.address = args[0];
                     this.size = args[1].toInt32();
                     this.allocationType = args[2].toInt32();
                     this.protect = args[3].toInt32();
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (!retval.isNull()) {
                         allocationCount++;
 
@@ -1378,18 +1384,18 @@ class HwidSpooferEnhanced {
         );
         if (getNumaNodeProcessorMask) {
             Interceptor.attach(getNumaNodeProcessorMask, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.node = args[0].toInt32();
                     this.processorMask = args[1];
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (
-                        retval.toInt32() !== 0 &&
-                        this.processorMask &&
-                        !this.processorMask.isNull()
+                        retval.toInt32() !== 0
+                        && this.processorMask
+                        && !this.processorMask.isNull()
                     ) {
                         // Spoof NUMA node processor affinity
-                        this.processorMask.writeU64(0xff); // All 8 cores on node 0
+                        this.processorMask.writeU64(0xFF); // All 8 cores on node 0
 
                         send({
                             type: 'bypass',
@@ -1417,7 +1423,7 @@ class HwidSpooferEnhanced {
         const pdh = Module.findExportByName('pdh.dll', 'PdhOpenQueryW');
         if (pdh) {
             Interceptor.attach(pdh, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.dataSource = args[0];
                     this.userData = args[1];
                     this.query = args[2];
@@ -1438,37 +1444,37 @@ class HwidSpooferEnhanced {
         const ntdll = Module.findExportByName('ntdll.dll', 'NtQuerySystemInformation');
         if (ntdll) {
             Interceptor.attach(ntdll, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.infoClass = args[0].toInt32();
                     this.infoBuffer = args[1];
                     this.infoLength = args[2].toInt32();
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (retval.toInt32() === 0 && this.infoBuffer && !this.infoBuffer.isNull()) {
                         if (this.infoClass === 8) {
                             // SystemProcessorPerformanceInformation
                             // Spoof CPU performance counters
                             const performanceInfo = this.infoBuffer;
-                            performanceInfo.writeU64(1000000); // IdleTime (normalized)
-                            performanceInfo.add(8).writeU64(2000000); // KernelTime
-                            performanceInfo.add(16).writeU64(3000000); // UserTime
+                            performanceInfo.writeU64(1_000_000); // IdleTime (normalized)
+                            performanceInfo.add(8).writeU64(2_000_000); // KernelTime
+                            performanceInfo.add(16).writeU64(3_000_000); // UserTime
 
                             send({
                                 type: 'bypass',
                                 target: 'cpu_performance',
                                 action: 'cpu_performance_spoofed',
-                                idle_time: 1000000,
-                                kernel_time: 2000000,
-                                user_time: 3000000,
+                                idle_time: 1_000_000,
+                                kernel_time: 2_000_000,
+                                user_time: 3_000_000,
                             });
                         } else if (this.infoClass === 2) {
                             // SystemPerformanceInformation
                             // Spoof system performance metrics
                             const sysPerf = this.infoBuffer;
-                            sysPerf.writeU64(500000); // IdleProcessTime
-                            sysPerf.add(8).writeU64(100000); // IoReadTransferCount
-                            sysPerf.add(16).writeU64(50000); // IoWriteTransferCount
-                            sysPerf.add(24).writeU64(150000); // IoOtherTransferCount
+                            sysPerf.writeU64(500_000); // IdleProcessTime
+                            sysPerf.add(8).writeU64(100_000); // IoReadTransferCount
+                            sysPerf.add(16).writeU64(50_000); // IoWriteTransferCount
+                            sysPerf.add(24).writeU64(150_000); // IoOtherTransferCount
                             sysPerf.add(32).writeU32(1000); // IoReadOperationCount
                             sysPerf.add(36).writeU32(500); // IoWriteOperationCount
                             sysPerf.add(40).writeU32(250); // IoOtherOperationCount
@@ -1490,24 +1496,24 @@ class HwidSpooferEnhanced {
         const diskPerf = Module.findExportByName('kernel32.dll', 'DeviceIoControl');
         if (diskPerf) {
             Interceptor.attach(diskPerf, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.device = args[0];
                     this.ioControlCode = args[1].toInt32();
                     this.outputBuffer = args[4];
                     this.outputBufferSize = args[5].toInt32();
 
                     // Check for disk performance IOCTL
-                    if (this.ioControlCode === 0x00070020) {
+                    if (this.ioControlCode === 0x00_07_00_20) {
                         // IOCTL_DISK_PERFORMANCE
                         this.diskPerfQuery = true;
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (
-                        this.diskPerfQuery &&
-                        retval.toInt32() !== 0 &&
-                        this.outputBuffer &&
-                        !this.outputBuffer.isNull()
+                        this.diskPerfQuery
+                        && retval.toInt32() !== 0
+                        && this.outputBuffer
+                        && !this.outputBuffer.isNull()
                     ) {
                         // Spoof disk performance statistics
                         this.outputBuffer.writeU64(1000); // BytesRead
@@ -1536,16 +1542,16 @@ class HwidSpooferEnhanced {
         const iphlpapi = Module.findExportByName('iphlpapi.dll', 'GetIfEntry2');
         if (iphlpapi) {
             Interceptor.attach(iphlpapi, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.ifRow = args[0];
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (retval.toInt32() === 0 && this.ifRow && !this.ifRow.isNull()) {
                         // Spoof network interface statistics
                         const statsOffset = 48; // Approximate offset to statistics
-                        this.ifRow.add(statsOffset).writeU64(1000000); // InOctets
-                        this.ifRow.add(statsOffset + 8).writeU64(500000); // OutOctets
-                        this.ifRow.add(statsOffset + 16).writeU64(10000); // InUcastPkts
+                        this.ifRow.add(statsOffset).writeU64(1_000_000); // InOctets
+                        this.ifRow.add(statsOffset + 8).writeU64(500_000); // OutOctets
+                        this.ifRow.add(statsOffset + 16).writeU64(10_000); // InUcastPkts
                         this.ifRow.add(statsOffset + 24).writeU64(5000); // OutUcastPkts
                         this.ifRow.add(statsOffset + 32).writeU64(100); // InErrors
                         this.ifRow.add(statsOffset + 40).writeU64(50); // OutErrors
@@ -1554,9 +1560,9 @@ class HwidSpooferEnhanced {
                             type: 'bypass',
                             target: 'network_performance',
                             action: 'network_stats_spoofed',
-                            bytes_in: 1000000,
-                            bytes_out: 500000,
-                            packets_in: 10000,
+                            bytes_in: 1_000_000,
+                            bytes_out: 500_000,
+                            packets_in: 10_000,
                             packets_out: 5000,
                         });
                     }
@@ -1568,14 +1574,14 @@ class HwidSpooferEnhanced {
         const powerQuery = Module.findExportByName('powrprof.dll', 'PowerReadACValue');
         if (powerQuery) {
             Interceptor.attach(powerQuery, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.rootGuid = args[0];
                     this.schemeGuid = args[1];
                     this.settingGuid = args[3];
                     this.buffer = args[5];
                     this.bufferSize = args[6];
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (retval.toInt32() === 0 && this.buffer && !this.buffer.isNull()) {
                         // Spoof power management settings
                         this.buffer.writeU32(100); // Maximum performance setting
@@ -1613,8 +1619,8 @@ if (hwidSpoofer && typeof hwidSpoofer.initializeSpoofing === 'function') {
         // Set up periodic spoofing refresh
         setInterval(() => {
             if (hwidSpoofer.spoofingState) {
-                hwidSpoofer.spoofingState.refreshCount =
-                    (hwidSpoofer.spoofingState.refreshCount || 0) + 1;
+                hwidSpoofer.spoofingState.refreshCount
+                    = (hwidSpoofer.spoofingState.refreshCount || 0) + 1;
                 send({
                     type: 'status',
                     message: 'Hardware spoofing state refreshed',
@@ -1622,13 +1628,13 @@ if (hwidSpoofer && typeof hwidSpoofer.initializeSpoofing === 'function') {
                     active_bypasses: hwidSpoofer.spoofingState.bypassCount || 0,
                 });
             }
-        }, 30000); // Refresh every 30 seconds
-    } catch (e) {
+        }, 30_000); // Refresh every 30 seconds
+    } catch (error) {
         send({
             type: 'error',
             message: 'Failed to initialize hardware spoofing',
-            error: e.toString(),
-            stack: e.stack || 'No stack available',
+            error: error.toString(),
+            stack: error.stack || 'No stack available',
         });
     }
 } else {
@@ -1647,8 +1653,8 @@ if (hwidSpoofer && typeof hwidSpoofer.initializeSpoofing === 'function') {
         // Set up periodic spoofing refresh
         setInterval(() => {
             if (hwidSpoofer.spoofingState) {
-                hwidSpoofer.spoofingState.refreshCount =
-                    (hwidSpoofer.spoofingState.refreshCount || 0) + 1;
+                hwidSpoofer.spoofingState.refreshCount
+                    = (hwidSpoofer.spoofingState.refreshCount || 0) + 1;
                 send({
                     type: 'status',
                     message: 'Hardware spoofing state refreshed',
@@ -1656,13 +1662,13 @@ if (hwidSpoofer && typeof hwidSpoofer.initializeSpoofing === 'function') {
                     active_bypasses: hwidSpoofer.spoofingState.bypassCount || 0,
                 });
             }
-        }, 30000); // Refresh every 30 seconds
-    } catch (e) {
+        }, 30_000); // Refresh every 30 seconds
+    } catch (error) {
         send({
             type: 'error',
             message: 'Failed to initialize hardware spoofing',
-            error: e.toString(),
-            stack: e.stack || 'No stack available',
+            error: error.toString(),
+            stack: error.stack || 'No stack available',
         });
     }
 } else {

@@ -2919,10 +2919,7 @@ def run_ml_similarity_search(binary_path: str, database: str | None = None) -> d
     try:
         from ...core.analysis import SimilaritySearcher
 
-        searcher_class = SimilaritySearcher
-        if not callable(searcher_class):
-            return {"status": "error", "message": "SimilaritySearcher is not available"}
-        searcher = searcher_class()
+        searcher = SimilaritySearcher()
         if database:
             searcher.load_database(database)
 

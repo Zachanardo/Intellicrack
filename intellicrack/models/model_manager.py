@@ -541,7 +541,7 @@ class ModelManager:
         # Cast to Any to handle both fallback and real repository types
         from typing import cast as type_cast
 
-        repo_any = type_cast(Any, repository)
+        repo_any = type_cast("Any", repository)
         success, message = repo_any.download_model(
             model_id=model_id,
             destination_path=destination_path,
@@ -683,8 +683,8 @@ class ModelManager:
 
                     # Prepare data (assuming training_data has 'features' and 'labels')
                     if hasattr(training_data, "features") and hasattr(training_data, "labels"):
-                        X = getattr(training_data, "features")
-                        y = getattr(training_data, "labels")
+                        X = training_data.features
+                        y = training_data.labels
                     elif isinstance(training_data, dict):
                         X = training_data.get("features", training_data.get("X", []))
                         y = training_data.get("labels", training_data.get("y", []))

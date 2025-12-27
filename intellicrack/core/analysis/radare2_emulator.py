@@ -24,6 +24,7 @@ import z3
 from unicorn import (
     UC_ARCH_ARM,
     UC_ARCH_ARM64,
+    UC_ARCH_MIPS,
     UC_ARCH_X86,
     UC_HOOK_CODE,
     UC_HOOK_MEM_READ,
@@ -31,11 +32,11 @@ from unicorn import (
     UC_MODE_32,
     UC_MODE_64,
     UC_MODE_ARM,
+    UC_MODE_MIPS32,
     UC_PROT_ALL,
 )
 from unicorn.arm64_const import UC_ARM64_REG_PC, UC_ARM64_REG_SP, UC_ARM64_REG_X0
 from unicorn.arm_const import UC_ARM_REG_LR, UC_ARM_REG_PC, UC_ARM_REG_R0, UC_ARM_REG_SP
-from unicorn import UC_ARCH_MIPS, UC_MODE_MIPS32
 from unicorn.x86_const import (
     UC_X86_REG_EAX,
     UC_X86_REG_EBP,

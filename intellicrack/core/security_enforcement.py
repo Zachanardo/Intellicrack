@@ -31,6 +31,7 @@ from pathlib import Path
 from typing import IO, TYPE_CHECKING, Any, cast
 
 from intellicrack.utils.type_safety import validate_type
+
 from ..utils.logger import log_all_methods, log_function_call
 
 
@@ -497,7 +498,9 @@ def _secure_pickle_dumps(
             logger.debug("JSON serialization failed for pickle.dumps: %s. Falling back to original pickle.dumps.", e)
 
     logger.debug("pickle.dumps: object type=%s", type(obj).__name__)
-    return validate_type(sec._original_functions["pickle.dumps"](obj, protocol, fix_imports=fix_imports, buffer_callback=buffer_callback), bytes)
+    return validate_type(
+        sec._original_functions["pickle.dumps"](obj, protocol, fix_imports=fix_imports, buffer_callback=buffer_callback), bytes
+    )
 
 
 @log_function_call

@@ -213,7 +213,7 @@ class ThemidaAnalyzer:
                 if self.binary and hasattr(self.binary, "header"):
                     header = self.binary.header
                     if hasattr(header, "machine") and hasattr(lief, "PE"):
-                        pe_module = getattr(lief, "PE")
+                        pe_module = lief.PE
                         if hasattr(pe_module, "MACHINE_TYPES"):
                             self.is_64bit = header.machine == pe_module.MACHINE_TYPES.AMD64
             except Exception as e:

@@ -21,17 +21,19 @@ from __future__ import annotations
 import json
 import logging
 import os
-from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, Protocol, cast
 
 import yara
+
 from intellicrack.utils.type_safety import get_typed_item, validate_type
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from intellicrack.core.debugging_engine import LicenseDebugger
     from intellicrack.core.process_manipulation import LicenseAnalyzer
 
@@ -42,12 +44,34 @@ class LicenseAnalyzerProtocol(Protocol):
     process_handle: int | None
 
     def enumerate_memory_regions(self) -> list[dict[str, Any]]:
+        """Enumerate all memory regions in the target process.
+
+        Returns:
+            List of dictionaries containing region base, size, and protection info.
+
+        """
         ...
 
     def read_process_memory(self, address: int, size: int) -> bytes | None:
+        """Read memory from the target process at the specified address.
+
+        Args:
+            address: Virtual memory address to read from.
+            size: Number of bytes to read.
+
+        Returns:
+            Bytes read from memory, or None if read fails.
+
+        """
         ...
 
     def enumerate_modules(self) -> list[dict[str, Any]]:
+        """Enumerate all loaded modules in the target process.
+
+        Returns:
+            List of dictionaries containing module name, base address, and size.
+
+        """
         ...
 
 
@@ -66,6 +90,20 @@ class DebuggerProtocol(Protocol):
         *,
         apply_to_all_threads: bool = True,
     ) -> bool:
+        """Set a hardware breakpoint using debug registers.
+
+        Args:
+            address: Memory address for the breakpoint.
+            dr_index: Debug register index (0-3), or -1 for auto-select.
+            access_type: Breakpoint type - "execute", "write", or "readwrite".
+            size: Memory access size in bytes (1, 2, 4, or 8).
+            callback: Function to call when breakpoint triggers.
+            apply_to_all_threads: Whether to apply to all process threads.
+
+        Returns:
+            True if breakpoint was set successfully.
+
+        """
         ...
 
     def set_breakpoint(
@@ -75,10 +113,33 @@ class DebuggerProtocol(Protocol):
         description: str = "",
         condition: str | None = None,
     ) -> bool:
+        """Set a software breakpoint at the specified address.
+
+        Args:
+            address: Memory address for the breakpoint.
+            callback: Function to call when breakpoint triggers.
+            description: Human-readable description of the breakpoint.
+            condition: Optional condition expression for conditional breakpoints.
+
+        Returns:
+            True if breakpoint was set successfully.
+
+        """
         ...
 
     def trace_thread_execution(self, thread_id: int, max_instructions: int = 1000) -> list[dict[str, Any]]:
+        """Trace instruction execution for a specific thread.
+
+        Args:
+            thread_id: Thread identifier to trace.
+            max_instructions: Maximum number of instructions to trace.
+
+        Returns:
+            List of dictionaries containing instruction address, opcode, and operands.
+
+        """
         ...
+
 
 logger = logging.getLogger(__name__)
 
@@ -3313,7 +3374,7 @@ extern "C" {{
                     )
                 else:
                     # Use software breakpoint
-                    description: str = cast(str, bp_data["description"])
+                    description: str = cast("str", bp_data["description"])
                     bp_id = debugger.set_breakpoint(
                         match.offset,
                         description=description,

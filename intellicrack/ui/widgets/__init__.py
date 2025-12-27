@@ -21,13 +21,10 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any
 
+
 if TYPE_CHECKING:
-    from .embedded_terminal_widget import (
-        EmbeddedTerminalWidget as EmbeddedTerminalWidgetType,
-    )
-    from .terminal_session_widget import (
-        TerminalSessionWidget as TerminalSessionWidgetType,
-    )
+    from .embedded_terminal_widget import EmbeddedTerminalWidget as EmbeddedTerminalWidgetType
+    from .terminal_session_widget import TerminalSessionWidget as TerminalSessionWidgetType
 
 logger: logging.Logger = logging.getLogger(__name__)
 

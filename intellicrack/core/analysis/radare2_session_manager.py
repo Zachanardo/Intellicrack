@@ -173,9 +173,7 @@ class R2SessionWrapper:
 
             start_time = time.time()
             try:
-                result: str | dict[str, Any] | list[Any] | None = (
-                    self.r2.cmdj(command) if expect_json else self.r2.cmd(command)
-                )
+                result: str | dict[str, Any] | list[Any] | None = self.r2.cmdj(command) if expect_json else self.r2.cmd(command)
                 execution_time = time.time() - start_time
                 self.metrics.commands_executed += 1
                 self.metrics.last_command_time = execution_time

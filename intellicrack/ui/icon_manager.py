@@ -9,7 +9,6 @@ Licensed under GNU General Public License v3.0
 
 import os
 from pathlib import Path
-
 from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import QIcon

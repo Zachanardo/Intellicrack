@@ -22,9 +22,9 @@ import logging
 from types import ModuleType
 from typing import TYPE_CHECKING, Any
 
+
 if TYPE_CHECKING:
-    from intellicrack.ui import dialogs
-    from intellicrack.ui import widgets
+    from intellicrack.ui import dialogs, widgets
     from intellicrack.ui.comprehensive_integration import (
         ComprehensiveR2Integration,
         cleanup_integration,
@@ -33,22 +33,10 @@ if TYPE_CHECKING:
         integrate_radare2_comprehensive,
     )
     from intellicrack.ui.dashboard_manager import DashboardManager
-    from intellicrack.ui.enhanced_ui_integration import (
-        EnhancedAnalysisDashboard,
-        EnhancedMainWindow,
-        create_enhanced_application,
-    )
+    from intellicrack.ui.enhanced_ui_integration import EnhancedAnalysisDashboard, EnhancedMainWindow, create_enhanced_application
     from intellicrack.ui.main_window import IntellicrackMainWindow
-    from intellicrack.ui.radare2_integration_ui import (
-        R2ConfigurationDialog,
-        R2IntegrationWidget,
-        R2ResultsViewer,
-        create_radare2_tab,
-    )
-    from intellicrack.ui.radare2_ui_manager import (
-        R2UIManager,
-        create_r2_ui_manager,
-    )
+    from intellicrack.ui.radare2_integration_ui import R2ConfigurationDialog, R2IntegrationWidget, R2ResultsViewer, create_radare2_tab
+    from intellicrack.ui.radare2_ui_manager import R2UIManager, create_r2_ui_manager
 
 
 logger = logging.getLogger(__name__)

@@ -16,7 +16,7 @@ const TEST_CONFIG = {
     concurrencyTestEnabled: true,
     timingAnalysisEnabled: true,
     messageValidationEnabled: true,
-    loadTestDuration: 10000, // 10 seconds
+    loadTestDuration: 10_000, // 10 seconds
     maxConcurrentMessages: 1000,
     stressTestMessageCount: 5000,
     validationTimeoutMs: 5000,
@@ -103,21 +103,21 @@ function recordTestResult(testName, passed, latency, details) {
     if (latency !== undefined) {
         TEST_RESULTS.minLatency = Math.min(TEST_RESULTS.minLatency, latency);
         TEST_RESULTS.maxLatency = Math.max(TEST_RESULTS.maxLatency, latency);
-        TEST_RESULTS.averageLatency =
-            (TEST_RESULTS.averageLatency * (TEST_RESULTS.totalTests - 1) + latency) /
-            TEST_RESULTS.totalTests;
+        TEST_RESULTS.averageLatency
+            = (TEST_RESULTS.averageLatency * (TEST_RESULTS.totalTests - 1) + latency)
+            / TEST_RESULTS.totalTests;
     }
 
     TEST_RESULTS.testDetails.push({
         name: testName,
-        passed: passed,
-        latency: latency,
-        details: details,
+        passed,
+        latency,
+        details,
         timestamp: Date.now(),
     });
 }
 
-function encryptMessage(message, key = 0xdeadbeef) {
+function encryptMessage(message, key = 0xDE_AD_BE_EF) {
     const messageStr = JSON.stringify(message);
     let encrypted = '';
     for (let i = 0; i < messageStr.length; i++) {
@@ -279,7 +279,9 @@ function runStressTests() {
                     },
                 },
             },
-            array_data: new Array(50).fill(0).map((_, idx) => `item_${idx}`),
+            array_data: Array.from({ length: 50 })
+                .fill(0)
+                .map((_, idx) => `item_${idx}`),
             timestamp: Date.now(),
         };
 
@@ -320,7 +322,7 @@ function runErrorInjectionTests() {
             type: 'info',
             target: 'error_test',
             action: 'oversized_test',
-            huge_payload: generateTestData(10000),
+            huge_payload: generateTestData(10_000),
         },
         null, // Null message
         undefined, // Undefined message
@@ -341,14 +343,7 @@ function runErrorInjectionTests() {
             }
 
             const validation = validateMessage(invalidMsg);
-            if (!validation.valid) {
-                recordTestResult(
-                    `error_injection_${index}`,
-                    true,
-                    0,
-                    `Correctly rejected invalid message: ${validation.error}`
-                );
-            } else {
+            if (validation.valid) {
                 send(invalidMsg);
                 recordTestResult(
                     `error_injection_${index}`,
@@ -357,6 +352,13 @@ function runErrorInjectionTests() {
                     'Invalid message was not rejected'
                 );
                 TEST_RESULTS.validationFailures++;
+            } else {
+                recordTestResult(
+                    `error_injection_${index}`,
+                    true,
+                    0,
+                    `Correctly rejected invalid message: ${validation.error}`
+                );
             }
         } catch (error) {
             recordTestResult(
@@ -386,7 +388,7 @@ function runIntegrationTests() {
             function_name: `TestFunction${index}`,
             original_value: `original_${index}`,
             bypassed_value: `bypassed_${index}`,
-            hook_address: `0x${(0x12345678 + index * 0x1000).toString(16)}`,
+            hook_address: `0x${(0x12_34_56_78 + index * 0x10_00).toString(16)}`,
             return_value: `modified_return_${index}`,
             parameters: [`param1_${index}`, `param2_${index}`],
             integration_test: true,
@@ -466,9 +468,9 @@ function runTimingAnalysisTests() {
             send(testMessage);
         });
 
-        const withinExpectedRange =
-            latency >= MESSAGE_VALIDATION_RULES.min_response_time_ms &&
-            latency <= MESSAGE_VALIDATION_RULES.max_response_time_ms;
+        const withinExpectedRange
+            = latency >= MESSAGE_VALIDATION_RULES.min_response_time_ms
+            && latency <= MESSAGE_VALIDATION_RULES.max_response_time_ms;
 
         recordTestResult(
             `timing_${test.name}`,
@@ -534,7 +536,7 @@ function runComprehensiveTestSuite() {
             },
         },
         test_configuration: TEST_CONFIG,
-        production_ready: successRate >= 95.0 && TEST_RESULTS.validationFailures === 0,
+        production_ready: successRate >= 95 && TEST_RESULTS.validationFailures === 0,
         recommendations: generateRecommendations(successRate),
         timestamp: Date.now(),
     };
@@ -549,7 +551,7 @@ function runComprehensiveTestSuite() {
 function generateRecommendations(successRate) {
     const recommendations = [];
 
-    if (successRate < 95.0) {
+    if (successRate < 95) {
         recommendations.push(
             'Success rate below production threshold (95%). Review failed test details.'
         );

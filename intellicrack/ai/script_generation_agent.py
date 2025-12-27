@@ -29,7 +29,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Protocol, cast
+from typing import TYPE_CHECKING, Any, Protocol, TypedDict
 
 import lief
 import lief.ELF
@@ -51,6 +51,45 @@ from ..core.logging.audit_logger import AuditLogger
 
 
 logger = get_logger(__name__)
+
+
+class NetworkStringsResult(TypedDict):
+    """Result from network string analysis."""
+
+    strings: list[str]
+    endpoints: list[str]
+    protocols: list[str]
+    count: int
+
+
+class NetworkCodeAnalysisResult(TypedDict):
+    """Result from network code pattern analysis."""
+
+    apis: list[str]
+    found: bool
+
+
+class BinaryFormatNetworkResult(TypedDict):
+    """Result from binary format networking analysis."""
+
+    has_network: bool
+    endpoints: list[str]
+    protocols: list[str]
+    indicators: list[str]
+
+
+class NetworkAnalysisResult(TypedDict):
+    """Complete network analysis result."""
+
+    has_network: bool
+    binary_path: str
+    binary_size: int
+    endpoints: list[str]
+    protocols: list[str]
+    network_apis: list[str]
+    strings_found: list[str]
+    imports_found: list[str]
+    confidence: float
 
 
 class OrchestratorProtocol(Protocol):
@@ -966,28 +1005,28 @@ class AIAgent:
                 network_indicators.extend(network_imports)
                 logger.info("Found %s network-related imports in %s", len(network_imports), binary_path)
 
-            if network_strings := self._analyze_network_strings(binary_path):
-                strings_found.extend(cast("list[str]", network_strings.get("strings", [])))
-                endpoints_found.extend(cast("list[str]", network_strings.get("endpoints", [])))
-                protocols_found.extend(cast("list[str]", network_strings.get("protocols", [])))
-                if network_strings.get("count", 0) > 0:
-                    has_network = True
-                    network_indicators.extend(cast("list[str]", network_strings.get("strings", [])))
-                logger.info("Found %s network-related strings in %s", network_strings.get("count", 0), binary_path)
+            network_strings = self._analyze_network_strings(binary_path)
+            strings_found.extend(network_strings["strings"])
+            endpoints_found.extend(network_strings["endpoints"])
+            protocols_found.extend(network_strings["protocols"])
+            if network_strings["count"] > 0:
+                has_network = True
+                network_indicators.extend(network_strings["strings"])
+            logger.info("Found %s network-related strings in %s", network_strings["count"], binary_path)
 
             code_analysis = self._analyze_network_code_patterns(binary_path)
-            if code_analysis.get("found", False):
-                network_apis_found.extend(cast("list[str]", code_analysis.get("apis", [])))
+            if code_analysis["found"]:
+                network_apis_found.extend(code_analysis["apis"])
                 has_network = True
-                network_indicators.extend(cast("list[str]", code_analysis.get("apis", [])))
-                logger.info("Found %s network API usage patterns in %s", len(code_analysis.get("apis", [])), binary_path)
+                network_indicators.extend(code_analysis["apis"])
+                logger.info("Found %s network API usage patterns in %s", len(code_analysis["apis"]), binary_path)
 
             binary_format_analysis = self._analyze_binary_format_networking(binary_path)
-            if binary_format_analysis.get("has_network", False):
+            if binary_format_analysis["has_network"]:
                 has_network = True
-                endpoints_found.extend(cast("list[str]", binary_format_analysis.get("endpoints", [])))
-                protocols_found.extend(cast("list[str]", binary_format_analysis.get("protocols", [])))
-                network_indicators.extend(cast("list[str]", binary_format_analysis.get("indicators", [])))
+                endpoints_found.extend(binary_format_analysis["endpoints"])
+                protocols_found.extend(binary_format_analysis["protocols"])
+                network_indicators.extend(binary_format_analysis["indicators"])
 
             result["has_network"] = has_network
 
@@ -998,15 +1037,13 @@ class AIAgent:
                 confidence_factors += 0.3
             if result["network_apis"]:
                 confidence_factors += 0.2
-            if binary_format_analysis.get("has_network"):
+            if binary_format_analysis["has_network"]:
                 confidence_factors += 0.1
 
             result["confidence"] = min(1.0, confidence_factors)
 
-            endpoints_list: list[str] = cast("list[str]", result["endpoints"])
-            protocols_list: list[str] = cast("list[str]", result["protocols"])
-            result["endpoints"] = list(set(endpoints_list))
-            result["protocols"] = list(set(protocols_list))
+            result["endpoints"] = list(set(endpoints_found))
+            result["protocols"] = list(set(protocols_found))
 
             if result["has_network"]:
                 logger.info("Network activity detected in %s with confidence %.2f", binary_path, result["confidence"])
@@ -1195,7 +1232,7 @@ class AIAgent:
             "libcurl",
         ]
 
-    def _analyze_network_strings(self, binary_path: str) -> dict[str, Any]:
+    def _analyze_network_strings(self, binary_path: str) -> NetworkStringsResult:
         """Analyze strings for network-related content.
 
         Args:
@@ -1210,7 +1247,7 @@ class AIAgent:
             protocols_list: list[str] = []
             count = 0
 
-            result: dict[str, Any] = {
+            result: NetworkStringsResult = {
                 "strings": strings_list,
                 "endpoints": endpoints_list,
                 "protocols": protocols_list,
@@ -1237,7 +1274,7 @@ class AIAgent:
             logger.debug("String analysis failed for %s: %s", binary_path, e, exc_info=True)
             return {"strings": [], "endpoints": [], "protocols": [], "count": 0}
 
-    def _extract_urls(self, text_content: str, result: dict[str, Any]) -> None:
+    def _extract_urls(self, text_content: str, result: NetworkStringsResult) -> None:
         import re
 
         url_patterns = [
@@ -1257,7 +1294,7 @@ class AIAgent:
                         protocol = match.split("://")[0].upper()
                         result["protocols"].append(protocol)
 
-    def _extract_domains(self, text_content: str, result: dict[str, Any]) -> None:
+    def _extract_domains(self, text_content: str, result: NetworkStringsResult) -> None:
         import re
 
         domain_patterns = [
@@ -1284,7 +1321,7 @@ class AIAgent:
                     result["endpoints"].append(domain)
                     result["count"] += 1
 
-    def _extract_protocols(self, text_content: str, result: dict[str, Any]) -> None:
+    def _extract_protocols(self, text_content: str, result: NetworkStringsResult) -> None:
         import re
 
         protocol_patterns = [
@@ -1304,7 +1341,7 @@ class AIAgent:
                 result["protocols"].append(match.upper())
                 result["count"] += 1
 
-    def _extract_network_keywords(self, text_content: str, result: dict[str, Any]) -> None:
+    def _extract_network_keywords(self, text_content: str, result: NetworkStringsResult) -> None:
         network_keywords = [
             "User-Agent",
             "Content-Type",
@@ -1326,14 +1363,14 @@ class AIAgent:
                 result["strings"].append(keyword)
                 result["count"] += 1
 
-    def _analyze_network_code_patterns(self, binary_path: str) -> dict[str, Any]:
+    def _analyze_network_code_patterns(self, binary_path: str) -> NetworkCodeAnalysisResult:
         """Analyze code patterns for network functionality.
 
         Args:
-            binary_path: Description.
+            binary_path: Path to binary file for network code pattern analysis.
 
         Returns:
-            Description of return value.
+            Dictionary with found flag and list of API patterns detected.
         """
         try:
             apis_found: list[str] = []
@@ -1370,17 +1407,17 @@ class AIAgent:
             logger.debug("Code pattern analysis failed for %s: %s", binary_path, e, exc_info=True)
             return {"found": False, "apis": []}
 
-    def _analyze_binary_format_networking(self, binary_path: str) -> dict[str, Any]:
+    def _analyze_binary_format_networking(self, binary_path: str) -> BinaryFormatNetworkResult:
         """Analyze binary format specific networking features.
 
         Args:
-            binary_path: Description.
+            binary_path: Path to binary file for format-specific network analysis.
 
         Returns:
-            Description of return value.
+            Dictionary with network presence flag and detected endpoints/protocols.
         """
         try:
-            result = {"has_network": False, "endpoints": [], "protocols": [], "indicators": []}
+            result: BinaryFormatNetworkResult = {"has_network": False, "endpoints": [], "protocols": [], "indicators": []}
             file_ext = Path(binary_path).suffix.lower()
 
             if file_ext in [".exe", ".dll"]:
@@ -1393,16 +1430,12 @@ class AIAgent:
             logger.debug("Binary format analysis failed for %s: %s", binary_path, e, exc_info=True)
             return {"has_network": False, "endpoints": [], "protocols": [], "indicators": []}
 
-    def _analyze_pe_format(self, binary_path: str, result: dict[str, Any]) -> None:
+    def _analyze_pe_format(self, binary_path: str, result: BinaryFormatNetworkResult) -> None:
         """Analyze PE-specific networking features.
 
         Args:
-            binary_path: Description.
-            result: Description.
-            Any]: Description.
-
-        Returns:
-            Description of return value.
+            binary_path: Path to PE binary file.
+            result: Result dictionary to populate with network indicators.
         """
         try:
             import pefile
@@ -1426,16 +1459,12 @@ class AIAgent:
         except Exception as e:
             logger.debug("PE analysis failed: %s", e, exc_info=True)
 
-    def _analyze_elf_format(self, binary_path: str, result: dict[str, Any]) -> None:
+    def _analyze_elf_format(self, binary_path: str, result: BinaryFormatNetworkResult) -> None:
         """Analyze ELF-specific networking features.
 
         Args:
-            binary_path: Description.
-            result: Description.
-            Any]: Description.
-
-        Returns:
-            Description of return value.
+            binary_path: Path to ELF binary file.
+            result: Result dictionary to populate with network indicators.
         """
         try:
             binary = lief.parse(binary_path)

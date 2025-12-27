@@ -1571,21 +1571,26 @@ def get_tf() -> object:
     """Get TensorFlow module (real or fallback)."""
     return tf
 
+
 def get_keras() -> object:
     """Get Keras module (real or fallback)."""
     return keras_module
+
 
 def get_layers() -> object:
     """Get layers module (real or fallback)."""
     return layers_module
 
+
 def get_models() -> object:
     """Get models module (real or fallback)."""
     return models_module
 
+
 def get_optimizers() -> object:
     """Get optimizers module (real or fallback)."""
     return optimizers_module
+
 
 # Export all TensorFlow objects and availability flag
 __all__ = [

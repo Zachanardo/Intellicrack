@@ -21,7 +21,6 @@ import os
 import sys
 from typing import TYPE_CHECKING, cast
 
-from intellicrack.utils.type_safety import validate_type
 from intellicrack.handlers.pyqt6_handler import (
     HAS_PYQT as HAS_QT,
     QDialog,
@@ -38,10 +37,10 @@ from intellicrack.handlers.pyqt6_handler import (
     pyqtSignal,
 )
 from intellicrack.utils.logger import logger
+from intellicrack.utils.type_safety import validate_type
 
-if TYPE_CHECKING:
-    from ...utils.system.file_resolution import FileResolver
-    from ...utils.system.program_discovery import ProgramDiscoveryEngine, ProgramInfo
+from ...utils.system.file_resolution import FileResolver
+from ...utils.system.program_discovery import ProgramDiscoveryEngine, ProgramInfo
 
 
 """Smart program selector dialog for choosing target applications."""

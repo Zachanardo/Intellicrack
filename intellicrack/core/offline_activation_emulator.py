@@ -351,7 +351,9 @@ class OfflineActivationEmulator:
         macs: list[str] = []
         if self.wmi_client is not None:
             macs = [
-                str(nic.MACAddress).replace(":", "") for nic in self.wmi_client.Win32_NetworkAdapterConfiguration(IPEnabled=True) if nic.MACAddress
+                str(nic.MACAddress).replace(":", "")
+                for nic in self.wmi_client.Win32_NetworkAdapterConfiguration(IPEnabled=True)
+                if nic.MACAddress
             ]
         return macs
 

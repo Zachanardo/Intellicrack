@@ -54,12 +54,13 @@ from intellicrack.handlers.cryptography_handler import NameOID, hashes, load_pem
 from intellicrack.handlers.sqlite3_handler import sqlite3
 from intellicrack.utils.logger import log_all_methods
 
+
 try:
     from cryptography.hazmat.primitives.asymmetric import (
         dsa,
         ec,
-        ed25519,
         ed448,
+        ed25519,
         rsa as rsa_module,
     )
     from cryptography.x509 import Certificate as X509Certificate
@@ -302,7 +303,7 @@ class CertificateManager:
                     x509.random_serial_number(),
                 )
                 .not_valid_before(datetime.datetime.now(datetime.UTC))
-                .not_valid_after(datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=3650))
+                .not_valid_after(datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=3650))
                 .add_extension(
                     x509.SubjectAlternativeName(
                         [
@@ -391,7 +392,7 @@ class CertificateManager:
                         x509.random_serial_number(),
                     )
                     .not_valid_before(datetime.datetime.now(datetime.UTC))
-                    .not_valid_after(datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=365))
+                    .not_valid_after(datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=365))
                     .add_extension(
                         x509.SubjectAlternativeName(
                             [

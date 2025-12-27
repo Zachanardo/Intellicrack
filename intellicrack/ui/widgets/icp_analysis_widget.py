@@ -109,7 +109,7 @@ class ICPAnalysisWidget(QWidget):
 
         # Title
         title = QLabel("Intellicrack Protection Engine")
-        title.setFont(QFont("Arial", 12, QFont.Bold))
+        title.setFont(QFont("Arial", 12, QFont.Weight.Bold))
         header_layout.addWidget(title)
 
         header_layout.addStretch()
@@ -142,7 +142,7 @@ class ICPAnalysisWidget(QWidget):
         layout.addWidget(self.progress_bar)
 
         # Main content area with splitter
-        splitter = QSplitter(Qt.Horizontal)
+        splitter = QSplitter(Qt.Orientation.Horizontal)
 
         # Left: Detection tree
         detections_group = QGroupBox("Detected Protections")

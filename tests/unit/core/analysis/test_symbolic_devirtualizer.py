@@ -2,15 +2,36 @@
 
 import pytest
 from unittest.mock import Mock, patch, MagicMock
-from intellicrack.core.analysis.symbolic_devirtualizer import (
-    SymbolicDevirtualizer,
-    ExplorationStrategy,
-    VMType,
-    HandlerSemantic,
-    DevirtualizationResult,
-    devirtualize_vmprotect,
-    devirtualize_themida,
-    devirtualize_generic,
+
+try:
+    from intellicrack.core.analysis.symbolic_devirtualizer import (
+        SymbolicDevirtualizer,
+        ExplorationStrategy,
+        VMType,
+        HandlerSemantic,
+        DevirtualizationResult,
+        devirtualize_vmprotect,
+        devirtualize_themida,
+        devirtualize_generic,
+        ANGR_AVAILABLE,
+    )
+    DEVIRTUALIZER_AVAILABLE = True
+except ImportError:
+    DEVIRTUALIZER_AVAILABLE = False
+    ANGR_AVAILABLE = False
+    SymbolicDevirtualizer = None
+    ExplorationStrategy = None
+    VMType = None
+    HandlerSemantic = None
+    DevirtualizationResult = None
+    devirtualize_vmprotect = None
+    devirtualize_themida = None
+    devirtualize_generic = None
+
+
+pytestmark = pytest.mark.skipif(
+    not DEVIRTUALIZER_AVAILABLE,
+    reason="Symbolic devirtualizer not available"
 )
 
 

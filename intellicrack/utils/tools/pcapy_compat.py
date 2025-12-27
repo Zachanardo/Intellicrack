@@ -30,15 +30,15 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 
-scapy_module: ModuleType | None
+scapy_module: ModuleType | None = None
+SCAPY_AVAILABLE: bool = False
 try:
-    import scapy.all as scapy_module
+    import scapy.all as _scapy_all
 
+    scapy_module = _scapy_all
     SCAPY_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in pcapy_compat: %s", e)
-    SCAPY_AVAILABLE = False
-    scapy_module = None
 
 
 class ScapyPacketReader:

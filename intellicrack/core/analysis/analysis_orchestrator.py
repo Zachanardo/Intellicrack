@@ -28,14 +28,10 @@ import tempfile
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from intellicrack.handlers.pyqt6_handler import QObject, pyqtSignal
 
-
-logger = logging.getLogger(__name__)
-
-from ...ai.common_types import ExecutionResult
 from ...ai.qemu_manager import QEMUManager
 from ...utils.tools.ghidra_script_manager import GhidraScript, GhidraScriptManager
 from .binary_analyzer import BinaryAnalyzer
@@ -43,6 +39,11 @@ from .entropy_analyzer import EntropyAnalyzer
 from .multi_format_analyzer import MultiFormatBinaryAnalyzer as MultiFormatAnalyzer
 from .vulnerability_engine import AdvancedVulnerabilityEngine as VulnerabilityEngine
 from .yara_pattern_engine import YaraPatternEngine
+
+if TYPE_CHECKING:
+    from ...ai.common_types import ExecutionResult
+
+logger = logging.getLogger(__name__)
 
 
 class AnalysisPhase(Enum):
@@ -210,8 +211,6 @@ class AnalysisOrchestrator(QObject):
                     phase_result = self._perform_dynamic_analysis(binary_path)
                 elif phase == AnalysisPhase.FINALIZATION:
                     phase_result = self._finalize_analysis(result)
-                else:
-                    phase_result = {"status": "skipped", "reason": "Unknown phase"}
 
                 result.add_result(phase, phase_result)
                 self.phase_completed.emit(phase.value, phase_result)
@@ -660,7 +659,7 @@ class AnalysisOrchestrator(QObject):
 
             # Check if dynamic analysis is available
             if hasattr(self.dynamic_analyzer, "is_available") and callable(getattr(self.dynamic_analyzer, "is_available", None)):
-                is_available_method = getattr(self.dynamic_analyzer, "is_available")
+                is_available_method = self.dynamic_analyzer.is_available
                 if is_available_method():
                     analyze_method = getattr(self.dynamic_analyzer, "analyze", None)
                     if analyze_method is not None and callable(analyze_method):
@@ -669,7 +668,7 @@ class AnalysisOrchestrator(QObject):
             elif hasattr(self.dynamic_analyzer, "run_comprehensive_analysis") and callable(
                 getattr(self.dynamic_analyzer, "run_comprehensive_analysis", None)
             ):
-                run_method = getattr(self.dynamic_analyzer, "run_comprehensive_analysis")
+                run_method = self.dynamic_analyzer.run_comprehensive_analysis
                 if callable(run_method):
                     comprehensive_result: dict[str, Any] = run_method()
                     return comprehensive_result

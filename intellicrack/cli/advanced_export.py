@@ -23,6 +23,7 @@ import csv
 import json
 import logging
 import os
+import xml.etree.ElementTree as StdET
 from datetime import datetime
 from typing import Any, Protocol, TypedDict, Unpack, runtime_checkable
 
@@ -30,7 +31,7 @@ from typing import Any, Protocol, TypedDict, Unpack, runtime_checkable
 try:
     import defusedxml.ElementTree as ET  # noqa: N817
 except ImportError:
-    import xml.etree.ElementTree as ET  # noqa: S405
+    ET = StdET
 
 logger = logging.getLogger(__name__)
 
@@ -60,16 +61,53 @@ except ImportError:
 class WorkbookProtocol(Protocol):
     """Protocol defining the interface for xlsxwriter Workbook objects."""
 
-    def add_worksheet(self, name: str = "") -> "WorksheetProtocol": ...
-    def add_format(self, properties: dict[str, Any] | None = None) -> object: ...
-    def close(self) -> None: ...
+    def add_worksheet(self, name: str = "") -> "WorksheetProtocol":
+        """Add a new worksheet to the workbook.
+
+        Args:
+            name: Optional name for the worksheet.
+
+        Returns:
+            The created worksheet object.
+
+        """
+        ...
+
+    def add_format(self, properties: dict[str, Any] | None = None) -> object:
+        """Create a format object for cell styling.
+
+        Args:
+            properties: Dictionary of format properties.
+
+        Returns:
+            Format object for use with write operations.
+
+        """
+        ...
+
+    def close(self) -> None:
+        """Close the workbook and write to disk."""
+        ...
 
 
 @runtime_checkable
 class WorksheetProtocol(Protocol):
     """Protocol defining the interface for xlsxwriter Worksheet objects."""
 
-    def write(self, row: int, col: int, data: Any, format_obj: object | None = None) -> int: ...
+    def write(self, row: int, col: int, data: Any, format_obj: object | None = None) -> int:
+        """Write data to a cell in the worksheet.
+
+        Args:
+            row: Zero-indexed row number.
+            col: Zero-indexed column number.
+            data: Data to write to the cell.
+            format_obj: Optional format object for cell styling.
+
+        Returns:
+            Integer status code (0 for success).
+
+        """
+        ...
 
 
 class ExportOptions(TypedDict, total=False):
@@ -798,7 +836,7 @@ KEY FINDINGS
 
         return min(score, 100.0)
 
-    def _dict_to_xml(self, data: dict[str, Any] | list[Any] | str | float | bool | None, parent: ET.Element) -> None:
+    def _dict_to_xml(self, data: dict[str, Any] | list[Any] | str | float | bool | None, parent: StdET.Element) -> None:
         """Convert dictionary to XML elements.
 
         Args:

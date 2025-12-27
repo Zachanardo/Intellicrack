@@ -22,8 +22,8 @@ Provides safe imports and fallback implementations when dependencies are missing
 
 import logging
 import sys
-from typing import Any, Callable
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
+from typing import Any
 
 
 logger = logging.getLogger(__name__)

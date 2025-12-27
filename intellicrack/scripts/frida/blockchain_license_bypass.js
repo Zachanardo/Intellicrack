@@ -111,7 +111,7 @@ const BlockchainLicenseBypass = {
     },
 
     // Initialize the bypass system
-    initialize: function () {
+    initialize() {
         send({
             type: 'status',
             target: 'blockchain_license_bypass',
@@ -153,7 +153,7 @@ const BlockchainLicenseBypass = {
     },
 
     // Hook Web3 libraries
-    hookWeb3Libraries: function () {
+    hookWeb3Libraries() {
         // Hook web3.js
         this.hookWeb3JS();
 
@@ -165,13 +165,13 @@ const BlockchainLicenseBypass = {
     },
 
     // Hook web3.js library
-    hookWeb3JS: function () {
+    hookWeb3JS() {
         try {
             // Hook web3.eth.Contract
             const Contract = Module.findExportByName(null, 'Contract');
             if (Contract) {
                 Interceptor.attach(Contract, {
-                    onEnter: function (args) {
+                    onEnter(args) {
                         // Capture contract ABI and address
                         const contractABI = args[0];
                         const contractAddress = args[1];
@@ -203,8 +203,8 @@ const BlockchainLicenseBypass = {
                         type: 'info',
                         target: 'blockchain_license_bypass',
                         action: 'web3js_method_called',
-                        method: method,
-                        params: params,
+                        method,
+                        params,
                     });
 
                     // Intercept license validation calls
@@ -212,24 +212,24 @@ const BlockchainLicenseBypass = {
                         return this.bypassLicenseCall(method, params);
                     }
 
-                    return original_send.apply(this, arguments);
+                    return Reflect.apply(original_send, this, arguments);
                 }.bind(this);
             }
 
             // Hook web3.eth.call
             this.hookWeb3Call();
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'warning',
                 target: 'blockchain_license_bypass',
                 action: 'web3js_not_found',
-                error: e.toString(),
+                error: error.toString(),
             });
         }
     },
 
     // Hook web3.eth.call specifically
-    hookWeb3Call: function () {
+    hookWeb3Call() {
         try {
             // Find and hook eth_call RPC method
             const patterns = ['eth_call', 'eth_sendTransaction', 'eth_sendRawTransaction'];
@@ -242,7 +242,7 @@ const BlockchainLicenseBypass = {
                         type: 'info',
                         target: 'blockchain_license_bypass',
                         action: 'web3_pattern_found',
-                        pattern: pattern,
+                        pattern,
                         address: match.address.toString(),
                     });
 
@@ -250,18 +250,18 @@ const BlockchainLicenseBypass = {
                     this.hookNearbyFunction(match.address, pattern);
                 });
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'blockchain_license_bypass',
                 action: 'web3_call_hook_error',
-                error: e.toString(),
+                error: error.toString(),
             });
         }
     },
 
     // Hook ethers.js library
-    hookEthersJS: function () {
+    hookEthersJS() {
         try {
             // Hook ethers.Contract
             const ethersPatterns = ['ethers.Contract', 'BaseContract', 'Contract.prototype.call'];
@@ -274,7 +274,7 @@ const BlockchainLicenseBypass = {
                         type: 'info',
                         target: 'blockchain_license_bypass',
                         action: 'ethersjs_pattern_found',
-                        pattern: pattern,
+                        pattern,
                     });
                     this.hookEthersContract(match.address);
                 });
@@ -282,18 +282,18 @@ const BlockchainLicenseBypass = {
 
             // Hook provider calls
             this.hookEthersProviders();
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'warning',
                 target: 'blockchain_license_bypass',
                 action: 'ethersjs_not_found',
-                error: e.toString(),
+                error: error.toString(),
             });
         }
     },
 
     // Hook ethers contract methods
-    hookEthersContract: function (address) {
+    hookEthersContract(address) {
         try {
             // Find the actual function address
             const funcAddr = this.findNearestFunction(address);
@@ -302,7 +302,7 @@ const BlockchainLicenseBypass = {
             }
 
             Interceptor.attach(funcAddr, {
-                onEnter: function (args) {
+                onEnter(args) {
                     // Capture contract call arguments
                     const contractAddr = args[0];
                     const methodSelector = args[1];
@@ -337,18 +337,18 @@ const BlockchainLicenseBypass = {
                     }
                 }.bind(this),
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'blockchain_license_bypass',
                 action: 'ethers_hook_error',
-                error: e.toString(),
+                error: error.toString(),
             });
         }
     },
 
     // Hook contract calls generically
-    hookContractCalls: function () {
+    hookContractCalls() {
         // Common contract call patterns
         const patterns = {
             // Solidity function signatures
@@ -370,7 +370,7 @@ const BlockchainLicenseBypass = {
     },
 
     // Hook by function signature
-    hookFunctionSignature: function (name, signature) {
+    hookFunctionSignature(name, signature) {
         try {
             // Search for function signature in memory
             const matches = Memory.scanSync(
@@ -388,15 +388,15 @@ const BlockchainLicenseBypass = {
                 });
 
                 Interceptor.attach(match.address, {
-                    onEnter: function (args) {
+                    onEnter(args) {
                         // Capture function arguments for analysis
                         const argValues = [];
                         for (let i = 0; i < 4 && args[i]; i++) {
                             try {
                                 const val = args[i].readUtf8String();
                                 argValues.push(val);
-                            } catch (e) {
-                                console.log(`[Contract] Arg ${i} not a string: ${e.message}`);
+                            } catch (error) {
+                                console.log(`[Contract] Arg ${i} not a string: ${error.message}`);
                                 argValues.push(args[i].toString());
                             }
                         }
@@ -437,19 +437,19 @@ const BlockchainLicenseBypass = {
 
                 this.state.hooked_contracts.add(name);
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'blockchain_license_bypass',
                 action: 'hook_signature_error',
                 function_name: name,
-                error: e.toString(),
+                error: error.toString(),
             });
         }
     },
 
     // Hook generic contract calls
-    hookGenericContractCalls: function () {
+    hookGenericContractCalls() {
         // Hook JSON-RPC calls
         this.hookJSONRPC();
 
@@ -461,7 +461,7 @@ const BlockchainLicenseBypass = {
     },
 
     // Hook JSON-RPC communication
-    hookJSONRPC: function () {
+    hookJSONRPC() {
         // Hook XMLHttpRequest
         const xhr_send = XMLHttpRequest.prototype.send;
         XMLHttpRequest.prototype.send = function (data) {
@@ -486,12 +486,12 @@ const BlockchainLicenseBypass = {
                             return;
                         }
                     }
-                } catch (e) {
-                    console.log(`[RPC] Data is not valid JSON: ${e.message}`);
+                } catch (error) {
+                    console.log(`[RPC] Data is not valid JSON: ${error.message}`);
                 }
             }
 
-            xhr_send.apply(this, arguments);
+            Reflect.apply(xhr_send, this, arguments);
         }.bind(this);
 
         // Hook fetch API
@@ -499,7 +499,7 @@ const BlockchainLicenseBypass = {
     },
 
     // Hook fetch API for Web3 calls
-    hookFetchAPI: function () {
+    hookFetchAPI() {
         const originalFetch = window.fetch;
         window.fetch = async function (url, options) {
             // Check if this is a blockchain RPC call
@@ -508,7 +508,7 @@ const BlockchainLicenseBypass = {
                     type: 'info',
                     target: 'blockchain_license_bypass',
                     action: 'fetch_blockchain_call',
-                    url: url,
+                    url,
                 });
 
                 // Intercept request body
@@ -523,7 +523,7 @@ const BlockchainLicenseBypass = {
                                 action: 'fetch_license_call_bypassed',
                             });
 
-                            // Return fake successful response
+                            // Return spoofed successful response
                             return new Response(
                                 JSON.stringify({
                                     jsonrpc: '2.0',
@@ -536,21 +536,22 @@ const BlockchainLicenseBypass = {
                                 }
                             );
                         }
-                    } catch (e) {
+                    } catch (error) {
                         // Use e to log JSON parsing failures for blockchain license bypass debugging
+                        const rawBody = typeof options.body === 'string' ? options.body : '';
                         send({
                             type: 'debug',
                             target: 'blockchain_license_bypass',
                             action: 'json_parse_failed',
-                            body_preview: body.slice(0, 100),
-                            error: e.toString(),
+                            body_preview: rawBody.slice(0, 100),
+                            error: error.toString(),
                         });
                     }
                 }
             }
 
             // Call original fetch
-            const response = await originalFetch.apply(this, arguments);
+            const response = await Reflect.apply(originalFetch, this, arguments);
 
             // Intercept response
             if (this.isBlockchainURL(url)) {
@@ -572,8 +573,8 @@ const BlockchainLicenseBypass = {
                             headers: response.headers,
                         });
                     }
-                } catch (e) {
-                    console.log(`[RPC] Data is not valid JSON: ${e.message}`);
+                } catch (error) {
+                    console.log(`[RPC] Data is not valid JSON: ${error.message}`);
                 }
             }
 
@@ -582,7 +583,7 @@ const BlockchainLicenseBypass = {
     },
 
     // Hook blockchain providers
-    hookProviders: function () {
+    hookProviders() {
         // MetaMask
         this.hookMetaMask();
 
@@ -597,7 +598,7 @@ const BlockchainLicenseBypass = {
     },
 
     // Hook MetaMask provider
-    hookMetaMask: function () {
+    hookMetaMask() {
         if (typeof window !== 'undefined' && window.ethereum) {
             send({
                 type: 'info',
@@ -642,7 +643,7 @@ const BlockchainLicenseBypass = {
     },
 
     // Hook wallet APIs
-    hookWalletAPIs: function () {
+    hookWalletAPIs() {
         // Hook wallet signature verification
         this.hookSignatureVerification();
 
@@ -654,7 +655,7 @@ const BlockchainLicenseBypass = {
     },
 
     // Hook signature verification
-    hookSignatureVerification: function () {
+    hookSignatureVerification() {
         // Common signature verification patterns
         const sigPatterns = [
             'ecrecover',
@@ -672,7 +673,7 @@ const BlockchainLicenseBypass = {
                     type: 'info',
                     target: 'blockchain_license_bypass',
                     action: 'signature_pattern_found',
-                    pattern: pattern,
+                    pattern,
                 });
 
                 Interceptor.attach(this.findNearestFunction(match.address), {
@@ -691,14 +692,14 @@ const BlockchainLicenseBypass = {
     },
 
     // Hook NFT ownership checks
-    hookNFTOwnership: function () {
+    hookNFTOwnership() {
         // ERC-721 ownerOf
         this.hookContractMethod('ownerOf', function (retval) {
             // Return user's address
             send({
                 type: 'bypass',
                 target: 'blockchain_license_bypass',
-                action: 'nft_ownership_faked',
+                action: 'nft_ownership_spoofed',
             });
             retval.replace(this.getUserAddress());
         });
@@ -709,14 +710,14 @@ const BlockchainLicenseBypass = {
             send({
                 type: 'bypass',
                 target: 'blockchain_license_bypass',
-                action: 'nft_balance_faked',
+                action: 'nft_balance_spoofed',
             });
             retval.replace(ptr(1));
         });
     },
 
     // Check if a call is license-related
-    isLicenseCall: function (method, params) {
+    isLicenseCall(method, params) {
         // Check method name
         if (
             this.config.contract_patterns.validation_functions.some(func => method.includes(func))
@@ -739,7 +740,7 @@ const BlockchainLicenseBypass = {
         }
 
         // Check function signature (first 4 bytes)
-        const sig = data.substring(0, 10);
+        const sig = data.slice(0, 10);
 
         // Known license function signatures
         const licenseSigs = [
@@ -753,7 +754,7 @@ const BlockchainLicenseBypass = {
     },
 
     // Check if RPC call is license-related
-    isLicenseRPCCall: function (rpc) {
+    isLicenseRPCCall(rpc) {
         if (!rpc.params || !rpc.params[0]) {
             return false;
         }
@@ -771,32 +772,39 @@ const BlockchainLicenseBypass = {
 
     // Get successful license result
     getSuccessfulLicenseResult: rpcCall => {
-        const method = rpcCall.params[0].data.substring(0, 10);
+        const method = rpcCall.params[0].data.slice(0, 10);
 
         // Return appropriate success value based on method
         switch (method) {
-            case '0x1e0263b7': // isLicensed() -> true
+            case '0x1e0263b7': {
+                // isLicensed() -> true
                 return '0x0000000000000000000000000000000000000000000000000000000000000001';
+            }
 
-            case '0x70a08231': // balanceOf() -> large number
+            case '0x70a08231': {
+                // balanceOf() -> large number
                 return '0x00000000000000000000000000000000000000000000000000000000ffffffff';
+            }
 
-            case '0x91d14854': // hasRole() -> true
+            case '0x91d14854': {
+                // hasRole() -> true
                 return '0x0000000000000000000000000000000000000000000000000000000000000001';
+            }
 
-            default:
+            default: {
                 // Generic success
                 return '0x0000000000000000000000000000000000000000000000000000000000000001';
+            }
         }
     },
 
     // Modify license response
     modifyLicenseResponse: response => {
         if (
-            response.result &&
-            (response.result === '0x0' ||
-                response.result ===
-                    '0x0000000000000000000000000000000000000000000000000000000000000000')
+            response.result
+            && (response.result === '0x0'
+                || response.result
+                    === '0x0000000000000000000000000000000000000000000000000000000000000000')
         ) {
             response.result = '0x0000000000000000000000000000000000000000000000000000000000000001';
         }
@@ -805,7 +813,7 @@ const BlockchainLicenseBypass = {
     },
 
     // Get bypass value for function
-    getBypassValue: function (functionName) {
+    getBypassValue(functionName) {
         // Return appropriate value based on function type
         if (functionName.includes('balance') || functionName.includes('Balance')) {
             // Return max uint256
@@ -813,10 +821,9 @@ const BlockchainLicenseBypass = {
         } else if (functionName.includes('owner') || functionName.includes('Owner')) {
             // Return current user address
             return this.getUserAddress();
-        } else {
-            // Return true/1
-            return ptr(1);
         }
+        // Return true/1
+        return ptr(1);
     },
 
     // Get current user address
@@ -849,7 +856,7 @@ const BlockchainLicenseBypass = {
     },
 
     // Find nearest function from address
-    findNearestFunction: function (address) {
+    findNearestFunction(address) {
         try {
             // Search backwards for function prologue
             let addr = ptr(address);
@@ -862,8 +869,8 @@ const BlockchainLicenseBypass = {
                     return addr;
                 }
             }
-        } catch (e) {
-            console.log(`[FunctionFinder] Memory access error at address: ${e.message}`);
+        } catch (error) {
+            console.log(`[FunctionFinder] Memory access error at address: ${error.message}`);
         }
 
         return null;
@@ -877,10 +884,10 @@ const BlockchainLicenseBypass = {
 
         // x86/x64 prologues
         const prologues = [
-            [0x55, 0x48, 0x89, 0xe5], // push rbp; mov rbp, rsp
-            [0x55, 0x89, 0xe5], // push ebp; mov ebp, esp
-            [0x48, 0x83, 0xec], // sub rsp, XX
-            [0x48, 0x89, 0x5c, 0x24], // mov [rsp+XX], rbx
+            [0x55, 0x48, 0x89, 0xE5], // push rbp; mov rbp, rsp
+            [0x55, 0x89, 0xE5], // push ebp; mov ebp, esp
+            [0x48, 0x83, 0xEC], // sub rsp, XX
+            [0x48, 0x89, 0x5C, 0x24], // mov [rsp+XX], rbx
         ];
 
         return prologues.some(prologue =>
@@ -889,7 +896,7 @@ const BlockchainLicenseBypass = {
     },
 
     // Monitor blockchain activity
-    startMonitoring: function () {
+    startMonitoring() {
         send({
             type: 'status',
             target: 'blockchain_license_bypass',
@@ -908,11 +915,11 @@ const BlockchainLicenseBypass = {
         // Periodic stats
         setInterval(() => {
             this.printStats();
-        }, 30000);
+        }, 30_000);
     },
 
     // Monitor contract creation
-    monitorContractCreation: function () {
+    monitorContractCreation() {
         // Hook contract deployment patterns
         const deployPatterns = ['deploy', 'Deploy', 'ContractFactory', 'create2', 'CREATE2'];
 
@@ -924,7 +931,7 @@ const BlockchainLicenseBypass = {
                     type: 'info',
                     target: 'blockchain_license_bypass',
                     action: 'deployment_pattern_found',
-                    pattern: pattern,
+                    pattern,
                 });
 
                 // Hook deployment function
@@ -934,7 +941,7 @@ const BlockchainLicenseBypass = {
     },
 
     // Print statistics
-    printStats: function () {
+    printStats() {
         let recentBypasses = [];
         if (this.state.bypassed_calls.length > 0) {
             recentBypasses = this.state.bypassed_calls.slice(-5).map(call => ({
@@ -958,7 +965,7 @@ const BlockchainLicenseBypass = {
     },
 
     // Helper function to hook contract methods
-    hookContractMethod: function (methodName, callback) {
+    hookContractMethod(methodName, callback) {
         const matches = Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${methodName}`);
 
         matches.forEach(match => {
@@ -982,7 +989,7 @@ const BlockchainLicenseBypass = {
     // NEW 2024-2025 ENHANCEMENT FUNCTIONS
 
     // Bypass quantum-resistant blockchain protocols
-    bypassQuantumResistantBlockchainProtocols: function () {
+    bypassQuantumResistantBlockchainProtocols() {
         try {
             send({
                 type: 'info',
@@ -1108,18 +1115,18 @@ const BlockchainLicenseBypass = {
                 action: 'quantum_resistant_protocol_bypass_initialized',
                 bypassed_count: this.state.quantumResistantProtocolsBypassed,
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'blockchain_license_bypass',
                 action: 'quantum_resistant_protocol_bypass_failed',
-                error: e.toString(),
+                error: error.toString(),
             });
         }
     },
 
     // Bypass Layer 2 scaling solutions
-    bypassLayer2ScalingSolutions: function () {
+    bypassLayer2ScalingSolutions() {
         try {
             send({
                 type: 'info',
@@ -1258,18 +1265,18 @@ const BlockchainLicenseBypass = {
                 action: 'layer2_scaling_bypass_initialized',
                 bypassed_count: this.state.layer2SolutionsBypassed,
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'blockchain_license_bypass',
                 action: 'layer2_scaling_bypass_failed',
-                error: e.toString(),
+                error: error.toString(),
             });
         }
     },
 
     // Bypass zero-knowledge proof systems
-    bypassZeroKnowledgeProofSystems: function () {
+    bypassZeroKnowledgeProofSystems() {
         try {
             send({
                 type: 'info',
@@ -1406,18 +1413,18 @@ const BlockchainLicenseBypass = {
                 action: 'zero_knowledge_bypass_initialized',
                 bypassed_count: this.state.zkProofSystemsBypassed,
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'blockchain_license_bypass',
                 action: 'zero_knowledge_bypass_failed',
-                error: e.toString(),
+                error: error.toString(),
             });
         }
     },
 
     // Bypass cross-chain bridge validation
-    bypassCrossChainBridgeValidation: function () {
+    bypassCrossChainBridgeValidation() {
         try {
             send({
                 type: 'info',
@@ -1559,18 +1566,18 @@ const BlockchainLicenseBypass = {
                 action: 'cross_chain_bridge_bypass_initialized',
                 bypassed_count: this.state.crossChainBridgesBypassed,
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'blockchain_license_bypass',
                 action: 'cross_chain_bridge_bypass_failed',
-                error: e.toString(),
+                error: error.toString(),
             });
         }
     },
 
     // Bypass advanced smart contract patterns
-    bypassAdvancedSmartContractPatterns: function () {
+    bypassAdvancedSmartContractPatterns() {
         try {
             send({
                 type: 'info',
@@ -1711,18 +1718,18 @@ const BlockchainLicenseBypass = {
                 action: 'advanced_contract_patterns_bypass_initialized',
                 bypassed_count: this.state.advancedSmartContractsBypassed,
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'blockchain_license_bypass',
                 action: 'advanced_contract_patterns_bypass_failed',
-                error: e.toString(),
+                error: error.toString(),
             });
         }
     },
 
     // Bypass decentralized identity validation
-    bypassDecentralizedIdentityValidation: function () {
+    bypassDecentralizedIdentityValidation() {
         try {
             send({
                 type: 'info',
@@ -1862,18 +1869,18 @@ const BlockchainLicenseBypass = {
                 action: 'decentralized_identity_bypass_initialized',
                 bypassed_count: this.state.decentralizedIdentityBypassed,
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'blockchain_license_bypass',
                 action: 'decentralized_identity_bypass_failed',
-                error: e.toString(),
+                error: error.toString(),
             });
         }
     },
 
     // Bypass modern consensus mechanisms
-    bypassModernConsensusMechanisms: function () {
+    bypassModernConsensusMechanisms() {
         try {
             send({
                 type: 'info',
@@ -2015,18 +2022,18 @@ const BlockchainLicenseBypass = {
                 action: 'consensus_mechanisms_bypass_initialized',
                 bypassed_count: this.state.consensusMechanismsBypassed,
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'blockchain_license_bypass',
                 action: 'consensus_mechanisms_bypass_failed',
-                error: e.toString(),
+                error: error.toString(),
             });
         }
     },
 
     // Bypass MEV protection systems
-    bypassMEVProtectionSystems: function () {
+    bypassMEVProtectionSystems() {
         try {
             send({
                 type: 'info',
@@ -2165,18 +2172,18 @@ const BlockchainLicenseBypass = {
                 action: 'mev_protection_bypass_initialized',
                 bypassed_count: this.state.mevProtectionBypassed,
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'blockchain_license_bypass',
                 action: 'mev_protection_bypass_failed',
-                error: e.toString(),
+                error: error.toString(),
             });
         }
     },
 
     // Bypass account abstraction validation
-    bypassAccountAbstractionValidation: function () {
+    bypassAccountAbstractionValidation() {
         try {
             send({
                 type: 'info',
@@ -2318,18 +2325,18 @@ const BlockchainLicenseBypass = {
                 action: 'account_abstraction_bypass_initialized',
                 bypassed_count: this.state.accountAbstractionBypassed,
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'blockchain_license_bypass',
                 action: 'account_abstraction_bypass_failed',
-                error: e.toString(),
+                error: error.toString(),
             });
         }
     },
 
     // Bypass decentralized storage validation
-    bypassDecentralizedStorageValidation: function () {
+    bypassDecentralizedStorageValidation() {
         try {
             send({
                 type: 'info',
@@ -2471,18 +2478,18 @@ const BlockchainLicenseBypass = {
                 action: 'decentralized_storage_bypass_initialized',
                 bypassed_count: this.state.decentralizedStorageBypassed,
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'blockchain_license_bypass',
                 action: 'decentralized_storage_bypass_failed',
-                error: e.toString(),
+                error: error.toString(),
             });
         }
     },
 
     // Entry point
-    run: function () {
+    run() {
         send({
             type: 'status',
             target: 'blockchain_license_bypass',

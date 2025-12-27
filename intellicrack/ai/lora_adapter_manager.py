@@ -19,9 +19,10 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import json
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from ..utils.logger import get_logger
 

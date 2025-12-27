@@ -23,6 +23,7 @@ from typing import Any
 
 from ..utils.logger import get_logger, log_all_methods
 
+
 HAS_PEFILE: bool
 HAS_ELFTOOLS: bool
 HAS_PYELFTOOLS: bool

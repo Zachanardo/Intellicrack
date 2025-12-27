@@ -338,7 +338,7 @@ echo "Test execution completed"
 exit $?
 """
 
-    def _get_user_export_path(self, suggested_filename: str) -> str:
+    def _get_user_export_path(self, suggested_filename: str) -> str | None:
         """Open file dialog for user to select export location."""
         app = QApplication.instance()
         if app is None:

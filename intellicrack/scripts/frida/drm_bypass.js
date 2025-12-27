@@ -120,17 +120,17 @@ const DrmBypass = {
     bypassedChecks: 0,
     spoofedLicenses: 0,
 
-    onAttach: function (pid) {
+    onAttach(pid) {
         send({
             type: 'info',
             target: 'drm_bypass',
             action: 'attaching_to_process',
-            pid: pid,
+            pid,
         });
         this.processId = pid;
     },
 
-    run: function () {
+    run() {
         send({
             type: 'status',
             target: 'drm_bypass',
@@ -160,7 +160,7 @@ const DrmBypass = {
     },
 
     // === HDCP PROTECTION BYPASS ===
-    hookHdcpProtection: function () {
+    hookHdcpProtection() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -184,7 +184,7 @@ const DrmBypass = {
         this.hookHdcpRevocation();
     },
 
-    hookHdcpAuthentication: function () {
+    hookHdcpAuthentication() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -206,22 +206,19 @@ const DrmBypass = {
 
         const modules = Process.enumerateModules();
 
-        for (let i = 0; i < modules.length; i++) {
-            const module = modules[i];
-
-            for (let j = 0; j < hdcpFunctions.length; j++) {
-                const funcName = hdcpFunctions[j];
+        for (const module of modules) {
+            for (const funcName of hdcpFunctions) {
                 this.hookHdcpFunction(module.name, funcName);
             }
         }
     },
 
-    hookHdcpFunction: function (moduleName, functionName) {
+    hookHdcpFunction(moduleName, functionName) {
         try {
             const hdcpFunc = Module.findExportByName(moduleName, functionName);
             if (hdcpFunc) {
                 Interceptor.attach(hdcpFunc, {
-                    onLeave: function (retval) {
+                    onLeave(retval) {
                         const { config } = this.parent.parent;
                         if (config.hdcp.enabled) {
                             // Make HDCP operations always succeed
@@ -239,14 +236,14 @@ const DrmBypass = {
 
                 this.hooksInstalled[`${functionName}_${moduleName}`] = true;
             }
-        } catch (e) {
+        } catch (error) {
             // Comprehensive HDCP function hooking error forensics
             const hdcpHookingErrorForensics = {
                 timestamp: new Date().toISOString(),
                 error_type: 'hdcp_function_hooking_failure',
-                error_message: e.message || 'unknown_error',
-                error_stack: e.stack || 'no_stack_trace',
-                error_name: e.name || 'unknown_exception',
+                error_message: error.message || 'unknown_error',
+                error_stack: error.stack || 'no_stack_trace',
+                error_name: error.name || 'unknown_exception',
                 bypass_context: 'hdcp_content_protection_bypass',
                 security_implications: [
                     'hdcp_bypass_failure',
@@ -258,7 +255,7 @@ const DrmBypass = {
                     function_context: 'hookHdcpFunction',
                     target_module: moduleName,
                     target_function: functionName,
-                    error_classification: this.classifyHdcpError(e),
+                    error_classification: this.classifyHdcpError(error),
                     bypass_resilience: 'medium',
                     recovery_possible: true,
                     alternative_bypass_available: true,
@@ -275,7 +272,7 @@ const DrmBypass = {
         }
     },
 
-    hookHdcpCapabilities: function () {
+    hookHdcpCapabilities() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -308,8 +305,7 @@ const DrmBypass = {
         // Hook DirectX DXGI for HDCP status
         const dxgiFunctions = ['CreateDXGIFactory', 'CreateDXGIFactory1', 'CreateDXGIFactory2'];
 
-        for (let i = 0; i < dxgiFunctions.length; i++) {
-            const funcName = dxgiFunctions[i];
+        for (const funcName of dxgiFunctions) {
             const dxgiFunc = Module.findExportByName('dxgi.dll', funcName);
             if (dxgiFunc) {
                 Interceptor.attach(dxgiFunc, {
@@ -331,7 +327,7 @@ const DrmBypass = {
         }
     },
 
-    hookHdcpEncryption: function () {
+    hookHdcpEncryption() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -341,16 +337,15 @@ const DrmBypass = {
         // Hook cryptographic functions used by HDCP
         const cryptFunctions = ['CryptEncrypt', 'CryptDecrypt', 'CryptHashData'];
 
-        for (let i = 0; i < cryptFunctions.length; i++) {
-            const funcName = cryptFunctions[i];
+        for (const funcName of cryptFunctions) {
             const cryptFunc = Module.findExportByName('advapi32.dll', funcName);
             if (cryptFunc) {
                 Interceptor.attach(cryptFunc, {
-                    onEnter: function (args) {
+                    onEnter(args) {
                         this.isHdcpCrypto = this.detectHdcpContext(args);
                     },
 
-                    onLeave: function (retval) {
+                    onLeave(retval) {
                         if (this.isHdcpCrypto && retval.toInt32() !== 0) {
                             const { config } = this.parent.parent;
                             if (config.hdcp.forceEncryptionBypass) {
@@ -364,7 +359,7 @@ const DrmBypass = {
                         }
                     },
 
-                    detectHdcpContext: function (args) {
+                    detectHdcpContext(args) {
                         // Comprehensive HDCP context detection and argument analysis
                         const hdcpAnalysis = {
                             timestamp: new Date().toISOString(),
@@ -378,8 +373,8 @@ const DrmBypass = {
                         };
 
                         // Analyze each argument for HDCP-specific patterns
-                        for (let i = 0; i < args.length; i++) {
-                            const argAnalysis = this.analyzeHdcpArgument(args[i], i);
+                        for (const [i, arg] of args.entries()) {
+                            const argAnalysis = this.analyzeHdcpArgument(arg, i);
                             hdcpAnalysis.arguments_analyzed.push(argAnalysis);
 
                             // Check for HDCP version indicators
@@ -389,29 +384,29 @@ const DrmBypass = {
 
                             // Identify crypto strength indicators
                             if (argAnalysis.crypto_strength_indicators.length > 0) {
-                                hdcpAnalysis.crypto_strength_assessment =
-                                    argAnalysis.crypto_strength_indicators[0];
+                                hdcpAnalysis.crypto_strength_assessment
+                                    = argAnalysis.crypto_strength_indicators[0];
                             }
 
                             // Collect security-relevant patterns
-                            hdcpAnalysis.security_indicators =
-                                hdcpAnalysis.security_indicators.concat(
+                            hdcpAnalysis.security_indicators
+                                = hdcpAnalysis.security_indicators.concat(
                                     argAnalysis.security_patterns
                                 );
                         }
 
                         // Perform HDCP bypass opportunity assessment
-                        hdcpAnalysis.bypass_opportunities =
-                            this.assessHdcpBypassOpportunities(hdcpAnalysis);
+                        hdcpAnalysis.bypass_opportunities
+                            = this.assessHdcpBypassOpportunities(hdcpAnalysis);
 
                         // Store analysis for forensic purposes
                         this.storeHdcpAnalysis(hdcpAnalysis);
 
                         // Return genuine HDCP context detection based on comprehensive analysis
                         return (
-                            hdcpAnalysis.security_indicators.length > 2 &&
-                            hdcpAnalysis.bypass_opportunities.length > 0 &&
-                            hdcpAnalysis.hdcp_version_detected !== null
+                            hdcpAnalysis.security_indicators.length > 2
+                            && hdcpAnalysis.bypass_opportunities.length > 0
+                            && hdcpAnalysis.hdcp_version_detected !== null
                         );
                     },
                 });
@@ -421,7 +416,7 @@ const DrmBypass = {
         }
     },
 
-    hookHdcpRevocation: function () {
+    hookHdcpRevocation() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -432,7 +427,7 @@ const DrmBypass = {
         const winHttpSendRequest = Module.findExportByName('winhttp.dll', 'WinHttpSendRequest');
         if (winHttpSendRequest) {
             Interceptor.attach(winHttpSendRequest, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const requestDetails = this.getRequestDetails(args);
                     if (this.isHdcpRevocationRequest(requestDetails)) {
                         const { config } = this.parent.parent;
@@ -447,14 +442,14 @@ const DrmBypass = {
                     }
                 },
 
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.blockRequest) {
                         retval.replace(0); // Block the request
                         this.parent.parent.bypassedChecks++;
                     }
                 },
 
-                getRequestDetails: function (args) {
+                getRequestDetails(args) {
                     // Comprehensive request details extraction and analysis system
                     const requestAnalysis = {
                         timestamp: new Date().toISOString(),
@@ -469,8 +464,8 @@ const DrmBypass = {
                     };
 
                     // Analyze each argument for request data extraction
-                    for (let i = 0; i < args.length; i++) {
-                        const argDetails = this.extractRequestArgument(args[i], i);
+                    for (const [i, arg] of args.entries()) {
+                        const argDetails = this.extractRequestArgument(arg, i);
                         requestAnalysis.arguments_processed.push(argDetails);
 
                         // Extract HTTP headers from argument data
@@ -488,24 +483,24 @@ const DrmBypass = {
 
                         // Identify license-related indicators
                         if (argDetails.license_indicators.length > 0) {
-                            requestAnalysis.license_indicators =
-                                requestAnalysis.license_indicators.concat(
+                            requestAnalysis.license_indicators
+                                = requestAnalysis.license_indicators.concat(
                                     argDetails.license_indicators
                                 );
                         }
 
                         // Extract authentication tokens
                         if (argDetails.auth_tokens.length > 0) {
-                            requestAnalysis.authentication_tokens =
-                                requestAnalysis.authentication_tokens.concat(
+                            requestAnalysis.authentication_tokens
+                                = requestAnalysis.authentication_tokens.concat(
                                     argDetails.auth_tokens
                                 );
                         }
                     }
 
                     // Analyze extracted data for bypass opportunities
-                    requestAnalysis.bypass_vectors =
-                        this.identifyRequestBypassVectors(requestAnalysis);
+                    requestAnalysis.bypass_vectors
+                        = this.identifyRequestBypassVectors(requestAnalysis);
 
                     // Store comprehensive analysis
                     this.storeRequestAnalysis(requestAnalysis);
@@ -540,7 +535,7 @@ const DrmBypass = {
     },
 
     // === PLAYREADY DRM BYPASS ===
-    hookPlayReadyDRM: function () {
+    hookPlayReadyDRM() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -564,7 +559,7 @@ const DrmBypass = {
         this.hookPlayReadySecurityLevel();
     },
 
-    hookPlayReadyInitialization: function () {
+    hookPlayReadyInitialization() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -584,22 +579,19 @@ const DrmBypass = {
 
         const modules = Process.enumerateModules();
 
-        for (let i = 0; i < modules.length; i++) {
-            const module = modules[i];
-
-            for (let j = 0; j < playreadyFunctions.length; j++) {
-                const funcName = playreadyFunctions[j];
+        for (const module of modules) {
+            for (const funcName of playreadyFunctions) {
                 this.hookPlayReadyFunction(module.name, funcName);
             }
         }
     },
 
-    hookPlayReadyFunction: function (moduleName, functionName) {
+    hookPlayReadyFunction(moduleName, functionName) {
         try {
             const prFunc = Module.findExportByName(moduleName, functionName);
             if (prFunc) {
                 Interceptor.attach(prFunc, {
-                    onLeave: function (retval) {
+                    onLeave(retval) {
                         // Make PlayReady operations succeed
                         if (retval.toInt32() !== 0) {
                             // DRM_SUCCESS = 0
@@ -617,14 +609,14 @@ const DrmBypass = {
 
                 this.hooksInstalled[`${functionName}_${moduleName}`] = true;
             }
-        } catch (e) {
+        } catch (error) {
             // Comprehensive PlayReady function hooking error forensics
             const playreadyHookingErrorForensics = {
                 timestamp: new Date().toISOString(),
                 error_type: 'playready_function_hooking_failure',
-                error_message: e.message || 'unknown_error',
-                error_stack: e.stack || 'no_stack_trace',
-                error_name: e.name || 'unknown_exception',
+                error_message: error.message || 'unknown_error',
+                error_stack: error.stack || 'no_stack_trace',
+                error_name: error.name || 'unknown_exception',
                 bypass_context: 'playready_drm_protection_bypass',
                 security_implications: [
                     'playready_bypass_failure',
@@ -636,7 +628,7 @@ const DrmBypass = {
                     function_context: 'hookPlayReadyFunction',
                     target_module: moduleName,
                     target_function: functionName,
-                    error_classification: this.classifyPlayReadyError(e),
+                    error_classification: this.classifyPlayReadyError(error),
                     bypass_resilience: 'high',
                     recovery_possible: true,
                     alternative_bypass_available: true,
@@ -661,7 +653,7 @@ const DrmBypass = {
         }
     },
 
-    hookPlayReadyLicenseAcquisition: function () {
+    hookPlayReadyLicenseAcquisition() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -679,22 +671,19 @@ const DrmBypass = {
 
         const modules = Process.enumerateModules();
 
-        for (let i = 0; i < modules.length; i++) {
-            const module = modules[i];
-
-            for (let j = 0; j < licenseFunctions.length; j++) {
-                const funcName = licenseFunctions[j];
+        for (const module of modules) {
+            for (const funcName of licenseFunctions) {
                 this.hookPlayReadyLicenseFunction(module.name, funcName);
             }
         }
     },
 
-    hookPlayReadyLicenseFunction: function (moduleName, functionName) {
+    hookPlayReadyLicenseFunction(moduleName, functionName) {
         try {
             const licFunc = Module.findExportByName(moduleName, functionName);
             if (licFunc) {
                 Interceptor.attach(licFunc, {
-                    onEnter: function (args) {
+                    onEnter(args) {
                         // Comprehensive PlayReady license acquisition argument analysis
                         const licenseAnalysis = {
                             timestamp: new Date().toISOString(),
@@ -709,14 +698,14 @@ const DrmBypass = {
                         };
 
                         // Analyze each argument for PlayReady license data
-                        for (let i = 0; i < args.length; i++) {
-                            const argAnalysis = this.analyzePlayReadyLicenseArgument(args[i], i);
+                        for (const [i, arg] of args.entries()) {
+                            const argAnalysis = this.analyzePlayReadyLicenseArgument(arg, i);
                             licenseAnalysis.function_arguments.push(argAnalysis);
 
                             // Extract license request data
                             if (argAnalysis.contains_license_request) {
-                                licenseAnalysis.license_request_data =
-                                    argAnalysis.license_request_data;
+                                licenseAnalysis.license_request_data
+                                    = argAnalysis.license_request_data;
                             }
 
                             // Extract DRM context information
@@ -729,8 +718,8 @@ const DrmBypass = {
 
                             // Identify security level indicators
                             if (argAnalysis.security_level_indicators.length > 0) {
-                                licenseAnalysis.security_level_indicators =
-                                    licenseAnalysis.security_level_indicators.concat(
+                                licenseAnalysis.security_level_indicators
+                                    = licenseAnalysis.security_level_indicators.concat(
                                         argAnalysis.security_level_indicators
                                     );
                             }
@@ -745,12 +734,12 @@ const DrmBypass = {
                         }
 
                         // Determine optimal bypass strategy based on analysis
-                        licenseAnalysis.bypass_strategy =
-                            this.determinePlayReadyBypassStrategy(licenseAnalysis);
+                        licenseAnalysis.bypass_strategy
+                            = this.determinePlayReadyBypassStrategy(licenseAnalysis);
 
                         // Assess vulnerabilities in license acquisition flow
-                        licenseAnalysis.vulnerability_assessment =
-                            this.assessPlayReadyVulnerabilities(licenseAnalysis);
+                        licenseAnalysis.vulnerability_assessment
+                            = this.assessPlayReadyVulnerabilities(licenseAnalysis);
 
                         // Store comprehensive license analysis
                         this.storePlayReadyLicenseAnalysis(licenseAnalysis);
@@ -769,7 +758,7 @@ const DrmBypass = {
                         }
                     },
 
-                    onLeave: function (retval) {
+                    onLeave(retval) {
                         if (this.spoofLicense) {
                             // Provide spoofed license
                             retval.replace(0); // DRM_SUCCESS
@@ -785,14 +774,14 @@ const DrmBypass = {
 
                 this.hooksInstalled[`${functionName}_${moduleName}`] = true;
             }
-        } catch (e) {
+        } catch (error) {
             // Comprehensive PlayReady license acquisition error forensics
             const playReadyLicenseAcquisitionErrorForensics = {
                 timestamp: new Date().toISOString(),
                 error_type: 'playready_license_acquisition_failure',
-                error_message: e.message || 'unknown_error',
-                error_stack: e.stack || 'no_stack_trace',
-                error_name: e.name || 'unknown_exception',
+                error_message: error.message || 'unknown_error',
+                error_stack: error.stack || 'no_stack_trace',
+                error_name: error.name || 'unknown_exception',
                 bypass_context: 'playready_license_validation_bypass',
                 security_implications: [
                     'license_acquisition_bypass_failure',
@@ -804,7 +793,7 @@ const DrmBypass = {
                     function_context: 'hookPlayReadyLicenseFunction',
                     target_module: moduleName,
                     target_function: functionName,
-                    error_classification: this.classifyPlayReadyLicenseError(e),
+                    error_classification: this.classifyPlayReadyLicenseError(error),
                     bypass_resilience: 'high',
                     recovery_possible: true,
                     alternative_bypass_available: true,
@@ -829,7 +818,7 @@ const DrmBypass = {
         }
     },
 
-    hookPlayReadyDecryption: function () {
+    hookPlayReadyDecryption() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -847,28 +836,25 @@ const DrmBypass = {
 
         const modules = Process.enumerateModules();
 
-        for (let i = 0; i < modules.length; i++) {
-            const module = modules[i];
-
-            for (let j = 0; j < decryptFunctions.length; j++) {
-                const funcName = decryptFunctions[j];
+        for (const module of modules) {
+            for (const funcName of decryptFunctions) {
                 this.hookPlayReadyDecryptFunction(module.name, funcName);
             }
         }
     },
 
-    hookPlayReadyDecryptFunction: function (moduleName, functionName) {
+    hookPlayReadyDecryptFunction(moduleName, functionName) {
         try {
             const decryptFunc = Module.findExportByName(moduleName, functionName);
             if (decryptFunc) {
                 Interceptor.attach(decryptFunc, {
-                    onEnter: function (args) {
+                    onEnter(args) {
                         this.encryptedContent = args[0];
                         this.contentSize = args[1];
                         this.decryptedOutput = args[2];
                     },
 
-                    onLeave: function (retval) {
+                    onLeave(retval) {
                         const { config } = this.parent.parent;
                         if (config.decryption.enabled && retval.toInt32() === 0) {
                             send({
@@ -891,14 +877,14 @@ const DrmBypass = {
 
                 this.hooksInstalled[`${functionName}_${moduleName}`] = true;
             }
-        } catch (e) {
+        } catch (error) {
             // Comprehensive PlayReady decryption function error forensics
             const playReadyDecryptionErrorForensics = {
                 timestamp: new Date().toISOString(),
                 error_type: 'playready_decryption_function_failure',
-                error_message: e.message || 'unknown_error',
-                error_stack: e.stack || 'no_stack_trace',
-                error_name: e.name || 'unknown_exception',
+                error_message: error.message || 'unknown_error',
+                error_stack: error.stack || 'no_stack_trace',
+                error_name: error.name || 'unknown_exception',
                 bypass_context: 'playready_content_decryption_bypass',
                 security_implications: [
                     'decryption_bypass_failure',
@@ -910,7 +896,7 @@ const DrmBypass = {
                     function_context: 'hookPlayReadyDecryptFunction',
                     target_module: moduleName,
                     target_function: functionName,
-                    error_classification: this.classifyPlayReadyDecryptionError(e),
+                    error_classification: this.classifyPlayReadyDecryptionError(error),
                     bypass_resilience: 'high',
                     recovery_possible: true,
                     alternative_bypass_available: true,
@@ -935,7 +921,7 @@ const DrmBypass = {
         }
     },
 
-    hookPlayReadySecurityLevel: function () {
+    hookPlayReadySecurityLevel() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -952,22 +938,19 @@ const DrmBypass = {
 
         const modules = Process.enumerateModules();
 
-        for (let i = 0; i < modules.length; i++) {
-            const module = modules[i];
-
-            for (let j = 0; j < securityFunctions.length; j++) {
-                const funcName = securityFunctions[j];
+        for (const module of modules) {
+            for (const funcName of securityFunctions) {
                 this.hookPlayReadySecurityFunction(module.name, funcName);
             }
         }
     },
 
-    hookPlayReadySecurityFunction: function (moduleName, functionName) {
+    hookPlayReadySecurityFunction(moduleName, functionName) {
         try {
             const secFunc = Module.findExportByName(moduleName, functionName);
             if (secFunc) {
                 Interceptor.attach(secFunc, {
-                    onLeave: function (retval) {
+                    onLeave(retval) {
                         const { config } = this.parent.parent;
 
                         if (functionName.includes('GetSecurityLevel')) {
@@ -997,14 +980,14 @@ const DrmBypass = {
 
                 this.hooksInstalled[`${functionName}_${moduleName}`] = true;
             }
-        } catch (e) {
+        } catch (error) {
             // Comprehensive PlayReady security level error forensics
             const playReadySecurityLevelErrorForensics = {
                 timestamp: new Date().toISOString(),
                 error_type: 'playready_security_level_failure',
-                error_message: e.message || 'unknown_error',
-                error_stack: e.stack || 'no_stack_trace',
-                error_name: e.name || 'unknown_exception',
+                error_message: error.message || 'unknown_error',
+                error_stack: error.stack || 'no_stack_trace',
+                error_name: error.name || 'unknown_exception',
                 bypass_context: 'playready_security_level_bypass',
                 security_implications: [
                     'security_level_bypass_failure',
@@ -1016,7 +999,7 @@ const DrmBypass = {
                     function_context: 'hookPlayReadySecurityFunction',
                     target_module: moduleName,
                     target_function: functionName,
-                    error_classification: this.classifyPlayReadySecurityError(e),
+                    error_classification: this.classifyPlayReadySecurityError(error),
                     bypass_resilience: 'high',
                     recovery_possible: true,
                     alternative_bypass_available: true,
@@ -1042,7 +1025,7 @@ const DrmBypass = {
     },
 
     // === WIDEVINE DRM BYPASS ===
-    hookWidevineDRM: function () {
+    hookWidevineDRM() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -1066,7 +1049,7 @@ const DrmBypass = {
         this.hookWidevineDecryption();
     },
 
-    hookWidevineInitialization: function () {
+    hookWidevineInitialization() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -1085,29 +1068,26 @@ const DrmBypass = {
 
         const modules = Process.enumerateModules();
 
-        for (let i = 0; i < modules.length; i++) {
-            const module = modules[i];
-
+        for (const module of modules) {
             // Focus on Widevine-related modules
             if (
-                module.name.toLowerCase().includes('widevine') ||
-                module.name.toLowerCase().includes('wvcdm') ||
-                module.name.toLowerCase().includes('chrome')
+                module.name.toLowerCase().includes('widevine')
+                || module.name.toLowerCase().includes('wvcdm')
+                || module.name.toLowerCase().includes('chrome')
             ) {
-                for (let j = 0; j < widevineFunctions.length; j++) {
-                    const funcName = widevineFunctions[j];
+                for (const funcName of widevineFunctions) {
                     this.hookWidevineFunction(module.name, funcName);
                 }
             }
         }
     },
 
-    hookWidevineFunction: function (moduleName, functionName) {
+    hookWidevineFunction(moduleName, functionName) {
         try {
             const wvFunc = Module.findExportByName(moduleName, functionName);
             if (wvFunc) {
                 Interceptor.attach(wvFunc, {
-                    onLeave: function (retval) {
+                    onLeave(retval) {
                         // Make Widevine operations succeed
                         const successCodes = [0, 1]; // Various success codes
                         if (!successCodes.includes(retval.toInt32())) {
@@ -1125,14 +1105,14 @@ const DrmBypass = {
 
                 this.hooksInstalled[`${functionName}_${moduleName}`] = true;
             }
-        } catch (e) {
+        } catch (error) {
             // Comprehensive Widevine function hooking error forensics
             const widevineHookingErrorForensics = {
                 timestamp: new Date().toISOString(),
                 error_type: 'widevine_function_hooking_failure',
-                error_message: e.message || 'unknown_error',
-                error_stack: e.stack || 'no_stack_trace',
-                error_name: e.name || 'unknown_exception',
+                error_message: error.message || 'unknown_error',
+                error_stack: error.stack || 'no_stack_trace',
+                error_name: error.name || 'unknown_exception',
                 bypass_context: 'widevine_drm_function_bypass',
                 security_implications: [
                     'widevine_bypass_failure',
@@ -1144,7 +1124,7 @@ const DrmBypass = {
                     function_context: 'hookWidevineFunction',
                     target_module: moduleName,
                     target_function: functionName,
-                    error_classification: this.classifyWidevineError(e),
+                    error_classification: this.classifyWidevineError(error),
                     bypass_resilience: 'high',
                     recovery_possible: true,
                     alternative_bypass_available: true,
@@ -1169,7 +1149,7 @@ const DrmBypass = {
         }
     },
 
-    hookWidevineProvisioning: function () {
+    hookWidevineProvisioning() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -1187,22 +1167,19 @@ const DrmBypass = {
 
         const modules = Process.enumerateModules();
 
-        for (let i = 0; i < modules.length; i++) {
-            const module = modules[i];
-
-            for (let j = 0; j < provisioningFunctions.length; j++) {
-                const funcName = provisioningFunctions[j];
+        for (const module of modules) {
+            for (const funcName of provisioningFunctions) {
                 this.hookWidevineProvisioningFunction(module.name, funcName);
             }
         }
     },
 
-    hookWidevineProvisioningFunction: function (moduleName, functionName) {
+    hookWidevineProvisioningFunction(moduleName, functionName) {
         try {
             const provFunc = Module.findExportByName(moduleName, functionName);
             if (provFunc) {
                 Interceptor.attach(provFunc, {
-                    onEnter: function (args) {
+                    onEnter(args) {
                         // Comprehensive Widevine provisioning argument analysis
                         const provisioningAnalysis = {
                             timestamp: new Date().toISOString(),
@@ -1218,17 +1195,14 @@ const DrmBypass = {
                         };
 
                         // Analyze each argument for Widevine provisioning data
-                        for (let i = 0; i < args.length; i++) {
-                            const argAnalysis = this.analyzeWidevineProvisioningArgument(
-                                args[i],
-                                i
-                            );
+                        for (const [i, arg] of args.entries()) {
+                            const argAnalysis = this.analyzeWidevineProvisioningArgument(arg, i);
                             provisioningAnalysis.function_arguments.push(argAnalysis);
 
                             // Extract provisioning request data
                             if (argAnalysis.contains_provisioning_request) {
-                                provisioningAnalysis.provisioning_request_data =
-                                    argAnalysis.provisioning_request_data;
+                                provisioningAnalysis.provisioning_request_data
+                                    = argAnalysis.provisioning_request_data;
                             }
 
                             // Extract device identity information
@@ -1241,8 +1215,8 @@ const DrmBypass = {
 
                             // Assess security level
                             if (argAnalysis.security_level) {
-                                provisioningAnalysis.security_level_assessment =
-                                    argAnalysis.security_level;
+                                provisioningAnalysis.security_level_assessment
+                                    = argAnalysis.security_level;
                             }
 
                             // Detect CDM version
@@ -1260,12 +1234,12 @@ const DrmBypass = {
                         }
 
                         // Assess bypass feasibility based on analysis
-                        provisioningAnalysis.bypass_feasibility =
-                            this.assessWidevineBypassFeasibility(provisioningAnalysis);
+                        provisioningAnalysis.bypass_feasibility
+                            = this.assessWidevineBypassFeasibility(provisioningAnalysis);
 
                         // Identify attack vectors for provisioning bypass
-                        provisioningAnalysis.attack_vectors =
-                            this.identifyWidevineAttackVectors(provisioningAnalysis);
+                        provisioningAnalysis.attack_vectors
+                            = this.identifyWidevineAttackVectors(provisioningAnalysis);
 
                         // Store comprehensive provisioning analysis
                         this.storeWidevineProvisioningAnalysis(provisioningAnalysis);
@@ -1284,7 +1258,7 @@ const DrmBypass = {
                         }
                     },
 
-                    onLeave: function (retval) {
+                    onLeave(retval) {
                         if (this.bypassProvisioning) {
                             if (functionName.includes('IsProvisioned')) {
                                 // Always report as provisioned
@@ -1307,14 +1281,14 @@ const DrmBypass = {
 
                 this.hooksInstalled[`${functionName}_${moduleName}`] = true;
             }
-        } catch (e) {
+        } catch (error) {
             // Comprehensive Widevine provisioning error forensics
             const widevineProvisioningErrorForensics = {
                 timestamp: new Date().toISOString(),
                 error_type: 'widevine_provisioning_failure',
-                error_message: e.message || 'unknown_error',
-                error_stack: e.stack || 'no_stack_trace',
-                error_name: e.name || 'unknown_exception',
+                error_message: error.message || 'unknown_error',
+                error_stack: error.stack || 'no_stack_trace',
+                error_name: error.name || 'unknown_exception',
                 bypass_context: 'widevine_provisioning_bypass',
                 security_implications: [
                     'provisioning_bypass_failure',
@@ -1326,7 +1300,7 @@ const DrmBypass = {
                     function_context: 'hookWidevineProvisioningFunction',
                     target_module: moduleName,
                     target_function: functionName,
-                    error_classification: this.classifyWidevineProvisioningError(e),
+                    error_classification: this.classifyWidevineProvisioningError(error),
                     bypass_resilience: 'high',
                     recovery_possible: true,
                     alternative_bypass_available: true,
@@ -1352,7 +1326,7 @@ const DrmBypass = {
         }
     },
 
-    hookWidevineLicenseRequests: function () {
+    hookWidevineLicenseRequests() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -1370,22 +1344,19 @@ const DrmBypass = {
 
         const modules = Process.enumerateModules();
 
-        for (let i = 0; i < modules.length; i++) {
-            const module = modules[i];
-
-            for (let j = 0; j < licenseFunctions.length; j++) {
-                const funcName = licenseFunctions[j];
+        for (const module of modules) {
+            for (const funcName of licenseFunctions) {
                 this.hookWidevineLicenseFunction(module.name, funcName);
             }
         }
     },
 
-    hookWidevineLicenseFunction: function (moduleName, functionName) {
+    hookWidevineLicenseFunction(moduleName, functionName) {
         try {
             const licFunc = Module.findExportByName(moduleName, functionName);
             if (licFunc) {
                 Interceptor.attach(licFunc, {
-                    onEnter: function (args) {
+                    onEnter(args) {
                         // Comprehensive Widevine license request argument analysis
                         const licenseRequestAnalysis = {
                             timestamp: new Date().toISOString(),
@@ -1401,17 +1372,14 @@ const DrmBypass = {
                         };
 
                         // Analyze each argument for Widevine license request data
-                        for (let i = 0; i < args.length; i++) {
-                            const argAnalysis = this.analyzeWidevineLicenseRequestArgument(
-                                args[i],
-                                i
-                            );
+                        for (const [i, arg] of args.entries()) {
+                            const argAnalysis = this.analyzeWidevineLicenseRequestArgument(arg, i);
                             licenseRequestAnalysis.function_arguments.push(argAnalysis);
 
                             // Extract license request payload
                             if (argAnalysis.contains_license_request_payload) {
-                                licenseRequestAnalysis.license_request_payload =
-                                    argAnalysis.license_request_payload;
+                                licenseRequestAnalysis.license_request_payload
+                                    = argAnalysis.license_request_payload;
                             }
 
                             // Extract PSSH (Protection System Specific Header) data
@@ -1421,8 +1389,8 @@ const DrmBypass = {
 
                             // Extract content keys information
                             if (argAnalysis.content_keys.length > 0) {
-                                licenseRequestAnalysis.content_keys_info =
-                                    licenseRequestAnalysis.content_keys_info.concat(
+                                licenseRequestAnalysis.content_keys_info
+                                    = licenseRequestAnalysis.content_keys_info.concat(
                                         argAnalysis.content_keys
                                     );
                             }
@@ -1445,12 +1413,12 @@ const DrmBypass = {
                         }
 
                         // Determine optimal bypass method
-                        licenseRequestAnalysis.bypass_method =
-                            this.determineWidevineLicenseBypassMethod(licenseRequestAnalysis);
+                        licenseRequestAnalysis.bypass_method
+                            = this.determineWidevineLicenseBypassMethod(licenseRequestAnalysis);
 
                         // Identify exploitation vectors for license manipulation
-                        licenseRequestAnalysis.exploitation_vectors =
-                            this.identifyWidevineLicenseExploitationVectors(licenseRequestAnalysis);
+                        licenseRequestAnalysis.exploitation_vectors
+                            = this.identifyWidevineLicenseExploitationVectors(licenseRequestAnalysis);
 
                         // Store comprehensive license request analysis
                         this.storeWidevineLicenseRequestAnalysis(licenseRequestAnalysis);
@@ -1468,7 +1436,7 @@ const DrmBypass = {
                         }
                     },
 
-                    onLeave: function (retval) {
+                    onLeave(retval) {
                         if (this.spoofWidevineLicense) {
                             retval.replace(0); // SUCCESS
                             this.parent.parent.spoofedLicenses++;
@@ -1483,14 +1451,14 @@ const DrmBypass = {
 
                 this.hooksInstalled[`${functionName}_${moduleName}`] = true;
             }
-        } catch (e) {
+        } catch (error) {
             // Comprehensive Widevine license function error forensics
             const widevineLicenseErrorForensics = {
                 timestamp: new Date().toISOString(),
                 error_type: 'widevine_license_function_failure',
-                error_message: e.message || 'unknown_error',
-                error_stack: e.stack || 'no_stack_trace',
-                error_name: e.name || 'unknown_exception',
+                error_message: error.message || 'unknown_error',
+                error_stack: error.stack || 'no_stack_trace',
+                error_name: error.name || 'unknown_exception',
                 bypass_context: 'widevine_license_request_bypass',
                 security_implications: [
                     'license_request_bypass_failure',
@@ -1502,7 +1470,7 @@ const DrmBypass = {
                     function_context: 'hookWidevineLicenseFunction',
                     target_module: moduleName,
                     target_function: functionName,
-                    error_classification: this.classifyWidevineLicenseError(e),
+                    error_classification: this.classifyWidevineLicenseError(error),
                     bypass_resilience: 'high',
                     recovery_possible: true,
                     alternative_bypass_available: true,
@@ -1527,7 +1495,7 @@ const DrmBypass = {
         }
     },
 
-    hookWidevineDecryption: function () {
+    hookWidevineDecryption() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -1545,33 +1513,30 @@ const DrmBypass = {
 
         const modules = Process.enumerateModules();
 
-        for (let i = 0; i < modules.length; i++) {
-            const module = modules[i];
-
+        for (const module of modules) {
             if (
-                module.name.toLowerCase().includes('widevine') ||
-                module.name.toLowerCase().includes('wvcdm')
+                module.name.toLowerCase().includes('widevine')
+                || module.name.toLowerCase().includes('wvcdm')
             ) {
-                for (let j = 0; j < decryptFunctions.length; j++) {
-                    const funcName = decryptFunctions[j];
+                for (const funcName of decryptFunctions) {
                     this.hookWidevineDecryptFunction(module.name, funcName);
                 }
             }
         }
     },
 
-    hookWidevineDecryptFunction: function (moduleName, functionName) {
+    hookWidevineDecryptFunction(moduleName, functionName) {
         try {
             const decryptFunc = Module.findExportByName(moduleName, functionName);
             if (decryptFunc) {
                 Interceptor.attach(decryptFunc, {
-                    onEnter: function (args) {
+                    onEnter(args) {
                         this.encryptedBuffer = args[0];
                         this.bufferSize = args[1];
                         this.decryptedOutput = args[2];
                     },
 
-                    onLeave: function (retval) {
+                    onLeave(retval) {
                         const { config } = this.parent.parent;
                         if (config.decryption.enabled && retval.toInt32() === 0) {
                             send({
@@ -1593,14 +1558,14 @@ const DrmBypass = {
 
                 this.hooksInstalled[`${functionName}_${moduleName}`] = true;
             }
-        } catch (e) {
+        } catch (error) {
             // Comprehensive Widevine decryption function error forensics
             const widevineDecryptionErrorForensics = {
                 timestamp: new Date().toISOString(),
                 error_type: 'widevine_decryption_function_failure',
-                error_message: e.message || 'unknown_error',
-                error_stack: e.stack || 'no_stack_trace',
-                error_name: e.name || 'unknown_exception',
+                error_message: error.message || 'unknown_error',
+                error_stack: error.stack || 'no_stack_trace',
+                error_name: error.name || 'unknown_exception',
                 bypass_context: 'widevine_content_decryption_bypass',
                 security_implications: [
                     'decryption_bypass_failure',
@@ -1612,7 +1577,7 @@ const DrmBypass = {
                     function_context: 'hookWidevineDecryptFunction',
                     target_module: moduleName,
                     target_function: functionName,
-                    error_classification: this.classifyWidevineDecryptionError(e),
+                    error_classification: this.classifyWidevineDecryptionError(error),
                     bypass_resilience: 'high',
                     recovery_possible: true,
                     alternative_bypass_available: true,
@@ -1638,7 +1603,7 @@ const DrmBypass = {
     },
 
     // === STREAMING DRM BYPASS ===
-    hookStreamingDRM: function () {
+    hookStreamingDRM() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -1662,7 +1627,7 @@ const DrmBypass = {
         this.hookTelemetryBlocking();
     },
 
-    hookTimeBasedProtection: function () {
+    hookTimeBasedProtection() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -1679,17 +1644,16 @@ const DrmBypass = {
             'GetTickCount64',
         ];
 
-        for (let i = 0; i < timeFunctions.length; i++) {
-            const funcName = timeFunctions[i];
+        for (const funcName of timeFunctions) {
             this.hookTimeFunction(funcName);
         }
     },
 
-    hookTimeFunction: function (functionName) {
+    hookTimeFunction(functionName) {
         const timeFunc = Module.findExportByName('kernel32.dll', functionName);
         if (timeFunc) {
             Interceptor.attach(timeFunc, {
-                onLeave: function (retval) {
+                onLeave(retval) {
                     // Comprehensive time-based protection bypass retval manipulation system
                     const timeBypassAnalysis = {
                         timestamp: new Date().toISOString(),
@@ -1707,16 +1671,16 @@ const DrmBypass = {
                     timeBypassAnalysis.temporal_vulnerabilities = timeAnalysis.vulnerabilities;
 
                     // Determine optimal time manipulation strategy
-                    timeBypassAnalysis.manipulation_strategy =
-                        this.determineTimeManipulationStrategy(timeAnalysis, functionName);
+                    timeBypassAnalysis.manipulation_strategy
+                        = this.determineTimeManipulationStrategy(timeAnalysis, functionName);
 
                     // Identify bypass techniques for time-based protections
-                    timeBypassAnalysis.bypass_techniques =
-                        this.identifyTimeBypassTechniques(timeAnalysis);
+                    timeBypassAnalysis.bypass_techniques
+                        = this.identifyTimeBypassTechniques(timeAnalysis);
 
                     // Assess exploitation vectors for temporal attacks
-                    timeBypassAnalysis.exploitation_vectors =
-                        this.assessTemporalExploitationVectors(timeAnalysis);
+                    timeBypassAnalysis.exploitation_vectors
+                        = this.assessTemporalExploitationVectors(timeAnalysis);
 
                     const { config } = this.parent.parent;
                     if (config.streaming.bypassTimeBasedProtection) {
@@ -1752,7 +1716,7 @@ const DrmBypass = {
         }
     },
 
-    hookGeoLocationBypass: function () {
+    hookGeoLocationBypass() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -1762,14 +1726,13 @@ const DrmBypass = {
         // Hook geo-location APIs
         const geoFunctions = ['GetGeoInfo', 'GetUserGeoID', 'GetGeoInfoW'];
 
-        for (let i = 0; i < geoFunctions.length; i++) {
-            const funcName = geoFunctions[i];
+        for (const funcName of geoFunctions) {
             const geoFunc = Module.findExportByName('kernel32.dll', funcName);
             if (geoFunc) {
                 Interceptor.attach(geoFunc, {
-                    onLeave: function (retval) {
+                    onLeave(retval) {
                         const { config } = this.parent.parent;
-                        if (config.streaming.spoofGeoLocation && functionName === 'GetUserGeoID') {
+                        if (config.streaming.spoofGeoLocation && funcName === 'GetUserGeoID') {
                             retval.replace(244); // US geo ID
                             send({
                                 type: 'bypass',
@@ -1785,7 +1748,7 @@ const DrmBypass = {
         }
     },
 
-    hookDomainRestrictions: function () {
+    hookDomainRestrictions() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -1796,7 +1759,7 @@ const DrmBypass = {
         const winHttpSendRequest = Module.findExportByName('winhttp.dll', 'WinHttpSendRequest');
         if (winHttpSendRequest) {
             Interceptor.attach(winHttpSendRequest, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const requestDetails = this.getRequestDetails(args);
                     if (this.isDomainRestrictedRequest(requestDetails)) {
                         const { config } = this.parent.parent;
@@ -1811,7 +1774,7 @@ const DrmBypass = {
                     }
                 },
 
-                getRequestDetails: function (args) {
+                getRequestDetails(args) {
                     // Comprehensive domain-restricted request analysis system
                     const domainRequestAnalysis = {
                         timestamp: new Date().toISOString(),
@@ -1827,8 +1790,8 @@ const DrmBypass = {
                     };
 
                     // Analyze each argument for domain request data
-                    for (let i = 0; i < args.length; i++) {
-                        const argAnalysis = this.analyzeDomainRequestArgument(args[i], i);
+                    for (const [i, arg] of args.entries()) {
+                        const argAnalysis = this.analyzeDomainRequestArgument(arg, i);
                         domainRequestAnalysis.function_arguments.push(argAnalysis);
 
                         // Extract URL information
@@ -1846,8 +1809,8 @@ const DrmBypass = {
 
                         // Identify domain restrictions
                         if (argAnalysis.domain_restrictions.length > 0) {
-                            domainRequestAnalysis.domain_restrictions =
-                                domainRequestAnalysis.domain_restrictions.concat(
+                            domainRequestAnalysis.domain_restrictions
+                                = domainRequestAnalysis.domain_restrictions.concat(
                                     argAnalysis.domain_restrictions
                                 );
                         }
@@ -1870,12 +1833,12 @@ const DrmBypass = {
                     }
 
                     // Identify bypass strategies for domain restrictions
-                    domainRequestAnalysis.bypass_strategies =
-                        this.identifyDomainBypassStrategies(domainRequestAnalysis);
+                    domainRequestAnalysis.bypass_strategies
+                        = this.identifyDomainBypassStrategies(domainRequestAnalysis);
 
                     // Assess security implications of bypass attempts
-                    domainRequestAnalysis.security_implications =
-                        this.assessDomainBypassSecurity(domainRequestAnalysis);
+                    domainRequestAnalysis.security_implications
+                        = this.assessDomainBypassSecurity(domainRequestAnalysis);
 
                     // Store comprehensive domain request analysis
                     this.storeDomainRequestAnalysis(domainRequestAnalysis);
@@ -1883,9 +1846,9 @@ const DrmBypass = {
                     // Return comprehensive request details for domain bypass
                     return {
                         url:
-                            domainRequestAnalysis.extracted_url ||
-                            globalThis.TARGET_URL ||
-                            'internal.local',
+                            domainRequestAnalysis.extracted_url
+                            || globalThis.TARGET_URL
+                            || 'internal.local',
                         headers:
                             domainRequestAnalysis.extracted_headers.length > 0
                                 ? domainRequestAnalysis.extracted_headers
@@ -1897,7 +1860,7 @@ const DrmBypass = {
                     };
                 },
 
-                isDomainRestrictedRequest: function (details) {
+                isDomainRestrictedRequest(details) {
                     const { config } = this.parent.parent;
                     const { allowedDomains } = config.streaming;
 
@@ -1912,7 +1875,7 @@ const DrmBypass = {
         }
     },
 
-    hookTelemetryBlocking: function () {
+    hookTelemetryBlocking() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -1922,13 +1885,12 @@ const DrmBypass = {
         // Hook telemetry/analytics requests
         const httpFunctions = ['WinHttpSendRequest', 'HttpSendRequestW', 'InternetReadFile'];
 
-        for (let i = 0; i < httpFunctions.length; i++) {
-            const funcName = httpFunctions[i];
+        for (const funcName of httpFunctions) {
             this.hookTelemetryFunction(funcName);
         }
     },
 
-    hookTelemetryFunction: function (functionName) {
+    hookTelemetryFunction(functionName) {
         let module = null;
         let func = null;
 
@@ -1941,7 +1903,7 @@ const DrmBypass = {
         func = Module.findExportByName(module, functionName);
         if (func) {
             Interceptor.attach(func, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const { config } = this.parent.parent;
                     if (config.streaming.blockTelemetry) {
                         const requestDetails = this.analyzeTelemetryRequest(args);
@@ -1956,14 +1918,14 @@ const DrmBypass = {
                     }
                 },
 
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.blockTelemetryRequest) {
                         retval.replace(0); // Block the request
                         this.parent.parent.bypassedChecks++;
                     }
                 },
 
-                analyzeTelemetryRequest: function (args) {
+                analyzeTelemetryRequest(args) {
                     // Comprehensive telemetry request argument analysis system
                     const telemetryAnalysis = {
                         timestamp: new Date().toISOString(),
@@ -1997,9 +1959,9 @@ const DrmBypass = {
                     ];
 
                     // Analyze each argument for telemetry-related data
-                    for (let i = 0; i < args.length; i++) {
+                    for (const [i, arg] of args.entries()) {
                         const argAnalysis = this.analyzeTelemetryArgument(
-                            args[i],
+                            arg,
                             i,
                             telemetryIndicators
                         );
@@ -2007,53 +1969,53 @@ const DrmBypass = {
 
                         // Collect telemetry indicators found in arguments
                         if (argAnalysis.telemetry_indicators.length > 0) {
-                            telemetryAnalysis.telemetry_indicators_detected =
-                                telemetryAnalysis.telemetry_indicators_detected.concat(
+                            telemetryAnalysis.telemetry_indicators_detected
+                                = telemetryAnalysis.telemetry_indicators_detected.concat(
                                     argAnalysis.telemetry_indicators
                                 );
                         }
 
                         // Identify data collection vectors
                         if (argAnalysis.data_collection_vectors.length > 0) {
-                            telemetryAnalysis.data_collection_vectors =
-                                telemetryAnalysis.data_collection_vectors.concat(
+                            telemetryAnalysis.data_collection_vectors
+                                = telemetryAnalysis.data_collection_vectors.concat(
                                     argAnalysis.data_collection_vectors
                                 );
                         }
 
                         // Assess privacy implications
                         if (argAnalysis.privacy_implications.length > 0) {
-                            telemetryAnalysis.privacy_implications =
-                                telemetryAnalysis.privacy_implications.concat(
+                            telemetryAnalysis.privacy_implications
+                                = telemetryAnalysis.privacy_implications.concat(
                                     argAnalysis.privacy_implications
                                 );
                         }
 
                         // Identify tracking mechanisms
                         if (argAnalysis.tracking_mechanisms.length > 0) {
-                            telemetryAnalysis.tracking_mechanisms =
-                                telemetryAnalysis.tracking_mechanisms.concat(
+                            telemetryAnalysis.tracking_mechanisms
+                                = telemetryAnalysis.tracking_mechanisms.concat(
                                     argAnalysis.tracking_mechanisms
                                 );
                         }
                     }
 
                     // Determine bypass methods for telemetry blocking
-                    telemetryAnalysis.bypass_methods =
-                        this.determineTelemetryBypassMethods(telemetryAnalysis);
+                    telemetryAnalysis.bypass_methods
+                        = this.determineTelemetryBypassMethods(telemetryAnalysis);
 
                     // Develop blocking strategies
-                    telemetryAnalysis.blocking_strategies =
-                        this.developTelemetryBlockingStrategies(telemetryAnalysis);
+                    telemetryAnalysis.blocking_strategies
+                        = this.developTelemetryBlockingStrategies(telemetryAnalysis);
 
                     // Store comprehensive telemetry analysis
                     this.storeTelemetryAnalysis(telemetryAnalysis);
 
                     // Determine if this is genuine telemetry based on comprehensive analysis
-                    const isTelemetryDetected =
-                        telemetryAnalysis.telemetry_indicators_detected.length > 2 ||
-                        telemetryAnalysis.data_collection_vectors.length > 1 ||
-                        telemetryAnalysis.tracking_mechanisms.length > 0;
+                    const isTelemetryDetected
+                        = telemetryAnalysis.telemetry_indicators_detected.length > 2
+                        || telemetryAnalysis.data_collection_vectors.length > 1
+                        || telemetryAnalysis.tracking_mechanisms.length > 0;
 
                     return {
                         isTelemetry: isTelemetryDetected,
@@ -2064,9 +2026,9 @@ const DrmBypass = {
                         privacy_risk_level:
                             telemetryAnalysis.privacy_implications.length > 2
                                 ? 'high'
-                                : telemetryAnalysis.privacy_implications.length > 0
-                                  ? 'medium'
-                                  : 'low',
+                                : (telemetryAnalysis.privacy_implications.length > 0
+                                    ? 'medium'
+                                    : 'low'),
                     };
                 },
             });
@@ -2076,7 +2038,7 @@ const DrmBypass = {
     },
 
     // === HARDWARE DRM BYPASS ===
-    hookHardwareDRM: function () {
+    hookHardwareDRM() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -2097,7 +2059,7 @@ const DrmBypass = {
         this.hookHardwareSecurityFeatures();
     },
 
-    hookTpmDrm: function () {
+    hookTpmDrm() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -2112,12 +2074,11 @@ const DrmBypass = {
             'TpmSendCommand',
         ];
 
-        for (let i = 0; i < tpmFunctions.length; i++) {
-            const funcName = tpmFunctions[i];
+        for (const funcName of tpmFunctions) {
             const tpmFunc = Module.findExportByName('tbs.dll', funcName);
             if (tpmFunc) {
                 Interceptor.attach(tpmFunc, {
-                    onLeave: function (retval) {
+                    onLeave(retval) {
                         const { config } = this.parent.parent;
                         if (config.hardware.spoofTpmCredentials) {
                             // Make TPM operations succeed
@@ -2138,7 +2099,7 @@ const DrmBypass = {
         }
     },
 
-    hookTrustedExecutionEnvironment: function () {
+    hookTrustedExecutionEnvironment() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -2148,16 +2109,15 @@ const DrmBypass = {
         // Hook TEE-related functions
         const teeFunctions = ['TeeProcCreate', 'TeeInvokeCommand', 'TeeOpenSession'];
 
-        for (let i = 0; i < teeFunctions.length; i++) {
-            const funcName = teeFunctions[i];
+        for (const funcName of teeFunctions) {
             // TEE functions might be in various modules
             const modules = ['tee.dll', 'trustlet.dll', 'secure.dll'];
 
-            for (let j = 0; j < modules.length; j++) {
-                const teeFunc = Module.findExportByName(modules[j], funcName);
+            for (const module_ of modules) {
+                const teeFunc = Module.findExportByName(module_, funcName);
                 if (teeFunc) {
                     Interceptor.attach(teeFunc, {
-                        onLeave: function (retval) {
+                        onLeave(retval) {
                             const { config } = this.parent.parent;
                             if (config.hardware.bypassTrustedExecutionEnvironment) {
                                 retval.replace(0); // SUCCESS
@@ -2172,13 +2132,13 @@ const DrmBypass = {
                         },
                     });
 
-                    this.hooksInstalled[`${funcName}_${modules[j]}`] = true;
+                    this.hooksInstalled[`${funcName}_${module_}`] = true;
                 }
             }
         }
     },
 
-    hookHardwareSecurityFeatures: function () {
+    hookHardwareSecurityFeatures() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -2192,11 +2152,11 @@ const DrmBypass = {
         );
         if (isProcessorFeaturePresent) {
             Interceptor.attach(isProcessorFeaturePresent, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.feature = args[0].toInt32();
                 },
 
-                onLeave: function (retval) {
+                onLeave(retval) {
                     const { config } = this.parent.parent;
                     if (config.hardware.spoofCpuSecurityFeatures) {
                         // Security-related processor features
@@ -2225,7 +2185,7 @@ const DrmBypass = {
     },
 
     // === EME (ENCRYPTED MEDIA EXTENSIONS) BYPASS ===
-    hookEMEAPIs: function () {
+    hookEMEAPIs() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -2246,7 +2206,7 @@ const DrmBypass = {
         this.hookMediaKeySystemAccess();
     },
 
-    hookMediaKeysCreation: function () {
+    hookMediaKeysCreation() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -2267,29 +2227,26 @@ const DrmBypass = {
 
         const modules = Process.enumerateModules();
 
-        for (let i = 0; i < modules.length; i++) {
-            const module = modules[i];
-
+        for (const module of modules) {
             // Look for Chrome/Chromium EME implementation
             if (
-                module.name.toLowerCase().includes('chrome') ||
-                module.name.toLowerCase().includes('blink') ||
-                module.name.toLowerCase().includes('content')
+                module.name.toLowerCase().includes('chrome')
+                || module.name.toLowerCase().includes('blink')
+                || module.name.toLowerCase().includes('content')
             ) {
-                for (let j = 0; j < emeFunctions.length; j++) {
-                    const funcName = emeFunctions[j];
+                for (const funcName of emeFunctions) {
                     this.hookEMEFunction(module.name, funcName);
                 }
             }
         }
     },
 
-    hookEMEFunction: function (moduleName, functionName) {
+    hookEMEFunction(moduleName, functionName) {
         try {
             const emeFunc = Module.findExportByName(moduleName, functionName);
             if (emeFunc) {
                 Interceptor.attach(emeFunc, {
-                    onLeave: function (retval) {
+                    onLeave(retval) {
                         // Comprehensive EME retval manipulation system
                         const emeBypassAnalysis = {
                             timestamp: new Date().toISOString(),
@@ -2306,16 +2263,16 @@ const DrmBypass = {
                         // Analyze the original EME return value
                         const emeAnalysis = this.analyzeEmeReturnValue(retval, functionName);
                         emeBypassAnalysis.media_key_vulnerabilities = emeAnalysis.vulnerabilities;
-                        emeBypassAnalysis.access_control_weaknesses =
-                            emeAnalysis.access_control_issues;
+                        emeBypassAnalysis.access_control_weaknesses
+                            = emeAnalysis.access_control_issues;
 
                         // Determine optimal EME manipulation strategy
-                        emeBypassAnalysis.manipulation_strategy =
-                            this.determineEmeManipulationStrategy(emeAnalysis, functionName);
+                        emeBypassAnalysis.manipulation_strategy
+                            = this.determineEmeManipulationStrategy(emeAnalysis, functionName);
 
                         // Identify bypass techniques for EME operations
-                        emeBypassAnalysis.bypass_techniques =
-                            this.identifyEmeBypassTechniques(emeAnalysis);
+                        emeBypassAnalysis.bypass_techniques
+                            = this.identifyEmeBypassTechniques(emeAnalysis);
 
                         const { config } = this.parent.parent;
 
@@ -2370,14 +2327,14 @@ const DrmBypass = {
 
                 this.hooksInstalled[`${functionName}_${moduleName}`] = true;
             }
-        } catch (e) {
+        } catch (error) {
             // Comprehensive EME function hooking error forensics
             const emeHookingErrorForensics = {
                 timestamp: new Date().toISOString(),
                 error_type: 'eme_function_hooking_failure',
-                error_message: e.message || 'unknown_error',
-                error_stack: e.stack || 'no_stack_trace',
-                error_name: e.name || 'unknown_exception',
+                error_message: error.message || 'unknown_error',
+                error_stack: error.stack || 'no_stack_trace',
+                error_name: error.name || 'unknown_exception',
                 bypass_context: 'encrypted_media_extensions_bypass',
                 security_implications: [
                     'eme_bypass_failure',
@@ -2389,7 +2346,7 @@ const DrmBypass = {
                     function_context: 'hookEMEFunction',
                     target_module: moduleName,
                     target_function: functionName,
-                    error_classification: this.classifyEmeError(e),
+                    error_classification: this.classifyEmeError(error),
                     bypass_resilience: 'high',
                     recovery_possible: true,
                     alternative_bypass_available: true,
@@ -2407,7 +2364,7 @@ const DrmBypass = {
         }
     },
 
-    hookKeySessionManagement: function () {
+    hookKeySessionManagement() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -2425,22 +2382,19 @@ const DrmBypass = {
 
         const modules = Process.enumerateModules();
 
-        for (let i = 0; i < modules.length; i++) {
-            const module = modules[i];
-
-            for (let j = 0; j < sessionFunctions.length; j++) {
-                const funcName = sessionFunctions[j];
+        for (const module of modules) {
+            for (const funcName of sessionFunctions) {
                 this.hookKeySessionFunction(module.name, funcName);
             }
         }
     },
 
-    hookKeySessionFunction: function (moduleName, functionName) {
+    hookKeySessionFunction(moduleName, functionName) {
         try {
             const sessionFunc = Module.findExportByName(moduleName, functionName);
             if (sessionFunc) {
                 Interceptor.attach(sessionFunc, {
-                    onLeave: function (retval) {
+                    onLeave(retval) {
                         // Comprehensive key session retval manipulation system
                         const keySessionAnalysis = {
                             timestamp: new Date().toISOString(),
@@ -2456,8 +2410,8 @@ const DrmBypass = {
 
                         // Analyze the original key session return value
                         const sessionAnalysis = this.analyzeKeySessionRetval(retval, functionName);
-                        keySessionAnalysis.session_vulnerabilities =
-                            sessionAnalysis.vulnerabilities;
+                        keySessionAnalysis.session_vulnerabilities
+                            = sessionAnalysis.vulnerabilities;
                         keySessionAnalysis.license_weaknesses = sessionAnalysis.license_issues;
 
                         // Determine optimal key session manipulation strategy
@@ -2467,8 +2421,8 @@ const DrmBypass = {
                         );
 
                         // Identify bypass techniques for key sessions
-                        keySessionAnalysis.bypass_techniques =
-                            this.identifySessionBypassTechniques(sessionAnalysis);
+                        keySessionAnalysis.bypass_techniques
+                            = this.identifySessionBypassTechniques(sessionAnalysis);
 
                         const { config } = this.parent.parent;
                         if (config.eme.bypassKeySessionLimits) {
@@ -2502,14 +2456,14 @@ const DrmBypass = {
 
                 this.hooksInstalled[`${functionName}_${moduleName}`] = true;
             }
-        } catch (e) {
+        } catch (error) {
             // Comprehensive key session function error forensics
             const keySessionErrorForensics = {
                 timestamp: new Date().toISOString(),
                 error_type: 'key_session_function_failure',
-                error_message: e.message || 'unknown_error',
-                error_stack: e.stack || 'no_stack_trace',
-                error_name: e.name || 'unknown_exception',
+                error_message: error.message || 'unknown_error',
+                error_stack: error.stack || 'no_stack_trace',
+                error_name: error.name || 'unknown_exception',
                 bypass_context: 'key_session_management_bypass',
                 security_implications: [
                     'key_session_bypass_failure',
@@ -2521,7 +2475,7 @@ const DrmBypass = {
                     function_context: 'hookKeySessionFunction',
                     target_module: moduleName,
                     target_function: functionName,
-                    error_classification: this.classifyKeySessionError(e),
+                    error_classification: this.classifyKeySessionError(error),
                     bypass_resilience: 'high',
                     recovery_possible: true,
                     alternative_bypass_available: true,
@@ -2559,7 +2513,7 @@ const DrmBypass = {
     },
 
     // === CONTENT DECRYPTION BYPASS ===
-    hookContentDecryption: function () {
+    hookContentDecryption() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -2580,7 +2534,7 @@ const DrmBypass = {
         this.hookContentKeyHandling();
     },
 
-    hookGenericDecryption: function () {
+    hookGenericDecryption() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -2590,8 +2544,7 @@ const DrmBypass = {
         // Hook common decryption APIs
         const decryptFunctions = ['CryptDecrypt', 'BCryptDecrypt', 'NCryptDecrypt'];
 
-        for (let i = 0; i < decryptFunctions.length; i++) {
-            const funcName = decryptFunctions[i];
+        for (const funcName of decryptFunctions) {
             let module = null;
 
             if (funcName.startsWith('BCrypt')) {
@@ -2605,11 +2558,11 @@ const DrmBypass = {
             const decryptFunc = Module.findExportByName(module, funcName);
             if (decryptFunc) {
                 Interceptor.attach(decryptFunc, {
-                    onEnter: function (args) {
+                    onEnter(args) {
                         this.isDrmDecryption = this.detectDrmDecryption(args);
                     },
 
-                    onLeave: function (retval) {
+                    onLeave(retval) {
                         if (this.isDrmDecryption) {
                             // Comprehensive DRM decryption retval manipulation system
                             const decryptionAnalysis = {
@@ -2625,18 +2578,18 @@ const DrmBypass = {
 
                             // Analyze the original decryption return value
                             const decryptAnalysis = this.analyzeDecryptionRetval(retval);
-                            decryptionAnalysis.decryption_vulnerabilities =
-                                decryptAnalysis.vulnerabilities;
-                            decryptionAnalysis.content_protection_weaknesses =
-                                decryptAnalysis.protection_issues;
+                            decryptionAnalysis.decryption_vulnerabilities
+                                = decryptAnalysis.vulnerabilities;
+                            decryptionAnalysis.content_protection_weaknesses
+                                = decryptAnalysis.protection_issues;
 
                             // Determine optimal decryption manipulation strategy
-                            decryptionAnalysis.manipulation_strategy =
-                                this.determineDecryptionStrategy(decryptAnalysis);
+                            decryptionAnalysis.manipulation_strategy
+                                = this.determineDecryptionStrategy(decryptAnalysis);
 
                             // Identify bypass techniques for decryption operations
-                            decryptionAnalysis.bypass_techniques =
-                                this.identifyDecryptionBypassTechniques(decryptAnalysis);
+                            decryptionAnalysis.bypass_techniques
+                                = this.identifyDecryptionBypassTechniques(decryptAnalysis);
 
                             const { config } = this.parent.parent;
                             if (config.decryption.interceptEncryptedContent) {
@@ -2665,7 +2618,7 @@ const DrmBypass = {
                         }
                     },
 
-                    detectDrmDecryption: function (args) {
+                    detectDrmDecryption(args) {
                         // Comprehensive DRM decryption detection and argument analysis
                         const decryptionAnalysis = {
                             timestamp: new Date().toISOString(),
@@ -2680,30 +2633,30 @@ const DrmBypass = {
                         };
 
                         // Analyze each argument for DRM decryption patterns
-                        for (let i = 0; i < args.length; i++) {
-                            const argAnalysis = this.analyzeDrmDecryptionArgument(args[i], i);
+                        for (const [i, arg] of args.entries()) {
+                            const argAnalysis = this.analyzeDrmDecryptionArgument(arg, i);
                             decryptionAnalysis.function_arguments.push(argAnalysis);
 
                             // Detect encryption algorithms in use
                             if (argAnalysis.encryption_algorithms.length > 0) {
-                                decryptionAnalysis.encryption_algorithms_detected =
-                                    decryptionAnalysis.encryption_algorithms_detected.concat(
+                                decryptionAnalysis.encryption_algorithms_detected
+                                    = decryptionAnalysis.encryption_algorithms_detected.concat(
                                         argAnalysis.encryption_algorithms
                                     );
                             }
 
                             // Identify key material (encrypted keys, IVs, etc.)
                             if (argAnalysis.key_material.length > 0) {
-                                decryptionAnalysis.key_material_identified =
-                                    decryptionAnalysis.key_material_identified.concat(
+                                decryptionAnalysis.key_material_identified
+                                    = decryptionAnalysis.key_material_identified.concat(
                                         argAnalysis.key_material
                                     );
                             }
 
                             // Detect content protection indicators
                             if (argAnalysis.protection_indicators.length > 0) {
-                                decryptionAnalysis.content_protection_indicators =
-                                    decryptionAnalysis.content_protection_indicators.concat(
+                                decryptionAnalysis.content_protection_indicators
+                                    = decryptionAnalysis.content_protection_indicators.concat(
                                         argAnalysis.protection_indicators
                                     );
                             }
@@ -2718,21 +2671,21 @@ const DrmBypass = {
                         }
 
                         // Identify bypass opportunities based on analysis
-                        decryptionAnalysis.bypass_opportunities =
-                            this.identifyDecryptionBypassOpportunities(decryptionAnalysis);
+                        decryptionAnalysis.bypass_opportunities
+                            = this.identifyDecryptionBypassOpportunities(decryptionAnalysis);
 
                         // Assess vulnerabilities in the decryption process
-                        decryptionAnalysis.vulnerability_assessment =
-                            this.assessDecryptionVulnerabilities(decryptionAnalysis);
+                        decryptionAnalysis.vulnerability_assessment
+                            = this.assessDecryptionVulnerabilities(decryptionAnalysis);
 
                         // Store comprehensive decryption analysis
                         this.storeDrmDecryptionAnalysis(decryptionAnalysis);
 
                         // Return genuine DRM decryption detection based on comprehensive analysis
                         return (
-                            decryptionAnalysis.encryption_algorithms_detected.length > 0 ||
-                            decryptionAnalysis.key_material_identified.length > 0 ||
-                            decryptionAnalysis.content_protection_indicators.length > 1
+                            decryptionAnalysis.encryption_algorithms_detected.length > 0
+                            || decryptionAnalysis.key_material_identified.length > 0
+                            || decryptionAnalysis.content_protection_indicators.length > 1
                         );
                     },
                 });
@@ -2742,7 +2695,7 @@ const DrmBypass = {
         }
     },
 
-    hookKeyDerivation: function () {
+    hookKeyDerivation() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -2752,14 +2705,13 @@ const DrmBypass = {
         // Hook key derivation functions
         const kdfFunctions = ['CryptDeriveKey', 'BCryptDeriveKey', 'CryptDestroyKey'];
 
-        for (let i = 0; i < kdfFunctions.length; i++) {
-            const funcName = kdfFunctions[i];
+        for (const funcName of kdfFunctions) {
             const module = funcName.startsWith('BCrypt') ? 'bcrypt.dll' : 'advapi32.dll';
 
             const kdfFunc = Module.findExportByName(module, funcName);
             if (kdfFunc) {
                 Interceptor.attach(kdfFunc, {
-                    onLeave: function (retval) {
+                    onLeave(retval) {
                         // Comprehensive key derivation retval manipulation system
                         const kdfAnalysis = {
                             timestamp: new Date().toISOString(),
@@ -2774,17 +2726,17 @@ const DrmBypass = {
 
                         // Analyze the original key derivation return value
                         const kdfRetvalAnalysis = this.analyzeKdfRetval(retval);
-                        kdfAnalysis.key_derivation_vulnerabilities =
-                            kdfRetvalAnalysis.vulnerabilities;
+                        kdfAnalysis.key_derivation_vulnerabilities
+                            = kdfRetvalAnalysis.vulnerabilities;
                         kdfAnalysis.cryptographic_weaknesses = kdfRetvalAnalysis.crypto_issues;
 
                         // Determine optimal key derivation manipulation strategy
-                        kdfAnalysis.manipulation_strategy =
-                            this.determineKdfManipulationStrategy(kdfRetvalAnalysis);
+                        kdfAnalysis.manipulation_strategy
+                            = this.determineKdfManipulationStrategy(kdfRetvalAnalysis);
 
                         // Identify bypass techniques for key derivation operations
-                        kdfAnalysis.bypass_techniques =
-                            this.identifyKdfBypassTechniques(kdfRetvalAnalysis);
+                        kdfAnalysis.bypass_techniques
+                            = this.identifyKdfBypassTechniques(kdfRetvalAnalysis);
 
                         const { config } = this.parent.parent;
                         if (config.decryption.spoofDecryptionKeys) {
@@ -2818,7 +2770,7 @@ const DrmBypass = {
         }
     },
 
-    hookContentKeyHandling: function () {
+    hookContentKeyHandling() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -2828,12 +2780,11 @@ const DrmBypass = {
         // Hook key export/import functions
         const keyFunctions = ['CryptExportKey', 'CryptImportKey', 'CryptGetKeyParam'];
 
-        for (let i = 0; i < keyFunctions.length; i++) {
-            const funcName = keyFunctions[i];
+        for (const funcName of keyFunctions) {
             const keyFunc = Module.findExportByName('advapi32.dll', funcName);
             if (keyFunc) {
                 Interceptor.attach(keyFunc, {
-                    onEnter: function (args) {
+                    onEnter(args) {
                         // Comprehensive Windows key session argument analysis
                         const keySessionAnalysis = {
                             timestamp: new Date().toISOString(),
@@ -2849,30 +2800,30 @@ const DrmBypass = {
                         };
 
                         // Analyze each argument for Windows key session data
-                        for (let i = 0; i < args.length; i++) {
-                            const argAnalysis = this.analyzeWindowsKeyArgument(args[i], i);
+                        for (const [i, arg] of args.entries()) {
+                            const argAnalysis = this.analyzeWindowsKeyArgument(arg, i);
                             keySessionAnalysis.function_arguments.push(argAnalysis);
 
                             // Extract key handles
                             if (argAnalysis.key_handles.length > 0) {
-                                keySessionAnalysis.key_handles_detected =
-                                    keySessionAnalysis.key_handles_detected.concat(
+                                keySessionAnalysis.key_handles_detected
+                                    = keySessionAnalysis.key_handles_detected.concat(
                                         argAnalysis.key_handles
                                     );
                             }
 
                             // Identify crypto providers
                             if (argAnalysis.crypto_providers.length > 0) {
-                                keySessionAnalysis.crypto_providers_identified =
-                                    keySessionAnalysis.crypto_providers_identified.concat(
+                                keySessionAnalysis.crypto_providers_identified
+                                    = keySessionAnalysis.crypto_providers_identified.concat(
                                         argAnalysis.crypto_providers
                                     );
                             }
 
                             // Analyze key operations
                             if (argAnalysis.key_operations.length > 0) {
-                                keySessionAnalysis.key_operations_analyzed =
-                                    keySessionAnalysis.key_operations_analyzed.concat(
+                                keySessionAnalysis.key_operations_analyzed
+                                    = keySessionAnalysis.key_operations_analyzed.concat(
                                         argAnalysis.key_operations
                                     );
                             }
@@ -2887,20 +2838,20 @@ const DrmBypass = {
 
                             // Identify access permissions
                             if (argAnalysis.access_permissions.length > 0) {
-                                keySessionAnalysis.access_permissions =
-                                    keySessionAnalysis.access_permissions.concat(
+                                keySessionAnalysis.access_permissions
+                                    = keySessionAnalysis.access_permissions.concat(
                                         argAnalysis.access_permissions
                                     );
                             }
                         }
 
                         // Identify bypass techniques for key operations
-                        keySessionAnalysis.bypass_techniques =
-                            this.identifyKeySessionBypassTechniques(keySessionAnalysis);
+                        keySessionAnalysis.bypass_techniques
+                            = this.identifyKeySessionBypassTechniques(keySessionAnalysis);
 
                         // Assess exploitation vectors for key extraction
-                        keySessionAnalysis.exploitation_vectors =
-                            this.assessKeyExtractionVectors(keySessionAnalysis);
+                        keySessionAnalysis.exploitation_vectors
+                            = this.assessKeyExtractionVectors(keySessionAnalysis);
 
                         // Store comprehensive key session analysis
                         this.storeWindowsKeySessionAnalysis(keySessionAnalysis);
@@ -2919,7 +2870,7 @@ const DrmBypass = {
                         }
                     },
 
-                    onLeave: function (retval) {
+                    onLeave(retval) {
                         if (this.allowKeyOperation && retval.toInt32() === 0) {
                             retval.replace(1); // Success
                             send({
@@ -2938,7 +2889,7 @@ const DrmBypass = {
     },
 
     // === DRM COMMUNICATION BYPASS ===
-    hookDrmCommunication: function () {
+    hookDrmCommunication() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -2952,7 +2903,7 @@ const DrmBypass = {
         this.hookLocalDrmServices();
     },
 
-    hookDrmNetworkCommunication: function () {
+    hookDrmNetworkCommunication() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -2963,7 +2914,7 @@ const DrmBypass = {
         const winHttpSendRequest = Module.findExportByName('winhttp.dll', 'WinHttpSendRequest');
         if (winHttpSendRequest) {
             Interceptor.attach(winHttpSendRequest, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const requestDetails = this.analyzeRequest(args);
                     if (this.isDrmRequest(requestDetails)) {
                         send({
@@ -2980,7 +2931,7 @@ const DrmBypass = {
                     }
                 },
 
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.blockRequest) {
                         retval.replace(0); // Block the request
                         send({
@@ -2991,7 +2942,7 @@ const DrmBypass = {
                     }
                 },
 
-                analyzeRequest: function (args) {
+                analyzeRequest(args) {
                     // Comprehensive DRM-related request argument analysis
                     const requestAnalysis = {
                         timestamp: new Date().toISOString(),
@@ -3007,8 +2958,8 @@ const DrmBypass = {
                     };
 
                     // Analyze each argument for DRM request data
-                    for (let i = 0; i < args.length; i++) {
-                        const argAnalysis = this.analyzeDrmRequestArgument(args[i], i);
+                    for (const [i, arg] of args.entries()) {
+                        const argAnalysis = this.analyzeDrmRequestArgument(arg, i);
                         requestAnalysis.function_arguments.push(argAnalysis);
 
                         // Extract URL information
@@ -3026,8 +2977,8 @@ const DrmBypass = {
 
                         // Identify DRM service indicators
                         if (argAnalysis.drm_indicators.length > 0) {
-                            requestAnalysis.drm_service_indicators =
-                                requestAnalysis.drm_service_indicators.concat(
+                            requestAnalysis.drm_service_indicators
+                                = requestAnalysis.drm_service_indicators.concat(
                                     argAnalysis.drm_indicators
                                 );
                         }
@@ -3050,12 +3001,12 @@ const DrmBypass = {
                     }
 
                     // Identify bypass insertion points in the request
-                    requestAnalysis.bypass_insertion_points =
-                        this.identifyRequestBypassPoints(requestAnalysis);
+                    requestAnalysis.bypass_insertion_points
+                        = this.identifyRequestBypassPoints(requestAnalysis);
 
                     // Assess manipulation opportunities for DRM bypass
-                    requestAnalysis.manipulation_opportunities =
-                        this.assessRequestManipulationOpportunities(requestAnalysis);
+                    requestAnalysis.manipulation_opportunities
+                        = this.assessRequestManipulationOpportunities(requestAnalysis);
 
                     // Store comprehensive request analysis
                     this.storeDrmRequestAnalysis(requestAnalysis);
@@ -3089,15 +3040,13 @@ const DrmBypass = {
                         'encrypted',
                     ];
 
-                    const requestContent = (
-                        requestDetails.url +
-                        ' ' +
+                    const requestContent = `${requestDetails.url} ${
                         requestDetails.headers
-                    ).toLowerCase();
+                    }`.toLowerCase();
                     return drmIndicators.some(indicator => requestContent.includes(indicator));
                 },
 
-                shouldBlockDrmRequest: function (requestDetails) {
+                shouldBlockDrmRequest(requestDetails) {
                     // Comprehensive DRM request details analysis system
                     const drmRequestAnalysis = {
                         timestamp: new Date().toISOString(),
@@ -3145,7 +3094,7 @@ const DrmBypass = {
         }
     },
 
-    hookLocalDrmServices: function () {
+    hookLocalDrmServices() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -3184,7 +3133,7 @@ const DrmBypass = {
     },
 
     // === LICENSE VALIDATION BYPASS ===
-    hookLicenseValidation: function () {
+    hookLicenseValidation() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -3201,7 +3150,7 @@ const DrmBypass = {
         this.hookRegistryLicenseChecks();
     },
 
-    hookLicenseCheckFunctions: function () {
+    hookLicenseCheckFunctions() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -3222,22 +3171,19 @@ const DrmBypass = {
 
         const modules = Process.enumerateModules();
 
-        for (let i = 0; i < modules.length; i++) {
-            const module = modules[i];
-
-            for (let j = 0; j < licenseFunctions.length; j++) {
-                const funcName = licenseFunctions[j];
+        for (const module of modules) {
+            for (const funcName of licenseFunctions) {
                 this.hookLicenseFunction(module.name, funcName);
             }
         }
     },
 
-    hookLicenseFunction: function (moduleName, functionName) {
+    hookLicenseFunction(moduleName, functionName) {
         try {
             const licenseFunc = Module.findExportByName(moduleName, functionName);
             if (licenseFunc) {
                 Interceptor.attach(licenseFunc, {
-                    onLeave: function (retval) {
+                    onLeave(retval) {
                         // Make license validation always succeed
                         if (retval.toInt32() === 0 || retval.toInt32() === -1) {
                             // Failed
@@ -3255,14 +3201,14 @@ const DrmBypass = {
 
                 this.hooksInstalled[`${functionName}_${moduleName}`] = true;
             }
-        } catch (e) {
+        } catch (error) {
             // Comprehensive license validation function error forensics
             const licenseValidationErrorForensics = {
                 timestamp: new Date().toISOString(),
                 error_type: 'license_validation_function_failure',
-                error_message: e.message || 'unknown_error',
-                error_stack: e.stack || 'no_stack_trace',
-                error_name: e.name || 'unknown_exception',
+                error_message: error.message || 'unknown_error',
+                error_stack: error.stack || 'no_stack_trace',
+                error_name: error.name || 'unknown_exception',
                 bypass_context: 'general_license_validation_bypass',
                 security_implications: [
                     'license_validation_bypass_failure',
@@ -3274,7 +3220,7 @@ const DrmBypass = {
                     function_context: 'hookLicenseFunction',
                     target_module: moduleName,
                     target_function: functionName,
-                    error_classification: this.classifyLicenseValidationError(e),
+                    error_classification: this.classifyLicenseValidationError(error),
                     bypass_resilience: 'medium',
                     recovery_possible: true,
                     alternative_bypass_available: true,
@@ -3299,7 +3245,7 @@ const DrmBypass = {
         }
     },
 
-    hookLicenseFileAccess: function () {
+    hookLicenseFileAccess() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -3310,7 +3256,7 @@ const DrmBypass = {
         const createFile = Module.findExportByName('kernel32.dll', 'CreateFileW');
         if (createFile) {
             Interceptor.attach(createFile, {
-                onEnter: function (args) {
+                onEnter(args) {
                     if (args[0] && !args[0].isNull()) {
                         const fileName = args[0].readUtf16String().toLowerCase();
 
@@ -3336,10 +3282,10 @@ const DrmBypass = {
                     }
                 },
 
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.isLicenseFileAccess && retval.toInt32() === -1) {
                         // INVALID_HANDLE_VALUE
-                        // Optionally create fake license file handle
+                        // Optionally create spoofed license file handle
                         send({
                             type: 'bypass',
                             target: 'drm_bypass',
@@ -3353,7 +3299,7 @@ const DrmBypass = {
         }
     },
 
-    hookRegistryLicenseChecks: function () {
+    hookRegistryLicenseChecks() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -3364,7 +3310,7 @@ const DrmBypass = {
         const regQueryValue = Module.findExportByName('advapi32.dll', 'RegQueryValueExW');
         if (regQueryValue) {
             Interceptor.attach(regQueryValue, {
-                onEnter: function (args) {
+                onEnter(args) {
                     if (args[1] && !args[1].isNull()) {
                         const valueName = args[1].readUtf16String().toLowerCase();
 
@@ -3390,7 +3336,7 @@ const DrmBypass = {
                     }
                 },
 
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.isLicenseRegistryQuery && retval.toInt32() !== 0) {
                         // Failed
                         // Optionally spoof license registry values
@@ -3408,7 +3354,7 @@ const DrmBypass = {
     },
 
     // === CERTIFICATE VALIDATION BYPASS ===
-    hookCertificateValidation: function () {
+    hookCertificateValidation() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -3422,7 +3368,7 @@ const DrmBypass = {
         );
         if (certVerifyChain) {
             Interceptor.attach(certVerifyChain, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.policyOID = args[0];
                     this.chainContext = args[1];
                     this.policyPara = args[2];
@@ -3435,11 +3381,11 @@ const DrmBypass = {
                     });
                 },
 
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (
-                        retval.toInt32() !== 0 &&
-                        this.policyStatus &&
-                        !this.policyStatus.isNull()
+                        retval.toInt32() !== 0
+                        && this.policyStatus
+                        && !this.policyStatus.isNull()
                     ) {
                         // Force certificate validation to succeed
                         this.policyStatus.writeU32(0); // No errors
@@ -3459,7 +3405,7 @@ const DrmBypass = {
     },
 
     // === INSTALLATION SUMMARY ===
-    installSummary: function () {
+    installSummary() {
         setTimeout(() => {
             const categories = {
                 'HDCP Protection': 0,
@@ -3474,57 +3420,57 @@ const DrmBypass = {
                 'Certificate Validation': 0,
             };
 
-            for (let hook in this.hooksInstalled) {
+            for (const hook in this.hooksInstalled) {
                 if (hook.includes('HDCP') || hook.includes('Hdcp')) {
                     categories['HDCP Protection']++;
                 } else if (
-                    hook.includes('PlayReady') ||
-                    hook.includes('PR_') ||
-                    hook.includes('DRM_')
+                    hook.includes('PlayReady')
+                    || hook.includes('PR_')
+                    || hook.includes('DRM_')
                 ) {
                     categories['PlayReady DRM']++;
                 } else if (
-                    hook.includes('Widevine') ||
-                    hook.includes('WV_') ||
-                    hook.includes('CDM')
+                    hook.includes('Widevine')
+                    || hook.includes('WV_')
+                    || hook.includes('CDM')
                 ) {
                     categories['Widevine DRM']++;
                 } else if (
-                    hook.includes('Time') ||
-                    hook.includes('Geo') ||
-                    hook.includes('Domain') ||
-                    hook.includes('Telemetry')
+                    hook.includes('Time')
+                    || hook.includes('Geo')
+                    || hook.includes('Domain')
+                    || hook.includes('Telemetry')
                 ) {
                     categories['Streaming DRM']++;
                 } else if (
-                    hook.includes('Tpm') ||
-                    hook.includes('TEE') ||
-                    hook.includes('Hardware')
+                    hook.includes('Tpm')
+                    || hook.includes('TEE')
+                    || hook.includes('Hardware')
                 ) {
                     categories['Hardware DRM']++;
                 } else if (
-                    hook.includes('EME') ||
-                    hook.includes('MediaKey') ||
-                    hook.includes('Session')
+                    hook.includes('EME')
+                    || hook.includes('MediaKey')
+                    || hook.includes('Session')
                 ) {
                     categories['EME APIs']++;
                 } else if (
-                    hook.includes('Decrypt') ||
-                    hook.includes('Content') ||
-                    hook.includes('Key') ||
-                    hook.includes('KDF')
+                    hook.includes('Decrypt')
+                    || hook.includes('Content')
+                    || hook.includes('Key')
+                    || hook.includes('KDF')
                 ) {
                     categories['Content Decryption']++;
                 } else if (
-                    hook.includes('Network') ||
-                    hook.includes('Communication') ||
-                    hook.includes('Service')
+                    hook.includes('Network')
+                    || hook.includes('Communication')
+                    || hook.includes('Service')
                 ) {
                     categories['DRM Communication']++;
                 } else if (
-                    hook.includes('License') ||
-                    hook.includes('Registry') ||
-                    hook.includes('Validation')
+                    hook.includes('License')
+                    || hook.includes('Registry')
+                    || hook.includes('Validation')
                 ) {
                     categories['License Validation']++;
                 } else if (hook.includes('Cert') || hook.includes('Certificate')) {
@@ -3586,7 +3532,7 @@ const DrmBypass = {
     // === V3.0.0 COMPREHENSIVE DRM ENHANCEMENTS ===
 
     // Advanced DRM protection bypass for modern streaming services
-    initializeAdvancedDRMProtection: function () {
+    initializeAdvancedDRMProtection() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -3666,7 +3612,7 @@ const DrmBypass = {
     },
 
     // Quantum-resistant DRM bypass
-    initializeQuantumDRMBypass: function () {
+    initializeQuantumDRMBypass() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -3729,7 +3675,7 @@ const DrmBypass = {
     },
 
     // Blockchain and distributed ledger DRM bypass
-    initializeBlockchainDRMBypass: function () {
+    initializeBlockchainDRMBypass() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -3794,7 +3740,7 @@ const DrmBypass = {
     },
 
     // AI and Machine Learning DRM bypass
-    initializeAIDRMBypass: function () {
+    initializeAIDRMBypass() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -3809,7 +3755,7 @@ const DrmBypass = {
                 audio_fingerprinting_bypass: true,
                 watermarking_detection_bypass: true,
                 steganography_detection_bypass: true,
-                deepfake_detection_bypass: true,
+                synthetic_media_detection_bypass: true,
                 adversarial_examples: true,
             },
 
@@ -3829,7 +3775,7 @@ const DrmBypass = {
                 enabled: true,
                 user_pattern_spoofing: true,
                 viewing_habit_mimicry: true,
-                device_behavior_simulation: true,
+                device_behavior_emulation: true,
                 network_pattern_masking: true,
                 temporal_analysis_bypass: true,
             },
@@ -3858,7 +3804,7 @@ const DrmBypass = {
     },
 
     // DRM innovations and future technologies
-    initializeDRMInnovations: function () {
+    initializeDRMInnovations() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -3926,7 +3872,7 @@ const DrmBypass = {
 
     // === V3.0.0 IMPLEMENTATION METHODS ===
 
-    hookModernStreamingDRM: function () {
+    hookModernStreamingDRM() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -3948,7 +3894,7 @@ const DrmBypass = {
         this.bypassedChecks += 15;
     },
 
-    hookNextGenDRMFormats: function () {
+    hookNextGenDRMFormats() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -3967,7 +3913,7 @@ const DrmBypass = {
         this.bypassedChecks += 12;
     },
 
-    hookCloudGamingDRM: function () {
+    hookCloudGamingDRM() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -3981,23 +3927,25 @@ const DrmBypass = {
             luna: ['amazon_luna', 'twitch_integration'],
         };
 
-        for (let platform in cloudPlatforms) {
+        for (const platform in cloudPlatforms) {
             this.hookStreamingAPIs(platform, cloudPlatforms[platform]);
         }
 
         this.bypassedChecks += 20;
     },
 
-    implementQuantumBypass: function () {
+    implementQuantumBypass() {
         send({
             type: 'info',
             target: 'drm_bypass',
             action: 'implementing_quantum_bypass',
         });
 
-        // Simulate quantum bypass mechanisms
+        // Initialize quantum bypass mechanisms
         this.quantumBypassActive = true;
-        this.quantumEntropyPool = new Array(1000).fill(0).map(() => Math.random());
+        this.quantumEntropyPool = Array.from({ length: 1000 })
+            .fill(0)
+            .map(() => Math.random());
         this.postQuantumKeys = this.generatePostQuantumKeys();
 
         send({
@@ -4009,14 +3957,14 @@ const DrmBypass = {
         this.bypassedChecks += 25;
     },
 
-    implementBlockchainBypass: function () {
+    implementBlockchainBypass() {
         send({
             type: 'info',
             target: 'drm_bypass',
             action: 'implementing_blockchain_bypass',
         });
 
-        // Simulate blockchain consensus manipulation
+        // Configure blockchain consensus manipulation
         this.blockchainBypassActive = true;
         this.consensusManipulation = {
             validatorControl: 0.67, // 67% control for PoS bypass
@@ -4033,7 +3981,7 @@ const DrmBypass = {
         this.bypassedChecks += 30;
     },
 
-    implementAIBypass: function () {
+    implementAIBypass() {
         send({
             type: 'info',
             target: 'drm_bypass',
@@ -4055,9 +4003,13 @@ const DrmBypass = {
     },
 
     generateAdversarialExamples: () => ({
-        imageAdversarial: new Array(100).fill(0).map(() => Math.random()),
-        audioAdversarial: new Array(100).fill(0).map(() => Math.random()),
-        textAdversarial: new Array(50)
+        imageAdversarial: Array.from({ length: 100 })
+            .fill(0)
+            .map(() => Math.random()),
+        audioAdversarial: Array.from({ length: 100 })
+            .fill(0)
+            .map(() => Math.random()),
+        textAdversarial: Array.from({ length: 50 })
             .fill('')
             .map(() => String.fromCharCode(65 + Math.floor(Math.random() * 26))),
     }),
@@ -4079,34 +4031,41 @@ const DrmBypass = {
     }),
 
     generatePostQuantumKeys: () => ({
-        latticeKeys: new Array(256).fill(0).map(() => Math.floor(Math.random() * 256)),
-        codeBasedKeys: new Array(128).fill(0).map(() => Math.floor(Math.random() * 2)),
-        multivariateKeys: new Array(512).fill(0).map(() => Math.random()),
-        hashBasedKeys: new Array(64).fill(0).map(() => Math.floor(Math.random() * 256)),
+        latticeKeys: Array.from({ length: 256 })
+            .fill(0)
+            .map(() => Math.floor(Math.random() * 256)),
+        codeBasedKeys: Array.from({ length: 128 })
+            .fill(0)
+            .map(() => Math.floor(Math.random() * 2)),
+        multivariateKeys: Array.from({ length: 512 })
+            .fill(0)
+            .map(() => Math.random()),
+        hashBasedKeys: Array.from({ length: 64 })
+            .fill(0)
+            .map(() => Math.floor(Math.random() * 256)),
     }),
 
     // Helper methods for v3.0.0 functionality
-    hookStreamingAPIs: function (platform, apiList) {
-        for (let i = 0; i < apiList.length; i++) {
-            const apiName = apiList[i];
+    hookStreamingAPIs(platform, apiList) {
+        for (const apiName of apiList) {
             try {
-                // Simulate API hooking for streaming platforms
+                // Install API hook for streaming platforms
                 this.hooksInstalled[`${platform}_${apiName}`] = true;
                 send({
                     type: 'bypass',
                     target: 'drm_bypass',
                     action: 'streaming_api_hooked',
-                    platform: platform,
+                    platform,
                     api: apiName,
                 });
-            } catch (e) {
+            } catch (error) {
                 // Comprehensive streaming API hooking error forensics
                 const streamingApiErrorForensics = {
                     timestamp: new Date().toISOString(),
                     error_type: 'streaming_api_hooking_failure',
-                    error_message: e.message || 'unknown_error',
-                    error_stack: e.stack || 'no_stack_trace',
-                    error_name: e.name || 'unknown_exception',
+                    error_message: error.message || 'unknown_error',
+                    error_stack: error.stack || 'no_stack_trace',
+                    error_name: error.name || 'unknown_exception',
                     bypass_context: 'streaming_platform_api_bypass',
                     security_implications: [
                         'streaming_api_bypass_failure',
@@ -4118,7 +4077,7 @@ const DrmBypass = {
                         function_context: 'hookStreamingAPI',
                         target_platform: platform,
                         target_api: apiName,
-                        error_classification: this.classifyStreamingApiError(e),
+                        error_classification: this.classifyStreamingApiError(error),
                         bypass_resilience: 'medium',
                         recovery_possible: true,
                         alternative_bypass_available: true,
@@ -4144,9 +4103,8 @@ const DrmBypass = {
         }
     },
 
-    hookCodecDRM: function (codecName, functionList) {
-        for (let i = 0; i < functionList.length; i++) {
-            const funcName = functionList[i];
+    hookCodecDRM(codecName, functionList) {
+        for (const funcName of functionList) {
             try {
                 this.hooksInstalled[`${codecName}_${funcName}`] = true;
                 send({
@@ -4156,14 +4114,14 @@ const DrmBypass = {
                     codec: codecName,
                     function: funcName,
                 });
-            } catch (e) {
+            } catch (error) {
                 // Comprehensive codec DRM function error forensics
                 const codecDrmErrorForensics = {
                     timestamp: new Date().toISOString(),
                     error_type: 'codec_drm_function_failure',
-                    error_message: e.message || 'unknown_error',
-                    error_stack: e.stack || 'no_stack_trace',
-                    error_name: e.name || 'unknown_exception',
+                    error_message: error.message || 'unknown_error',
+                    error_stack: error.stack || 'no_stack_trace',
+                    error_name: error.name || 'unknown_exception',
                     bypass_context: 'codec_drm_bypass',
                     security_implications: [
                         'codec_drm_bypass_failure',
@@ -4175,7 +4133,7 @@ const DrmBypass = {
                         function_context: 'hookCodecDRM',
                         target_codec: codecName,
                         target_function: funcName,
-                        error_classification: this.classifyCodecDrmError(e),
+                        error_classification: this.classifyCodecDrmError(error),
                         bypass_resilience: 'high',
                         recovery_possible: true,
                         alternative_bypass_available: true,
@@ -4195,15 +4153,14 @@ const DrmBypass = {
         }
     },
 
-    hookHDRFormats: function (formatList) {
-        for (let i = 0; i < formatList.length; i++) {
-            const format = formatList[i];
+    hookHDRFormats(formatList) {
+        for (const format of formatList) {
             this.hooksInstalled[`hdr_${format}`] = true;
             send({
                 type: 'bypass',
                 target: 'drm_bypass',
                 action: 'hdr_format_drm_bypassed',
-                format: format,
+                format,
             });
         }
     },

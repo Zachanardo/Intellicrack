@@ -57,7 +57,7 @@ const QuantumCryptoHandler = {
                     security_levels: [2, 3, 5],
                     patterns: ['dilithium', 'DILITHIUM', 'mldsa'],
                     constants: {
-                        q: 8380417,
+                        q: 8_380_417,
                         d: 13,
                         tau: 39,
                     },
@@ -154,7 +154,7 @@ const QuantumCryptoHandler = {
     },
 
     // Initialize the handler
-    initialize: function () {
+    initialize() {
         send({
             type: 'info',
             target: 'quantum_crypto_handler',
@@ -184,7 +184,7 @@ const QuantumCryptoHandler = {
     },
 
     // Detect post-quantum crypto libraries
-    detectPQCLibraries: function () {
+    detectPQCLibraries() {
         send({
             type: 'info',
             target: 'quantum_crypto_handler',
@@ -228,7 +228,7 @@ const QuantumCryptoHandler = {
                         });
                         this.analyzeLibrary(module);
                     }
-                }, this);
+                });
             }.bind(this),
             onComplete: () => {
                 send({
@@ -244,7 +244,7 @@ const QuantumCryptoHandler = {
     },
 
     // Analyze detected library
-    analyzeLibrary: function (module) {
+    analyzeLibrary(module) {
         send({
             type: 'info',
             target: 'quantum_crypto_handler',
@@ -276,7 +276,7 @@ const QuantumCryptoHandler = {
     },
 
     // Scan for algorithm patterns in memory
-    scanForAlgorithmPatterns: function () {
+    scanForAlgorithmPatterns() {
         send({
             type: 'info',
             target: 'quantum_crypto_handler',
@@ -297,7 +297,7 @@ const QuantumCryptoHandler = {
     },
 
     // Scan for SPHINCS+ implementation
-    scanForSPHINCS: function () {
+    scanForSPHINCS() {
         // SPHINCS+ uses hash functions and tree structures
         const sphincsFuncs = [
             'sphincs_sign',
@@ -320,7 +320,7 @@ const QuantumCryptoHandler = {
     },
 
     // Scan for other PQC algorithms
-    scanForOtherPQC: function () {
+    scanForOtherPQC() {
         // Multivariate signature schemes
         const multivariatePatterns = [
             'rainbow',
@@ -350,10 +350,10 @@ const QuantumCryptoHandler = {
     },
 
     // Scan for Kyber implementation
-    scanForKyber: function () {
+    scanForKyber() {
         // Kyber polynomial operations use q=3329
         const kyberQ = 3329;
-        const qBytes = [(kyberQ >> 8) & 0xff, kyberQ & 0xff];
+        const qBytes = [(kyberQ >> 8) & 0xFF, kyberQ & 0xFF];
 
         try {
             const matches = Memory.scanSync(Process.enumerateRanges('r-x'), {
@@ -372,12 +372,12 @@ const QuantumCryptoHandler = {
                 // Hook nearby functions
                 this.hookNearbyPQCFunctions(match.address, 'kyber');
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'quantum_crypto_handler',
                 action: 'kyber_scan_error',
-                error: e.toString(),
+                error: error.toString(),
             });
         }
 
@@ -399,23 +399,23 @@ const QuantumCryptoHandler = {
     },
 
     // Scan for Dilithium implementation
-    scanForDilithium: function () {
+    scanForDilithium() {
         // Dilithium uses q=8380417
-        const dilithiumQ = 8380417;
+        const dilithiumQ = 8_380_417;
 
         try {
             // Search for the constant
             const qBytes = [
-                (dilithiumQ >> 24) & 0xff,
-                (dilithiumQ >> 16) & 0xff,
-                (dilithiumQ >> 8) & 0xff,
-                dilithiumQ & 0xff,
+                (dilithiumQ >> 24) & 0xFF,
+                (dilithiumQ >> 16) & 0xFF,
+                (dilithiumQ >> 8) & 0xFF,
+                dilithiumQ & 0xFF,
             ];
 
             const pattern = qBytes.map(b => b.toString(16).padStart(2, '0')).join(' ');
 
             const matches = Memory.scanSync(Process.enumerateRanges('r-x'), {
-                pattern: pattern,
+                pattern,
                 mask: 'FF FF FF FF',
             });
 
@@ -428,12 +428,12 @@ const QuantumCryptoHandler = {
                 });
                 this.hookNearbyPQCFunctions(match.address, 'dilithium');
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'quantum_crypto_handler',
                 action: 'dilithium_scan_error',
-                error: e.toString(),
+                error: error.toString(),
             });
         }
 
@@ -454,7 +454,7 @@ const QuantumCryptoHandler = {
     },
 
     // Hook crypto operations
-    hookCryptoOperations: function () {
+    hookCryptoOperations() {
         send({
             type: 'info',
             target: 'quantum_crypto_handler',
@@ -472,7 +472,7 @@ const QuantumCryptoHandler = {
     },
 
     // Hook KEM operations
-    hookKEMOperations: function () {
+    hookKEMOperations() {
         // Generic KEM interface
         const kemOps = [
             'crypto_kem_keypair',
@@ -485,7 +485,7 @@ const QuantumCryptoHandler = {
 
         kemOps.forEach(op => {
             this.findAndHookFunction(op, 'kem', {
-                onEnter: function (args) {
+                onEnter(args) {
                     // Bypass quantum verification
                     if (args[1]) {
                         args[1] = ptr(1); // Force verified
@@ -500,7 +500,7 @@ const QuantumCryptoHandler = {
                     // Store context
                     this.context = {
                         operation: op,
-                        args: args,
+                        args,
                         timestamp: Date.now(),
                     };
                 },
@@ -529,7 +529,7 @@ const QuantumCryptoHandler = {
     },
 
     // Hook signature operations
-    hookSignatureOperations: function () {
+    hookSignatureOperations() {
         const sigOps = [
             'crypto_sign_keypair',
             'crypto_sign',
@@ -541,7 +541,7 @@ const QuantumCryptoHandler = {
 
         sigOps.forEach(op => {
             this.findAndHookFunction(op, 'signature', {
-                onEnter: function (args) {
+                onEnter(args) {
                     send({
                         type: 'info',
                         target: 'quantum_crypto_handler',
@@ -550,7 +550,7 @@ const QuantumCryptoHandler = {
                     });
                     this.sigContext = {
                         operation: op,
-                        args: args,
+                        args,
                     };
                 },
                 onLeave: function (retval) {
@@ -582,7 +582,7 @@ const QuantumCryptoHandler = {
     },
 
     // Find and hook function by name
-    findAndHookFunction: function (funcName, category, callbacks) {
+    findAndHookFunction(funcName, category, callbacks) {
         try {
             // Search in exports first
             const exp = Module.findExportByName(null, funcName);
@@ -615,13 +615,13 @@ const QuantumCryptoHandler = {
                     this.hookFunction(funcAddr, funcName, category, callbacks);
                 }
             });
-        } catch (_e) {
+        } catch {
             // Function not found
         }
     },
 
     // Hook a specific function
-    hookFunction: function (address, name, category, callbacks) {
+    hookFunction(address, name, category, callbacks) {
         if (this.state.hooked_functions.has(address.toString())) {
             return; // Already hooked
         }
@@ -632,13 +632,13 @@ const QuantumCryptoHandler = {
                 onEnter: args => {
                     // Manipulate quantum parameters
                     if (args[0]) {
-                        args[0] = ptr(0xdeadbeef); // Predictable entropy
+                        args[0] = ptr(0xDE_AD_BE_EF); // Predictable entropy
                     }
                     send({
                         type: 'info',
                         target: 'quantum_crypto_handler',
                         action: 'function_called',
-                        category: category,
+                        category,
                         function: name,
                     });
 
@@ -649,12 +649,12 @@ const QuantumCryptoHandler = {
                                 type: 'info',
                                 target: 'quantum_crypto_handler',
                                 action: 'function_argument',
-                                category: category,
+                                category,
                                 function: name,
                                 arg_index: i,
                                 arg_value: args[i].toString(),
                             });
-                        } catch (_e) {
+                        } catch {
                             // Invalid pointer
                         }
                     }
@@ -664,7 +664,7 @@ const QuantumCryptoHandler = {
                         type: 'info',
                         target: 'quantum_crypto_handler',
                         action: 'function_returned',
-                        category: category,
+                        category,
                         function: name,
                         return_value: retval.toString(),
                     });
@@ -676,20 +676,20 @@ const QuantumCryptoHandler = {
         );
 
         this.state.hooked_functions.set(address.toString(), {
-            name: name,
-            category: category,
-            hook: hook,
+            name,
+            category,
+            hook,
         });
     },
 
     // Apply bypass based on function type
-    applyBypass: function (funcName, retval) {
+    applyBypass(funcName, retval) {
         const lowerName = funcName.toLowerCase();
 
         // Verification functions - return success
         if (
-            (lowerName.includes('verify') || lowerName.includes('check')) &&
-            this.config.bypass.skip_verification
+            (lowerName.includes('verify') || lowerName.includes('check'))
+            && this.config.bypass.skip_verification
         ) {
             send({
                 type: 'bypass',
@@ -702,8 +702,8 @@ const QuantumCryptoHandler = {
 
         // Validation functions - return valid
         if (
-            (lowerName.includes('valid') || lowerName.includes('authenticate')) &&
-            this.config.bypass.return_success
+            (lowerName.includes('valid') || lowerName.includes('authenticate'))
+            && this.config.bypass.return_success
         ) {
             send({
                 type: 'bypass',
@@ -727,7 +727,7 @@ const QuantumCryptoHandler = {
     },
 
     // Hook key generation
-    hookKeyGeneration: function () {
+    hookKeyGeneration() {
         send({
             type: 'info',
             target: 'quantum_crypto_handler',
@@ -740,15 +740,15 @@ const QuantumCryptoHandler = {
 
         keygenPatterns.forEach(pattern => {
             this.findAndHookFunction(pattern, 'keygen', {
-                onEnter: function (args) {
+                onEnter(args) {
                     send({
                         type: 'info',
                         target: 'quantum_crypto_handler',
                         action: 'keygen_started',
-                        pattern: pattern,
+                        pattern,
                     });
                     this.keygenContext = {
-                        pattern: pattern,
+                        pattern,
                         publicKey: args[0],
                         privateKey: args[1],
                         seed: args[2],
@@ -772,7 +772,7 @@ const QuantumCryptoHandler = {
     },
 
     // Extract generated keys
-    extractGeneratedKeys: function (context) {
+    extractGeneratedKeys(context) {
         try {
             // Determine key sizes based on algorithm
             const keySizes = this.getKeySizesForContext(context);
@@ -788,14 +788,14 @@ const QuantumCryptoHandler = {
 
                 // Log first few bytes
                 if (pubKey.length > 0) {
-                    const preview = Array.from(pubKey.slice(0, 16))
+                    const preview = [...pubKey.slice(0, 16)]
                         .map(b => b.toString(16).padStart(2, '0'))
                         .join(' ');
                     send({
                         type: 'info',
                         target: 'quantum_crypto_handler',
                         action: 'pubkey_preview',
-                        preview: preview,
+                        preview,
                     });
                 }
             }
@@ -809,12 +809,12 @@ const QuantumCryptoHandler = {
                     key_length: privKey.length,
                 });
             }
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'quantum_crypto_handler',
                 action: 'keygen_extraction_error',
-                error: e.toString(),
+                error: error.toString(),
             });
         }
     },
@@ -826,7 +826,7 @@ const QuantumCryptoHandler = {
             kyber: { publicKey: 1568, privateKey: 3168 }, // Kyber-1024
             dilithium: { publicKey: 2592, privateKey: 4864 }, // Dilithium5
             sphincs: { publicKey: 64, privateKey: 128 }, // SPHINCS+
-            mceliece: { publicKey: 1357824, privateKey: 14080 }, // Classic McEliece
+            mceliece: { publicKey: 1_357_824, privateKey: 14_080 }, // Classic McEliece
         };
 
         // Try to determine algorithm from context
@@ -842,7 +842,7 @@ const QuantumCryptoHandler = {
     },
 
     // Hook verification functions
-    hookVerification: function () {
+    hookVerification() {
         send({
             type: 'info',
             target: 'quantum_crypto_handler',
@@ -861,17 +861,17 @@ const QuantumCryptoHandler = {
 
         verifyPatterns.forEach(pattern => {
             this.findAndHookFunction(pattern, 'verify', {
-                onEnter: function (args) {
+                onEnter(args) {
                     send({
                         type: 'info',
                         target: 'quantum_crypto_handler',
                         action: 'verify_started',
-                        pattern: pattern,
+                        pattern,
                     });
 
                     // Store verification context
                     this.verifyContext = {
-                        pattern: pattern,
+                        pattern,
                         message: args[0],
                         signature: args[1],
                         publicKey: args[2],
@@ -908,7 +908,7 @@ const QuantumCryptoHandler = {
     },
 
     // Fake encapsulation result
-    fakeEncapsulation: function (context, retval) {
+    fakeEncapsulation(context, retval) {
         try {
             // Most KEM functions return 0 on success
             if (retval.toInt32() !== 0) {
@@ -929,12 +929,12 @@ const QuantumCryptoHandler = {
                     context.args[0].writeByteArray(fakeData);
                 }
             }
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'quantum_crypto_handler',
                 action: 'kem_encapsulation_error',
-                error: e.toString(),
+                error: error.toString(),
             });
         }
     },
@@ -972,7 +972,7 @@ const QuantumCryptoHandler = {
     },
 
     // Hook hybrid crypto operations
-    hookHybridOperations: function () {
+    hookHybridOperations() {
         send({
             type: 'info',
             target: 'quantum_crypto_handler',
@@ -996,7 +996,7 @@ const QuantumCryptoHandler = {
                         type: 'info',
                         target: 'quantum_crypto_handler',
                         action: 'hybrid_function_called',
-                        pattern: pattern,
+                        pattern,
                     });
                 },
                 onLeave: function (retval) {
@@ -1006,7 +1006,7 @@ const QuantumCryptoHandler = {
                             type: 'bypass',
                             target: 'quantum_crypto_handler',
                             action: 'hybrid_bypass_applied',
-                            pattern: pattern,
+                            pattern,
                         });
                         retval.replace(ptr(0)); // Success
                     }
@@ -1016,7 +1016,7 @@ const QuantumCryptoHandler = {
     },
 
     // Find nearest function from address
-    findNearestFunction: function (address) {
+    findNearestFunction(address) {
         try {
             let addr = ptr(address);
 
@@ -1030,7 +1030,7 @@ const QuantumCryptoHandler = {
                     return addr;
                 }
             }
-        } catch (_e) {
+        } catch {
             // Continue searching
         }
 
@@ -1051,18 +1051,18 @@ const QuantumCryptoHandler = {
     },
 
     // Hook nearby PQC functions
-    hookNearbyPQCFunctions: function (address, algorithm) {
+    hookNearbyPQCFunctions(address, algorithm) {
         send({
             type: 'info',
             target: 'quantum_crypto_handler',
             action: 'hook_searching',
-            algorithm: algorithm,
+            algorithm,
             address: address.toString(),
         });
 
         try {
             // Search around the constant
-            const searchRange = 0x1000; // 4KB
+            const searchRange = 0x10_00; // 4KB
             const startAddr = ptr(address).sub(searchRange);
             const endAddr = ptr(address).add(searchRange);
 
@@ -1082,24 +1082,24 @@ const QuantumCryptoHandler = {
                         this.hookFunction(addr, `${algorithm}_func_${addr}`, algorithm);
 
                         // Skip past this function
-                        addr = addr.add(0x100);
+                        addr = addr.add(0x1_00);
                     }
-                } catch (_e) {
+                } catch {
                     // Invalid instruction
                 }
             }
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'quantum_crypto_handler',
                 action: 'hook_search_error',
-                error: e.toString(),
+                error: error.toString(),
             });
         }
     },
 
     // Store key material
-    storeKeyMaterial: function (context) {
+    storeKeyMaterial(context) {
         const keyId = `key_${Date.now()}`;
 
         this.state.key_materials.set(keyId, {
@@ -1118,7 +1118,7 @@ const QuantumCryptoHandler = {
     },
 
     // Detect algorithm from context
-    detectAlgorithmFromContext: function (context) {
+    detectAlgorithmFromContext(context) {
         const pattern = context.pattern.toLowerCase();
 
         // Check against known algorithms
@@ -1134,9 +1134,9 @@ const QuantumCryptoHandler = {
     },
 
     // Log bypass operation
-    logBypass: function (type, context) {
+    logBypass(type, context) {
         const bypass = {
-            type: type,
+            type,
             timestamp: Date.now(),
             context: {
                 pattern: context.pattern,
@@ -1153,7 +1153,7 @@ const QuantumCryptoHandler = {
     },
 
     // Start monitoring
-    startMonitoring: function () {
+    startMonitoring() {
         send({
             type: 'info',
             target: 'quantum_crypto_handler',
@@ -1170,11 +1170,11 @@ const QuantumCryptoHandler = {
         // Periodic statistics
         setInterval(() => {
             this.printStats();
-        }, 30000);
+        }, 30_000);
     },
 
     // Monitor key allocations
-    monitorKeyAllocations: function () {
+    monitorKeyAllocations() {
         // Hook malloc/calloc for large allocations (potential keys)
         const malloc = Module.findExportByName(null, 'malloc');
         if (malloc) {
@@ -1190,7 +1190,7 @@ const QuantumCryptoHandler = {
                         4864, // Dilithium
                         64,
                         128, // SPHINCS+
-                        1357824, // McEliece
+                        1_357_824, // McEliece
                     ];
 
                     if (pqcSizes.includes(size)) {
@@ -1198,10 +1198,10 @@ const QuantumCryptoHandler = {
                             type: 'detection',
                             target: 'quantum_crypto_handler',
                             action: 'malloc_pqc_allocation',
-                            size: size,
+                            size,
                         });
                         this.pendingAlloc = {
-                            size: size,
+                            size,
                             timestamp: Date.now(),
                         };
                     }
@@ -1225,7 +1225,7 @@ const QuantumCryptoHandler = {
     },
 
     // Print statistics
-    printStats: function () {
+    printStats() {
         send({
             type: 'info',
             target: 'quantum_crypto_handler',
@@ -1301,7 +1301,7 @@ const QuantumCryptoHandler = {
     },
 
     // Hook PQC function from export
-    hookPQCFunction: function (exp, algo) {
+    hookPQCFunction(exp, algo) {
         this.state.detected_algorithms.add(algo.name);
 
         this.hookFunction(exp.address, exp.name, algo.name, {
@@ -1402,9 +1402,9 @@ const QuantumCryptoHandler = {
                         target: 'quantum_crypto_handler',
                         action: 'algo_message_preview',
                         algorithm: algo.name,
-                        message: message,
+                        message,
                     });
-                } catch (_e) {
+                } catch {
                     // Can't read message
                 }
             }
@@ -1424,7 +1424,7 @@ const QuantumCryptoHandler = {
 
         // Algorithm-specific bypasses
         switch (algo.name) {
-            case 'CRYSTALS-Kyber':
+            case 'CRYSTALS-Kyber': {
                 if (lowerName.includes('decaps') && retval.toInt32() !== 0) {
                     send({
                         type: 'bypass',
@@ -1434,8 +1434,9 @@ const QuantumCryptoHandler = {
                     retval.replace(ptr(0));
                 }
                 break;
+            }
 
-            case 'CRYSTALS-Dilithium':
+            case 'CRYSTALS-Dilithium': {
                 if (lowerName.includes('verify') && retval.toInt32() !== 0) {
                     send({
                         type: 'bypass',
@@ -1445,11 +1446,12 @@ const QuantumCryptoHandler = {
                     retval.replace(ptr(0));
                 }
                 break;
+            }
 
-            case 'SPHINCS+':
+            case 'SPHINCS+': {
                 if (
-                    (lowerName.includes('verify') || lowerName.includes('open')) &&
-                    retval.toInt32() !== 0
+                    (lowerName.includes('verify') || lowerName.includes('open'))
+                    && retval.toInt32() !== 0
                 ) {
                     send({
                         type: 'bypass',
@@ -1459,12 +1461,13 @@ const QuantumCryptoHandler = {
                     retval.replace(ptr(0));
                 }
                 break;
+            }
 
-            default:
+            default: {
                 // Generic bypass
                 if (
-                    (lowerName.includes('verify') || lowerName.includes('check')) &&
-                    retval.toInt32() !== 0
+                    (lowerName.includes('verify') || lowerName.includes('check'))
+                    && retval.toInt32() !== 0
                 ) {
                     send({
                         type: 'bypass',
@@ -1474,11 +1477,12 @@ const QuantumCryptoHandler = {
                     });
                     retval.replace(ptr(0));
                 }
+            }
         }
     },
 
     // Detect advanced PQC algorithms not in basic config
-    detectAdvancedPQCAlgorithms: function () {
+    detectAdvancedPQCAlgorithms() {
         send({
             type: 'info',
             target: 'quantum_crypto_handler',
@@ -1511,10 +1515,10 @@ const QuantumCryptoHandler = {
     },
 
     // Detect FALCON signature scheme
-    detectFALCON: function () {
+    detectFALCON() {
         // FALCON uses q = 12289 and specific polynomial structures
-        const falconQ = 12289;
-        const qBytes = [(falconQ >> 8) & 0xff, falconQ & 0xff];
+        const falconQ = 12_289;
+        const qBytes = [(falconQ >> 8) & 0xFF, falconQ & 0xFF];
 
         try {
             const matches = Memory.scanSync(Process.enumerateRanges('r-x'), {
@@ -1531,7 +1535,7 @@ const QuantumCryptoHandler = {
                 });
                 this.hookNearbyPQCFunctions(match.address, 'falcon');
             });
-        } catch (_e) {
+        } catch {
             // Continue with other detections
         }
 
@@ -1572,7 +1576,7 @@ const QuantumCryptoHandler = {
     },
 
     // Detect BIKE (Bit Flipping Key Encapsulation)
-    detectBIKE: function () {
+    detectBIKE() {
         // BIKE specific constants and patterns
         const _bikePatterns = ['bike', 'BIKE', 'bit_flipping', 'qc_mdpc'];
 
@@ -1615,7 +1619,7 @@ const QuantumCryptoHandler = {
     },
 
     // Detect HQC (Hamming Quasi-Cyclic)
-    detectHQC: function () {
+    detectHQC() {
         const hqcFuncs = [
             'hqc_keygen',
             'hqc_encaps',
@@ -1651,7 +1655,7 @@ const QuantumCryptoHandler = {
     },
 
     // Detect FrodoKEM (conservative lattice-based)
-    detectFrodoKEM: function () {
+    detectFrodoKEM() {
         // FrodoKEM uses LWE with larger error distributions
         const frodoFuncs = [
             'frodo_keygen',
@@ -1692,7 +1696,7 @@ const QuantumCryptoHandler = {
     },
 
     // Detect SABER
-    detectSABER: function () {
+    detectSABER() {
         // SABER uses Module-LWR instead of Module-LWE
         const saberFuncs = [
             'saber_keygen',
@@ -1728,7 +1732,7 @@ const QuantumCryptoHandler = {
     },
 
     // Detect hybrid cryptography schemes
-    detectHybridCryptography: function () {
+    detectHybridCryptography() {
         send({
             type: 'info',
             target: 'quantum_crypto_handler',
@@ -1753,7 +1757,7 @@ const QuantumCryptoHandler = {
     },
 
     // Detect X25519+Kyber hybrid
-    detectX25519Kyber: function () {
+    detectX25519Kyber() {
         const hybridFuncs = [
             'x25519_kyber_keygen',
             'x25519_kyber_encaps',
@@ -1792,7 +1796,7 @@ const QuantumCryptoHandler = {
     },
 
     // Perform ML-based PQC detection
-    performMLBasedDetection: function () {
+    performMLBasedDetection() {
         send({
             type: 'info',
             target: 'quantum_crypto_handler',
@@ -1814,7 +1818,7 @@ const QuantumCryptoHandler = {
     },
 
     // Analyze code patterns for PQC
-    analyzeCodePatterns: function () {
+    analyzeCodePatterns() {
         try {
             // Get all executable regions
             const ranges = Process.enumerateRanges('r-x');
@@ -1834,7 +1838,7 @@ const QuantumCryptoHandler = {
                                 instructions.push(inst.mnemonic);
                             }
                             addr = addr.add(4);
-                        } catch (_e) {
+                        } catch {
                             addr = addr.add(1);
                         }
                     }
@@ -1849,11 +1853,11 @@ const QuantumCryptoHandler = {
                             target: 'quantum_crypto_handler',
                             action: 'pqc_code_pattern_detected',
                             address: range.base.toString(),
-                            score: score,
+                            score,
                         });
                         pqcScore += score;
                     }
-                } catch (_e) {
+                } catch {
                     // Continue with next range
                 }
             });
@@ -1864,12 +1868,12 @@ const QuantumCryptoHandler = {
                 action: 'ml_analysis_complete',
                 overall_score: pqcScore,
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'quantum_crypto_handler',
                 action: 'ml_analysis_error',
-                error: e.toString(),
+                error: error.toString(),
             });
         }
     },
@@ -1936,11 +1940,11 @@ const QuantumCryptoHandler = {
             score += (value / total) * weights[key];
         });
 
-        return Math.min(score, 1.0);
+        return Math.min(score, 1);
     },
 
     // Perform side-channel analysis
-    performSideChannelAnalysis: function () {
+    performSideChannelAnalysis() {
         send({
             type: 'info',
             target: 'quantum_crypto_handler',
@@ -1962,7 +1966,7 @@ const QuantumCryptoHandler = {
     },
 
     // Perform timing analysis on PQC operations
-    performTimingAnalysis: function () {
+    performTimingAnalysis() {
         const timingData = new Map();
 
         // Hook key generation for timing
@@ -1994,7 +1998,7 @@ const QuantumCryptoHandler = {
     },
 
     // Extract advanced key material from memory
-    extractAdvancedKeyMaterial: function () {
+    extractAdvancedKeyMaterial() {
         send({
             type: 'info',
             target: 'quantum_crypto_handler',
@@ -2019,7 +2023,7 @@ const QuantumCryptoHandler = {
     },
 
     // Perform deep memory scanning for keys
-    performDeepMemoryScanning: function () {
+    performDeepMemoryScanning() {
         try {
             // Scan heap regions for key patterns
             const heapRanges = Process.enumerateRanges('rw-');
@@ -2028,51 +2032,51 @@ const QuantumCryptoHandler = {
                 try {
                     // Look for key-like data patterns
                     this.scanRangeForKeys(range);
-                } catch (_e) {
+                } catch {
                     // Continue with next range
                 }
             });
 
             // Scan stack regions
             const stackRanges = Process.enumerateRanges('rw-').filter(
-                r => r.protection.includes('rw') && r.size < 0x100000
+                r => r.protection.includes('rw') && r.size < 0x10_00_00
             );
 
             stackRanges.forEach(range => {
                 try {
                     this.scanStackForKeys(range);
-                } catch (_e) {
+                } catch {
                     // Continue
                 }
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'quantum_crypto_handler',
                 action: 'memory_scan_error',
-                error: e.toString(),
+                error: error.toString(),
             });
         }
     },
 
     // Scan range for key material
-    scanRangeForKeys: function (range) {
+    scanRangeForKeys(range) {
         // PQC key entropy patterns
-        const data = range.base.readByteArray(Math.min(range.size, 0x10000));
+        const data = range.base.readByteArray(Math.min(range.size, 0x1_00_00));
         if (!data) {
             return;
         }
 
         // Entropy analysis
         const entropy = this.calculateEntropy(data);
-        if (entropy > 7.0) {
+        if (entropy > 7) {
             // High entropy indicates potential key material
             send({
                 type: 'detection',
                 target: 'quantum_crypto_handler',
                 action: 'high_entropy_data_found',
                 address: range.base.toString(),
-                entropy: entropy,
+                entropy,
                 size: data.byteLength,
             });
 
@@ -2084,11 +2088,11 @@ const QuantumCryptoHandler = {
     // Calculate entropy of data
     calculateEntropy: data => {
         const bytes = new Uint8Array(data);
-        const freq = new Array(256).fill(0);
+        const freq = Array.from({ length: 256 }).fill(0);
 
         // Count byte frequencies
-        for (let i = 0; i < bytes.length; i++) {
-            freq[bytes[i]]++;
+        for (const byte of bytes) {
+            freq[byte]++;
         }
 
         // Calculate Shannon entropy
@@ -2104,7 +2108,7 @@ const QuantumCryptoHandler = {
     },
 
     // Analyze high entropy data for key patterns
-    analyzeHighEntropyData: function (address, data) {
+    analyzeHighEntropyData(address, data) {
         const bytes = new Uint8Array(data);
 
         // Check for PQC key size patterns
@@ -2128,10 +2132,10 @@ const QuantumCryptoHandler = {
     },
 
     // Extract and analyze potential key
-    extractAndAnalyzeKey: function (address, data, expectedSize) {
+    extractAndAnalyzeKey(address, data, expectedSize) {
         try {
             // Log key preview (first 32 bytes)
-            const preview = Array.from(data.slice(0, 32))
+            const preview = [...data.slice(0, 32)]
                 .map(b => b.toString(16).padStart(2, '0'))
                 .join(' ');
 
@@ -2140,24 +2144,24 @@ const QuantumCryptoHandler = {
                 target: 'quantum_crypto_handler',
                 action: 'key_preview',
                 address: address.toString(),
-                preview: preview,
+                preview,
             });
 
             // Store key material
             const keyId = `extracted_${Date.now()}_${address.toString()}`;
             this.state.key_materials.set(keyId, {
                 address: address.toString(),
-                data: data,
+                data,
                 size: expectedSize,
                 algorithm: this.classifyKeyBySize(expectedSize),
                 extracted_at: Date.now(),
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'quantum_crypto_handler',
                 action: 'key_extraction_error',
-                error: e.toString(),
+                error: error.toString(),
             });
         }
     },
@@ -2179,7 +2183,7 @@ const QuantumCryptoHandler = {
     },
 
     // Recover PRNG seeds
-    recoverPRNGSeeds: function () {
+    recoverPRNGSeeds() {
         send({
             type: 'info',
             target: 'quantum_crypto_handler',
@@ -2199,7 +2203,7 @@ const QuantumCryptoHandler = {
 
         prngFuncs.forEach(func => {
             this.findAndHookFunction(func, 'prng', {
-                onEnter: function (args) {
+                onEnter(args) {
                     send({
                         type: 'info',
                         target: 'quantum_crypto_handler',
@@ -2207,7 +2211,7 @@ const QuantumCryptoHandler = {
                         function: func,
                         requested_bytes: args[1] ? args[1].toInt32() : 0,
                     });
-                    this.prngContext = { func: func, buffer: args[0], size: args[1] };
+                    this.prngContext = { func, buffer: args[0], size: args[1] };
                 },
                 onLeave: function (_retval) {
                     if (this.prngContext?.buffer && this.prngContext.size > 0) {
@@ -2221,13 +2225,13 @@ const QuantumCryptoHandler = {
                                     target: 'quantum_crypto_handler',
                                     action: 'prng_output_captured',
                                     function: this.prngContext.func,
-                                    size: size,
+                                    size,
                                 });
 
                                 // Analyze randomness quality
                                 this.analyzeRandomness(randomData, this.prngContext.func);
                             }
-                        } catch (_e) {
+                        } catch {
                             // Failed to read
                         }
                     }
@@ -2237,7 +2241,7 @@ const QuantumCryptoHandler = {
     },
 
     // Analyze randomness quality
-    analyzeRandomness: function (data, source) {
+    analyzeRandomness(data, source) {
         const bytes = new Uint8Array(data);
 
         // Simple statistical tests
@@ -2246,7 +2250,7 @@ const QuantumCryptoHandler = {
 
         // Chi-square test approximation
         const expected = bytes.length / 256;
-        const freq = new Array(256).fill(0);
+        const freq = Array.from({ length: 256 }).fill(0);
         bytes.forEach(b => freq[b]++);
 
         let chiSquare = 0;
@@ -2259,21 +2263,21 @@ const QuantumCryptoHandler = {
             type: 'info',
             target: 'quantum_crypto_handler',
             action: 'randomness_analysis',
-            source: source,
-            entropy: entropy,
-            mean: mean,
+            source,
+            entropy,
+            mean,
             chi_square: chiSquare,
             quality: this.assessRandomnessQuality(entropy, chiSquare),
         });
 
         // Detect weak randomness
-        if (entropy < 6.0 || chiSquare > 512) {
+        if (entropy < 6 || chiSquare > 512) {
             send({
                 type: 'detection',
                 target: 'quantum_crypto_handler',
                 action: 'weak_randomness_detected',
-                source: source,
-                entropy: entropy,
+                source,
+                entropy,
                 chi_square: chiSquare,
             });
         }
@@ -2284,28 +2288,28 @@ const QuantumCryptoHandler = {
         if (entropy > 7.8 && chiSquare < 300) {
             return 'HIGH';
         }
-        if (entropy > 7.0 && chiSquare < 400) {
+        if (entropy > 7 && chiSquare < 400) {
             return 'MEDIUM';
         }
         return 'LOW';
     },
 
     // Scan for BIKE patterns
-    scanForBIKEPatterns: function () {
+    scanForBIKEPatterns() {
         // BIKE uses specific bit manipulation patterns
         const bikeConstants = [
-            12323,
-            24659,
-            40973, // BIKE security levels
+            12_323,
+            24_659,
+            40_973, // BIKE security levels
         ];
 
         bikeConstants.forEach(constant => {
             try {
                 const constBytes = [
-                    (constant >> 24) & 0xff,
-                    (constant >> 16) & 0xff,
-                    (constant >> 8) & 0xff,
-                    constant & 0xff,
+                    (constant >> 24) & 0xFF,
+                    (constant >> 16) & 0xFF,
+                    (constant >> 8) & 0xFF,
+                    constant & 0xFF,
                 ];
 
                 const matches = Memory.scanSync(Process.enumerateRanges('r-x'), {
@@ -2318,29 +2322,29 @@ const QuantumCryptoHandler = {
                         target: 'quantum_crypto_handler',
                         action: 'bike_constant_found',
                         address: match.address.toString(),
-                        constant: constant,
+                        constant,
                     });
                     this.hookNearbyPQCFunctions(match.address, 'bike');
                 });
-            } catch (_e) {
+            } catch {
                 // Continue with next constant
             }
         });
     },
 
     // Scan for Frodo constants
-    scanForFrodoConstants: function () {
+    scanForFrodoConstants() {
         // FrodoKEM parameters
         const frodoParams = [
-            { n: 640, q: 32768 }, // Frodo-640
-            { n: 976, q: 65536 }, // Frodo-976
-            { n: 1344, q: 65536 }, // Frodo-1344
+            { n: 640, q: 32_768 }, // Frodo-640
+            { n: 976, q: 65_536 }, // Frodo-976
+            { n: 1344, q: 65_536 }, // Frodo-1344
         ];
 
         frodoParams.forEach(param => {
             try {
                 // Search for n parameter
-                const nBytes = [(param.n >> 8) & 0xff, param.n & 0xff];
+                const nBytes = [(param.n >> 8) & 0xFF, param.n & 0xFF];
                 const matches = Memory.scanSync(Process.enumerateRanges('r-x'), {
                     pattern: nBytes.map(b => b.toString(16).padStart(2, '0')).join(' '),
                 });
@@ -2356,14 +2360,14 @@ const QuantumCryptoHandler = {
                     });
                     this.hookNearbyPQCFunctions(match.address, 'frodo');
                 });
-            } catch (_e) {
+            } catch {
                 // Continue
             }
         });
     },
 
     // Scan for X25519+Kyber patterns
-    scanForX25519KyberPatterns: function () {
+    scanForX25519KyberPatterns() {
         // X25519 base point
         const x25519Base = new Uint8Array([
             0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -2372,12 +2376,12 @@ const QuantumCryptoHandler = {
         ]);
 
         try {
-            const pattern = Array.from(x25519Base.slice(0, 8))
+            const pattern = [...x25519Base.slice(0, 8)]
                 .map(b => b.toString(16).padStart(2, '0'))
                 .join(' ');
 
             const matches = Memory.scanSync(Process.enumerateRanges('r--'), {
-                pattern: pattern,
+                pattern,
             });
 
             matches.forEach(match => {
@@ -2391,14 +2395,14 @@ const QuantumCryptoHandler = {
                 // Check nearby for Kyber constants
                 this.checkForNearbyKyber(match.address);
             });
-        } catch (_e) {
+        } catch {
             // Continue
         }
     },
 
     // Check for nearby Kyber implementation
     checkForNearbyKyber: x25519Address => {
-        const searchRange = 0x10000; // 64KB
+        const searchRange = 0x1_00_00; // 64KB
         const startAddr = ptr(x25519Address).sub(searchRange);
         const _endAddr = ptr(x25519Address).add(searchRange);
 
@@ -2406,7 +2410,7 @@ const QuantumCryptoHandler = {
         const kyberQ = 3329;
 
         try {
-            const qBytes = [(kyberQ >> 8) & 0xff, kyberQ & 0xff];
+            const qBytes = [(kyberQ >> 8) & 0xFF, kyberQ & 0xFF];
             const ranges = [
                 {
                     base: startAddr,
@@ -2427,13 +2431,13 @@ const QuantumCryptoHandler = {
                     kyber_addresses: matches.map(m => m.address.toString()),
                 });
             }
-        } catch (_e) {
+        } catch {
             // Continue
         }
     },
 
     // Detect NewHope algorithm
-    detectNewHope: function () {
+    detectNewHope() {
         const newHopeFuncs = [
             'newhope_keygen',
             'newhope_sharedb',
@@ -2476,7 +2480,7 @@ const QuantumCryptoHandler = {
     },
 
     // Detect XMSS (eXtended Merkle Signature Scheme)
-    detectXMSS: function () {
+    detectXMSS() {
         const xmssFuncs = [
             'xmss_keygen',
             'xmss_sign',
@@ -2515,7 +2519,7 @@ const QuantumCryptoHandler = {
     },
 
     // Detect LMS (Leighton-Micali Signatures)
-    detectLMS: function () {
+    detectLMS() {
         const lmsFuncs = [
             'lms_keygen',
             'lms_sign',
@@ -2554,7 +2558,7 @@ const QuantumCryptoHandler = {
     },
 
     // Detect GeMSS (Great Multivariate Short Signature)
-    detectGeMSS: function () {
+    detectGeMSS() {
         const gemssFuncs = [
             'gemss_keygen',
             'gemss_sign',
@@ -2593,15 +2597,15 @@ const QuantumCryptoHandler = {
 
     // Check for nearby Dilithium implementation
     checkForNearbyDilithium: p256Address => {
-        const searchRange = 0x10000;
-        const dilithiumQ = 8380417;
+        const searchRange = 0x1_00_00;
+        const dilithiumQ = 8_380_417;
 
         try {
             const qBytes = [
-                (dilithiumQ >> 24) & 0xff,
-                (dilithiumQ >> 16) & 0xff,
-                (dilithiumQ >> 8) & 0xff,
-                dilithiumQ & 0xff,
+                (dilithiumQ >> 24) & 0xFF,
+                (dilithiumQ >> 16) & 0xFF,
+                (dilithiumQ >> 8) & 0xFF,
+                dilithiumQ & 0xFF,
             ];
 
             const startAddr = ptr(p256Address).sub(searchRange);
@@ -2625,15 +2629,15 @@ const QuantumCryptoHandler = {
                     dilithium_addresses: matches.map(m => m.address.toString()),
                 });
             }
-        } catch (_e) {
+        } catch {
             // Continue
         }
     },
 
     // Scan for NewHope constants
-    scanForNewHopeConstants: function () {
-        const newHopeQ = 12289;
-        const qBytes = [(newHopeQ >> 8) & 0xff, newHopeQ & 0xff];
+    scanForNewHopeConstants() {
+        const newHopeQ = 12_289;
+        const qBytes = [(newHopeQ >> 8) & 0xFF, newHopeQ & 0xFF];
 
         try {
             const matches = Memory.scanSync(Process.enumerateRanges('r-x'), {
@@ -2649,13 +2653,13 @@ const QuantumCryptoHandler = {
                 });
                 this.hookNearbyPQCFunctions(match.address, 'newhope');
             });
-        } catch (_e) {
+        } catch {
             // Continue
         }
     },
 
     // Scan for SPHINCS+ parameters
-    scanForSPHINCSParameters: function () {
+    scanForSPHINCSParameters() {
         // SPHINCS+ parameter sets
         const sphincsParams = [
             { n: 16, h: 60 }, // SPHINCS+-SHA256-128s
@@ -2670,7 +2674,7 @@ const QuantumCryptoHandler = {
                     .join(' ');
 
                 const matches = Memory.scanSync(Process.enumerateRanges('r--'), {
-                    pattern: pattern,
+                    pattern,
                 });
 
                 matches.forEach(match => {
@@ -2684,14 +2688,14 @@ const QuantumCryptoHandler = {
                     });
                     this.hookNearbyPQCFunctions(match.address, 'sphincs');
                 });
-            } catch (_e) {
+            } catch {
                 // Continue
             }
         });
     },
 
     // Entry point
-    run: function () {
+    run() {
         send({
             type: 'status',
             target: 'quantum_crypto_handler',
@@ -2705,7 +2709,7 @@ const QuantumCryptoHandler = {
     },
 
     // Initialize advanced capabilities
-    initializeAdvancedCapabilities: function () {
+    initializeAdvancedCapabilities() {
         send({
             type: 'info',
             target: 'quantum_crypto_handler',
@@ -2749,10 +2753,10 @@ rpc.exports = {
 };
 
 // Also run immediately if in Frida CLI
-if (typeof Java !== 'undefined') {
+if (typeof Java === 'undefined') {
+    quantumCryptoHandler.run();
+} else {
     Java.performNow(() => {
         quantumCryptoHandler.run();
     });
-} else {
-    quantumCryptoHandler.run();
 }

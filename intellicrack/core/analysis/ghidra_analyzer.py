@@ -60,7 +60,7 @@ class MainAppProtocol(Protocol):
 
     current_binary: str
     update_output: SignalProtocol
-    ghidra_analysis_result: GhidraAnalysisResult | None
+    ghidra_analysis_result: "GhidraAnalysisResult | None"
     ghidra_scripts_used: list[dict[str, Any]]
     analysis_completed: SignalProtocol
 

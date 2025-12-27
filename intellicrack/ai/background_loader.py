@@ -352,7 +352,7 @@ class BackgroundModelLoader:
         if cancelled:
             return
 
-        backend: "LLMBackend" = task.backend_class(task.config)
+        backend: LLMBackend = task.backend_class(task.config)
 
         cancelled = task.cancelled
         if cancelled:

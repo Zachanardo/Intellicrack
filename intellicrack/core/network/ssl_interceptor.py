@@ -8,9 +8,9 @@ import traceback
 from subprocess import Popen
 from typing import Any, cast
 
-from intellicrack.utils.type_safety import get_typed_item, validate_type
 from intellicrack.data import CA_CERT_PATH, CA_KEY_PATH
 from intellicrack.utils.logger import logger
+from intellicrack.utils.type_safety import get_typed_item, validate_type
 
 
 """

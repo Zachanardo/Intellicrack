@@ -15,29 +15,29 @@ package.json:75:10: [devDependencies] playwright
 
 2 findings in intellicrack/scripts/frida/universal_unpacker.js
 
-intellicrack/scripts/frida/universal_unpacker.js:14564:39: [unlisted] ws
+intellicrack/scripts/frida/universal_unpacker.js:14758:35: [unlisted] ws
 
-intellicrack/scripts/frida/universal_unpacker.js:14816:41: [unlisted] msgpack
+intellicrack/scripts/frida/universal_unpacker.js:15010:41: [unlisted] msgpack
 
 
 1 findings in intellicrack/scripts/frida/behavioral_pattern_analyzer.js
 
-intellicrack/scripts/frida/behavioral_pattern_analyzer.js:3729:22: [exports] default
+intellicrack/scripts/frida/behavioral_pattern_analyzer.js:3864:22: [exports] default
 
 
 1 findings in intellicrack/scripts/frida/blockchain_license_bypass.js
 
-intellicrack/scripts/frida/blockchain_license_bypass.js:2509:22: [exports] default
+intellicrack/scripts/frida/blockchain_license_bypass.js:2516:22: [exports] default
 
 
 1 findings in intellicrack/scripts/frida/bypass_success_tracker.js
 
-intellicrack/scripts/frida/bypass_success_tracker.js:2681:22: [exports] default
+intellicrack/scripts/frida/bypass_success_tracker.js:2686:22: [exports] default
 
 
 1 findings in intellicrack/scripts/frida/central_orchestrator.js
 
-intellicrack/scripts/frida/central_orchestrator.js:4834:22: [exports] default
+intellicrack/scripts/frida/central_orchestrator.js:5038:22: [exports] default
 
 
 1 findings in intellicrack/scripts/frida/certificate_pinner_bypass.js
@@ -47,72 +47,72 @@ intellicrack/scripts/frida/certificate_pinner_bypass.js:3197:22: [exports] defau
 
 1 findings in intellicrack/scripts/frida/certificate_pinning_bypass.js
 
-intellicrack/scripts/frida/certificate_pinning_bypass.js:8841:22: [exports] default
+intellicrack/scripts/frida/certificate_pinning_bypass.js:8925:22: [exports] default
 
 
 1 findings in intellicrack/scripts/frida/cloud_licensing_bypass.js
 
-intellicrack/scripts/frida/cloud_licensing_bypass.js:2808:22: [exports] default
+intellicrack/scripts/frida/cloud_licensing_bypass.js:2789:22: [exports] default
 
 
 1 findings in intellicrack/scripts/frida/dotnet_bypass_suite.js
 
-intellicrack/scripts/frida/dotnet_bypass_suite.js:2525:22: [exports] default
+intellicrack/scripts/frida/dotnet_bypass_suite.js:2523:22: [exports] default
 
 
 1 findings in intellicrack/scripts/frida/drm_bypass.js
 
-intellicrack/scripts/frida/drm_bypass.js:4214:22: [exports] default
+intellicrack/scripts/frida/drm_bypass.js:4171:22: [exports] default
 
 
 1 findings in intellicrack/scripts/frida/dynamic_script_generator.js
 
-intellicrack/scripts/frida/dynamic_script_generator.js:5609:22: [exports] default
+intellicrack/scripts/frida/dynamic_script_generator.js:5608:22: [exports] default
 
 
 1 findings in intellicrack/scripts/frida/hook_effectiveness_monitor.js
 
-intellicrack/scripts/frida/hook_effectiveness_monitor.js:5123:22: [exports] default
+intellicrack/scripts/frida/hook_effectiveness_monitor.js:5220:22: [exports] default
 
 
 1 findings in intellicrack/scripts/frida/http3_quic_interceptor.js
 
-intellicrack/scripts/frida/http3_quic_interceptor.js:3457:22: [exports] default
+intellicrack/scripts/frida/http3_quic_interceptor.js:3465:22: [exports] default
 
 
 1 findings in intellicrack/scripts/frida/kernel_bridge.js
 
-intellicrack/scripts/frida/kernel_bridge.js:3359:22: [exports] default
+intellicrack/scripts/frida/kernel_bridge.js:3371:22: [exports] default
 
 
 1 findings in intellicrack/scripts/frida/kernel_mode_bypass.js
 
-intellicrack/scripts/frida/kernel_mode_bypass.js:2491:22: [exports] default
+intellicrack/scripts/frida/kernel_mode_bypass.js:2519:22: [exports] default
 
 
 1 findings in intellicrack/scripts/frida/keygen_generator.js
 
-intellicrack/scripts/frida/keygen_generator.js:5897:22: [exports] default
+intellicrack/scripts/frida/keygen_generator.js:5909:22: [exports] default
 
 
 1 findings in intellicrack/scripts/frida/ml_license_detector.js
 
-intellicrack/scripts/frida/ml_license_detector.js:1541:22: [exports] default
+intellicrack/scripts/frida/ml_license_detector.js:1535:22: [exports] default
 
 
 1 findings in intellicrack/scripts/frida/ntp_blocker.js
 
-intellicrack/scripts/frida/ntp_blocker.js:4451:22: [exports] default
+intellicrack/scripts/frida/ntp_blocker.js:4485:22: [exports] default
 
 
 1 findings in intellicrack/scripts/frida/obfuscation_detector.js
 
-intellicrack/scripts/frida/obfuscation_detector.js:3318:22: [exports] default
+intellicrack/scripts/frida/obfuscation_detector.js:3306:22: [exports] default
 
 
 1 findings in intellicrack/scripts/frida/realtime_protection_detector.js
 
-intellicrack/scripts/frida/realtime_protection_detector.js:10977:22: [exports] default
+intellicrack/scripts/frida/realtime_protection_detector.js:10978:22: [exports] default
 
 
 1 findings in intellicrack/scripts/frida/test_binary_patcher.js

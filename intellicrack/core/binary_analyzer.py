@@ -28,9 +28,11 @@ import logging
 import mimetypes
 import os
 import time
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
+from ..utils.logger import log_all_methods
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +42,11 @@ PEAnalyzer: type[Any] | None = None
 ELFAnalyzer: type[Any] | None = None
 
 try:
-    from .analysis.multi_format_analyzer import BinaryInfo as _BinaryInfo, MultiFormatBinaryAnalyzer as _MultiFormatBinaryAnalyzer
+    from .analysis.multi_format_analyzer import (
+        BinaryInfo as _BinaryInfo,
+        MultiFormatBinaryAnalyzer as _MultiFormatBinaryAnalyzer,
+    )
+
     MultiFormatBinaryAnalyzer = _MultiFormatBinaryAnalyzer
     BinaryInfo = _BinaryInfo
 except ImportError:
@@ -51,12 +57,14 @@ except ImportError:
 
 try:
     from ..utils.binary.pe_analysis_common import PEAnalyzer as _PEAnalyzer
+
     PEAnalyzer = _PEAnalyzer
 except ImportError:
     logger.warning("Failed to import PEAnalyzer from ..utils.binary.pe_analysis_common, PE analysis will be disabled.")
 
 try:
     from ..utils.binary.elf_analyzer import ELFAnalyzer as _ELFAnalyzer
+
     ELFAnalyzer = _ELFAnalyzer
 except ImportError:
     logger.warning("Failed to import ELFAnalyzer from ..utils.binary.elf_analyzer, ELF analysis will be disabled.")
@@ -65,6 +73,7 @@ detect_file_type_impl: Callable[[str], str] | None = None
 
 try:
     from ..utils.system.os_detection import detect_file_type as _detect_file_type
+
     detect_file_type_impl = _detect_file_type
 except ImportError:
     logger.warning("Failed to import detect_file_type from ..utils.system.os_detection, using fallback.")
@@ -114,9 +123,6 @@ except ImportError:
                 entropy -= probability * math.log2(probability)
 
         return entropy
-
-
-from ..utils.logger import log_all_methods
 
 
 logger.debug("Binary analyzer module loaded")
@@ -408,11 +414,7 @@ class BinaryAnalyzer:
                         if hasattr(hasher, "update"):
                             hasher.update(chunk)
 
-            hash_results: dict[str, str] = {
-                name: hasher.hexdigest()
-                for name, hasher in hash_algos.items()
-                if hasattr(hasher, "hexdigest")
-            }
+            hash_results: dict[str, str] = {name: hasher.hexdigest() for name, hasher in hash_algos.items() if hasattr(hasher, "hexdigest")}
             results["file_hashes"] = hash_results
             self.logger.debug("Calculated hashes: %s", results["file_hashes"])
 

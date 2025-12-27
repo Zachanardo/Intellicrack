@@ -1532,6 +1532,7 @@ class FallbackNumPy:
 
 if TYPE_CHECKING:
     import numpy as _np
+
     NpOrFallback = _np.ndarray[Any, Any] | FallbackArray
 
 

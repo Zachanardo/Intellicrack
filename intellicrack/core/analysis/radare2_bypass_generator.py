@@ -2097,7 +2097,7 @@ Compatible=1.0,1.5,2.0"""
         """Generate patch bytes for function based on function characteristics."""
         func_name: str = func_info.get("function", {}).get("name", "")
         func_size: int = func_info.get("function", {}).get("size", 0)
-        func_type: str = func_info.get("function", {}).get("type", "")
+        func_info.get("function", {}).get("type", "")
 
         if "license" in func_name.lower() or "check" in func_name.lower():
             return "b8010000c3"

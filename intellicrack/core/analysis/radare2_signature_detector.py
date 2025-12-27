@@ -957,13 +957,11 @@ rule CryptoAPI_Usage {
                 unique_sigs[match.name].append(match)
 
             for sig_name, sig_matches in unique_sigs.items():
-                report.extend(
-                    (
-                        f"  {sig_name}",
-                        f"    Matches: {len(sig_matches)}",
-                        f"    Confidence: {sig_matches[0].confidence:.0%}",
-                    )
-                )
+                report.extend((
+                    f"  {sig_name}",
+                    f"    Matches: {len(sig_matches)}",
+                    f"    Confidence: {sig_matches[0].confidence:.0%}",
+                ))
                 # Show first few offsets
                 offsets = [hex(m.offset) for m in sig_matches[:5]]
                 if len(sig_matches) > 5:
@@ -971,18 +969,14 @@ rule CryptoAPI_Usage {
                 report.extend((f"    Offsets: {', '.join(offsets)}", ""))
         if compiler_info := self.detect_compiler():
             report.extend(("\nCOMPILER INFORMATION", "-" * 40))
-            report.extend(
-                (
-                    f"  Compiler: {compiler_info.compiler}",
-                    f"  Version: {compiler_info.version}",
-                )
-            )
-            report.extend(
-                (
-                    f"  Optimization: {compiler_info.optimization_level}",
-                    f"  Architecture: {compiler_info.architecture}",
-                )
-            )
+            report.extend((
+                f"  Compiler: {compiler_info.compiler}",
+                f"  Version: {compiler_info.version}",
+            ))
+            report.extend((
+                f"  Optimization: {compiler_info.optimization_level}",
+                f"  Architecture: {compiler_info.architecture}",
+            ))
             report.append("")
 
         if libraries := self.detect_libraries():
@@ -1019,16 +1013,14 @@ rule CryptoAPI_Usage {
                 matches_list: list[dict[str, Any]] = []
 
                 for match in self.matches:
-                    matches_list.append(
-                        {
-                            "type": match.signature_type.value,
-                            "name": match.name,
-                            "offset": match.offset,
-                            "size": match.size,
-                            "confidence": match.confidence,
-                            "metadata": match.metadata,
-                        }
-                    )
+                    matches_list.append({
+                        "type": match.signature_type.value,
+                        "name": match.name,
+                        "offset": match.offset,
+                        "size": match.size,
+                        "confidence": match.confidence,
+                        "metadata": match.metadata,
+                    })
                 data["matches"] = matches_list
 
                 with open(output_file, "w") as f:

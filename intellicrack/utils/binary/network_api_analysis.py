@@ -95,22 +95,19 @@ def get_scapy_layers(scapy_module: object) -> tuple[object, object] | None:
 
     """
     try:
-        IP_LAYER = getattr(scapy_module, "IP", None)
-        TCP_LAYER = getattr(scapy_module, "TCP", None)
-        if IP_LAYER is None or TCP_LAYER is None:
+        ip_layer = getattr(scapy_module, "IP", None)
+        tcp_layer = getattr(scapy_module, "TCP", None)
+        if ip_layer is None or tcp_layer is None:
             raise AttributeError("Missing IP or TCP layer")
-        return IP_LAYER, TCP_LAYER
+        return ip_layer, tcp_layer
     except AttributeError as e:
         logger.error("Attribute error in network_api_analysis: %s", e)
         try:
-            from scapy.layers.inet import (
-                IP as IP_LAYER,
-                TCP as TCP_LAYER,
-            )
+            from scapy.layers.inet import IP, TCP
 
-            return IP_LAYER, TCP_LAYER
-        except ImportError as e:
-            logger.error("Import error in network_api_analysis: %s", e)
+            return IP, TCP
+        except ImportError as import_err:
+            logger.error("Import error in network_api_analysis: %s", import_err)
             return None
 
 

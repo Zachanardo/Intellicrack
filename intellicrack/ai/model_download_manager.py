@@ -250,15 +250,21 @@ class ModelDownloadManager:
             try:
                 siblings: Any = getattr(model, "siblings", None) or []
                 for file in siblings:
-                    if hasattr(file, "rfilename") and hasattr(file, "size") and file.rfilename and file.size and file.rfilename.endswith((".bin", ".safetensors", ".pt", ".pth")):
+                    if (
+                        hasattr(file, "rfilename")
+                        and hasattr(file, "size")
+                        and file.rfilename
+                        and file.size
+                        and file.rfilename.endswith((".bin", ".safetensors", ".pt", ".pth"))
+                    ):
                         model_size = (model_size or 0) + file.size
             except Exception as e:
                 model_id_attr: str = getattr(model, "modelId", model_id)
                 logger.debug("Could not calculate model size for %s: %s", model_id_attr, e)
 
             model_id_val: str = getattr(model, "modelId", model_id)
-            author_val: str = getattr(model, "author", None) or model_id_val.split("/")[0]
-            model_name_val: str = model_id_val.split("/")[-1]
+            author_val: str = getattr(model, "author", None) or model_id_val.split("/", maxsplit=1)[0]
+            model_name_val: str = model_id_val.rsplit("/", maxsplit=1)[-1]
             downloads_val: int = getattr(model, "downloads", None) or 0
             likes_val: int = getattr(model, "likes", None) or 0
             tags_val: list[str] = getattr(model, "tags", None) or []
@@ -267,7 +273,7 @@ class ModelDownloadManager:
             last_modified_val: datetime | None = getattr(model, "lastModified", None)
             private_val: bool = bool(getattr(model, "private", False))
             gated_val_raw: Any = getattr(model, "gated", False)
-            gated_val: bool = bool(gated_val_raw) if gated_val_raw not in ("auto", "manual") else gated_val_raw != False
+            gated_val: bool = bool(gated_val_raw) if gated_val_raw not in ("auto", "manual") else gated_val_raw
 
             info = ModelInfo(
                 model_id=model_id_val,

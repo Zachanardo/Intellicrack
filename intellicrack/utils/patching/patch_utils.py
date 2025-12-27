@@ -320,7 +320,7 @@ def convert_rva_to_offset(file_path: str | Path, rva: int) -> int | None:
         pe = pefile.PE(str(file_path))
         offset = pe.get_offset_from_rva(rva)
         pe.close()
-        return cast(int | None, offset)
+        return cast("int | None", offset)
     except (OSError, ValueError, RuntimeError) as e:
         logger.exception("Error converting RVA to offset: %s", e)
         return None

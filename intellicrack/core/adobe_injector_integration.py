@@ -18,7 +18,7 @@ import subprocess
 import time
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from intellicrack.handlers.pyqt6_handler import (
     PYQT6_AVAILABLE,
@@ -333,7 +333,7 @@ class AdobeInjectorWidget(BaseWidget):
     def launch_injector(self) -> None:
         """Launch and embed Adobe Injector."""
         if not self.adobe_injector_path:
-            if hasattr(self, 'status_updated'):
+            if hasattr(self, "status_updated"):
                 self.status_updated.emit("Adobe Injector executable not found")
             return
 
@@ -345,21 +345,21 @@ class AdobeInjectorWidget(BaseWidget):
                 self.status_label.hide()
 
                 if adobe_process.embed_in_widget(self.embed_container):
-                    if hasattr(self, 'status_updated'):
+                    if hasattr(self, "status_updated"):
                         self.status_updated.emit("Adobe Injector embedded successfully")
                     self.launch_btn.setEnabled(False)
                     self.terminate_btn.setEnabled(True)
                 else:
-                    if hasattr(self, 'status_updated'):
+                    if hasattr(self, "status_updated"):
                         self.status_updated.emit("Failed to embed Adobe Injector window")
                     adobe_process.terminate()
             else:
-                if hasattr(self, 'status_updated'):
+                if hasattr(self, "status_updated"):
                     self.status_updated.emit("Failed to start Adobe Injector")
 
         except Exception as e:
             logger.exception("Error launching Adobe Injector")
-            if hasattr(self, 'status_updated'):
+            if hasattr(self, "status_updated"):
                 self.status_updated.emit(f"Error: {e}")
 
     def terminate_injector(self) -> None:
@@ -375,7 +375,7 @@ class AdobeInjectorWidget(BaseWidget):
             self.launch_btn.setEnabled(True)
             self.terminate_btn.setEnabled(False)
 
-            if hasattr(self, 'status_updated'):
+            if hasattr(self, "status_updated"):
                 self.status_updated.emit("Adobe Injector terminated")
 
     def apply_rebranding(self) -> None:
@@ -393,7 +393,7 @@ class AdobeInjectorWidget(BaseWidget):
         config_path = self.adobe_injector_path.parent / "rebrand_config.json"
         with open(config_path, "w", encoding="utf-8") as f:
             json.dump(rebrand_config, f, indent=2)
-        if hasattr(self, 'status_updated'):
+        if hasattr(self, "status_updated"):
             self.status_updated.emit("Rebranding configuration created")
 
     def resizeEvent(self, event: QResizeEvent | None) -> None:  # noqa: N802

@@ -38,12 +38,12 @@ from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, TypeVar, cast
 
-from intellicrack.utils.type_safety import get_typed_item, validate_type
 from intellicrack.handlers.numpy_handler import numpy as np
 from intellicrack.handlers.psutil_handler import psutil
 from intellicrack.handlers.sqlite3_handler import sqlite3
 from intellicrack.handlers.torch_handler import TORCH_AVAILABLE, torch
 from intellicrack.utils.logger import get_logger
+from intellicrack.utils.type_safety import get_typed_item, validate_type
 
 
 logger = get_logger(__name__)
@@ -409,7 +409,9 @@ class ThreadPoolOptimizer:
         """
         start_time = time.time()
         queue_depth = len(self.executor._threads) - len([
-            t for t in self.executor._threads if not hasattr(t, "_tstate_lock") or getattr(t, "_tstate_lock", None) is None or not getattr(t, "_tstate_lock").acquire(False)
+            t
+            for t in self.executor._threads
+            if not hasattr(t, "_tstate_lock") or getattr(t, "_tstate_lock", None) is None or not t._tstate_lock.acquire(False)
         ])
 
         with self.lock:
@@ -813,7 +815,9 @@ class DatabaseOptimizer:
             "avg_execution_time": avg_execution_time,
             "cache_size": len(self.query_cache),
             "connection_pool_size": len(self.connection_pool),
-            "slow_queries": len([s for stats in self.query_stats.values() for s in stats if get_typed_item(s, "execution_time", float) > 1.0]),
+            "slow_queries": len([
+                s for stats in self.query_stats.values() for s in stats if get_typed_item(s, "execution_time", float) > 1.0
+            ]),
         }
 
 

@@ -24,9 +24,6 @@ A professional console widget with syntax highlighting, filtering, and search ca
 import logging
 from datetime import datetime
 
-
-logger = logging.getLogger(__name__)
-
 from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
     QColor,
@@ -49,6 +46,8 @@ from intellicrack.handlers.pyqt6_handler import (
     QWidget,
     pyqtSignal,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class ConsoleSyntaxHighlighter(QSyntaxHighlighter):
@@ -536,7 +535,13 @@ class ConsoleWidget(QWidget):
             bool: True if event was handled (key press intercepted), False otherwise.
 
         """
-        if hasattr(self, "command_input") and obj == self.command_input and event is not None and event.type() == QEvent.Type.KeyPress and hasattr(event, "key"):
+        if (
+            hasattr(self, "command_input")
+            and obj == self.command_input
+            and event is not None
+            and event.type() == QEvent.Type.KeyPress
+            and hasattr(event, "key")
+        ):
             key_value = event.key()
             if key_value == Qt.Key.Key_Up:
                 if self.history_index > 0:

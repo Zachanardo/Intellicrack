@@ -160,17 +160,17 @@ class PluginDialogBase(QDialog):
         if " - " not in current_title:
             self.setWindowTitle(f"{current_title} - {plugin_name}")
         else:
-            base_title: str = current_title.split(" - ")[0]
+            base_title: str = current_title.split(" - ", maxsplit=1)[0]
             self.setWindowTitle(f"{base_title} - {plugin_name}")
 
         if hasattr(self, "plugin_dependent_widgets"):
-            plugin_dependent_widgets = getattr(self, "plugin_dependent_widgets")
+            plugin_dependent_widgets = self.plugin_dependent_widgets
             if plugin_dependent_widgets is not None:
                 for widget in plugin_dependent_widgets:
                     widget.setEnabled(True)
 
         if hasattr(self, "plugin_loaded_signal"):
-            plugin_loaded_signal = getattr(self, "plugin_loaded_signal")
+            plugin_loaded_signal = self.plugin_loaded_signal
             if plugin_loaded_signal is not None:
                 plugin_loaded_signal.emit(plugin_path)
 

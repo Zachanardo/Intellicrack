@@ -30,7 +30,11 @@ import struct
 import threading
 import time
 from datetime import datetime, timedelta
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any
+
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 logger = logging.getLogger(__name__)

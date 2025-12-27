@@ -41,10 +41,11 @@ from intellicrack.handlers.pyqt6_handler import (
 
 from ...utils.logger import get_logger
 
+
 if TYPE_CHECKING:
+    from PyQt6.QtCore import QAbstractItemModel
     from PyQt6.QtGui import QClipboard
     from PyQt6.QtWidgets import QScrollBar
-    from PyQt6.QtCore import QAbstractItemModel
 
 logger = get_logger(__name__)
 

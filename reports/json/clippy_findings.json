@@ -1,6 +1,6 @@
 {
   "tool": "clippy",
-  "generated": "2025-12-20T21:59:18.625863",
+  "generated": "2025-12-26T20:22:28.742822",
   "total_findings": 379,
   "total_files": 25,
   "files": [
@@ -324,13 +324,6 @@
           "raw": "src\\process_manager.rs:808:25: [warning] docs for function which may panic missing `# Panics` section"
         },
         {
-          "line": 185,
-          "column": 5,
-          "severity": "warning",
-          "message": "unused `async` for function with no await statements",
-          "raw": "src\\process_manager.rs:185:5: [warning] unused `async` for function with no await statements"
-        },
-        {
           "line": 1153,
           "column": 25,
           "severity": "warning",
@@ -364,6 +357,13 @@
           "severity": "warning",
           "message": "you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`",
           "raw": "src\\process_manager.rs:1198:9: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`"
+        },
+        {
+          "line": 185,
+          "column": 5,
+          "severity": "warning",
+          "message": "unused `async` for function with no await statements",
+          "raw": "src\\process_manager.rs:185:5: [warning] unused `async` for function with no await statements"
         }
       ]
     },
@@ -937,13 +937,6 @@
           "raw": "src\\python_integration.rs:564:5: [warning] docs for function returning `Result` missing `# Errors` section"
         },
         {
-          "line": 161,
-          "column": 28,
-          "severity": "warning",
-          "message": "this argument is a mutable reference, but not used mutably",
-          "raw": "src\\python_integration.rs:161:28: [warning] this argument is a mutable reference, but not used mutably"
-        },
-        {
           "line": 795,
           "column": 9,
           "severity": "warning",
@@ -963,6 +956,13 @@
           "severity": "warning",
           "message": "variables can be used directly in the `format!` string",
           "raw": "src\\python_integration.rs:896:27: [warning] variables can be used directly in the `format!` string"
+        },
+        {
+          "line": 161,
+          "column": 28,
+          "severity": "warning",
+          "message": "this argument is a mutable reference, but not used mutably",
+          "raw": "src\\python_integration.rs:161:28: [warning] this argument is a mutable reference, but not used mutably"
         }
       ]
     },
@@ -2097,41 +2097,6 @@
           "raw": "src\\flask_validator.rs:203:29: [warning] this `continue` expression is redundant"
         },
         {
-          "line": 141,
-          "column": 5,
-          "severity": "warning",
-          "message": "unused `async` for function with no await statements",
-          "raw": "src\\flask_validator.rs:141:5: [warning] unused `async` for function with no await statements"
-        },
-        {
-          "line": 168,
-          "column": 5,
-          "severity": "warning",
-          "message": "unused `async` for function with no await statements",
-          "raw": "src\\flask_validator.rs:168:5: [warning] unused `async` for function with no await statements"
-        },
-        {
-          "line": 216,
-          "column": 5,
-          "severity": "warning",
-          "message": "unused `async` for function with no await statements",
-          "raw": "src\\flask_validator.rs:216:5: [warning] unused `async` for function with no await statements"
-        },
-        {
-          "line": 304,
-          "column": 5,
-          "severity": "warning",
-          "message": "unused `async` for function with no await statements",
-          "raw": "src\\flask_validator.rs:304:5: [warning] unused `async` for function with no await statements"
-        },
-        {
-          "line": 384,
-          "column": 5,
-          "severity": "warning",
-          "message": "unused `async` for function with no await statements",
-          "raw": "src\\flask_validator.rs:384:5: [warning] unused `async` for function with no await statements"
-        },
-        {
           "line": 550,
           "column": 45,
           "severity": "warning",
@@ -2172,6 +2137,41 @@
           "severity": "warning",
           "message": "variables can be used directly in the `format!` string",
           "raw": "src\\flask_validator.rs:682:25: [warning] variables can be used directly in the `format!` string"
+        },
+        {
+          "line": 141,
+          "column": 5,
+          "severity": "warning",
+          "message": "unused `async` for function with no await statements",
+          "raw": "src\\flask_validator.rs:141:5: [warning] unused `async` for function with no await statements"
+        },
+        {
+          "line": 168,
+          "column": 5,
+          "severity": "warning",
+          "message": "unused `async` for function with no await statements",
+          "raw": "src\\flask_validator.rs:168:5: [warning] unused `async` for function with no await statements"
+        },
+        {
+          "line": 216,
+          "column": 5,
+          "severity": "warning",
+          "message": "unused `async` for function with no await statements",
+          "raw": "src\\flask_validator.rs:216:5: [warning] unused `async` for function with no await statements"
+        },
+        {
+          "line": 304,
+          "column": 5,
+          "severity": "warning",
+          "message": "unused `async` for function with no await statements",
+          "raw": "src\\flask_validator.rs:304:5: [warning] unused `async` for function with no await statements"
+        },
+        {
+          "line": 384,
+          "column": 5,
+          "severity": "warning",
+          "message": "unused `async` for function with no await statements",
+          "raw": "src\\flask_validator.rs:384:5: [warning] unused `async` for function with no await statements"
         }
       ]
     },
@@ -2381,6 +2381,13 @@
           "raw": "src\\startup_checks.rs:97:5: [warning] docs for function returning `Result` missing `# Errors` section"
         },
         {
+          "line": 1592,
+          "column": 13,
+          "severity": "warning",
+          "message": "consider adding a `;` to the last statement for consistent formatting",
+          "raw": "src\\startup_checks.rs:1592:13: [warning] consider adding a `;` to the last statement for consistent formatting"
+        },
+        {
           "line": 172,
           "column": 5,
           "severity": "warning",
@@ -2428,13 +2435,6 @@
           "severity": "warning",
           "message": "unused `async` for function with no await statements",
           "raw": "src\\startup_checks.rs:1020:5: [warning] unused `async` for function with no await statements"
-        },
-        {
-          "line": 1592,
-          "column": 13,
-          "severity": "warning",
-          "message": "consider adding a `;` to the last statement for consistent formatting",
-          "raw": "src\\startup_checks.rs:1592:13: [warning] consider adding a `;` to the last statement for consistent formatting"
         }
       ]
     },
@@ -2686,40 +2686,6 @@
       ]
     },
     {
-      "path": "benches\\performance_benchmarks.rs",
-      "count": 4,
-      "findings": [
-        {
-          "line": 116,
-          "column": 9,
-          "severity": "warning",
-          "message": "binding to `_` prefixed variable with no side-effect",
-          "raw": "benches\\performance_benchmarks.rs:116:9: [warning] binding to `_` prefixed variable with no side-effect"
-        },
-        {
-          "line": 180,
-          "column": 78,
-          "severity": "warning",
-          "message": "used underscore-prefixed binding",
-          "raw": "benches\\performance_benchmarks.rs:180:78: [warning] used underscore-prefixed binding"
-        },
-        {
-          "line": 179,
-          "column": 17,
-          "severity": "warning",
-          "message": "used underscore-prefixed binding",
-          "raw": "benches\\performance_benchmarks.rs:179:17: [warning] used underscore-prefixed binding"
-        },
-        {
-          "line": 190,
-          "column": 18,
-          "severity": "warning",
-          "message": "avoid using `collect()` when not needed",
-          "raw": "benches\\performance_benchmarks.rs:190:18: [warning] avoid using `collect()` when not needed"
-        }
-      ]
-    },
-    {
       "path": "src\\main.rs",
       "count": 4,
       "findings": [
@@ -2750,6 +2716,40 @@
           "severity": "warning",
           "message": "variables can be used directly in the `format!` string",
           "raw": "src\\main.rs:148:9: [warning] variables can be used directly in the `format!` string"
+        }
+      ]
+    },
+    {
+      "path": "benches\\performance_benchmarks.rs",
+      "count": 4,
+      "findings": [
+        {
+          "line": 116,
+          "column": 9,
+          "severity": "warning",
+          "message": "binding to `_` prefixed variable with no side-effect",
+          "raw": "benches\\performance_benchmarks.rs:116:9: [warning] binding to `_` prefixed variable with no side-effect"
+        },
+        {
+          "line": 180,
+          "column": 78,
+          "severity": "warning",
+          "message": "used underscore-prefixed binding",
+          "raw": "benches\\performance_benchmarks.rs:180:78: [warning] used underscore-prefixed binding"
+        },
+        {
+          "line": 179,
+          "column": 17,
+          "severity": "warning",
+          "message": "used underscore-prefixed binding",
+          "raw": "benches\\performance_benchmarks.rs:179:17: [warning] used underscore-prefixed binding"
+        },
+        {
+          "line": 190,
+          "column": 18,
+          "severity": "warning",
+          "message": "avoid using `collect()` when not needed",
+          "raw": "benches\\performance_benchmarks.rs:190:18: [warning] avoid using `collect()` when not needed"
         }
       ]
     },

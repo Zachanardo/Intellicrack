@@ -39,7 +39,7 @@ const BinaryPatcherAdvanced = {
         persistenceHandlers: new Map(),
 
         // Patch loaded modules in memory
-        patchLoadedModule: function (moduleName, patches) {
+        patchLoadedModule(moduleName, patches) {
             const module = Process.findModuleByName(moduleName);
             if (!module) {
                 send({
@@ -64,7 +64,7 @@ const BinaryPatcherAdvanced = {
                     this.residentPatches.set(targetAddr.toString(), {
                         module: moduleName,
                         offset: patch.offset,
-                        original: original,
+                        original,
                         patched: patch.data,
                     });
 
@@ -78,10 +78,10 @@ const BinaryPatcherAdvanced = {
                         success: true,
                         address: targetAddr,
                     });
-                } catch (e) {
+                } catch (error) {
                     results.push({
                         success: false,
-                        error: e.message,
+                        error: error.message,
                     });
                 }
             });
@@ -91,27 +91,47 @@ const BinaryPatcherAdvanced = {
                 target: 'binary_patcher_advanced',
                 action: 'module_patched',
                 module: moduleName,
-                results: results,
+                results,
             });
 
             return results;
         },
 
         // Hook module loading for just-in-time patching
-        hookModuleLoading: function () {
+        hookModuleLoading() {
             // Windows: Hook LoadLibrary variants
-            if (Process.platform === 'windows') {
-                const loadLibraryFuncs = [
-                    'LoadLibraryA',
-                    'LoadLibraryW',
-                    'LoadLibraryExA',
-                    'LoadLibraryExW',
-                ];
+            switch (Process.platform) {
+                case 'windows': {
+                    const loadLibraryFuncs = [
+                        'LoadLibraryA',
+                        'LoadLibraryW',
+                        'LoadLibraryExA',
+                        'LoadLibraryExW',
+                    ];
 
-                loadLibraryFuncs.forEach(funcName => {
-                    const func = Module.findExportByName('kernel32.dll', funcName);
-                    if (func) {
-                        Interceptor.attach(func, {
+                    loadLibraryFuncs.forEach(funcName => {
+                        const func = Module.findExportByName('kernel32.dll', funcName);
+                        if (func) {
+                            Interceptor.attach(func, {
+                                onLeave: retval => {
+                                    if (!retval.isNull()) {
+                                        const module = Process.findModuleByAddress(retval);
+                                        if (module && !this.hookedModules.has(module.name)) {
+                                            this.hookedModules.add(module.name);
+                                            this.applyJustInTimePatches(module);
+                                        }
+                                    }
+                                },
+                            });
+                        }
+                    });
+
+                    break;
+                }
+                case 'linux': {
+                    const dlopen = Module.findExportByName(null, 'dlopen');
+                    if (dlopen) {
+                        Interceptor.attach(dlopen, {
                             onLeave: retval => {
                                 if (!retval.isNull()) {
                                     const module = Process.findModuleByAddress(retval);
@@ -123,48 +143,33 @@ const BinaryPatcherAdvanced = {
                             },
                         });
                     }
-                });
-            }
 
-            // Linux: Hook dlopen
-            else if (Process.platform === 'linux') {
-                const dlopen = Module.findExportByName(null, 'dlopen');
-                if (dlopen) {
-                    Interceptor.attach(dlopen, {
-                        onLeave: retval => {
-                            if (!retval.isNull()) {
-                                const module = Process.findModuleByAddress(retval);
-                                if (module && !this.hookedModules.has(module.name)) {
-                                    this.hookedModules.add(module.name);
-                                    this.applyJustInTimePatches(module);
-                                }
-                            }
-                        },
-                    });
+                    break;
                 }
-            }
+                case 'darwin': {
+                    const dlopen = Module.findExportByName(null, 'dlopen');
+                    if (dlopen) {
+                        Interceptor.attach(dlopen, {
+                            onLeave: retval => {
+                                if (!retval.isNull()) {
+                                    const module = Process.findModuleByAddress(retval);
+                                    if (module && !this.hookedModules.has(module.name)) {
+                                        this.hookedModules.add(module.name);
+                                        this.applyJustInTimePatches(module);
+                                    }
+                                }
+                            },
+                        });
+                    }
 
-            // macOS: Hook dlopen and NSBundle
-            else if (Process.platform === 'darwin') {
-                const dlopen = Module.findExportByName(null, 'dlopen');
-                if (dlopen) {
-                    Interceptor.attach(dlopen, {
-                        onLeave: retval => {
-                            if (!retval.isNull()) {
-                                const module = Process.findModuleByAddress(retval);
-                                if (module && !this.hookedModules.has(module.name)) {
-                                    this.hookedModules.add(module.name);
-                                    this.applyJustInTimePatches(module);
-                                }
-                            }
-                        },
-                    });
+                    break;
                 }
+                // No default
             }
         },
 
         // Apply patches just-in-time when module loads
-        applyJustInTimePatches: function (module) {
+        applyJustInTimePatches(module) {
             // Check if we have patches for this module
             const patchConfig = this.getPatchConfigForModule(module.name);
             if (!patchConfig) {
@@ -184,13 +189,13 @@ const BinaryPatcherAdvanced = {
                     Memory.protect(addr, patch.data.length, 'rwx');
                     Memory.writeByteArray(addr, patch.data);
                     Memory.protect(addr, patch.data.length, 'r-x');
-                } catch (e) {
+                } catch (error) {
                     send({
                         type: 'error',
                         target: 'binary_patcher_advanced',
                         action: 'jit_patch_failed',
                         module: module.name,
-                        error: e.message,
+                        error: error.message,
                     });
                 }
             });
@@ -202,13 +207,13 @@ const BinaryPatcherAdvanced = {
             const configs = {
                 'license.dll': {
                     patches: [
-                        { offset: 0x1234, data: [0x31, 0xc0, 0x40, 0xc3] }, // Return 1
-                        { offset: 0x5678, data: [0x90, 0x90, 0x90, 0x90, 0x90] }, // NOP sled
+                        { offset: 0x12_34, data: [0x31, 0xC0, 0x40, 0xC3] }, // Return 1
+                        { offset: 0x56_78, data: [0x90, 0x90, 0x90, 0x90, 0x90] }, // NOP sled
                     ],
                 },
                 'protection.so': {
                     patches: [
-                        { offset: 0x2000, data: [0x31, 0xc0, 0xc3] }, // Return 0
+                        { offset: 0x20_00, data: [0x31, 0xC0, 0xC3] }, // Return 0
                     ],
                 },
             };
@@ -217,7 +222,7 @@ const BinaryPatcherAdvanced = {
         },
 
         // Make patches persistent across process restarts
-        makePersistent: function (patchId) {
+        makePersistent(patchId) {
             const patch = this.residentPatches.get(patchId);
             if (!patch) {
                 return false;
@@ -231,12 +236,12 @@ const BinaryPatcherAdvanced = {
                 data: patch.patched,
 
                 // Persist to disk (encrypted)
-                save: function () {
+                save() {
                     const encrypted = this.encrypt(
                         JSON.stringify({
                             module: this.module,
                             offset: this.offset,
-                            data: Array.from(this.data),
+                            data: [...this.data],
                         })
                     );
 
@@ -246,7 +251,7 @@ const BinaryPatcherAdvanced = {
                 },
 
                 // Load from disk
-                load: function () {
+                load() {
                     const path = this.getPersistencePath();
                     if (!File.exists(path)) {
                         return null;
@@ -257,24 +262,23 @@ const BinaryPatcherAdvanced = {
                     return JSON.parse(decrypted);
                 },
 
-                getPersistencePath: function () {
+                getPersistencePath() {
                     if (Process.platform === 'windows') {
                         return `${Process.env.APPDATA}\\.${this.id}`;
-                    } else {
-                        return `${Process.env.HOME}/.${this.id}`;
                     }
+                    return `${Process.env.HOME}/.${this.id}`;
                 },
 
                 encrypt: data => {
                     // Simple XOR encryption for demo
-                    const key = 0xdeadbeef;
+                    const key = 0xDE_AD_BE_EF;
                     return data
                         .split('')
                         .map(c => String.fromCharCode(c.charCodeAt(0) ^ key))
                         .join('');
                 },
 
-                decrypt: function (data) {
+                decrypt(data) {
                     return this.encrypt(data); // XOR is symmetric
                 },
             };
@@ -286,7 +290,7 @@ const BinaryPatcherAdvanced = {
         },
 
         // Handle incremental patching
-        incrementalPatch: function (moduleName, _baseVersion, targetVersion, patches) {
+        incrementalPatch(moduleName, _baseVersion, targetVersion, patches) {
             const module = Process.findModuleByName(moduleName);
             if (!module) {
                 return false;
@@ -315,7 +319,7 @@ const BinaryPatcherAdvanced = {
             return success;
         },
 
-        detectModuleVersion: function (module) {
+        detectModuleVersion(module) {
             // Version detection strategies
 
             // 1. Check PE version info (Windows)
@@ -334,11 +338,11 @@ const BinaryPatcherAdvanced = {
             const versionPatterns = [
                 /version\s+(\d+\.\d+\.\d+)/i,
                 /v(\d+\.\d+\.\d+)/i,
-                /(\d+\.\d+\.\d+\.\d+)/,
+                /((?:\d+\.){3}\d+)/,
             ];
 
             const moduleSize = module.size;
-            const scanSize = Math.min(moduleSize, 0x10000); // Scan first 64KB
+            const scanSize = Math.min(moduleSize, 0x1_00_00); // Scan first 64KB
             const moduleBytes = Memory.readByteArray(module.base, scanSize);
             const moduleString = this.bytesToString(moduleBytes);
 
@@ -350,7 +354,7 @@ const BinaryPatcherAdvanced = {
             }
 
             // 3. Check known offsets for version markers
-            const knownVersionOffsets = [0x100, 0x200, 0x1000, 0x2000];
+            const knownVersionOffsets = [0x1_00, 0x2_00, 0x10_00, 0x20_00];
             for (const offset of knownVersionOffsets) {
                 if (offset < moduleSize) {
                     try {
@@ -359,13 +363,13 @@ const BinaryPatcherAdvanced = {
                         if (version) {
                             return version;
                         }
-                    } catch (e) {
+                    } catch (error) {
                         // Log version detection error and continue
                         send({
                             type: 'debug',
                             source: 'version_detection',
-                            error: e.toString(),
-                            pattern: pattern.toString(),
+                            error: error.toString(),
+                            offset: offset.toString(16),
                         });
                     }
                 }
@@ -377,14 +381,14 @@ const BinaryPatcherAdvanced = {
         readPEVersionInfo: base => {
             // Read PE headers to find version resource
             const dos = Memory.readU16(base);
-            if (dos !== 0x5a4d) {
+            if (dos !== 0x5A_4D) {
                 // 'MZ'
                 return null;
             }
 
-            const peOffset = Memory.readU32(base.add(0x3c));
+            const peOffset = Memory.readU32(base.add(0x3C));
             const pe = Memory.readU32(base.add(peOffset));
-            if (pe !== 0x00004550) {
+            if (pe !== 0x00_00_45_50) {
                 return null;
             }
 
@@ -393,9 +397,9 @@ const BinaryPatcherAdvanced = {
 
         bytesToString: bytes => {
             let str = '';
-            for (let i = 0; i < bytes.length; i++) {
-                if (bytes[i] >= 32 && bytes[i] < 127) {
-                    str += String.fromCharCode(bytes[i]);
+            for (const byte of bytes) {
+                if (byte >= 32 && byte < 127) {
+                    str += String.fromCharCode(byte);
                 } else {
                     str += '.';
                 }
@@ -450,11 +454,11 @@ const BinaryPatcherAdvanced = {
                     Memory.protect(addr, change.data.length, 'r-x');
                 });
                 return true;
-            } catch (e) {
+            } catch (error) {
                 send({
                     type: 'error',
                     source: 'patch_application',
-                    error: e.toString(),
+                    error: error.toString(),
                     module: module ? module.name : 'unknown',
                     patchId: patch ? patch.id : 'unknown',
                 });
@@ -472,7 +476,7 @@ const BinaryPatcherAdvanced = {
             consensusThreshold: 0.51, // 51% consensus required
 
             // Initialize multi-node system
-            initialize: function () {
+            initialize() {
                 this.masterNode = {
                     id: this.generateNodeId(),
                     role: 'master',
@@ -489,7 +493,7 @@ const BinaryPatcherAdvanced = {
 
             generateNodeId: () => `${Process.id}_${Date.now().toString(36)}`,
 
-            getLocalAddress: function () {
+            getLocalAddress() {
                 // Get local network address using real system APIs
                 if (Process.platform === 'windows') {
                     // Windows Socket API implementation
@@ -516,79 +520,68 @@ const BinaryPatcherAdvanced = {
                         const addrInfo = result.readPointer();
                         const sockaddr = addrInfo.add(Process.pointerSize * 4).readPointer();
                         // Extract IP from sockaddr structure
-                        const ip =
-                            sockaddr.add(4).readU8() +
-                            '.' +
-                            sockaddr.add(5).readU8() +
-                            '.' +
-                            sockaddr.add(6).readU8() +
-                            '.' +
-                            sockaddr.add(7).readU8();
+                        const ip = `${sockaddr.add(4).readU8()}.${sockaddr
+                            .add(5)
+                            .readU8()}.${sockaddr.add(6).readU8()}.${sockaddr.add(7).readU8()}`;
                         freeaddrinfo(addrInfo);
                         return ip;
                     }
                     return '127.0.0.1'; // Fallback
-                } else {
-                    // POSIX implementation using real system calls
-                    try {
-                        const getifaddrs = new NativeFunction(
-                            Module.findExportByName(null, 'getifaddrs'),
-                            'int',
-                            ['pointer']
-                        );
-                        const freeifaddrs = new NativeFunction(
-                            Module.findExportByName(null, 'freeifaddrs'),
-                            'void',
-                            ['pointer']
-                        );
+                }
+                // POSIX implementation using real system calls
+                try {
+                    const getifaddrs = new NativeFunction(
+                        Module.findExportByName(null, 'getifaddrs'),
+                        'int',
+                        ['pointer']
+                    );
+                    const freeifaddrs = new NativeFunction(
+                        Module.findExportByName(null, 'freeifaddrs'),
+                        'void',
+                        ['pointer']
+                    );
 
-                        const ifap = Memory.alloc(Process.pointerSize);
-                        if (getifaddrs(ifap) === 0) {
-                            const ifaddr = ifap.readPointer();
-                            // Parse interface addresses
-                            let current = ifaddr;
-                            while (!current.isNull()) {
-                                const name = current.readPointer();
-                                const addr = current.add(Process.pointerSize * 3).readPointer();
+                    const ifap = Memory.alloc(Process.pointerSize);
+                    if (getifaddrs(ifap) === 0) {
+                        const ifaddr = ifap.readPointer();
+                        // Parse interface addresses
+                        let current = ifaddr;
+                        while (!current.isNull()) {
+                            const name = current.readPointer();
+                            const addr = current.add(Process.pointerSize * 3).readPointer();
 
-                                // Log interface name for network routing decisions
-                                if (!name.isNull()) {
-                                    const ifName = name.readCString();
-                                    console.log(`[NetworkInterface] Found interface: ${ifName}`);
-                                    this.interfaces = this.interfaces || [];
-                                    this.interfaces.push(ifName);
-                                }
+                            // Log interface name for network routing decisions
+                            if (!name.isNull()) {
+                                const ifName = name.readCString();
+                                console.log(`[NetworkInterface] Found interface: ${ifName}`);
+                                this.interfaces = this.interfaces || [];
+                                this.interfaces.push(ifName);
+                            }
 
-                                if (!addr.isNull()) {
-                                    const family = addr.readU16();
-                                    if (family === 2) {
-                                        // AF_INET
-                                        const ip =
-                                            addr.add(4).readU8() +
-                                            '.' +
-                                            addr.add(5).readU8() +
-                                            '.' +
-                                            addr.add(6).readU8() +
-                                            '.' +
-                                            addr.add(7).readU8();
-                                        if (ip !== '127.0.0.1') {
-                                            freeifaddrs(ifaddr);
-                                            return ip;
-                                        }
+                            if (!addr.isNull()) {
+                                const family = addr.readU16();
+                                if (family === 2) {
+                                    // AF_INET
+                                    const ip = `${addr.add(4).readU8()}.${addr
+                                        .add(5)
+                                        .readU8()}.${addr.add(6).readU8()}.${addr.add(7).readU8()}`;
+                                    if (ip !== '127.0.0.1') {
+                                        freeifaddrs(ifaddr);
+                                        return ip;
                                     }
                                 }
-                                current = current.add(Process.pointerSize).readPointer();
                             }
-                            freeifaddrs(ifaddr);
+                            current = current.add(Process.pointerSize).readPointer();
                         }
-                    } catch {
-                        // Fallback if system calls not available
+                        freeifaddrs(ifaddr);
                     }
-                    return '127.0.0.1';
+                } catch {
+                    // Fallback if system calls not available
                 }
+                return '127.0.0.1';
             },
 
-            startNodeDiscovery: function () {
+            startNodeDiscovery() {
                 // Broadcast presence
                 setInterval(() => {
                     this.broadcastPresence();
@@ -598,7 +591,7 @@ const BinaryPatcherAdvanced = {
                 this.listenForNodes();
             },
 
-            broadcastPresence: function () {
+            broadcastPresence() {
                 const message = {
                     type: 'node_announce',
                     node: this.masterNode,
@@ -608,24 +601,24 @@ const BinaryPatcherAdvanced = {
                 send({
                     type: 'broadcast',
                     target: 'distributed_protection',
-                    message: message,
+                    message,
                 });
             },
 
             listenForNodes: () => {},
 
-            startHeartbeat: function () {
+            startHeartbeat() {
                 setInterval(() => {
                     this.nodes.forEach(node => {
-                        if (Date.now() - node.lastSeen > 30000) {
+                        if (Date.now() - node.lastSeen > 30_000) {
                             node.status = 'inactive';
                         }
                     });
-                }, 10000);
+                }, 10_000);
             },
 
             // Coordinate patch across nodes
-            coordinatePatch: function (patchData) {
+            coordinatePatch(patchData) {
                 const proposal = {
                     id: this.generateNodeId(),
                     patch: patchData,
@@ -650,20 +643,19 @@ const BinaryPatcherAdvanced = {
                     if (yesVotes / totalVotes >= this.consensusThreshold) {
                         // Consensus achieved, apply patch
                         return this.applyDistributedPatch(patchData);
-                    } else {
-                        throw new Error('Consensus not achieved');
                     }
+                    throw new Error('Consensus not achieved');
                 });
             },
 
-            requestVote: function (_node, proposal) {
+            requestVote(_node, proposal) {
                 return new Promise(resolve => {
                     const vote = this.validatePatchProposal(proposal);
                     resolve(vote);
                 });
             },
 
-            validatePatchProposal: function (proposal) {
+            validatePatchProposal(proposal) {
                 // Validate patch integrity
                 if (!proposal.patch || !proposal.patch.data) {
                     return false;
@@ -677,7 +669,7 @@ const BinaryPatcherAdvanced = {
                 return Math.random() > 0.2;
             },
 
-            verifySignature: function (patch) {
+            verifySignature(patch) {
                 // Verify cryptographic signature using real validation
                 if (!patch || !patch.signature || !patch.data) {
                     console.error('[Signature] Missing patch components for verification');
@@ -688,10 +680,10 @@ const BinaryPatcherAdvanced = {
                 const dataHash = this.calculateChecksum(patch.data);
 
                 // Verify signature matches expected format
-                const signatureValid =
-                    patch.signature.length > 0 &&
-                    patch.signature.startsWith('0x') &&
-                    patch.signature.length === 66; // Standard signature length
+                const signatureValid
+                    = patch.signature.length > 0
+                    && patch.signature.startsWith('0x')
+                    && patch.signature.length === 66; // Standard signature length
 
                 if (!signatureValid) {
                     console.error(`[Signature] Invalid signature format: ${patch.signature}`);
@@ -705,7 +697,7 @@ const BinaryPatcherAdvanced = {
                 return true;
             },
 
-            applyDistributedPatch: function (patchData) {
+            applyDistributedPatch(patchData) {
                 // Apply patch on all nodes
                 const results = [];
 
@@ -722,9 +714,9 @@ const BinaryPatcherAdvanced = {
                 return Promise.all(results);
             },
 
-            applyLocalPatch: patchData => {
+            applyLocalPatch: patchData =>
                 // Apply patch locally
-                return new Promise(resolve => {
+                new Promise(resolve => {
                     try {
                         const module = Process.findModuleByName(patchData.module);
                         if (module) {
@@ -736,19 +728,19 @@ const BinaryPatcherAdvanced = {
                         } else {
                             resolve(false);
                         }
-                    } catch (e) {
-                        console.error(`[AsyncPatch] Failed to apply patch: ${e.message}`);
+                    } catch (error) {
+                        console.error(`[AsyncPatch] Failed to apply patch: ${error.message}`);
                         console.error(
-                            '[AsyncPatch] Target module: ' +
-                                (patchData ? patchData.module : 'unknown')
+                            `[AsyncPatch] Target module: ${
+                                patchData ? patchData.module : 'unknown'
+                            }`
                         );
-                        console.error(`[AsyncPatch] Error stack: ${e.stack}`);
+                        console.error(`[AsyncPatch] Error stack: ${error.stack}`);
                         resolve(false);
                     }
-                });
-            },
+                }),
 
-            applyRemotePatch: function (node, patchData) {
+            applyRemotePatch(node, patchData) {
                 // Apply patch on remote node using real RPC mechanism
                 return new Promise((resolve, reject) => {
                     // Parse node address
@@ -756,8 +748,8 @@ const BinaryPatcherAdvanced = {
                     const targetAddress = nodeInfo.address || nodeInfo;
 
                     // Serialize patch data
-                    const patchBuffer =
-                        typeof patchData === 'string'
+                    const patchBuffer
+                        = typeof patchData === 'string'
                             ? Memory.allocUtf8String(patchData)
                             : Memory.alloc(patchData.length);
 
@@ -769,12 +761,12 @@ const BinaryPatcherAdvanced = {
                     const rpcPayload = {
                         method: 'applyPatch',
                         params: {
-                            targetAddress: targetAddress,
+                            targetAddress,
                             patchSize: patchData.length,
                             checksum: this.calculateChecksum(patchData),
                             timestamp: Date.now(),
                         },
-                        id: Math.random().toString(36).substr(2, 9),
+                        id: Math.random().toString(36).slice(2, 11),
                     };
 
                     // Send via Frida RPC
@@ -804,8 +796,8 @@ const BinaryPatcherAdvanced = {
                             Memory.protect(ptr(nodeInfo.base), patchData.length, 'rwx');
                             Memory.writeByteArray(ptr(nodeInfo.base), patchData);
                             resolve(true);
-                        } catch (e) {
-                            reject(e);
+                        } catch (error) {
+                            reject(error);
                         }
                     }
                 });
@@ -813,15 +805,15 @@ const BinaryPatcherAdvanced = {
 
             calculateChecksum: data => {
                 // CRC32 implementation for patch verification
-                let crc = 0xffffffff;
+                let crc = 0xFF_FF_FF_FF;
                 for (let i = 0; i < data.length; i++) {
                     const byte = typeof data === 'string' ? data.charCodeAt(i) : data[i];
                     crc ^= byte;
                     for (let j = 0; j < 8; j++) {
-                        crc = (crc >>> 1) ^ (0xedb88320 & -(crc & 1));
+                        crc = (crc >>> 1) ^ (0xED_B8_83_20 & -(crc & 1));
                     }
                 }
-                return (crc ^ 0xffffffff) >>> 0;
+                return (crc ^ 0xFF_FF_FF_FF) >>> 0;
             },
         },
 
@@ -830,7 +822,7 @@ const BinaryPatcherAdvanced = {
             containerRuntime: null,
             orchestrator: null,
 
-            initialize: function () {
+            initialize() {
                 // Detect container runtime
                 this.containerRuntime = this.detectContainerRuntime();
 
@@ -864,7 +856,7 @@ const BinaryPatcherAdvanced = {
                 return null;
             },
 
-            connectToOrchestrator: function () {
+            connectToOrchestrator() {
                 if (this.containerRuntime === 'kubernetes') {
                     return this.connectToKubernetes();
                 } else if (this.containerRuntime === 'docker') {
@@ -873,28 +865,24 @@ const BinaryPatcherAdvanced = {
                 return null;
             },
 
-            connectToKubernetes: function () {
+            connectToKubernetes() {
                 // Connect to Kubernetes API
                 return {
-                    endpoint:
-                        Process.env.KUBERNETES_SERVICE_HOST +
-                        ':' +
-                        Process.env.KUBERNETES_SERVICE_PORT,
+                    endpoint: `${Process.env.KUBERNETES_SERVICE_HOST}:${
+                        Process.env.KUBERNETES_SERVICE_PORT
+                    }`,
                     token: this.readServiceAccountToken(),
                     namespace: this.readNamespace(),
 
-                    getPods: () => {
+                    getPods: () =>
                         // Get pod list
-                        return [];
-                    },
+                        [],
 
-                    patchPod: function (podName, patchData) {
+                    patchPod(podName, patchData) {
                         // Patch specific Kubernetes pod with real implementation
                         console.log(`[K8s] Preparing patch for pod: ${podName}`);
                         console.log(
-                            '[K8s] Patch data size: ' +
-                                (patchData ? patchData.length : 0) +
-                                ' bytes'
+                            `[K8s] Patch data size: ${patchData ? patchData.length : 0} bytes`
                         );
 
                         const patchPayload = {
@@ -910,9 +898,9 @@ const BinaryPatcherAdvanced = {
                                         name: 'patch-container',
                                         command: ['/bin/sh', '-c'],
                                         args: [
-                                            'echo ' +
-                                                Buffer.from(patchData).toString('base64') +
-                                                ' | base64 -d > /tmp/patch && chmod +x /tmp/patch && /tmp/patch',
+                                            `echo ${Buffer.from(patchData).toString(
+                                                'base64'
+                                            )} | base64 -d > /tmp/patch && chmod +x /tmp/patch && /tmp/patch`,
                                         ],
                                         securityContext: {
                                             privileged: true,
@@ -935,10 +923,10 @@ const BinaryPatcherAdvanced = {
                             '--',
                             'sh',
                             '-c',
-                            'pid=$(pgrep -f target_process); ' +
-                                'echo "' +
-                                Buffer.from(patchData).toString('hex') +
-                                '" | xxd -r -p > /proc/$pid/mem',
+                            `pid=$(pgrep -f target_process); `
+                                + `echo "${Buffer.from(patchData).toString(
+                                    'hex'
+                                )}" | xxd -r -p > /proc/$pid/mem`,
                         ];
 
                         send({
@@ -1022,30 +1010,28 @@ const BinaryPatcherAdvanced = {
                 return 'default';
             },
 
-            connectToDockerSwarm: () => {
+            connectToDockerSwarm: () =>
                 // Connect to Docker Swarm
-                return {
+                ({
                     getServices: () => [],
 
-                    patchService: function (serviceName, patchData) {
+                    patchService(serviceName, patchData) {
                         // Patch Kubernetes service with real implementation
                         console.log(`[K8s] Patching service: ${serviceName}`);
                         console.log(
                             `[K8s] Service patch configuration: ${JSON.stringify(patchData)}`
                         );
 
-                        const serviceEndpoint =
-                            '/api/v1/namespaces/' +
-                            (this.namespace || 'default') +
-                            '/services/' +
-                            serviceName;
+                        const serviceEndpoint = `/api/v1/namespaces/${
+                            this.namespace || 'default'
+                        }/services/${serviceName}`;
 
                         // Send service patch request
                         send({
                             type: 'k8s-service-patch',
                             service: serviceName,
                             endpoint: serviceEndpoint,
-                            patchData: patchData,
+                            patchData,
                             timestamp: Date.now(),
                         });
 
@@ -1059,11 +1045,10 @@ const BinaryPatcherAdvanced = {
 
                         return true;
                     },
-                };
-            },
+                }),
 
             // Handle serverless function patching
-            patchServerlessFunction: function (functionName, provider, patchData) {
+            patchServerlessFunction(functionName, provider, patchData) {
                 console.log(`[Serverless] Patching function: ${functionName}`);
                 console.log(`[Serverless] Provider: ${provider}`);
                 console.log(`[Serverless] Patch data: ${JSON.stringify(patchData)}`);
@@ -1075,18 +1060,22 @@ const BinaryPatcherAdvanced = {
                 }
 
                 switch (provider) {
-                    case 'aws-lambda':
+                    case 'aws-lambda': {
                         return this.patchLambdaFunction(functionName, patchData);
-                    case 'azure-functions':
+                    }
+                    case 'azure-functions': {
                         return this.patchAzureFunction(functionName, patchData);
-                    case 'gcp-functions':
+                    }
+                    case 'gcp-functions': {
                         return this.patchGCPFunction(functionName, patchData);
-                    default:
+                    }
+                    default: {
                         console.error(`[Serverless] Unsupported provider: ${provider}`);
                         // Store for potential future support
                         this.unsupportedPatches = this.unsupportedPatches || [];
                         this.unsupportedPatches.push({ provider, functionName, patchData });
                         return false;
+                    }
                 }
             },
 
@@ -1131,8 +1120,8 @@ const BinaryPatcherAdvanced = {
                             // Replace handler
                             module.exports = { handler: patchedHandler };
                             console.log('[Lambda] Handler successfully patched');
-                        } catch (e) {
-                            console.error(`[Lambda] Failed to patch handler: ${e.message}`);
+                        } catch (error) {
+                            console.error(`[Lambda] Failed to patch handler: ${error.message}`);
                             return false;
                         }
                     }
@@ -1152,7 +1141,7 @@ const BinaryPatcherAdvanced = {
                 return false;
             },
 
-            patchAzureFunction: function (functionName, patchData) {
+            patchAzureFunction(functionName, patchData) {
                 // Azure Functions patching with full implementation
                 console.log(`[Azure] Patching function: ${functionName}`);
                 console.log(`[Azure] Patch data: ${JSON.stringify(patchData)}`);
@@ -1185,8 +1174,9 @@ const BinaryPatcherAdvanced = {
                         Process.env.AZURE_FUNCTIONS_PATCHED = 'true';
                         Process.env.AZURE_PATCH_VERSION = patchData.version || '1.0.0';
                         console.log(
-                            '[Azure] Runtime patched with version: ' +
+                            `[Azure] Runtime patched with version: ${
                                 Process.env.AZURE_PATCH_VERSION
+                            }`
                         );
                     }
 
@@ -1243,7 +1233,7 @@ const BinaryPatcherAdvanced = {
             web3Provider: null,
             contracts: new Map(),
 
-            initialize: function () {
+            initialize() {
                 // Initialize Web3 provider
                 this.web3Provider = this.detectWeb3Provider();
             },
@@ -1264,7 +1254,7 @@ const BinaryPatcherAdvanced = {
             },
 
             // Bypass smart contract license validation
-            bypassSmartContract: function (contractAddress) {
+            bypassSmartContract(contractAddress) {
                 // Hook contract calls
                 if (!this.web3Provider) {
                     return false;
@@ -1297,7 +1287,7 @@ const BinaryPatcherAdvanced = {
                 return true;
             },
 
-            installWeb3Hooks: function (contract) {
+            installWeb3Hooks(contract) {
                 // Hook eth_call to intercept contract reads
                 const originalCall = this.web3Provider.request;
                 this.web3Provider.request = function (args) {
@@ -1305,7 +1295,7 @@ const BinaryPatcherAdvanced = {
                         const params = args.params[0];
                         if (params.to === contract.address) {
                             // Check if this is a hooked method
-                            const methodSig = params.data.substring(0, 10);
+                            const methodSig = params.data.slice(0, 10);
                             if (contract.hooks.has(methodSig)) {
                                 // Return success
                                 return Promise.resolve(
@@ -1319,10 +1309,10 @@ const BinaryPatcherAdvanced = {
             },
 
             // Bypass NFT-based licensing
-            bypassNFTLicense: function (nftContract, tokenId) {
+            bypassNFTLicense(nftContract, tokenId) {
                 const ownership = {
                     contract: nftContract,
-                    tokenId: tokenId,
+                    tokenId,
                     owner: this.getCurrentAddress(),
                 };
 
@@ -1332,7 +1322,7 @@ const BinaryPatcherAdvanced = {
                 return true;
             },
 
-            getCurrentAddress: function () {
+            getCurrentAddress() {
                 // Get current wallet address
                 if (this.web3Provider?.selectedAddress) {
                     return this.web3Provider.selectedAddress;
@@ -1340,7 +1330,7 @@ const BinaryPatcherAdvanced = {
                 return '0x0000000000000000000000000000000000000000';
             },
 
-            hookNFTOwnership: function (ownership) {
+            hookNFTOwnership(ownership) {
                 // Hook ERC-721 ownerOf method
                 const contract = this.contracts.get(ownership.contract) || {
                     address: ownership.contract,
@@ -1365,7 +1355,7 @@ const BinaryPatcherAdvanced = {
             devices: new Map(),
             meshNetwork: null,
 
-            initialize: function () {
+            initialize() {
                 // Detect IoT environment
                 this.detectIoTEnvironment();
 
@@ -1373,7 +1363,7 @@ const BinaryPatcherAdvanced = {
                 this.initializeMeshNetwork();
             },
 
-            detectIoTEnvironment: function () {
+            detectIoTEnvironment() {
                 // Check for common IoT platforms
 
                 // AWS IoT
@@ -1399,14 +1389,14 @@ const BinaryPatcherAdvanced = {
                 }
             },
 
-            initializeMeshNetwork: function () {
+            initializeMeshNetwork() {
                 this.meshNetwork = {
                     nodeId: this.generateMeshNodeId(),
                     neighbors: new Set(),
                     routingTable: new Map(),
 
                     // Discover neighboring nodes
-                    discover: function () {
+                    discover() {
                         // Broadcast discovery message
                         this.broadcast({
                             type: 'mesh_discovery',
@@ -1415,7 +1405,7 @@ const BinaryPatcherAdvanced = {
                     },
 
                     // Broadcast message to mesh
-                    broadcast: function (message) {
+                    broadcast(message) {
                         this.neighbors.forEach(neighbor => {
                             this.sendToNode(neighbor, message);
                         });
@@ -1427,7 +1417,7 @@ const BinaryPatcherAdvanced = {
                         send({
                             type: 'mesh_message',
                             target: nodeId,
-                            message: message,
+                            message,
                         });
                     },
                 };
@@ -1444,22 +1434,22 @@ const BinaryPatcherAdvanced = {
                 if (Process.platform === 'linux') {
                     try {
                         const interfaces = File.readAllText('/sys/class/net/eth0/address');
-                        hwId = interfaces.replace(/:/g, '');
-                    } catch (e) {
+                        hwId = interfaces.replaceAll(':', '');
+                    } catch (error) {
                         // Fallback to random if MAC address cannot be read
-                        console.error(`[MeshNode] Failed to read MAC address: ${e.message}`);
+                        console.error(`[MeshNode] Failed to read MAC address: ${error.message}`);
                         console.log('[MeshNode] Using random hardware ID as fallback');
-                        hwId = Math.random().toString(36).substr(2, 12);
+                        hwId = Math.random().toString(36).slice(2, 14);
                     }
                 } else {
-                    hwId = Math.random().toString(36).substr(2, 12);
+                    hwId = Math.random().toString(36).slice(2, 14);
                 }
 
                 return `mesh_${hwId}`;
             },
 
             // Patch IoT device firmware
-            patchIoTFirmware: function (deviceId, patchData) {
+            patchIoTFirmware(deviceId, patchData) {
                 const device = this.devices.get(deviceId) || {
                     id: deviceId,
                     type: 'unknown',
@@ -1473,14 +1463,18 @@ const BinaryPatcherAdvanced = {
 
                 // Apply appropriate patching strategy
                 switch (device.type) {
-                    case 'esp32':
+                    case 'esp32': {
                         return this.patchESP32(device, patchData);
-                    case 'arduino':
+                    }
+                    case 'arduino': {
                         return this.patchArduino(device, patchData);
-                    case 'raspberrypi':
+                    }
+                    case 'raspberrypi': {
                         return this.patchRaspberryPi(device, patchData);
-                    default:
+                    }
+                    default: {
                         return this.patchGenericDevice(device, patchData);
+                    }
                 }
             },
 
@@ -1502,7 +1496,7 @@ const BinaryPatcherAdvanced = {
                 return 'generic';
             },
 
-            patchESP32: function (device, patchData) {
+            patchESP32(device, patchData) {
                 // ESP32-specific patching with real implementation
                 console.log(`[ESP32] Patching device: ${device.id}`);
                 console.log(`[ESP32] Firmware size: ${patchData ? patchData.length : 0} bytes`);
@@ -1511,7 +1505,7 @@ const BinaryPatcherAdvanced = {
                 const ESP_COMMANDS = {
                     SYNC: 0x08,
                     WRITE_REG: 0x09,
-                    READ_REG: 0x0a,
+                    READ_REG: 0x0A,
                     FLASH_BEGIN: 0x02,
                     FLASH_DATA: 0x03,
                     FLASH_END: 0x04,
@@ -1519,7 +1513,7 @@ const BinaryPatcherAdvanced = {
 
                 // Apply firmware patch to ESP32
                 if (patchData?.firmware) {
-                    const flashAddress = patchData.address || 0x1000;
+                    const flashAddress = patchData.address || 0x10_00;
                     console.log(`[ESP32] Flashing at address: 0x${flashAddress.toString(16)}`);
                     console.log(`[ESP32] Device serial: ${device.serial || 'unknown'}`);
 
@@ -1544,7 +1538,7 @@ const BinaryPatcherAdvanced = {
                 return true;
             },
 
-            patchArduino: function (device, patchData) {
+            patchArduino(device, patchData) {
                 // Arduino-specific patching with real implementation
                 console.log(`[Arduino] Patching device: ${device.id}`);
                 console.log(`[Arduino] Board type: ${device.board || 'uno'}`);
@@ -1588,7 +1582,7 @@ const BinaryPatcherAdvanced = {
                 return true;
             },
 
-            patchRaspberryPi: function (device, patchData) {
+            patchRaspberryPi(device, patchData) {
                 // Raspberry Pi patching with real implementation
                 console.log(`[RPi] Patching device: ${device.id}`);
                 console.log(`[RPi] Model: ${device.model || 'unknown'}`);
@@ -1630,7 +1624,7 @@ const BinaryPatcherAdvanced = {
                 return true;
             },
 
-            patchGenericDevice: function (device, patchData) {
+            patchGenericDevice(device, patchData) {
                 // Generic embedded device patching with real implementation
                 console.log(`[Generic] Patching device: ${device.id}`);
                 console.log(`[Generic] Device type: ${device.type || 'unknown'}`);
@@ -1671,7 +1665,7 @@ const BinaryPatcherAdvanced = {
             },
 
             // Handle sensor network patches
-            patchSensorNetwork: function (networkId, patchData) {
+            patchSensorNetwork(networkId, patchData) {
                 // Coordinate patches across sensor network
                 const network = {
                     id: networkId,
@@ -1688,7 +1682,7 @@ const BinaryPatcherAdvanced = {
                 return Promise.all(results);
             },
 
-            discoverSensors: function (networkId) {
+            discoverSensors(networkId) {
                 // Discover sensors in network using real protocols
                 console.log(`[SensorNet] Discovering sensors in network: ${networkId}`);
 
@@ -1704,7 +1698,7 @@ const BinaryPatcherAdvanced = {
                 // Store discovered sensors
                 this.sensorNetworks = this.sensorNetworks || {};
                 this.sensorNetworks[networkId] = {
-                    sensors: sensors,
+                    sensors,
                     discoveredAt: Date.now(),
                 };
 
@@ -1712,7 +1706,7 @@ const BinaryPatcherAdvanced = {
                 return sensors;
             },
 
-            detectProtocol: function (networkId) {
+            detectProtocol(networkId) {
                 // Detect sensor network protocol with real implementation
                 console.log(`[Protocol] Detecting protocol for network: ${networkId}`);
 
@@ -1741,7 +1735,7 @@ const BinaryPatcherAdvanced = {
                 return 'unknown';
             },
 
-            patchSensor: function (sensor, patchData) {
+            patchSensor(sensor, patchData) {
                 // Apply patch to individual sensor with real implementation
                 return new Promise(resolve => {
                     console.log(`[Sensor] Patching sensor: ${sensor.id || 'unknown'}`);
@@ -1792,10 +1786,10 @@ const BinaryPatcherAdvanced = {
             results: new Map(),
 
             // Create test suite for patch
-            createTestSuite: function (patchId, tests) {
+            createTestSuite(patchId, tests) {
                 const suite = {
                     id: patchId,
-                    tests: tests,
+                    tests,
                     status: 'pending',
                     results: [],
                 };
@@ -1805,7 +1799,7 @@ const BinaryPatcherAdvanced = {
             },
 
             // Run test suite
-            runTestSuite: function (patchId) {
+            runTestSuite(patchId) {
                 const suite = this.testSuites.get(patchId);
                 if (!suite) {
                     return null;
@@ -1833,7 +1827,7 @@ const BinaryPatcherAdvanced = {
             },
 
             // Run individual test
-            runTest: function (test) {
+            runTest(test) {
                 const result = {
                     name: test.name,
                     type: test.type,
@@ -1846,23 +1840,28 @@ const BinaryPatcherAdvanced = {
 
                 try {
                     switch (test.type) {
-                        case 'functionality':
+                        case 'functionality': {
                             result.passed = this.testFunctionality(test);
                             break;
-                        case 'performance':
+                        }
+                        case 'performance': {
                             result.passed = this.testPerformance(test);
                             break;
-                        case 'compatibility':
+                        }
+                        case 'compatibility': {
                             result.passed = this.testCompatibility(test);
                             break;
-                        case 'security':
+                        }
+                        case 'security': {
                             result.passed = this.testSecurity(test);
                             break;
-                        default:
+                        }
+                        default: {
                             result.passed = this.runCustomTest(test);
+                        }
                     }
-                } catch (e) {
-                    result.error = e.message;
+                } catch (error) {
+                    result.error = error.message;
                     result.passed = false;
                 }
 
@@ -1900,27 +1899,29 @@ const BinaryPatcherAdvanced = {
                 return elapsed <= maxTime;
             },
 
-            testCompatibility: function (test) {
+            testCompatibility(test) {
                 // Test compatibility with other software
-                return test.checkList.every(check => {
-                    return this.checkCompatibility(check);
-                });
+                return test.checkList.every(check => this.checkCompatibility(check));
             },
 
-            checkCompatibility: function (check) {
+            checkCompatibility(check) {
                 switch (check.type) {
-                    case 'module':
+                    case 'module': {
                         return Process.findModuleByName(check.name) !== null;
-                    case 'function':
+                    }
+                    case 'function': {
                         return Module.findExportByName(check.module, check.name) !== null;
-                    case 'version':
+                    }
+                    case 'version': {
                         return this.checkVersion(check.module, check.minVersion);
-                    default:
+                    }
+                    default: {
                         return true;
+                    }
                 }
             },
 
-            checkVersion: function (module, minVersion) {
+            checkVersion(module, minVersion) {
                 // Check module version with real version comparison
                 if (!module || !minVersion) {
                     console.error('[Version] Missing module or minVersion for check');
@@ -1928,21 +1929,16 @@ const BinaryPatcherAdvanced = {
                 }
 
                 // Get actual module version
-                const moduleVersion =
-                    module.version || Process.findModuleByName(module.name)?.version || '0.0.0';
+                const moduleVersion
+                    = module.version || Process.findModuleByName(module.name)?.version || '0.0.0';
                 console.log(
-                    '[Version] Checking module: ' +
-                        module.name +
-                        ' v' +
-                        moduleVersion +
-                        ' >= v' +
-                        minVersion
+                    `[Version] Checking module: ${module.name} v${moduleVersion} >= v${minVersion}`
                 );
 
                 // Parse version strings for comparison
                 const parseVersion = v => {
-                    const parts = v.split('.').map(n => parseInt(n, 10) || 0);
-                    return parts[0] * 10000 + parts[1] * 100 + parts[2];
+                    const parts = v.split('.').map(n => Number.parseInt(n, 10) || 0);
+                    return parts[0] * 10_000 + parts[1] * 100 + parts[2];
                 };
 
                 const currentVer = parseVersion(moduleVersion);
@@ -1966,7 +1962,7 @@ const BinaryPatcherAdvanced = {
                 return versionOk;
             },
 
-            testSecurity: function (test) {
+            testSecurity(test) {
                 // Test security implications with comprehensive validation
 
                 // Check for memory leaks
@@ -2002,17 +1998,17 @@ const BinaryPatcherAdvanced = {
                     try {
                         test.operation();
                         console.log('[Security] Crash test passed');
-                    } catch (e) {
-                        console.error(`[Security] Crash detected during test: ${e.message}`);
-                        console.error(`[Security] Stack trace: ${e.stack}`);
+                    } catch (error) {
+                        console.error(`[Security] Crash detected during test: ${error.message}`);
+                        console.error(`[Security] Stack trace: ${error.stack}`);
 
                         // Store crash information
                         this.crashReports = this.crashReports || [];
                         this.crashReports.push({
                             test: test.name || 'unknown',
-                            error: e.message,
-                            stack: e.stack,
-                            type: e.name || 'Error',
+                            error: error.message,
+                            stack: error.stack,
+                            type: error.name || 'Error',
                             timestamp: Date.now(),
                         });
 
@@ -2020,8 +2016,8 @@ const BinaryPatcherAdvanced = {
                         send({
                             type: 'security-crash',
                             test: test.name,
-                            error: e.message,
-                            stack: e.stack,
+                            error: error.message,
+                            stack: error.stack,
                         });
 
                         return false;
@@ -2031,17 +2027,16 @@ const BinaryPatcherAdvanced = {
                 return true;
             },
 
-            runCustomTest: test => {
+            runCustomTest: test =>
                 // Run custom test function
-                return test.testFunction();
-            },
+                test.testFunction(),
         },
 
         // Cross-platform validation
         crossPlatformValidation: {
             platforms: ['windows', 'linux', 'darwin', 'android', 'ios'],
 
-            validatePatch: function (patchData) {
+            validatePatch(patchData) {
                 const currentPlatform = Process.platform;
                 const results = {
                     current: this.validateOnPlatform(patchData, currentPlatform),
@@ -2060,21 +2055,27 @@ const BinaryPatcherAdvanced = {
                 return results;
             },
 
-            validateOnPlatform: function (patchData, platform) {
+            validateOnPlatform(patchData, platform) {
                 // Platform-specific validation
                 switch (platform) {
-                    case 'windows':
+                    case 'windows': {
                         return this.validateWindows(patchData);
-                    case 'linux':
+                    }
+                    case 'linux': {
                         return this.validateLinux(patchData);
-                    case 'darwin':
+                    }
+                    case 'darwin': {
                         return this.validateMacOS(patchData);
-                    case 'android':
+                    }
+                    case 'android': {
                         return this.validateAndroid(patchData);
-                    case 'ios':
+                    }
+                    case 'ios': {
                         return this.validateIOS(patchData);
-                    default:
+                    }
+                    default: {
                         return false;
+                    }
                 }
             },
 
@@ -2100,10 +2101,10 @@ const BinaryPatcherAdvanced = {
                     if (patchData.apis) {
                         patchData.apis.forEach(api => {
                             if (
-                                !api.startsWith('kernel32.') &&
-                                !api.startsWith('ntdll.') &&
-                                !api.startsWith('user32.') &&
-                                !api.startsWith('ws2_32.')
+                                !api.startsWith('kernel32.')
+                                && !api.startsWith('ntdll.')
+                                && !api.startsWith('user32.')
+                                && !api.startsWith('ws2_32.')
                             ) {
                                 issues.push(`Non-Windows API reference: ${api}`);
                             }
@@ -2113,12 +2114,14 @@ const BinaryPatcherAdvanced = {
                     // Validate Windows version requirements
                     if (patchData.minWindowsVersion) {
                         const currentVersion = Process.env.OS_VERSION || '10.0';
-                        if (parseFloat(currentVersion) < parseFloat(patchData.minWindowsVersion)) {
+                        if (
+                            Number.parseFloat(currentVersion)
+                            < Number.parseFloat(patchData.minWindowsVersion)
+                        ) {
                             issues.push(
-                                'Windows version too old: ' +
-                                    currentVersion +
-                                    ' < ' +
+                                `Windows version too old: ${currentVersion} < ${
                                     patchData.minWindowsVersion
+                                }`
                             );
                             compatible = false;
                         }
@@ -2131,8 +2134,8 @@ const BinaryPatcherAdvanced = {
                 }
 
                 return {
-                    compatible: compatible,
-                    issues: issues,
+                    compatible,
+                    issues,
                     platform: 'windows',
                     validated: true,
                 };
@@ -2180,8 +2183,8 @@ const BinaryPatcherAdvanced = {
                 }
 
                 return {
-                    compatible: compatible,
-                    issues: issues,
+                    compatible,
+                    issues,
                     platform: 'linux',
                     validated: true,
                 };
@@ -2220,7 +2223,10 @@ const BinaryPatcherAdvanced = {
                     // Check macOS version requirements
                     if (patchData.minMacOSVersion) {
                         const osVersion = Process.env.MACOS_VERSION || '11.0';
-                        if (parseFloat(osVersion) < parseFloat(patchData.minMacOSVersion)) {
+                        if (
+                            Number.parseFloat(osVersion)
+                            < Number.parseFloat(patchData.minMacOSVersion)
+                        ) {
                             issues.push(`macOS version too old: ${osVersion}`);
                             compatible = false;
                         }
@@ -2238,8 +2244,8 @@ const BinaryPatcherAdvanced = {
                 }
 
                 return {
-                    compatible: compatible,
-                    issues: issues,
+                    compatible,
+                    issues,
                     platform: 'darwin',
                     validated: true,
                 };
@@ -2259,7 +2265,7 @@ const BinaryPatcherAdvanced = {
 
                     // Check Android API level requirements
                     if (patchData.minApiLevel) {
-                        const apiLevel = parseInt(Process.env.ANDROID_API_LEVEL || '28', 10);
+                        const apiLevel = Number.parseInt(Process.env.ANDROID_API_LEVEL || '28', 10);
                         if (apiLevel < patchData.minApiLevel) {
                             issues.push(
                                 `API level too low: ${apiLevel} < ${patchData.minApiLevel}`
@@ -2302,8 +2308,8 @@ const BinaryPatcherAdvanced = {
                 }
 
                 return {
-                    compatible: compatible,
-                    issues: issues,
+                    compatible,
+                    issues,
                     platform: 'android',
                     validated: true,
                 };
@@ -2324,7 +2330,10 @@ const BinaryPatcherAdvanced = {
                     // Check iOS version requirements
                     if (patchData.minIOSVersion) {
                         const iosVersion = Process.env.IOS_VERSION || '14.0';
-                        if (parseFloat(iosVersion) < parseFloat(patchData.minIOSVersion)) {
+                        if (
+                            Number.parseFloat(iosVersion)
+                            < Number.parseFloat(patchData.minIOSVersion)
+                        ) {
                             issues.push(`iOS version too old: ${iosVersion}`);
                             compatible = false;
                         }
@@ -2342,9 +2351,9 @@ const BinaryPatcherAdvanced = {
                         const isJailbroken = jailbreakPaths.some(path => {
                             try {
                                 return File.exists(path);
-                            } catch (e) {
+                            } catch (error) {
                                 // File access denied or path doesn't exist - common on non-jailbroken devices
-                                console.log(`[iOS] Cannot access path ${path}: ${e.message}`);
+                                console.log(`[iOS] Cannot access path ${path}: ${error.message}`);
                                 return false;
                             }
                         });
@@ -2378,8 +2387,8 @@ const BinaryPatcherAdvanced = {
                 }
 
                 return {
-                    compatible: compatible,
-                    issues: issues,
+                    compatible,
+                    issues,
                     platform: 'ios',
                     validated: true,
                 };
@@ -2392,7 +2401,7 @@ const BinaryPatcherAdvanced = {
                     compatible: true,
                     crossPlatform: true,
                     confidence: 0.8,
-                    platform: platform,
+                    platform,
                     checks: [],
                 };
 
@@ -2403,7 +2412,7 @@ const BinaryPatcherAdvanced = {
                 }
 
                 switch (platform) {
-                    case 'windows':
+                    case 'windows': {
                         if (patchData.format && patchData.format === 'PE') {
                             result.confidence += 0.1;
                             result.checks.push('PE format compatible');
@@ -2412,8 +2421,9 @@ const BinaryPatcherAdvanced = {
                             result.checks.push('Non-PE format may not work');
                         }
                         break;
+                    }
 
-                    case 'linux':
+                    case 'linux': {
                         if (patchData.format && patchData.format === 'ELF') {
                             result.confidence += 0.1;
                             result.checks.push('ELF format compatible');
@@ -2422,8 +2432,9 @@ const BinaryPatcherAdvanced = {
                             result.checks.push('Non-ELF format may not work');
                         }
                         break;
+                    }
 
-                    case 'darwin':
+                    case 'darwin': {
                         if (patchData.format && patchData.format === 'MACH-O') {
                             result.confidence += 0.1;
                             result.checks.push('Mach-O format compatible');
@@ -2432,8 +2443,9 @@ const BinaryPatcherAdvanced = {
                             result.checks.push('Non-Mach-O format may not work');
                         }
                         break;
+                    }
 
-                    case 'android':
+                    case 'android': {
                         if (patchData.format && ['DEX', 'APK', 'ELF'].includes(patchData.format)) {
                             result.confidence += 0.1;
                             result.checks.push('Android format compatible');
@@ -2446,8 +2458,9 @@ const BinaryPatcherAdvanced = {
                             result.checks.push('Root requirement reduces compatibility');
                         }
                         break;
+                    }
 
-                    case 'ios':
+                    case 'ios': {
                         if (patchData.format && patchData.format === 'MACH-O') {
                             result.confidence += 0.1;
                             result.checks.push('iOS Mach-O format compatible');
@@ -2457,11 +2470,13 @@ const BinaryPatcherAdvanced = {
                             result.checks.push('Jailbreak requirement reduces compatibility');
                         }
                         break;
+                    }
 
-                    default:
+                    default: {
                         result.confidence = 0.3;
                         result.checks.push(`Unknown platform: ${platform}`);
                         break;
+                    }
                 }
 
                 // General architecture checks
@@ -2477,7 +2492,7 @@ const BinaryPatcherAdvanced = {
                 }
 
                 // Check patch size for feasibility
-                if (patchData.size > 0 && patchData.size > 100000000) {
+                if (patchData.size > 0 && patchData.size > 100_000_000) {
                     result.confidence -= 0.1;
                     result.checks.push('Large patch size may cause issues');
                 }
@@ -2499,17 +2514,17 @@ const BinaryPatcherAdvanced = {
     // === PUBLIC API ===
 
     // Apply memory-resident patch
-    applyMemoryPatch: function (moduleName, patches) {
+    applyMemoryPatch(moduleName, patches) {
         return this.memoryResidentPatching.patchLoadedModule(moduleName, patches);
     },
 
     // Setup just-in-time patching
-    enableJITPatching: function () {
+    enableJITPatching() {
         this.memoryResidentPatching.hookModuleLoading();
     },
 
     // Initialize distributed patching
-    initializeDistributed: function () {
+    initializeDistributed() {
         this.distributedProtection.multiNodeCoordination.initialize();
         this.distributedProtection.cloudNative.initialize();
         this.distributedProtection.blockchain.initialize();
@@ -2517,7 +2532,7 @@ const BinaryPatcherAdvanced = {
     },
 
     // Run patch tests
-    testPatch: function (patchId, tests) {
+    testPatch(patchId, tests) {
         const suite = this.advancedVerification.testFramework.createTestSuite(patchId, tests);
 
         // Validate suite was created successfully
@@ -2535,8 +2550,8 @@ const BinaryPatcherAdvanced = {
         // Store suite results for analysis
         this.testResults = this.testResults || {};
         this.testResults[patchId] = {
-            suite: suite,
-            result: result,
+            suite,
+            result,
             timestamp: Date.now(),
         };
 
@@ -2544,7 +2559,7 @@ const BinaryPatcherAdvanced = {
     },
 
     // Validate patch cross-platform
-    validateCrossPlatform: function (patchData) {
+    validateCrossPlatform(patchData) {
         return this.advancedVerification.crossPlatformValidation.validatePatch(patchData);
     },
 };

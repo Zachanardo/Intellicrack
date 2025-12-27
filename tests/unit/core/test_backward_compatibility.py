@@ -43,7 +43,7 @@ from typing import Dict, List, Any, Optional
 # Add project root to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
-from intellicrack.core.config.config_manager import IntellicrackConfig, get_config
+from intellicrack.core.config_manager import IntellicrackConfig, get_config
 
 
 class RealConfigMigrationTester:

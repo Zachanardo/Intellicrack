@@ -79,7 +79,7 @@
         performDeepAnalysis: true,
         detectPatterns: true,
         useCache: true,
-        cacheTimeout: 60000,
+        cacheTimeout: 60_000,
     };
 
     const stats = {
@@ -441,8 +441,8 @@
                     } else if (funcName === 'CheckRemoteDebuggerPresent') {
                         this.debuggerPtr = args[1];
                     } else if (
-                        funcName === 'NtQueryInformationProcess' &&
-                        args[1].toInt32() === 7
+                        funcName === 'NtQueryInformationProcess'
+                        && args[1].toInt32() === 7
                     ) {
                         this.shouldFake = true;
                     }
@@ -514,7 +514,7 @@
                     }
                 }
             }
-        } catch (_e) {}
+        } catch {}
 
         return null;
     }
@@ -529,7 +529,7 @@
             if (!buffer.isNull() && length > 0) {
                 return buffer.readUtf16String(length / 2);
             }
-        } catch (_e) {}
+        } catch {}
         return null;
     }
 
@@ -544,8 +544,10 @@
         try {
             switch (type) {
                 case 1: // REG_SZ
-                case 2: // REG_EXPAND_SZ
+                case 2: {
+                    // REG_EXPAND_SZ
                     return { formatted: dataPtr.readUtf16String(actualSize / 2) };
+                }
 
                 case 3: {
                     // REG_BINARY
@@ -554,30 +556,29 @@
                     return { formatted: null, raw: hex };
                 }
 
-                case 4: // REG_DWORD
+                case 4: {
+                    // REG_DWORD
                     if (dataSize >= 4) {
                         return {
-                            formatted:
-                                '0x' +
-                                dataPtr.readU32().toString(16) +
-                                ' (' +
-                                dataPtr.readU32() +
-                                ')',
+                            formatted: `0x${dataPtr.readU32().toString(16)} (${dataPtr.readU32()})`,
                         };
                     }
                     break;
+                }
 
-                case 5: // REG_DWORD_BIG_ENDIAN
+                case 5: {
+                    // REG_DWORD_BIG_ENDIAN
                     if (dataSize >= 4) {
-                        const val =
-                            ((dataPtr.readU8() << 24) |
-                                (dataPtr.add(1).readU8() << 16) |
-                                (dataPtr.add(2).readU8() << 8) |
-                                dataPtr.add(3).readU8()) >>>
-                            0;
+                        const val
+                            = ((dataPtr.readU8() << 24)
+                                | (dataPtr.add(1).readU8() << 16)
+                                | (dataPtr.add(2).readU8() << 8)
+                                | dataPtr.add(3).readU8())
+                            >>> 0;
                         return { formatted: `0x${val.toString(16)} (${val})` };
                     }
                     break;
+                }
 
                 case 7: {
                     // REG_MULTI_SZ
@@ -594,16 +595,18 @@
                     return { formatted: strings.join('\\0') };
                 }
 
-                case 11: // REG_QWORD
+                case 11: {
+                    // REG_QWORD
                     if (dataSize >= 8) {
                         const low = dataPtr.readU32();
                         const high = dataPtr.add(4).readU32();
-                        const val = high * 0x100000000 + low;
+                        const val = high * 0x1_00_00_00_00 + low;
                         return { formatted: `0x${val.toString(16)} (${val})` };
                     }
                     break;
+                }
             }
-        } catch (_e) {}
+        } catch {}
 
         return { formatted: null, raw: null };
     }
@@ -633,17 +636,17 @@
 
         const patterns = [
             {
-                regex: /[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}/gi,
+                regex: /(?:[\da-z]{5}-){3}[\da-z]{5}/gi,
                 type: 'serial_key',
             },
             {
-                regex: /[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}/gi,
+                regex: /[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}/gi,
                 type: 'guid',
             },
-            { regex: /[A-Z0-9]{32,}/gi, type: 'hash' },
+            { regex: /[\da-z]{32,}/gi, type: 'hash' },
             { regex: /\b\d{10,}\b/g, type: 'timestamp' },
             {
-                regex: /-----BEGIN [A-Z ]+-----[\s\S]+-----END [A-Z ]+-----/g,
+                regex: /-{5}BEGIN [ A-Z]+-{5}[\S\s]+-{5}END [ A-Z]+-{5}/g,
                 type: 'certificate',
             },
         ];
@@ -666,7 +669,7 @@
                         target: 'registry_monitor',
                         pattern: p.type,
                         location: fullPath,
-                        sample: dataStr.substring(0, 100),
+                        sample: dataStr.slice(0, 100),
                     });
                 }
             }
@@ -683,7 +686,7 @@
 
         if (!info || Date.now() - info.timestamp > 1000) {
             info = {
-                tid: tid,
+                tid,
                 timestamp: Date.now(),
             };
 
@@ -693,7 +696,7 @@
                     info.state = thread.state;
                     info.context = thread.context;
                 }
-            } catch (_e) {}
+            } catch {}
 
             threadInfo.set(tid, info);
         }
@@ -763,7 +766,7 @@
             target: 'registry_monitor',
             function: 'NtOpenKey',
             key_name: this.keyName,
-            success: success,
+            success,
             status: retval.toInt32(),
             duration: Date.now() - this.startTime,
         };
@@ -782,8 +785,8 @@
             }
         }
 
-        const includeBt =
-            config.includeBacktraceOnMatch && success && matchesFilters(evt.key_path, null);
+        const includeBt
+            = config.includeBacktraceOnMatch && success && matchesFilters(evt.key_path, null);
         sendEvent(evt, includeBt);
     }
 
@@ -826,15 +829,15 @@
             key_name: this.keyName,
             class_name: this.className,
             create_options: this.createOptions,
-            success: success,
+            success,
             status: retval.toInt32(),
             duration: Date.now() - this.startTime,
         };
 
         if (success) {
             if (this.dispositionPtr && !this.dispositionPtr.isNull()) {
-                evt.disposition =
-                    this.dispositionPtr.readU32() === 1 ? 'created_new' : 'opened_existing';
+                evt.disposition
+                    = this.dispositionPtr.readU32() === 1 ? 'created_new' : 'opened_existing';
             }
 
             if (this.args?.[0]) {
@@ -848,8 +851,8 @@
             }
         }
 
-        const includeBt =
-            config.includeBacktraceOnMatch && success && matchesFilters(evt.key_path, null);
+        const includeBt
+            = config.includeBacktraceOnMatch && success && matchesFilters(evt.key_path, null);
         sendEvent(evt, includeBt);
     }
 
@@ -874,13 +877,13 @@
             function: 'NtQueryKey',
             key_path: this.keyPath,
             info_class: this.infoClass,
-            success: success,
+            success,
             status: retval.toInt32(),
             duration: Date.now() - this.startTime,
         };
 
-        const includeBt =
-            config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
+        const includeBt
+            = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
         sendEvent(evt, includeBt);
     }
 
@@ -911,7 +914,7 @@
             key_path: this.keyPath,
             value_name: this.valueName,
             info_class: this.infoClass,
-            success: success,
+            success,
             status: retval.toInt32(),
             duration: Date.now() - this.startTime,
         };
@@ -923,10 +926,12 @@
                 let regType;
 
                 switch (this.infoClass) {
-                    case 0: // KeyValueBasicInformation
+                    case 0: {
+                        // KeyValueBasicInformation
                         regType = this.keyValueInfo.add(4).readU32();
                         evt.data_type = regType;
                         break;
+                    }
 
                     case 1: {
                         // KeyValueFullInformation
@@ -954,7 +959,8 @@
                         break;
                     }
 
-                    case 2: // KeyValuePartialInformation
+                    case 2: {
+                        // KeyValuePartialInformation
                         regType = this.keyValueInfo.add(4).readU32();
                         dataSize = this.keyValueInfo.add(8).readU32();
                         dataPtr = this.keyValueInfo.add(12);
@@ -976,16 +982,17 @@
                             }
                         }
                         break;
+                    }
                 }
-            } catch (e) {
-                evt.parse_error = e.toString();
+            } catch (error) {
+                evt.parse_error = error.toString();
             }
         }
 
-        const includeBt =
-            config.includeBacktraceOnMatch &&
-            success &&
-            matchesFilters(this.keyPath, this.valueName);
+        const includeBt
+            = config.includeBacktraceOnMatch
+            && success
+            && matchesFilters(this.keyPath, this.valueName);
         sendEvent(evt, includeBt);
     }
 
@@ -1022,7 +1029,7 @@
             value_name: this.valueName,
             data_type: this.dataType,
             data_size: this.dataSize,
-            success: success,
+            success,
             status: retval.toInt32(),
             duration: Date.now() - this.startTime,
         };
@@ -1040,10 +1047,10 @@
             });
         }
 
-        const includeBt =
-            config.includeBacktraceOnMatch &&
-            success &&
-            matchesFilters(this.keyPath, this.valueName);
+        const includeBt
+            = config.includeBacktraceOnMatch
+            && success
+            && matchesFilters(this.keyPath, this.valueName);
         sendEvent(evt, includeBt);
     }
 
@@ -1061,7 +1068,7 @@
             target: 'registry_monitor',
             function: 'NtDeleteKey',
             key_path: this.keyPath,
-            success: success,
+            success,
             status: retval.toInt32(),
             duration: Date.now() - this.startTime,
         };
@@ -1070,8 +1077,8 @@
             handleTracker.delete(this.keyHandle.toString());
         }
 
-        const includeBt =
-            config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
+        const includeBt
+            = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
         sendEvent(evt, includeBt);
     }
 
@@ -1093,15 +1100,15 @@
             function: 'NtDeleteValueKey',
             key_path: this.keyPath,
             value_name: this.valueName,
-            success: success,
+            success,
             status: retval.toInt32(),
             duration: Date.now() - this.startTime,
         };
 
-        const includeBt =
-            config.includeBacktraceOnMatch &&
-            success &&
-            matchesFilters(this.keyPath, this.valueName);
+        const includeBt
+            = config.includeBacktraceOnMatch
+            && success
+            && matchesFilters(this.keyPath, this.valueName);
         sendEvent(evt, includeBt);
     }
 
@@ -1130,7 +1137,7 @@
             key_path: this.keyPath,
             index: this.index,
             info_class: this.infoClass,
-            success: success,
+            success,
             status: retval.toInt32(),
             duration: Date.now() - this.startTime,
         };
@@ -1141,13 +1148,15 @@
                 let nameLength;
 
                 switch (this.infoClass) {
-                    case 0: // KeyBasicInformation
+                    case 0: {
+                        // KeyBasicInformation
                         nameLength = this.keyInfo.add(4).readU32();
                         namePtr = this.keyInfo.add(16);
                         if (nameLength > 0) {
                             evt.subkey_name = namePtr.readUtf16String(nameLength / 2);
                         }
                         break;
+                    }
 
                     case 1: {
                         // KeyNodeInformation
@@ -1160,16 +1169,18 @@
                         break;
                     }
 
-                    case 2: // KeyFullInformation
+                    case 2: {
+                        // KeyFullInformation
                         break;
+                    }
                 }
-            } catch (e) {
-                evt.parse_error = e.toString();
+            } catch (error) {
+                evt.parse_error = error.toString();
             }
         }
 
-        const includeBt =
-            config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
+        const includeBt
+            = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
         sendEvent(evt, includeBt);
     }
 
@@ -1198,7 +1209,7 @@
             key_path: this.keyPath,
             index: this.index,
             info_class: this.infoClass,
-            success: success,
+            success,
             status: retval.toInt32(),
             duration: Date.now() - this.startTime,
         };
@@ -1212,7 +1223,8 @@
                 let regType;
 
                 switch (this.infoClass) {
-                    case 0: // KeyValueBasicInformation
+                    case 0: {
+                        // KeyValueBasicInformation
                         nameLength = this.keyValueInfo.add(4).readU32();
                         namePtr = this.keyValueInfo.add(12);
                         regType = this.keyValueInfo.add(8).readU32();
@@ -1222,6 +1234,7 @@
                         }
                         evt.data_type = regType;
                         break;
+                    }
 
                     case 1: {
                         // KeyValueFullInformation
@@ -1256,7 +1269,8 @@
                         break;
                     }
 
-                    case 2: // KeyValuePartialInformation
+                    case 2: {
+                        // KeyValuePartialInformation
                         regType = this.keyValueInfo.add(4).readU32();
                         dataSize = this.keyValueInfo.add(8).readU32();
                         dataPtr = this.keyValueInfo.add(12);
@@ -1274,16 +1288,17 @@
                             }
                         }
                         break;
+                    }
                 }
-            } catch (e) {
-                evt.parse_error = e.toString();
+            } catch (error) {
+                evt.parse_error = error.toString();
             }
         }
 
-        const includeBt =
-            config.includeBacktraceOnMatch &&
-            success &&
-            matchesFilters(this.keyPath, evt.value_name);
+        const includeBt
+            = config.includeBacktraceOnMatch
+            && success
+            && matchesFilters(this.keyPath, evt.value_name);
         sendEvent(evt, includeBt);
     }
 
@@ -1312,13 +1327,13 @@
             target: 'registry_monitor',
             function: 'NtFlushKey',
             key_path: this.keyPath,
-            success: success,
+            success,
             status: retval.toInt32(),
             duration: Date.now() - this.startTime,
         };
 
-        const includeBt =
-            config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
+        const includeBt
+            = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
         sendEvent(evt, includeBt);
     }
 
@@ -1346,13 +1361,13 @@
             function: 'NtQueryMultipleValueKey',
             key_path: this.keyPath,
             entry_count: this.entryCount,
-            success: success,
+            success,
             status: retval.toInt32(),
             duration: Date.now() - this.startTime,
         };
 
-        const includeBt =
-            config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
+        const includeBt
+            = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
         sendEvent(evt, includeBt);
     }
 
@@ -1374,13 +1389,13 @@
             function: 'NtRenameKey',
             key_path: this.keyPath,
             new_name: this.newName,
-            success: success,
+            success,
             status: retval.toInt32(),
             duration: Date.now() - this.startTime,
         };
 
-        const includeBt =
-            config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
+        const includeBt
+            = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
         sendEvent(evt, includeBt);
     }
 
@@ -1401,7 +1416,7 @@
             function: 'NtLoadKey',
             target_key: this.targetKey,
             source_file: this.sourceFile,
-            success: success,
+            success,
             status: retval.toInt32(),
             duration: Date.now() - this.startTime,
         };
@@ -1423,7 +1438,7 @@
             target: 'registry_monitor',
             function: 'NtUnloadKey',
             target_key: this.targetKey,
-            success: success,
+            success,
             status: retval.toInt32(),
             duration: Date.now() - this.startTime,
         };
@@ -1448,13 +1463,13 @@
             target: 'registry_monitor',
             function: 'NtSaveKey',
             key_path: this.keyPath,
-            success: success,
+            success,
             status: retval.toInt32(),
             duration: Date.now() - this.startTime,
         };
 
-        const includeBt =
-            config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
+        const includeBt
+            = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
         sendEvent(evt, includeBt);
     }
 
@@ -1477,13 +1492,13 @@
             function: 'NtRestoreKey',
             key_path: this.keyPath,
             flags: this.flags,
-            success: success,
+            success,
             status: retval.toInt32(),
             duration: Date.now() - this.startTime,
         };
 
-        const includeBt =
-            config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
+        const includeBt
+            = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
         sendEvent(evt, includeBt);
     }
 
@@ -1512,7 +1527,7 @@
             sub_key: this.subKey,
             options: this.options,
             access: this.access,
-            success: success,
+            success,
             status: retval,
             duration: Date.now() - this.startTime,
         };
@@ -1531,10 +1546,10 @@
             }
         }
 
-        const includeBt =
-            config.includeBacktraceOnMatch &&
-            success &&
-            matchesFilters(evt.key_path || this.subKey, null);
+        const includeBt
+            = config.includeBacktraceOnMatch
+            && success
+            && matchesFilters(evt.key_path || this.subKey, null);
         sendEvent(evt, includeBt);
     }
 
@@ -1563,7 +1578,7 @@
             sub_key: this.subKey,
             options: this.options,
             access: this.access,
-            success: success,
+            success,
             status: retval,
             duration: Date.now() - this.startTime,
         };
@@ -1578,10 +1593,10 @@
             }
         }
 
-        const includeBt =
-            config.includeBacktraceOnMatch &&
-            success &&
-            matchesFilters(evt.key_path || this.subKey, null);
+        const includeBt
+            = config.includeBacktraceOnMatch
+            && success
+            && matchesFilters(evt.key_path || this.subKey, null);
         sendEvent(evt, includeBt);
     }
 
@@ -1617,15 +1632,15 @@
             class_name: this.className,
             options: this.options,
             access: this.access,
-            success: success,
+            success,
             status: retval,
             duration: Date.now() - this.startTime,
         };
 
         if (success) {
             if (this.dispositionPtr && !this.dispositionPtr.isNull()) {
-                evt.disposition =
-                    this.dispositionPtr.readU32() === 1 ? 'created_new' : 'opened_existing';
+                evt.disposition
+                    = this.dispositionPtr.readU32() === 1 ? 'created_new' : 'opened_existing';
             }
 
             if (this.resultPtr && !this.resultPtr.isNull()) {
@@ -1639,10 +1654,10 @@
             }
         }
 
-        const includeBt =
-            config.includeBacktraceOnMatch &&
-            success &&
-            matchesFilters(evt.key_path || this.subKey, null);
+        const includeBt
+            = config.includeBacktraceOnMatch
+            && success
+            && matchesFilters(evt.key_path || this.subKey, null);
         sendEvent(evt, includeBt);
     }
 
@@ -1678,15 +1693,15 @@
             class_name: this.className,
             options: this.options,
             access: this.access,
-            success: success,
+            success,
             status: retval,
             duration: Date.now() - this.startTime,
         };
 
         if (success) {
             if (this.dispositionPtr && !this.dispositionPtr.isNull()) {
-                evt.disposition =
-                    this.dispositionPtr.readU32() === 1 ? 'created_new' : 'opened_existing';
+                evt.disposition
+                    = this.dispositionPtr.readU32() === 1 ? 'created_new' : 'opened_existing';
             }
 
             if (this.resultPtr && !this.resultPtr.isNull()) {
@@ -1700,10 +1715,10 @@
             }
         }
 
-        const includeBt =
-            config.includeBacktraceOnMatch &&
-            success &&
-            matchesFilters(evt.key_path || this.subKey, null);
+        const includeBt
+            = config.includeBacktraceOnMatch
+            && success
+            && matchesFilters(evt.key_path || this.subKey, null);
         sendEvent(evt, includeBt);
     }
 
@@ -1734,7 +1749,7 @@
             function: 'RegQueryValueExW',
             key_path: this.keyPath,
             value_name: this.valueName,
-            success: success,
+            success,
             status: retval,
             duration: Date.now() - this.startTime,
         };
@@ -1763,10 +1778,10 @@
             }
         }
 
-        const includeBt =
-            config.includeBacktraceOnMatch &&
-            success &&
-            matchesFilters(this.keyPath, this.valueName);
+        const includeBt
+            = config.includeBacktraceOnMatch
+            && success
+            && matchesFilters(this.keyPath, this.valueName);
         sendEvent(evt, includeBt);
     }
 
@@ -1797,7 +1812,7 @@
             function: 'RegQueryValueExA',
             key_path: this.keyPath,
             value_name: this.valueName,
-            success: success,
+            success,
             status: retval,
             duration: Date.now() - this.startTime,
         };
@@ -1826,10 +1841,10 @@
             }
         }
 
-        const includeBt =
-            config.includeBacktraceOnMatch &&
-            success &&
-            matchesFilters(this.keyPath, this.valueName);
+        const includeBt
+            = config.includeBacktraceOnMatch
+            && success
+            && matchesFilters(this.keyPath, this.valueName);
         sendEvent(evt, includeBt);
     }
 
@@ -1868,7 +1883,7 @@
             value_name: this.valueName,
             data_type: this.dataType,
             data_size: this.dataSize,
-            success: success,
+            success,
             status: retval,
             duration: Date.now() - this.startTime,
         };
@@ -1886,10 +1901,10 @@
             });
         }
 
-        const includeBt =
-            config.includeBacktraceOnMatch &&
-            success &&
-            matchesFilters(this.keyPath, this.valueName);
+        const includeBt
+            = config.includeBacktraceOnMatch
+            && success
+            && matchesFilters(this.keyPath, this.valueName);
         sendEvent(evt, includeBt);
     }
 
@@ -1928,7 +1943,7 @@
             value_name: this.valueName,
             data_type: this.dataType,
             data_size: this.dataSize,
-            success: success,
+            success,
             status: retval,
             duration: Date.now() - this.startTime,
         };
@@ -1946,10 +1961,10 @@
             });
         }
 
-        const includeBt =
-            config.includeBacktraceOnMatch &&
-            success &&
-            matchesFilters(this.keyPath, this.valueName);
+        const includeBt
+            = config.includeBacktraceOnMatch
+            && success
+            && matchesFilters(this.keyPath, this.valueName);
         sendEvent(evt, includeBt);
     }
 
@@ -1973,13 +1988,13 @@
             function: 'RegDeleteKeyW',
             key_path: this.keyPath,
             sub_key: this.subKey,
-            success: success,
+            success,
             status: retval,
             duration: Date.now() - this.startTime,
         };
 
-        const includeBt =
-            config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, this.subKey);
+        const includeBt
+            = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, this.subKey);
         sendEvent(evt, includeBt);
     }
 
@@ -2003,13 +2018,13 @@
             function: 'RegDeleteKeyA',
             key_path: this.keyPath,
             sub_key: this.subKey,
-            success: success,
+            success,
             status: retval,
             duration: Date.now() - this.startTime,
         };
 
-        const includeBt =
-            config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, this.subKey);
+        const includeBt
+            = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, this.subKey);
         sendEvent(evt, includeBt);
     }
 
@@ -2033,15 +2048,15 @@
             function: 'RegDeleteValueW',
             key_path: this.keyPath,
             value_name: this.valueName,
-            success: success,
+            success,
             status: retval,
             duration: Date.now() - this.startTime,
         };
 
-        const includeBt =
-            config.includeBacktraceOnMatch &&
-            success &&
-            matchesFilters(this.keyPath, this.valueName);
+        const includeBt
+            = config.includeBacktraceOnMatch
+            && success
+            && matchesFilters(this.keyPath, this.valueName);
         sendEvent(evt, includeBt);
     }
 
@@ -2065,15 +2080,15 @@
             function: 'RegDeleteValueA',
             key_path: this.keyPath,
             value_name: this.valueName,
-            success: success,
+            success,
             status: retval,
             duration: Date.now() - this.startTime,
         };
 
-        const includeBt =
-            config.includeBacktraceOnMatch &&
-            success &&
-            matchesFilters(this.keyPath, this.valueName);
+        const includeBt
+            = config.includeBacktraceOnMatch
+            && success
+            && matchesFilters(this.keyPath, this.valueName);
         sendEvent(evt, includeBt);
     }
 
@@ -2105,7 +2120,7 @@
             function: 'RegEnumKeyExW',
             key_path: this.keyPath,
             index: this.index,
-            success: success,
+            success,
             status: retval,
             duration: Date.now() - this.startTime,
         };
@@ -2114,10 +2129,10 @@
             evt.subkey_name = this.lpName.readUtf16String();
         }
 
-        const includeBt =
-            config.includeBacktraceOnMatch &&
-            success &&
-            matchesFilters(this.keyPath, evt.subkey_name);
+        const includeBt
+            = config.includeBacktraceOnMatch
+            && success
+            && matchesFilters(this.keyPath, evt.subkey_name);
         sendEvent(evt, includeBt);
     }
 
@@ -2149,7 +2164,7 @@
             function: 'RegEnumKeyExA',
             key_path: this.keyPath,
             index: this.index,
-            success: success,
+            success,
             status: retval,
             duration: Date.now() - this.startTime,
         };
@@ -2158,10 +2173,10 @@
             evt.subkey_name = this.lpName.readAnsiString();
         }
 
-        const includeBt =
-            config.includeBacktraceOnMatch &&
-            success &&
-            matchesFilters(this.keyPath, evt.subkey_name);
+        const includeBt
+            = config.includeBacktraceOnMatch
+            && success
+            && matchesFilters(this.keyPath, evt.subkey_name);
         sendEvent(evt, includeBt);
     }
 
@@ -2196,7 +2211,7 @@
             function: 'RegEnumValueW',
             key_path: this.keyPath,
             index: this.index,
-            success: success,
+            success,
             status: retval,
             duration: Date.now() - this.startTime,
         };
@@ -2227,10 +2242,10 @@
             }
         }
 
-        const includeBt =
-            config.includeBacktraceOnMatch &&
-            success &&
-            matchesFilters(this.keyPath, evt.value_name);
+        const includeBt
+            = config.includeBacktraceOnMatch
+            && success
+            && matchesFilters(this.keyPath, evt.value_name);
         sendEvent(evt, includeBt);
     }
 
@@ -2265,7 +2280,7 @@
             function: 'RegEnumValueA',
             key_path: this.keyPath,
             index: this.index,
-            success: success,
+            success,
             status: retval,
             duration: Date.now() - this.startTime,
         };
@@ -2296,10 +2311,10 @@
             }
         }
 
-        const includeBt =
-            config.includeBacktraceOnMatch &&
-            success &&
-            matchesFilters(this.keyPath, evt.value_name);
+        const includeBt
+            = config.includeBacktraceOnMatch
+            && success
+            && matchesFilters(this.keyPath, evt.value_name);
         sendEvent(evt, includeBt);
     }
 
@@ -2330,13 +2345,13 @@
             target: 'registry_monitor',
             function: 'RegFlushKey',
             key_path: this.keyPath,
-            success: success,
+            success,
             status: retval,
             duration: Date.now() - this.startTime,
         };
 
-        const includeBt =
-            config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
+        const includeBt
+            = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
         sendEvent(evt, includeBt);
     }
 
@@ -2361,13 +2376,13 @@
             function: 'RegSaveKeyW',
             key_path: this.keyPath,
             file_name: this.fileName,
-            success: success,
+            success,
             status: retval,
             duration: Date.now() - this.startTime,
         };
 
-        const includeBt =
-            config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
+        const includeBt
+            = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
         sendEvent(evt, includeBt);
     }
 
@@ -2392,13 +2407,13 @@
             function: 'RegSaveKeyA',
             key_path: this.keyPath,
             file_name: this.fileName,
-            success: success,
+            success,
             status: retval,
             duration: Date.now() - this.startTime,
         };
 
-        const includeBt =
-            config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
+        const includeBt
+            = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
         sendEvent(evt, includeBt);
     }
 
@@ -2425,13 +2440,13 @@
             key_path: this.keyPath,
             file_name: this.fileName,
             flags: this.flags,
-            success: success,
+            success,
             status: retval,
             duration: Date.now() - this.startTime,
         };
 
-        const includeBt =
-            config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
+        const includeBt
+            = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
         sendEvent(evt, includeBt);
     }
 
@@ -2458,13 +2473,13 @@
             key_path: this.keyPath,
             file_name: this.fileName,
             flags: this.flags,
-            success: success,
+            success,
             status: retval,
             duration: Date.now() - this.startTime,
         };
 
-        const includeBt =
-            config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
+        const includeBt
+            = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
         sendEvent(evt, includeBt);
     }
 
@@ -2488,7 +2503,7 @@
             parent_key: `0x${this.hKey.toString(16)}`,
             sub_key: this.subKey,
             file_name: this.fileName,
-            success: success,
+            success,
             status: retval,
             duration: Date.now() - this.startTime,
         };
@@ -2517,7 +2532,7 @@
             parent_key: `0x${this.hKey.toString(16)}`,
             sub_key: this.subKey,
             file_name: this.fileName,
-            success: success,
+            success,
             status: retval,
             duration: Date.now() - this.startTime,
         };
@@ -2543,7 +2558,7 @@
             function: 'RegUnLoadKeyW',
             parent_key: `0x${this.hKey.toString(16)}`,
             sub_key: this.subKey,
-            success: success,
+            success,
             status: retval,
             duration: Date.now() - this.startTime,
         };
@@ -2569,7 +2584,7 @@
             function: 'RegUnLoadKeyA',
             parent_key: `0x${this.hKey.toString(16)}`,
             sub_key: this.subKey,
-            success: success,
+            success,
             status: retval,
             duration: Date.now() - this.startTime,
         };
@@ -2594,13 +2609,13 @@
             target: 'registry_monitor',
             function: 'RegQueryInfoKeyW',
             key_path: this.keyPath,
-            success: success,
+            success,
             status: retval,
             duration: Date.now() - this.startTime,
         };
 
-        const includeBt =
-            config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
+        const includeBt
+            = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
         sendEvent(evt, includeBt);
     }
 
@@ -2620,13 +2635,13 @@
             target: 'registry_monitor',
             function: 'RegQueryInfoKeyA',
             key_path: this.keyPath,
-            success: success,
+            success,
             status: retval,
             duration: Date.now() - this.startTime,
         };
 
-        const includeBt =
-            config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
+        const includeBt
+            = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
         sendEvent(evt, includeBt);
     }
 
@@ -2662,7 +2677,7 @@
             sub_key: this.subKey,
             value_name: this.valueName,
             flags: this.flags,
-            success: success,
+            success,
             status: retval,
             duration: Date.now() - this.startTime,
         };
@@ -2688,8 +2703,8 @@
         }
 
         const keyPath = this.keyPath + (this.subKey ? `\\${this.subKey}` : '');
-        const includeBt =
-            config.includeBacktraceOnMatch && success && matchesFilters(keyPath, this.valueName);
+        const includeBt
+            = config.includeBacktraceOnMatch && success && matchesFilters(keyPath, this.valueName);
         sendEvent(evt, includeBt);
     }
 
@@ -2725,7 +2740,7 @@
             sub_key: this.subKey,
             value_name: this.valueName,
             flags: this.flags,
-            success: success,
+            success,
             status: retval,
             duration: Date.now() - this.startTime,
         };
@@ -2751,8 +2766,8 @@
         }
 
         const keyPath = this.keyPath + (this.subKey ? `\\${this.subKey}` : '');
-        const includeBt =
-            config.includeBacktraceOnMatch && success && matchesFilters(keyPath, this.valueName);
+        const includeBt
+            = config.includeBacktraceOnMatch && success && matchesFilters(keyPath, this.valueName);
         sendEvent(evt, includeBt);
     }
 

@@ -1,7 +1,7 @@
 {
   "tool": "yamllint",
-  "generated": "2025-12-20T22:10:17.845399",
-  "total_findings": 244,
+  "generated": "2025-12-26T20:33:01.953220",
+  "total_findings": 231,
   "total_files": 16,
   "files": [
     {
@@ -1135,132 +1135,6 @@
       ]
     },
     {
-      "path": ".\\intellicrack\\scripts\\frida\\qodana.yaml",
-      "count": 15,
-      "findings": [
-        {
-          "line": 1,
-          "column": 2,
-          "severity": "warning",
-          "code": "",
-          "message": "missing starting space in comment  (comments)",
-          "raw": ".\\intellicrack\\scripts\\frida\\qodana.yaml:1:2: [warning] missing starting space in comment  (comments)"
-        },
-        {
-          "line": 1,
-          "column": 82,
-          "severity": "error",
-          "code": "",
-          "message": "wrong new line character: expected \\n  (new-lines)",
-          "raw": ".\\intellicrack\\scripts\\frida\\qodana.yaml:1:82: [error] wrong new line character: expected \\n  (new-lines)"
-        },
-        {
-          "line": 4,
-          "column": 2,
-          "severity": "warning",
-          "code": "",
-          "message": "missing starting space in comment  (comments)",
-          "raw": ".\\intellicrack\\scripts\\frida\\qodana.yaml:4:2: [warning] missing starting space in comment  (comments)"
-        },
-        {
-          "line": 12,
-          "column": 2,
-          "severity": "warning",
-          "code": "",
-          "message": "missing starting space in comment  (comments)",
-          "raw": ".\\intellicrack\\scripts\\frida\\qodana.yaml:12:2: [warning] missing starting space in comment  (comments)"
-        },
-        {
-          "line": 14,
-          "column": 5,
-          "severity": "error",
-          "code": "",
-          "message": "wrong indentation: expected 2 but found 4  (indentation)",
-          "raw": ".\\intellicrack\\scripts\\frida\\qodana.yaml:14:5: [error] wrong indentation: expected 2 but found 4  (indentation)"
-        },
-        {
-          "line": 16,
-          "column": 2,
-          "severity": "warning",
-          "code": "",
-          "message": "missing starting space in comment  (comments)",
-          "raw": ".\\intellicrack\\scripts\\frida\\qodana.yaml:16:2: [warning] missing starting space in comment  (comments)"
-        },
-        {
-          "line": 17,
-          "column": 2,
-          "severity": "warning",
-          "code": "",
-          "message": "missing starting space in comment  (comments)",
-          "raw": ".\\intellicrack\\scripts\\frida\\qodana.yaml:17:2: [warning] missing starting space in comment  (comments)"
-        },
-        {
-          "line": 20,
-          "column": 2,
-          "severity": "warning",
-          "code": "",
-          "message": "missing starting space in comment  (comments)",
-          "raw": ".\\intellicrack\\scripts\\frida\\qodana.yaml:20:2: [warning] missing starting space in comment  (comments)"
-        },
-        {
-          "line": 21,
-          "column": 2,
-          "severity": "warning",
-          "code": "",
-          "message": "missing starting space in comment  (comments)",
-          "raw": ".\\intellicrack\\scripts\\frida\\qodana.yaml:21:2: [warning] missing starting space in comment  (comments)"
-        },
-        {
-          "line": 26,
-          "column": 2,
-          "severity": "warning",
-          "code": "",
-          "message": "missing starting space in comment  (comments)",
-          "raw": ".\\intellicrack\\scripts\\frida\\qodana.yaml:26:2: [warning] missing starting space in comment  (comments)"
-        },
-        {
-          "line": 27,
-          "column": 2,
-          "severity": "warning",
-          "code": "",
-          "message": "missing starting space in comment  (comments)",
-          "raw": ".\\intellicrack\\scripts\\frida\\qodana.yaml:27:2: [warning] missing starting space in comment  (comments)"
-        },
-        {
-          "line": 29,
-          "column": 2,
-          "severity": "warning",
-          "code": "",
-          "message": "missing starting space in comment  (comments)",
-          "raw": ".\\intellicrack\\scripts\\frida\\qodana.yaml:29:2: [warning] missing starting space in comment  (comments)"
-        },
-        {
-          "line": 30,
-          "column": 2,
-          "severity": "warning",
-          "code": "",
-          "message": "missing starting space in comment  (comments)",
-          "raw": ".\\intellicrack\\scripts\\frida\\qodana.yaml:30:2: [warning] missing starting space in comment  (comments)"
-        },
-        {
-          "line": 37,
-          "column": 2,
-          "severity": "warning",
-          "code": "",
-          "message": "missing starting space in comment  (comments)",
-          "raw": ".\\intellicrack\\scripts\\frida\\qodana.yaml:37:2: [warning] missing starting space in comment  (comments)"
-        },
-        {
-          "line": 45,
-          "column": 2,
-          "severity": "warning",
-          "code": "",
-          "message": "missing starting space in comment  (comments)",
-          "raw": ".\\intellicrack\\scripts\\frida\\qodana.yaml:45:2: [warning] missing starting space in comment  (comments)"
-        }
-      ]
-    },
-    {
       "path": ".\\.github\\workflows\\claude.yml",
       "count": 14,
       "findings": [
@@ -2035,6 +1909,28 @@
           "code": "",
           "message": "no new line character at the end of file  (new-line-at-end-of-file)",
           "raw": ".\\config\\startup_optimization.yaml:79:85: [error] no new line character at the end of file  (new-line-at-end-of-file)"
+        }
+      ]
+    },
+    {
+      "path": ".\\intellicrack\\scripts\\frida\\qodana.yaml",
+      "count": 2,
+      "findings": [
+        {
+          "line": 1,
+          "column": 83,
+          "severity": "error",
+          "code": "",
+          "message": "wrong new line character: expected \\n  (new-lines)",
+          "raw": ".\\intellicrack\\scripts\\frida\\qodana.yaml:1:83: [error] wrong new line character: expected \\n  (new-lines)"
+        },
+        {
+          "line": 14,
+          "column": 5,
+          "severity": "error",
+          "code": "",
+          "message": "wrong indentation: expected 2 but found 4  (indentation)",
+          "raw": ".\\intellicrack\\scripts\\frida\\qodana.yaml:14:5: [error] wrong indentation: expected 2 but found 4  (indentation)"
         }
       ]
     },

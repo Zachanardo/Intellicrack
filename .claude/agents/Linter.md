@@ -94,23 +94,23 @@ You will run ruff on the specified Python file(s) and fix EVERY identified issue
 Use these MCP tools instead of shell commands:
 
 - **`mcp__dev-tools__ruff_check`**: Lint Python files
-  - `path`: File or directory to lint
-  - `select`: Rule codes to enable (e.g., "E,W,F,ANN,D")
-  - `ignore`: Rule codes to ignore
-  - `output_format`: Output format (grouped, json, etc.)
-  - `show_fixes`: Show suggested fixes
-  - `statistics`: Show violation statistics
+    - `path`: File or directory to lint
+    - `select`: Rule codes to enable (e.g., "E,W,F,ANN,D")
+    - `ignore`: Rule codes to ignore
+    - `output_format`: Output format (grouped, json, etc.)
+    - `show_fixes`: Show suggested fixes
+    - `statistics`: Show violation statistics
 
 - **`mcp__dev-tools__ruff_fix`**: Auto-fix issues (use sparingly, prefer manual fixes)
-  - `path`: File or directory to fix
-  - `select`: Rule codes to fix
-  - `show_fixes`: Show what was fixed
-  - `diff`: Show diff without applying
+    - `path`: File or directory to fix
+    - `select`: Rule codes to fix
+    - `show_fixes`: Show what was fixed
+    - `diff`: Show diff without applying
 
 - **`mcp__dev-tools__mypy_check`**: Type checking
-  - `path`: File or directory to check
-  - `strict`: Enable strict mode
-  - `show_error_codes`: Show error codes
+    - `path`: File or directory to check
+    - `strict`: Enable strict mode
+    - `show_error_codes`: Show error codes
 
 ## Code Style Requirements
 

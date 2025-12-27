@@ -32,6 +32,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+
 # HASH type removed - hashlib doesn't export it, use Any instead
 
 

@@ -43,11 +43,9 @@ from intellicrack.handlers.pyqt6_handler import (
     pyqtSignal,
 )
 
+from ...ai.common_types import ExecutionResult
 from ...ai.qemu_manager import QEMUManager
-from ...ai.qemu_manager import ExecutionResult as _ExecutionResult  # type: ignore[attr-defined]
 from ...utils.logger import get_logger
-
-ExecutionResult = _ExecutionResult
 
 
 """
@@ -121,7 +119,7 @@ class QEMUExecutionThread(QThread):
             self.execution_complete.emit(test_results)
 
         except Exception as e:
-            logger.exception("QEMU execution failed: %s", e)
+            logger.exception("QEMU execution failed")
             error_results = TestResults(
                 success=False,
                 duration=time.time() - self.start_time,
@@ -208,7 +206,7 @@ class QEMUExecutionThread(QThread):
             return result
 
         except AttributeError as e:
-            logger.exception("QEMU manager missing Ghidra execution method: %s", e)
+            logger.exception("QEMU manager missing Ghidra execution method")
             return ExecutionResult(
                 success=False,
                 output="",
@@ -217,7 +215,7 @@ class QEMUExecutionThread(QThread):
                 runtime_ms=0,
             )
         except TimeoutError as e:
-            logger.exception("Ghidra script execution timed out: %s", e)
+            logger.exception("Ghidra script execution timed out")
             return ExecutionResult(
                 success=False,
                 output="",
@@ -299,7 +297,7 @@ class QEMUExecutionThread(QThread):
             return result
 
         except AttributeError as e:
-            logger.exception("QEMU manager missing execution method: %s", e)
+            logger.exception("QEMU manager missing execution method")
             return ExecutionResult(
                 success=False,
                 output="",
@@ -308,7 +306,7 @@ class QEMUExecutionThread(QThread):
                 runtime_ms=0,
             )
         except TimeoutError as e:
-            logger.exception("Generic script execution timed out: %s", e)
+            logger.exception("Generic script execution timed out")
             return ExecutionResult(
                 success=False,
                 output="",
@@ -704,6 +702,6 @@ class QEMUTestResultsDialog(QDialog):
         )
 
         if filename:
-            with open(filename, "w") as f:
+            with open(filename, "w", encoding="utf-8") as f:
                 json.dump(export_data, f, indent=2)
             logger.info("Exported test results to %s", filename)

@@ -34,15 +34,53 @@ from collections import defaultdict
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, cast
-
-from intellicrack.utils.type_safety import get_typed_item, validate_type
-
-from .base_analyzer import BaseAnalyzer
+from typing import Any, TypedDict
 
 import psutil
 
+from intellicrack.utils.type_safety import get_typed_item, validate_type
+
 from ...utils.logger import get_logger
+
+
+class QemuAnalysisResults(TypedDict, total=False):
+    """QEMU VM analysis results."""
+
+    started: bool
+    snapshots: list[str]
+    monitor_output: list[str]
+    events: list[Any]
+    vm_info: dict[str, Any]
+    error: str
+
+
+class NativeAnalysisResults(TypedDict, total=False):
+    """Native analysis results."""
+
+    process_started: bool
+    pid: int | None
+    memory_usage: dict[str, Any]
+    cpu_usage: list[float]
+    error: str
+
+
+class ApiMonitoringResults(TypedDict, total=False):
+    """API monitoring results."""
+
+    hooks_installed: int
+    events_captured: int
+    unique_apis_called: set[str]
+    error: str
+
+
+class AnalysisSummary(TypedDict, total=False):
+    """Analysis summary results."""
+
+    total_events: int
+    unique_event_types: int
+    suspicious_activities: int
+    risk_level: str
+    key_findings: list[str]
 
 
 logger = get_logger(__name__)
@@ -1462,9 +1500,16 @@ class BehavioralAnalyzer:
         logger.info("Behavioral analysis complete")
         return results
 
-    def _run_qemu_analysis(self, duration: int) -> dict[str, Any]:
+    def _run_qemu_analysis(self, duration: int) -> QemuAnalysisResults:
         """Run analysis in QEMU virtual machine."""
-        qemu_results: dict[str, Any] = {"started": False, "snapshots": [], "monitor_output": [], "events": []}
+        snapshots: list[str] = []
+        monitor_output_list: list[str] = []
+        qemu_results: QemuAnalysisResults = {
+            "started": False,
+            "snapshots": snapshots,
+            "monitor_output": monitor_output_list,
+            "events": [],
+        }
 
         try:
             if self.qemu_controller.start(self.binary_path):
@@ -1472,22 +1517,19 @@ class BehavioralAnalyzer:
 
                 initial_snapshot = "clean_state"
                 if self.qemu_controller.take_snapshot(initial_snapshot):
-                    snapshots_list = cast(list[str], qemu_results["snapshots"])
-                    snapshots_list.append(initial_snapshot)
+                    snapshots.append(initial_snapshot)
 
                 monitor_output = self.qemu_controller.send_monitor_command("info registers")
-                monitor_list = cast(list[str], qemu_results["monitor_output"])
-                monitor_list.append(monitor_output)
+                monitor_output_list.append(monitor_output)
 
                 vm_info = self.qemu_controller.send_qmp_command({"execute": "query-status"})
-                qemu_results["vm_status"] = vm_info
+                qemu_results["vm_info"] = vm_info
 
                 time.sleep(duration)
 
                 infected_snapshot = "post_execution"
                 if self.qemu_controller.take_snapshot(infected_snapshot):
-                    snapshots_list = cast(list[str], qemu_results["snapshots"])
-                    snapshots_list.append(infected_snapshot)
+                    snapshots.append(infected_snapshot)
 
                 self.qemu_controller.stop()
 
@@ -1497,13 +1539,14 @@ class BehavioralAnalyzer:
 
         return qemu_results
 
-    def _run_native_analysis(self, duration: int) -> dict[str, Any]:
+    def _run_native_analysis(self, duration: int) -> NativeAnalysisResults:
         """Run analysis natively without virtualization."""
-        native_results: dict[str, Any] = {
+        cpu_usage_list: list[float] = []
+        native_results: NativeAnalysisResults = {
             "process_started": False,
             "pid": None,
             "memory_usage": {},
-            "cpu_usage": [],
+            "cpu_usage": cpu_usage_list,
         }
 
         try:
@@ -1520,7 +1563,6 @@ class BehavioralAnalyzer:
             start_time = time.time()
             while time.time() - start_time < duration and process.poll() is None:
                 try:
-                    cpu_usage_list = cast(list[float], native_results["cpu_usage"])
                     cpu_usage_list.append(proc.cpu_percent())
                     mem_info = proc.memory_info()
                     native_results["memory_usage"] = {
@@ -1542,19 +1584,21 @@ class BehavioralAnalyzer:
 
         return native_results
 
-    def _run_api_monitoring(self, duration: int) -> dict[str, Any]:
+    def _run_api_monitoring(self, duration: int) -> ApiMonitoringResults:
         """Run API monitoring."""
-        monitoring_results: dict[str, Any] = {
+        unique_apis: set[str] = set()
+        monitoring_results: ApiMonitoringResults = {
             "hooks_installed": 0,
             "events_captured": 0,
-            "unique_apis_called": set[str](),
+            "unique_apis_called": unique_apis,
         }
 
         try:
+            hooks_count = 0
             for key in self.api_hooks.hooks:
                 self.api_hooks.enable_hook(*key.split(":"))
-                hooks_installed = cast(int, monitoring_results["hooks_installed"])
-                monitoring_results["hooks_installed"] = hooks_installed + 1
+                hooks_count += 1
+            monitoring_results["hooks_installed"] = hooks_count
 
             binary_path_str = str(self.binary_path)
             if not Path(binary_path_str).is_absolute() or ".." in binary_path_str:
@@ -1574,11 +1618,8 @@ class BehavioralAnalyzer:
             self.events.extend(self.api_hooks.events)
             monitoring_results["events_captured"] = len(self.api_hooks.events)
 
-            unique_apis = cast(set[str], monitoring_results["unique_apis_called"])
             for event in self.api_hooks.events:
                 unique_apis.add(event.event_type)
-
-            monitoring_results["unique_apis_called"] = list(unique_apis)
 
         except Exception as e:
             logger.exception("API monitoring failed: %s", e)
@@ -1650,48 +1691,44 @@ class BehavioralAnalyzer:
 
         return None
 
-    def _generate_summary(self, results: dict[str, Any]) -> dict[str, Any]:
+    def _generate_summary(self, results: dict[str, Any]) -> AnalysisSummary:
         """Generate analysis summary."""
-        summary: dict[str, Any] = {
+        key_findings: list[str] = []
+        suspicious_count = 0
+
+        summary: AnalysisSummary = {
             "total_events": len(self.events),
             "unique_event_types": len({e.event_type for e in self.events}),
             "suspicious_activities": 0,
             "risk_level": "low",
-            "key_findings": [],
+            "key_findings": key_findings,
         }
 
         anti_analysis = results.get("anti_analysis", {})
         if isinstance(anti_analysis, dict) and anti_analysis.get("detections"):
             detections = anti_analysis["detections"]
-            suspicious_count = cast(int, summary["suspicious_activities"])
-            summary["suspicious_activities"] = suspicious_count + len(detections)
-            key_findings_list = cast(list[str], summary["key_findings"])
-            key_findings_list.append("Anti-analysis techniques detected")
+            suspicious_count += len(detections)
+            key_findings.append("Anti-analysis techniques detected")
 
         behavioral_patterns = results.get("behavioral_patterns", {})
         if isinstance(behavioral_patterns, dict):
             if behavioral_patterns.get("license_checks"):
-                key_findings_list = cast(list[str], summary["key_findings"])
-                key_findings_list.append("License validation mechanisms identified")
+                key_findings.append("License validation mechanisms identified")
 
             if behavioral_patterns.get("persistence_mechanisms"):
                 persistence = behavioral_patterns["persistence_mechanisms"]
-                suspicious_count = cast(int, summary["suspicious_activities"])
-                summary["suspicious_activities"] = suspicious_count + len(persistence)
-                key_findings_list = cast(list[str], summary["key_findings"])
-                key_findings_list.append("Persistence mechanisms detected")
+                suspicious_count += len(persistence)
+                key_findings.append("Persistence mechanisms detected")
 
             if behavioral_patterns.get("data_exfiltration"):
                 exfiltration = behavioral_patterns["data_exfiltration"]
-                suspicious_count = cast(int, summary["suspicious_activities"])
-                summary["suspicious_activities"] = suspicious_count + len(exfiltration)
-                key_findings_list = cast(list[str], summary["key_findings"])
-                key_findings_list.append("Potential data exfiltration detected")
+                suspicious_count += len(exfiltration)
+                key_findings.append("Potential data exfiltration detected")
 
-        suspicious_activities = cast(int, summary["suspicious_activities"])
-        if suspicious_activities > 10:
+        summary["suspicious_activities"] = suspicious_count
+        if suspicious_count > 10:
             summary["risk_level"] = "high"
-        elif suspicious_activities > 5:
+        elif suspicious_count > 5:
             summary["risk_level"] = "medium"
 
         return summary

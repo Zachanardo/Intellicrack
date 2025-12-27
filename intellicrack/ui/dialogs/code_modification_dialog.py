@@ -61,6 +61,7 @@ from ...ai.intelligent_code_modifier import CodeChange, IntelligentCodeModifier,
 from ...ai.llm_backends import LLMManager
 from ...utils.logger import get_logger
 
+
 if TYPE_CHECKING:
     from collections.abc import Sequence
 

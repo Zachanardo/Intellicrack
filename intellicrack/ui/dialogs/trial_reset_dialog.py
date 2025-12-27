@@ -35,6 +35,7 @@ from PyQt6.QtWidgets import (
 
 from intellicrack.core.trial_reset_engine import TrialInfo, TrialResetEngine
 
+
 logger = logging.getLogger(__name__)
 
 

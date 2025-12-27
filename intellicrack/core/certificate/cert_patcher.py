@@ -194,24 +194,24 @@ class CertificatePatcher:
             return
 
         if isinstance(self.binary, lief.PE.Binary):
-            if hasattr(lief.PE, 'MACHINE_TYPES'):
+            if hasattr(lief.PE, "MACHINE_TYPES"):
                 if self.binary.header.machine == lief.PE.MACHINE_TYPES.I386:
                     self.architecture = Architecture.X86
                 elif self.binary.header.machine == lief.PE.MACHINE_TYPES.AMD64:
                     self.architecture = Architecture.X64
             else:
                 machine_type = self.binary.header.machine
-                if machine_type == 0x14c:
+                if machine_type == 0x14C:
                     self.architecture = Architecture.X86
                 elif machine_type == 0x8664:
                     self.architecture = Architecture.X64
         elif isinstance(self.binary, lief.ELF.Binary):
             machine_type_value = self.binary.header.machine_type
-            if hasattr(lief.ELF.ARCH, 'i386'):
-                arch_i386 = getattr(lief.ELF.ARCH, 'i386', None)
-                arch_x86_64 = getattr(lief.ELF.ARCH, 'x86_64', None)
-                arch_arm = getattr(lief.ELF.ARCH, 'ARM', None)
-                arch_aarch64 = getattr(lief.ELF.ARCH, 'AARCH64', None)
+            if hasattr(lief.ELF.ARCH, "i386"):
+                arch_i386 = getattr(lief.ELF.ARCH, "i386", None)
+                arch_x86_64 = getattr(lief.ELF.ARCH, "x86_64", None)
+                arch_arm = getattr(lief.ELF.ARCH, "ARM", None)
+                arch_aarch64 = getattr(lief.ELF.ARCH, "AARCH64", None)
 
                 if arch_i386 is not None and machine_type_value == arch_i386:
                     self.architecture = Architecture.X86
@@ -458,7 +458,7 @@ class CertificatePatcher:
             if not section:
                 return False
 
-            if hasattr(lief.PE, 'SECTION_CHARACTERISTICS'):
+            if hasattr(lief.PE, "SECTION_CHARACTERISTICS"):
                 if not (section.characteristics & lief.PE.SECTION_CHARACTERISTICS.MEM_EXECUTE):
                     return False
             else:

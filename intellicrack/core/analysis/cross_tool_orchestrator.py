@@ -37,12 +37,12 @@ try:
 except ImportError:
     import xml.etree.ElementTree as ET  # noqa: S405
 from collections import defaultdict
-from collections.abc import Callable, Mapping
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
 import psutil
 
@@ -51,6 +51,10 @@ from ..frida_manager import FridaManager
 from .ghidra_analyzer import GhidraFunction, run_advanced_ghidra_analysis
 from .ghidra_results import GhidraAnalysisResult
 from .radare2_enhanced_integration import EnhancedR2Integration
+
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 logger = logging.getLogger(__name__)
@@ -1120,7 +1124,7 @@ class CrossToolOrchestrator:
 
             if self.main_app:
                 # Use GUI integration
-                run_advanced_ghidra_analysis(self.main_app)
+                run_advanced_ghidra_analysis(cast("Any", self.main_app))
                 self.ghidra_results = GhidraAnalysisResult(
                     binary_path=self.binary_path,
                     architecture="",

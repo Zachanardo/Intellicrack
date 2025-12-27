@@ -26,10 +26,10 @@ import os
 import pickle  # noqa: S403
 import time
 from collections import OrderedDict
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, cast
 
 from ..utils.logger import get_logger
@@ -101,11 +101,11 @@ class RestrictedUnpickler(pickle.Unpickler):  # noqa: S301
 
         # Allow model classes from our own modules
         if module.startswith("intellicrack."):
-            return cast(type[Any], super().find_class(module, name))
+            return cast("type[Any]", super().find_class(module, name))
 
         # Check if module is in allowed list
         if any(module.startswith(allowed) for allowed in ALLOWED_MODULES):
-            return cast(type[Any], super().find_class(module, name))
+            return cast("type[Any]", super().find_class(module, name))
 
         # Deny everything else
         raise pickle.UnpicklingError(f"Attempted to load unsafe class {module}.{name}")
@@ -153,10 +153,12 @@ def secure_pickle_load(file_path: str) -> object:
 gpu_autoloader: Any = None
 
 try:
-    from ..utils.gpu_autoloader import get_device as _get_device
-    from ..utils.gpu_autoloader import get_gpu_info as _get_gpu_info
-    from ..utils.gpu_autoloader import gpu_autoloader as _gpu_autoloader
-    from ..utils.gpu_autoloader import to_device as _to_device
+    from ..utils.gpu_autoloader import (
+        get_device as _get_device,
+        get_gpu_info as _get_gpu_info,
+        gpu_autoloader as _gpu_autoloader,
+        to_device as _to_device,
+    )
 
     get_device = _get_device
     get_gpu_info = _get_gpu_info
@@ -464,9 +466,7 @@ class ModelCacheManager:
             quantization_str = quantization_val
 
         adapter_info_val = kwargs.get("adapter_info")
-        adapter_info_dict: dict[str, Any] | None = None
-        if adapter_info_val is not None and isinstance(adapter_info_val, dict):
-            adapter_info_dict = cast(dict[str, Any], adapter_info_val)
+        adapter_info_dict: dict[str, Any] | None = adapter_info_val if isinstance(adapter_info_val, dict) else None
 
         # Create cache entry
         entry = CacheEntry(
@@ -706,7 +706,7 @@ class ModelCacheManager:
             model_type="auto",
         )
 
-    def get_model(self, name: str) -> object | None:
+    def get_model(self, name: str) -> Any | None:
         """Get a cached model by name.
 
         This is a convenience wrapper that retrieves a model from cache without
@@ -728,14 +728,14 @@ class ModelCacheManager:
             self.stats["hits"] += 1
             logger.info("Cache hit for model: %s", name)
 
-            return cast(object, entry.model_object)
+            return entry.model_object
 
         self.stats["misses"] += 1
 
         if self.enable_disk_cache and name in self.disk_index:
             result = self._load_from_disk(name)
             if result is not None:
-                return cast(object, result[0])
+                return result[0]
 
         return None
 

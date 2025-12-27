@@ -29,6 +29,7 @@ from typing import TYPE_CHECKING, Any
 
 from intellicrack.handlers.psutil_handler import psutil
 
+
 if TYPE_CHECKING:
     from rich.layout import Layout
     from rich.panel import Panel

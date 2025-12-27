@@ -24,10 +24,14 @@ along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 import asyncio
 import logging
 import types
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
+
 
 if TYPE_CHECKING:
-    from intellicrack.handlers.aiohttp_handler import ClientTimeout, aiohttp as aiohttp_module
+    from intellicrack.handlers.aiohttp_handler import (
+        ClientTimeout,
+        aiohttp as aiohttp_module,
+    )
 else:
     aiohttp_module = None
     ClientTimeout = None
@@ -41,7 +45,7 @@ try:
 except ImportError as e:
     logger.exception("Import error in api_client: %s", e)
     aiohttp = None  # type: ignore[assignment]
-    ClientTimeout = None  # type: ignore[assignment,misc]
+    ClientTimeout = None  # type: ignore[misc,assignment]
     HAS_AIOHTTP = False
 
 

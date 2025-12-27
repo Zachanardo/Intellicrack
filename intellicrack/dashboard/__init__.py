@@ -15,6 +15,7 @@ import logging
 from types import ModuleType
 from typing import TYPE_CHECKING, Any
 
+
 if TYPE_CHECKING:
     from intellicrack.dashboard.dashboard_manager import (
         DashboardLayout,

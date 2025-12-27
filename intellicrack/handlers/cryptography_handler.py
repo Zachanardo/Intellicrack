@@ -444,7 +444,7 @@ except ImportError as e:
             self.algorithm = algorithm
             self.mode = mode
             if hasattr(algorithm, "key"):
-                key: bytes = getattr(algorithm, "key")
+                key: bytes = algorithm.key
                 self.aes = FallbackAES(key)
             else:
                 raise ValueError("Algorithm must have key attribute")
@@ -509,7 +509,7 @@ except ImportError as e:
             self.algorithm = algorithm
             self.mode = mode
             if hasattr(algorithm, "key"):
-                key: bytes = getattr(algorithm, "key")
+                key: bytes = algorithm.key
                 self.aes = FallbackAES(key)
             else:
                 raise ValueError("Algorithm must have key attribute")

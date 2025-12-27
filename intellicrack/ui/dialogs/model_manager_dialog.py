@@ -35,6 +35,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QProgressBar,
     QPushButton,
     QSpinBox,
+    Qt,
     QTableWidget,
     QTableWidgetItem,
     QTabWidget,
@@ -43,7 +44,6 @@ from intellicrack.handlers.pyqt6_handler import (
     QTimer,
     QVBoxLayout,
     QWidget,
-    Qt,
     pyqtSignal,
 )
 
@@ -217,7 +217,6 @@ class ModelManagerDialog(BaseDialog):
             layout: Existing layout to populate
 
         """
-
         # Main tabs
         tabs = QTabWidget()
 

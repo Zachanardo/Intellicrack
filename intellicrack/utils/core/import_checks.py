@@ -28,6 +28,7 @@ import logging
 import platform
 from typing import TYPE_CHECKING, Any
 
+
 if TYPE_CHECKING:
     from types import ModuleType
 
@@ -46,7 +47,10 @@ except ImportError as e:
     pefile = None
 
 try:
-    from intellicrack.handlers.lief_handler import HAS_LIEF, lief as _lief_import
+    from intellicrack.handlers.lief_handler import (
+        HAS_LIEF,
+        lief as _lief_import,
+    )
 
     lief: ModuleType | None = _lief_import
     LIEF_AVAILABLE: bool = HAS_LIEF
@@ -67,8 +71,10 @@ except ImportError as e:
     capstone = None
 
 try:
-    from intellicrack.handlers.pyelftools_handler import ELFFile as _ELFFile_import
-    from intellicrack.handlers.pyelftools_handler import HAS_PYELFTOOLS
+    from intellicrack.handlers.pyelftools_handler import (
+        HAS_PYELFTOOLS,
+        ELFFile as _ELFFile_import,
+    )
 
     ELFFile: type[Any] | None = _ELFFile_import
     PYELFTOOLS_AVAILABLE: bool = HAS_PYELFTOOLS
@@ -104,8 +110,10 @@ except ImportError as e:
 
 # Visualization
 try:
-    from intellicrack.handlers.matplotlib_handler import HAS_MATPLOTLIB
-    from intellicrack.handlers.matplotlib_handler import plt as _plt_import
+    from intellicrack.handlers.matplotlib_handler import (
+        HAS_MATPLOTLIB,
+        plt as _plt_import,
+    )
 
     plt: ModuleType | None = _plt_import
     MATPLOTLIB_AVAILABLE: bool = HAS_MATPLOTLIB
@@ -161,8 +169,10 @@ except ImportError as e:
 
 # Numerical computing
 try:
-    from intellicrack.handlers.numpy_handler import HAS_NUMPY as _HAS_NUMPY_import
-    from intellicrack.handlers.numpy_handler import numpy as _np_import
+    from intellicrack.handlers.numpy_handler import (
+        HAS_NUMPY as _HAS_NUMPY_import,
+        numpy as _np_import,
+    )
 
     np: ModuleType | None = _np_import
     HAS_NUMPY: bool = _HAS_NUMPY_import

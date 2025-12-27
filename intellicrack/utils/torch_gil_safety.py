@@ -14,7 +14,7 @@ import sys
 import threading
 from collections.abc import Callable
 from types import ModuleType, TracebackType
-from typing import Any
+from typing import Any, cast
 
 
 logger = logging.getLogger(__name__)

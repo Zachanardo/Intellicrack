@@ -33,6 +33,7 @@ from typing import Any, cast
 import psutil
 
 from intellicrack.utils.type_safety import get_typed_item, validate_type
+
 from .base_detector import BaseDetector
 
 
@@ -704,7 +705,7 @@ class SandboxDetector(BaseDetector):
         except Exception as e:
             self.logger.debug("Hardware check error: %s", e)
 
-        detected = bool(indicators.get("detected", False))
+        detected = bool(indicators.get("detected"))
         confidence = float(indicators.get("confidence", 0))
         return detected, confidence, indicators
 
@@ -713,7 +714,7 @@ class SandboxDetector(BaseDetector):
         indicators: dict[str, Any] = {"detected": False, "confidence": 0, "details": []}
 
         if platform.system() != "Windows":
-            detected = bool(indicators.get("detected", False))
+            detected = bool(indicators.get("detected"))
             confidence = float(indicators.get("confidence", 0))
             return detected, confidence, indicators
 
@@ -767,7 +768,7 @@ class SandboxDetector(BaseDetector):
         except Exception as e:
             self.logger.debug("Registry check error: %s", e)
 
-        detected = bool(indicators.get("detected", False))
+        detected = bool(indicators.get("detected"))
         confidence = float(indicators.get("confidence", 0))
         return detected, confidence, indicators
 
@@ -856,7 +857,7 @@ class SandboxDetector(BaseDetector):
         except Exception as e:
             self.logger.debug("Error checking DMI/SMBIOS information: %s", e)
 
-        detected = bool(artifacts.get("detected", False))
+        detected = bool(artifacts.get("detected"))
         confidence = float(artifacts.get("confidence", 0))
         return detected, confidence, artifacts
 

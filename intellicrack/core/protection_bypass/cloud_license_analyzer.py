@@ -14,7 +14,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from urllib.parse import parse_qs, urlparse
 
 import frida
@@ -43,10 +43,10 @@ try:
 except ImportError:
     xmltodict = None
 
-from typing import TYPE_CHECKING, Any as FridaSession, Any as FridaScript
+FridaScript = Any
+FridaSession = Any
 
 if TYPE_CHECKING:
-    from mitmproxy.tools.dump import DumpMaster
     from mitmproxy.options import Options
 
 logger = logging.getLogger(__name__)

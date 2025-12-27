@@ -77,6 +77,7 @@ logger.debug("Importing radare2_patch_integration...")
 R2PatchIntegrator: type[Any] | None
 try:
     from .radare2_patch_integration import R2PatchIntegrator as _R2PatchIntegrator
+
     R2PatchIntegrator = _R2PatchIntegrator
     logger.debug("radare2_patch_integration imported OK")
 except ImportError as e:

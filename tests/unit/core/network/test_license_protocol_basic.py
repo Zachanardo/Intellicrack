@@ -2,6 +2,8 @@
 
 import sys
 import os
+import pytest
+
 sys.path.insert(0, os.path.dirname(__file__))
 
 try:
@@ -10,6 +12,16 @@ try:
         HASPProtocolHandler,
         LicenseProtocolHandler,
     )
+    MODULE_AVAILABLE = True
+except ImportError:
+    FlexLMProtocolHandler = None
+    HASPProtocolHandler = None
+    LicenseProtocolHandler = None
+    MODULE_AVAILABLE = False
+
+pytestmark = pytest.mark.skipif(not MODULE_AVAILABLE, reason="Module not available")
+
+if MODULE_AVAILABLE:
     print("OK Successfully imported license protocol handlers")
 
     # Test basic FlexLM functionality

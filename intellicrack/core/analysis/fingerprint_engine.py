@@ -533,7 +533,7 @@ class FingerprintEngine:
                 matches = 0
                 total_checks = 0
 
-                import_matches = sum(any((imp in i for i in imports)) for imp in compiler_sig["imports"])
+                import_matches = sum(any(imp in i for i in imports) for imp in compiler_sig["imports"])
                 if import_matches > 0:
                     matches += import_matches
                 total_checks += len(compiler_sig["imports"])

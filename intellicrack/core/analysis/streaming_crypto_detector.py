@@ -29,7 +29,12 @@ from pathlib import Path
 from typing import Any
 
 from intellicrack.core.analysis.cryptographic_routine_detector import CryptoDetection, CryptographicRoutineDetector
-from intellicrack.core.processing.streaming_analysis_manager import ChunkContext, StreamingAnalysisManager, StreamingAnalyzer, StreamingProgress
+from intellicrack.core.processing.streaming_analysis_manager import (
+    ChunkContext,
+    StreamingAnalysisManager,
+    StreamingAnalyzer,
+    StreamingProgress,
+)
 
 
 logger = logging.getLogger(__name__)

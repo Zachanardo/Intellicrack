@@ -9,9 +9,13 @@ from pathlib import Path
 import pytest
 from dotenv import load_dotenv
 
-COLLECT_TYPES = os.environ.get("PYANNOTATE_COLLECT", "0") == "1"
-if COLLECT_TYPES:
-    from pyannotate_runtime import collect_types
+COLLECT_TYPES = False
+if os.environ.get("PYANNOTATE_COLLECT", "0") == "1":
+    try:
+        from pyannotate_runtime import collect_types
+        COLLECT_TYPES = True
+    except ImportError:
+        pass
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -77,7 +81,18 @@ def pytest_configure(config):
         collect_types.init_types_collection()
 
 
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_call(item):
+    """Wrap each test call with pyannotate type collection."""
+    if COLLECT_TYPES:
+        collect_types.start()
+    yield
+    if COLLECT_TYPES:
+        collect_types.stop()
+
+
 def pytest_unconfigure(config):
     """Dump collected type information after test session."""
     if COLLECT_TYPES:
-        collect_types.dump_stats(str(PROJECT_ROOT / "type_info.json"))
+        output_path = str(PROJECT_ROOT / "type_info.json")
+        collect_types.dump_stats(output_path)

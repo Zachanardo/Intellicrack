@@ -22,11 +22,19 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 # pylint: disable=cyclic-import
 
+import contextlib
+from collections.abc import Callable
 from datetime import datetime
-from typing import Any, Callable, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
+
 
 if TYPE_CHECKING:
-    from PyQt6.QtCore import QObject as _QObject, QRunnable as _QRunnable, QThreadPool as _QThreadPool, pyqtSignal as _pyqtSignal
+    from PyQt6.QtCore import (
+        QObject as _QObject,
+        QRunnable as _QRunnable,
+        QThreadPool as _QThreadPool,
+        pyqtSignal as _pyqtSignal,
+    )
     from PyQt6.QtWidgets import (
         QCheckBox as _QCheckBox,
         QComboBox as _QComboBox,
@@ -38,6 +46,7 @@ if TYPE_CHECKING:
         QVBoxLayout as _QVBoxLayout,
         QWidget as _QWidget,
     )
+
     QObject = _QObject
     QRunnable = _QRunnable
     QThreadPool = _QThreadPool
@@ -64,8 +73,14 @@ else:
 
         class QObject:
             """Fallback QObject class when PyQt6 is not available."""
+
             def __init__(self, parent: object | None = None) -> None:
-                pass
+                """Initialize the QObject with an optional parent.
+
+                Args:
+                    parent: Optional parent object for ownership hierarchy.
+
+                """
 
         class QRunnable:
             """Fallback QRunnable class when PyQt6 is not available."""
@@ -105,10 +120,8 @@ else:
             def emit(self, *args: object, **kwargs: object) -> None:
                 """Emit the signal to all connected callbacks."""
                 for callback in self._callbacks[:]:
-                    try:
+                    with contextlib.suppress(Exception):
                         callback(*args, **kwargs)
-                    except Exception:
-                        pass
 
             def __call__(self, *args: object, **kwargs: object) -> None:
                 """Allow direct calling of the signal."""
@@ -116,23 +129,45 @@ else:
 
         def pyqtSignal(*args: object, **kwargs: object) -> Callable[..., _SignalConnector]:
             """Fallback pyqtSignal function when PyQt6 is not available."""
+
             def signal_property() -> _SignalConnector:
                 return _SignalConnector()
+
             return signal_property
 
         class QCheckBox:
             """Fallback QCheckBox class when PyQt6 is not available."""
+
             def setChecked(self, checked: bool) -> None:
-                pass
+                """Set the checkbox checked state.
+
+                Args:
+                    checked: True to check the box, False to uncheck.
+
+                """
+
             def isChecked(self) -> bool:
+                """Return whether the checkbox is currently checked.
+
+                Returns:
+                    True if checked, False otherwise.
+
+                """
                 return False
+
             def setEnabled(self, enabled: bool) -> None:
-                pass
+                """Enable or disable the checkbox.
+
+                Args:
+                    enabled: True to enable, False to disable.
+
+                """
 
         class QComboBox:
             """Fallback QComboBox class when PyQt6 is not available."""
 
             def __init__(self) -> None:
+                """Initialize the combo box with empty items list."""
                 self.currentTextChanged: _SignalConnector = _SignalConnector()
                 self._items: list[str] = []
                 self._current_index: int = 0
@@ -166,51 +201,121 @@ else:
 
         class QDialog:
             """Fallback QDialog class when PyQt6 is not available."""
+
             Accepted: int = 1
             Rejected: int = 0
 
             def __init__(self, parent: object | None = None) -> None:
-                pass
+                """Initialize the dialog with an optional parent.
+
+                Args:
+                    parent: Optional parent widget for the dialog.
+
+                """
+
             def setWindowTitle(self, title: str) -> None:
-                pass
+                """Set the dialog window title.
+
+                Args:
+                    title: Title text to display in the window bar.
+
+                """
+
             def setMinimumWidth(self, width: int) -> None:
-                pass
+                """Set the minimum width of the dialog.
+
+                Args:
+                    width: Minimum width in pixels.
+
+                """
+
             def exec(self) -> int:
+                """Execute the dialog modally.
+
+                Returns:
+                    Dialog result code (Accepted or Rejected).
+
+                """
                 return 0
+
             def accept(self) -> None:
-                pass
+                """Accept and close the dialog with Accepted result."""
+
             def reject(self) -> None:
-                pass
+                """Reject and close the dialog with Rejected result."""
+
             def setLayout(self, layout: object) -> None:
-                pass
+                """Set the layout manager for the dialog.
+
+                Args:
+                    layout: Layout object to manage widget positioning.
+
+                """
 
         class QFileDialog:
             """Fallback QFileDialog class when PyQt6 is not available."""
+
             @staticmethod
             def getSaveFileName(
                 parent: object | None = None,
                 caption: str = "",
                 directory: str = "",
-                filter: str = "",
+                file_filter: str = "",
             ) -> tuple[str, str]:
+                """Display a save file dialog and return the selected path.
+
+                Args:
+                    parent: Parent widget for the dialog.
+                    caption: Dialog window title.
+                    directory: Initial directory to display.
+                    file_filter: File filter string (e.g., "Text Files (*.txt)").
+
+                Returns:
+                    Tuple of (selected_file_path, selected_filter).
+
+                """
                 return ("", "")
 
         class QGroupBox:
             """Fallback QGroupBox class when PyQt6 is not available."""
+
             def __init__(self, title: str = "") -> None:
-                pass
+                """Initialize the group box with an optional title.
+
+                Args:
+                    title: Title text displayed on the group box border.
+
+                """
+
             def setLayout(self, layout: object) -> None:
-                pass
+                """Set the layout manager for the group box.
+
+                Args:
+                    layout: Layout object to manage widget positioning.
+
+                """
 
         class QHBoxLayout:
             """Fallback QHBoxLayout class when PyQt6 is not available."""
+
             def addWidget(self, widget: object) -> None:
-                pass
+                """Add a widget to the horizontal layout.
+
+                Args:
+                    widget: Widget to add to the layout.
+
+                """
 
         class QPushButton:
             """Fallback QPushButton class when PyQt6 is not available."""
 
             def __init__(self, text: str = "") -> None:
+                """Initialize the push button with optional text.
+
+                Args:
+                    text: Button label text.
+
+                """
                 self.clicked: _SignalConnector = _SignalConnector()
                 self._text: str = text
 
@@ -224,10 +329,23 @@ else:
 
         class QVBoxLayout:
             """Fallback QVBoxLayout class when PyQt6 is not available."""
+
             def addWidget(self, widget: object) -> None:
-                pass
+                """Add a widget to the vertical layout.
+
+                Args:
+                    widget: Widget to add to the layout.
+
+                """
+
             def addLayout(self, layout: object) -> None:
-                pass
+                """Add a nested layout to the vertical layout.
+
+                Args:
+                    layout: Layout object to add.
+
+                """
+
 
 if TYPE_CHECKING:
     from ...protection.unified_protection_engine import UnifiedProtectionResult
@@ -235,10 +353,14 @@ else:
     try:
         from ...protection.unified_protection_engine import UnifiedProtectionResult
     except ImportError:
+
         class UnifiedProtectionResult:
             """Fallback UnifiedProtectionResult when module is not available."""
+
             def __init__(self) -> None:
+                """Initialize the protection result with default values."""
                 self.file_path: str = ""
+
 
 try:
     from ...utils.logger import get_logger

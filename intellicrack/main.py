@@ -23,6 +23,7 @@ import warnings
 
 import intellicrack.utils.logger
 
+
 # Suppress pkg_resources deprecation warning from capstone
 warnings.filterwarnings("ignore", message="pkg_resources is deprecated as an API.*", category=UserWarning)
 
@@ -141,12 +142,11 @@ def main() -> int:
     try:
         # Configure logging using the central configuration
         import os
+        from typing import Any
 
         from intellicrack.config import get_config
         from intellicrack.utils.core.plugin_paths import get_logs_dir
         from intellicrack.utils.logger import setup_logging
-
-        from typing import Any
 
         config_data = get_config()
         logging_config_obj: Any = config_data.get("logging", {})
@@ -190,9 +190,7 @@ def main() -> int:
 
         # Initialize comprehensive logging system
         try:
-            from intellicrack.core.logging.audit_logger import (
-                setup_comprehensive_logging,
-            )
+            from intellicrack.core.logging.audit_logger import setup_comprehensive_logging
 
             setup_comprehensive_logging()
             logger.info("Comprehensive logging system initialized successfully.")

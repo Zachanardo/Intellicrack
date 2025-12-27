@@ -285,39 +285,6 @@
 .\.github\dependabot.yml:65:11: [error] wrong indentation: expected 8 but found 10  (indentation)
 
 
-15 findings in .\intellicrack\scripts\frida\qodana.yaml
-
-.\intellicrack\scripts\frida\qodana.yaml:1:2: [warning] missing starting space in comment  (comments)
-
-.\intellicrack\scripts\frida\qodana.yaml:1:82: [error] wrong new line character: expected \n  (new-lines)
-
-.\intellicrack\scripts\frida\qodana.yaml:4:2: [warning] missing starting space in comment  (comments)
-
-.\intellicrack\scripts\frida\qodana.yaml:12:2: [warning] missing starting space in comment  (comments)
-
-.\intellicrack\scripts\frida\qodana.yaml:14:5: [error] wrong indentation: expected 2 but found 4  (indentation)
-
-.\intellicrack\scripts\frida\qodana.yaml:16:2: [warning] missing starting space in comment  (comments)
-
-.\intellicrack\scripts\frida\qodana.yaml:17:2: [warning] missing starting space in comment  (comments)
-
-.\intellicrack\scripts\frida\qodana.yaml:20:2: [warning] missing starting space in comment  (comments)
-
-.\intellicrack\scripts\frida\qodana.yaml:21:2: [warning] missing starting space in comment  (comments)
-
-.\intellicrack\scripts\frida\qodana.yaml:26:2: [warning] missing starting space in comment  (comments)
-
-.\intellicrack\scripts\frida\qodana.yaml:27:2: [warning] missing starting space in comment  (comments)
-
-.\intellicrack\scripts\frida\qodana.yaml:29:2: [warning] missing starting space in comment  (comments)
-
-.\intellicrack\scripts\frida\qodana.yaml:30:2: [warning] missing starting space in comment  (comments)
-
-.\intellicrack\scripts\frida\qodana.yaml:37:2: [warning] missing starting space in comment  (comments)
-
-.\intellicrack\scripts\frida\qodana.yaml:45:2: [warning] missing starting space in comment  (comments)
-
-
 14 findings in .\.github\workflows\claude.yml
 
 .\.github\workflows\claude.yml:1:18: [error] wrong new line character: expected \n  (new-lines)
@@ -527,6 +494,13 @@
 .\config\startup_optimization.yaml:62:1: [warning] comment not indented like content  (comments-indentation)
 
 .\config\startup_optimization.yaml:79:85: [error] no new line character at the end of file  (new-line-at-end-of-file)
+
+
+2 findings in .\intellicrack\scripts\frida\qodana.yaml
+
+.\intellicrack\scripts\frida\qodana.yaml:1:83: [error] wrong new line character: expected \n  (new-lines)
+
+.\intellicrack\scripts\frida\qodana.yaml:14:5: [error] wrong indentation: expected 2 but found 4  (indentation)
 
 
 1 findings in .\.yarnrc.yml

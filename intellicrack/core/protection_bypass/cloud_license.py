@@ -40,6 +40,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from intellicrack.data import CA_CERT_PATH, CA_KEY_PATH
+from intellicrack.utils.logger import get_logger
 
 
 if TYPE_CHECKING:
@@ -97,8 +98,6 @@ try:
     MITMPROXY_AVAILABLE = True
 except ImportError:
     pass
-
-from intellicrack.utils.logger import get_logger
 
 
 logger = get_logger(__name__)

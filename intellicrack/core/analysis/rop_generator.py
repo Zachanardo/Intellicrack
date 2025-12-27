@@ -19,7 +19,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
-from typing import Any
+from typing import Any, cast
 
 from ...utils.ui.ui_common import ask_open_report
 
@@ -1862,7 +1862,7 @@ def _handle_rop_report_generation(app: object, generator: ROPChainGenerator) -> 
                 app.update_output.emit(f"log_message([ROP Chain Generator] Report saved to {report_path})")
 
             # Ask if user wants to open the report
-            ask_open_report(app, report_path)
+            ask_open_report(cast("Any", app), report_path)
         elif hasattr(app, "update_output"):
             app.update_output.emit("log_message([ROP Chain Generator] Failed to generate report)")
 

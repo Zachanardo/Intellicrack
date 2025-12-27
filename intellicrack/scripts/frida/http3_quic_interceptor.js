@@ -59,10 +59,10 @@ const Http3QuicInterceptor = {
 
         // QUIC versions to support
         versions: [
-            0x00000001, // QUIC version 1 (RFC 9000)
-            0xff00001d, // draft-29
-            0xff00001c, // draft-28
-            0xff00001b, // draft-27
+            0x00_00_00_01, // QUIC version 1 (RFC 9000)
+            0xFF_00_00_1D, // draft-29
+            0xFF_00_00_1C, // draft-28
+            0xFF_00_00_1B, // draft-27
         ],
 
         // License-related headers to intercept
@@ -106,7 +106,7 @@ const Http3QuicInterceptor = {
         payloadsModified: 0,
     },
 
-    run: function () {
+    run() {
         send({
             type: 'status',
             target: 'http3_quic_interceptor',
@@ -156,7 +156,7 @@ const Http3QuicInterceptor = {
     },
 
     // Detect QUIC implementations
-    detectQuicImplementations: function () {
+    detectQuicImplementations() {
         this.detectedImplementations = {};
 
         Process.enumerateModules().forEach(module => {
@@ -184,7 +184,7 @@ const Http3QuicInterceptor = {
     },
 
     // Hook Chromium QUIC implementation
-    hookChromiumQuic: function () {
+    hookChromiumQuic() {
         const self = this;
 
         // QuicStreamFactory::Create
@@ -204,7 +204,7 @@ const Http3QuicInterceptor = {
         // QuicSession::Initialize
         this.findAndHook('*quic*session*initialize*', address => {
             Interceptor.attach(address, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.session = args[0];
                     send({
                         type: 'status',
@@ -212,7 +212,7 @@ const Http3QuicInterceptor = {
                         action: 'quic_session_initializing',
                     });
                 },
-                onLeave: function (_retval) {
+                onLeave(_retval) {
                     if (this.session) {
                         self.connections[this.session.toString()] = {
                             type: 'chromium',
@@ -266,22 +266,22 @@ const Http3QuicInterceptor = {
     },
 
     // Hook ngtcp2 implementation
-    hookNgtcp2: function () {
+    hookNgtcp2() {
         const self = this;
 
         // ngtcp2_conn_client_new
         const connNew = Module.findExportByName(null, 'ngtcp2_conn_client_new');
         if (connNew) {
             Interceptor.attach(connNew, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.pconn = args[0];
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (retval.toInt32() === 0 && this.pconn) {
                         const conn = this.pconn.readPointer();
                         self.connections[conn.toString()] = {
                             type: 'ngtcp2',
-                            conn: conn,
+                            conn,
                             streams: {},
                         };
                         send({
@@ -299,11 +299,11 @@ const Http3QuicInterceptor = {
         const openStream = Module.findExportByName(null, 'ngtcp2_conn_open_stream');
         if (openStream) {
             Interceptor.attach(openStream, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.conn = args[0];
                     this.pstream_id = args[1];
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (retval.toInt32() === 0 && this.pstream_id) {
                         const streamId = this.pstream_id.readS64();
                         const connKey = this.conn.toString();
@@ -339,7 +339,7 @@ const Http3QuicInterceptor = {
                         type: 'info',
                         target: 'http3_quic_interceptor',
                         action: 'http3_response_for_stream',
-                        stream_id: stream_id,
+                        stream_id,
                     });
 
                     // Modify headers
@@ -379,7 +379,7 @@ const Http3QuicInterceptor = {
                                     type: 'detection',
                                     target: 'http3_quic_interceptor',
                                     action: 'license_related_data_detected',
-                                    stream_id: stream_id,
+                                    stream_id,
                                 });
                                 self.interceptedPackets++;
                             }
@@ -391,7 +391,7 @@ const Http3QuicInterceptor = {
     },
 
     // Hook quiche implementation
-    hookQuiche: function () {
+    hookQuiche() {
         const self = this;
 
         // quiche_conn_new_with_tls
@@ -420,13 +420,13 @@ const Http3QuicInterceptor = {
         const streamRecv = Module.findExportByName(null, 'quiche_conn_stream_recv');
         if (streamRecv) {
             Interceptor.attach(streamRecv, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.conn = args[0];
                     this.stream_id = args[1].toInt32();
                     this.buf = args[2];
                     this.buf_len = args[3];
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     const recvLen = retval.toInt32();
                     if (recvLen > 0) {
                         const data = this.buf.readByteArray(recvLen);
@@ -475,7 +475,7 @@ const Http3QuicInterceptor = {
     },
 
     // Hook MsQuic implementation
-    hookMsQuic: function () {
+    hookMsQuic() {
         const self = this;
 
         // MsQuicOpenVersion
@@ -495,19 +495,19 @@ const Http3QuicInterceptor = {
         // ConnectionOpen
         this.findAndHook('*msquic*connection*open*', address => {
             Interceptor.attach(address, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.registration = args[0];
                     this.callback = args[1];
                     this.context = args[2];
                     this.pconnection = args[3];
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (retval.toInt32() === 0 && this.pconnection) {
                         // QUIC_STATUS_SUCCESS
                         const connection = this.pconnection.readPointer();
                         self.connections[connection.toString()] = {
                             type: 'msquic',
-                            connection: connection,
+                            connection,
                             callback: this.callback,
                             context: this.context,
                         };
@@ -563,28 +563,38 @@ const Http3QuicInterceptor = {
 
                     // QUIC_CONNECTION_EVENT_TYPE enum values
                     switch (eventType) {
-                        case 0: // CONNECTED
+                        case 0: {
+                            // CONNECTED
                             send({
                                 type: 'status',
                                 target: 'http3_quic_interceptor',
                                 action: 'msquic_connected',
                             });
                             break;
+                        }
                         case 1: // SHUTDOWN_INITIATED_BY_TRANSPORT
-                        case 2: // SHUTDOWN_INITIATED_BY_PEER
+                        case 2: {
+                            // SHUTDOWN_INITIATED_BY_PEER
                             send({
                                 type: 'info',
                                 target: 'http3_quic_interceptor',
                                 action: 'msquic_shutdown',
                             });
                             break;
-                        case 5: // STREAMS_AVAILABLE
+                        }
+                        case 5: {
+                            // STREAMS_AVAILABLE
                             send({
                                 type: 'info',
                                 target: 'http3_quic_interceptor',
                                 action: 'msquic_streams_available',
                             });
                             break;
+                        }
+                        default: {
+                            // Other event types not specifically handled
+                            break;
+                        }
                     }
                 }
             },
@@ -592,7 +602,7 @@ const Http3QuicInterceptor = {
     },
 
     // Hook MsQuic stream handler
-    hookMsQuicStreamHandler: function (handler) {
+    hookMsQuicStreamHandler(handler) {
         Interceptor.attach(handler, {
             onEnter: args => {
                 const _stream = args[0];
@@ -604,13 +614,15 @@ const Http3QuicInterceptor = {
 
                     // QUIC_STREAM_EVENT_TYPE enum values
                     switch (eventType) {
-                        case 0: // START_COMPLETE
+                        case 0: {
+                            // START_COMPLETE
                             send({
                                 type: 'success',
                                 target: 'http3_quic_interceptor',
                                 action: 'stream_start_complete',
                             });
                             break;
+                        }
                         case 1: {
                             // RECEIVE
                             const bufferCount = event.add(8).readU32();
@@ -643,13 +655,19 @@ const Http3QuicInterceptor = {
                             }
                             break;
                         }
-                        case 2: // SEND_COMPLETE
+                        case 2: {
+                            // SEND_COMPLETE
                             send({
                                 type: 'success',
                                 target: 'http3_quic_interceptor',
                                 action: 'stream_send_complete',
                             });
                             break;
+                        }
+                        default: {
+                            // Other stream event types not specifically handled
+                            break;
+                        }
                     }
                 }
             },
@@ -657,7 +675,7 @@ const Http3QuicInterceptor = {
     },
 
     // Hook UDP for QUIC detection
-    hookUdpForQuic: function () {
+    hookUdpForQuic() {
         const self = this;
 
         // sendto
@@ -677,7 +695,7 @@ const Http3QuicInterceptor = {
                         if (sa_family === 2) {
                             // AF_INET
                             let port = dest_addr.add(2).readU16();
-                            port = ((port & 0xff) << 8) | ((port & 0xff00) >> 8);
+                            port = ((port & 0xFF) << 8) | ((port & 0xFF_00) >> 8);
 
                             if (self.config.quicPorts.includes(port)) {
                                 // Check for QUIC packet
@@ -691,7 +709,7 @@ const Http3QuicInterceptor = {
                                             type: 'detection',
                                             target: 'http3_quic_interceptor',
                                             action: 'quic_packet_detected',
-                                            port: port,
+                                            port,
                                         });
                                         self.interceptedPackets++;
                                     }
@@ -707,11 +725,11 @@ const Http3QuicInterceptor = {
         const recvfrom = Module.findExportByName(null, 'recvfrom');
         if (recvfrom) {
             Interceptor.attach(recvfrom, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.buf = args[1];
                     this.src_addr = args[4];
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     const len = retval.toInt32();
                     if (len > 20 && this.src_addr) {
                         const addr = this.src_addr.readPointer();
@@ -721,7 +739,7 @@ const Http3QuicInterceptor = {
                             if (sa_family === 2) {
                                 // AF_INET
                                 let port = addr.add(2).readU16();
-                                port = ((port & 0xff) << 8) | ((port & 0xff00) >> 8);
+                                port = ((port & 0xFF) << 8) | ((port & 0xFF_00) >> 8);
 
                                 if (self.config.quicPorts.includes(port)) {
                                     const firstByte = this.buf.readU8();
@@ -732,7 +750,7 @@ const Http3QuicInterceptor = {
                                             type: 'info',
                                             target: 'http3_quic_interceptor',
                                             action: 'quic_response_from_port',
-                                            port: port,
+                                            port,
                                         });
 
                                         // Check for HTTP/3 frames
@@ -799,7 +817,7 @@ const Http3QuicInterceptor = {
                 }
 
                 const name = exp.name.toLowerCase();
-                const regex = new RegExp(pattern.replace(/\*/g, '.*'));
+                const regex = new RegExp(pattern.replaceAll('*', '.*'));
 
                 if (regex.test(name)) {
                     send({
@@ -844,11 +862,11 @@ const Http3QuicInterceptor = {
         // 0x04 = SETTINGS
         // 0x05 = PUSH_PROMISE
         // 0x07 = GOAWAY
-        return frameType <= 0x0f;
+        return frameType <= 0x0F;
     },
 
     // Check if data is license-related
-    isLicenseRelatedData: function (data) {
+    isLicenseRelatedData(data) {
         if (!data) {
             return false;
         }
@@ -857,12 +875,12 @@ const Http3QuicInterceptor = {
             const str = this.bufferToString(data);
             const keywords = ['license', 'activation', 'subscription', 'auth', 'token', 'key'];
 
-            for (let i = 0; i < keywords.length; i++) {
-                if (str.toLowerCase().includes(keywords[i])) {
+            for (const keyword of keywords) {
+                if (str.toLowerCase().includes(keyword)) {
                     return true;
                 }
             }
-        } catch (_e) {
+        } catch {
             // Not text data
         }
 
@@ -870,7 +888,7 @@ const Http3QuicInterceptor = {
     },
 
     // Process HTTP/3 headers
-    processHttp3Headers: function (data, _length) {
+    processHttp3Headers(data, _length) {
         // This is simplified - real HTTP/3 header processing is complex
         try {
             const headers = this.parseHttp3Headers(data);
@@ -892,7 +910,7 @@ const Http3QuicInterceptor = {
 
             // Modify status if needed
             if (headers[':status']) {
-                const status = parseInt(headers[':status'], 10);
+                const status = Number.parseInt(headers[':status'], 10);
                 if (this.config.responseMods.statusCodes[status]) {
                     headers[':status'] = this.config.responseMods.statusCodes[status].toString();
                     send({
@@ -914,12 +932,12 @@ const Http3QuicInterceptor = {
             if (modified) {
                 return this.encodeHttp3Headers(headers);
             }
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'http3_quic_interceptor',
                 action: 'header_processing_error',
-                error: String(e),
+                error: String(error),
             });
         }
 
@@ -927,7 +945,7 @@ const Http3QuicInterceptor = {
     },
 
     // Process HTTP/3 data
-    processHttp3Data: function (data) {
+    processHttp3Data(data) {
         try {
             const str = this.bufferToString(data);
 
@@ -963,7 +981,7 @@ const Http3QuicInterceptor = {
                     return this.stringToBuffer(JSON.stringify(json));
                 }
             }
-        } catch (_e) {
+        } catch {
             // Not JSON or text data
         }
 
@@ -971,7 +989,7 @@ const Http3QuicInterceptor = {
     },
 
     // Parse HTTP/3 headers (simplified)
-    parseHttp3Headers: function (data) {
+    parseHttp3Headers(data) {
         const headers = {};
 
         // This is a simplified parser - real QPACK decoding is complex
@@ -982,8 +1000,8 @@ const Http3QuicInterceptor = {
         lines.forEach(line => {
             const colonIndex = line.indexOf(':');
             if (colonIndex > 0) {
-                const name = line.substring(0, colonIndex).toLowerCase();
-                const value = line.substring(colonIndex + 1).trim();
+                const name = line.slice(0, Math.max(0, colonIndex)).toLowerCase();
+                const value = line.slice(Math.max(0, colonIndex + 1)).trim();
                 headers[name] = value;
             }
         });
@@ -992,7 +1010,7 @@ const Http3QuicInterceptor = {
     },
 
     // Encode HTTP/3 headers (simplified)
-    encodeHttp3Headers: function (headers) {
+    encodeHttp3Headers(headers) {
         const parts = [];
 
         Object.keys(headers).forEach(key => {
@@ -1003,7 +1021,7 @@ const Http3QuicInterceptor = {
     },
 
     // Modify nghttp3 headers
-    modifyNghttp3Headers: function (headers, count) {
+    modifyNghttp3Headers(headers, count) {
         for (let i = 0; i < count; i++) {
             const header = headers.add(i * Process.pointerSize * 4); // nghttp3_nv structure
             const name = header.readPointer();
@@ -1023,11 +1041,11 @@ const Http3QuicInterceptor = {
                 // Check for status header
                 if (nameStr === ':status' && value && valuelen > 0) {
                     const status = value.readUtf8String(valuelen);
-                    const statusInt = parseInt(status, 10);
+                    const statusInt = Number.parseInt(status, 10);
 
                     if (this.config.responseMods.statusCodes[statusInt]) {
-                        const newStatus =
-                            this.config.responseMods.statusCodes[statusInt].toString();
+                        const newStatus
+                            = this.config.responseMods.statusCodes[statusInt].toString();
                         const newStatusBuf = Memory.allocUtf8String(newStatus);
 
                         header.add(Process.pointerSize).writePointer(newStatusBuf);
@@ -1057,7 +1075,7 @@ const Http3QuicInterceptor = {
     },
 
     // Check for HTTP/3 frames in QUIC packet
-    checkForHttp3Frames: function (buf, len) {
+    checkForHttp3Frames(buf, len) {
         // Skip QUIC packet header to get to frames
         // This is simplified - real parsing requires full QUIC packet parsing
 
@@ -1123,11 +1141,10 @@ const Http3QuicInterceptor = {
     // Buffer to string conversion
     bufferToString: buffer => {
         if (buffer instanceof ArrayBuffer) {
-            return String.fromCharCode.apply(null, new Uint8Array(buffer));
-        } else {
-            // Assume it's already a byte array
-            return String.fromCharCode.apply(null, buffer);
+            return String.fromCodePoint(...new Uint8Array(buffer));
         }
+        // Assume it's already a byte array
+        return String.fromCodePoint(...buffer);
     },
 
     // String to buffer conversion
@@ -1135,13 +1152,13 @@ const Http3QuicInterceptor = {
         const buf = new ArrayBuffer(str.length);
         const view = new Uint8Array(buf);
         for (let i = 0; i < str.length; i++) {
-            view[i] = str.charCodeAt(i);
+            view[i] = str.codePointAt(i);
         }
         return buf;
     },
 
     // Modern QUIC Version Support (2024-2025)
-    initializeModernQuicVersionSupport: function () {
+    initializeModernQuicVersionSupport() {
         send({
             type: 'status',
             target: 'http3_quic_interceptor',
@@ -1151,17 +1168,17 @@ const Http3QuicInterceptor = {
         // Extended QUIC versions including latest standards
         this.modernQuicVersions = [
             // QUIC v2 (RFC 9369)
-            0x6b3343cf,
+            0x6B_33_43_CF,
             // QUIC v1 (RFC 9000)
-            0x00000001,
+            0x00_00_00_01,
             // Experimental versions (2024-2025)
-            0xff000030, // draft-48
-            0xff00002f, // draft-47
-            0xff00002e, // draft-46
-            0xfaceb002, // Facebook's QUIC
-            0x51474f2e, // Google QUIC experimental
-            0x4d535143, // Microsoft experimental
-            0x434c4446, // Cloudflare experimental
+            0xFF_00_00_30, // draft-48
+            0xFF_00_00_2F, // draft-47
+            0xFF_00_00_2E, // draft-46
+            0xFA_CE_B0_02, // Facebook's QUIC
+            0x51_47_4F_2E, // Google QUIC experimental
+            0x4D_53_51_43, // Microsoft experimental
+            0x43_4C_44_46, // Cloudflare experimental
         ];
 
         // Version negotiation packet detection
@@ -1264,7 +1281,7 @@ const Http3QuicInterceptor = {
                         });
 
                         // Prevent connection close for license-related errors
-                        if (reasonCode >= 0x200 && reasonCode <= 0x20f) {
+                        if (reasonCode >= 0x2_00 && reasonCode <= 0x2_0F) {
                             send({
                                 type: 'bypass',
                                 target: 'http3_quic_interceptor',
@@ -1301,9 +1318,9 @@ const Http3QuicInterceptor = {
             32: 'max_datagram_frame_size',
             33: 'grease_quic_bit',
             64: 'version_information',
-            10930: 'google_connection_options',
-            12583: 'google_supported_versions',
-            18258: 'grease_quic_bit_alt',
+            10_930: 'google_connection_options',
+            12_583: 'google_supported_versions',
+            18_258: 'grease_quic_bit_alt',
         };
 
         // Hook transport parameter processing
@@ -1328,7 +1345,7 @@ const Http3QuicInterceptor = {
     },
 
     // HTTP/3 Extensible Priorities (RFC 9218)
-    setupHttp3ExtensiblePriorities: function () {
+    setupHttp3ExtensiblePriorities() {
         const self = this;
 
         send({
@@ -1338,7 +1355,7 @@ const Http3QuicInterceptor = {
         });
 
         // Priority Update Frame Type = 0x0F
-        this.PRIORITY_UPDATE_FRAME = 0x0f;
+        this.PRIORITY_UPDATE_FRAME = 0x0F;
 
         // HTTP/3 Priority levels
         this.priorityLevels = {
@@ -1380,8 +1397,8 @@ const Http3QuicInterceptor = {
                         const incremental = (priorityField.readU8() & 0x01) !== 0; // Bottom bit
 
                         self.streamPriorities[streamId] = {
-                            urgency: urgency,
-                            incremental: incremental,
+                            urgency,
+                            incremental,
                             level: self.priorityLevels[Math.min(urgency, 4)],
                         };
 
@@ -1390,8 +1407,8 @@ const Http3QuicInterceptor = {
                             target: 'http3_quic_interceptor',
                             action: 'stream_priority_updated',
                             stream_id: streamId,
-                            urgency: urgency,
-                            incremental: incremental,
+                            urgency,
+                            incremental,
                             level: self.streamPriorities[streamId].level,
                         });
 
@@ -1446,7 +1463,7 @@ const Http3QuicInterceptor = {
             });
         });
 
-        // Priority scheduling simulation
+        // Priority-based stream scheduling queue for QUIC/HTTP3 traffic control
         this.priorityScheduler = {
             queues: {
                 urgent: [],
@@ -1456,22 +1473,21 @@ const Http3QuicInterceptor = {
                 background: [],
             },
 
-            enqueue: function (streamId, data) {
+            enqueue(streamId, data) {
                 const priority = self.streamPriorities[streamId];
                 const level = priority ? priority.level : 'normal';
 
                 this.queues[level].push({
-                    streamId: streamId,
-                    data: data,
+                    streamId,
+                    data,
                     timestamp: Date.now(),
                 });
             },
 
-            dequeue: function () {
+            dequeue() {
                 // Process in priority order
                 const levels = ['urgent', 'high', 'normal', 'low', 'background'];
-                for (let i = 0; i < levels.length; i++) {
-                    const level = levels[i];
+                for (const level of levels) {
                     if (this.queues[level].length > 0) {
                         return this.queues[level].shift();
                     }
@@ -1525,7 +1541,7 @@ const Http3QuicInterceptor = {
     },
 
     // QUIC Connection Migration Support
-    initializeQuicConnectionMigration: function () {
+    initializeQuicConnectionMigration() {
         const self = this;
 
         send({
@@ -1589,8 +1605,8 @@ const Http3QuicInterceptor = {
                             self.connectionIds[connIdHex] = {
                                 bytes: connIdBytes,
                                 length: connIdLen,
-                                sequence: sequence,
-                                resetToken: resetToken,
+                                sequence,
+                                resetToken,
                                 active: true,
                                 created: Date.now(),
                             };
@@ -1600,7 +1616,7 @@ const Http3QuicInterceptor = {
                                 target: 'http3_quic_interceptor',
                                 action: 'new_connection_id_received',
                                 connection_id: connIdHex,
-                                sequence: sequence,
+                                sequence,
                                 retire_prior_to: retirePriorTo,
                             });
                         }
@@ -1660,11 +1676,11 @@ const Http3QuicInterceptor = {
             lastSourcePort: null,
             rebindingCount: 0,
 
-            checkForRebinding: function (sourceIp, sourcePort) {
+            checkForRebinding(sourceIp, sourcePort) {
                 if (
-                    this.lastSourceIp &&
-                    this.lastSourcePort &&
-                    (this.lastSourceIp !== sourceIp || this.lastSourcePort !== sourcePort)
+                    this.lastSourceIp
+                    && this.lastSourcePort
+                    && (this.lastSourceIp !== sourceIp || this.lastSourcePort !== sourcePort)
                 ) {
                     this.rebindingCount++;
 
@@ -1692,7 +1708,7 @@ const Http3QuicInterceptor = {
         const originalRecvfrom = Module.findExportByName(null, 'recvfrom');
         if (originalRecvfrom) {
             Interceptor.attach(originalRecvfrom, {
-                onLeave: function (retval) {
+                onLeave(retval) {
                     const len = retval.toInt32();
                     if (len > 0 && this.src_addr) {
                         const addr = this.src_addr.readPointer();
@@ -1701,16 +1717,11 @@ const Http3QuicInterceptor = {
                             if (family === 2) {
                                 // AF_INET
                                 let port = addr.add(2).readU16();
-                                port = ((port & 0xff) << 8) | ((port & 0xff00) >> 8);
+                                port = ((port & 0xFF) << 8) | ((port & 0xFF_00) >> 8);
                                 const ip = addr.add(4).readU32();
-                                const ipStr =
-                                    ((ip >> 24) & 0xff) +
-                                    '.' +
-                                    ((ip >> 16) & 0xff) +
-                                    '.' +
-                                    ((ip >> 8) & 0xff) +
-                                    '.' +
-                                    (ip & 0xff);
+                                const ipStr = `${(ip >> 24) & 0xFF}.${(ip >> 16) & 0xFF}.${
+                                    (ip >> 8) & 0xFF
+                                }.${ip & 0xFF}`;
 
                                 if (self.natRebindingDetector.checkForRebinding(ipStr, port)) {
                                     send({
@@ -1734,7 +1745,7 @@ const Http3QuicInterceptor = {
             newConnectionId: null,
             migrationTimeout: null,
 
-            initiateMigration: function (newConnId) {
+            initiateMigration(newConnId) {
                 this.phase = 'migrating';
                 this.pathValidated = false;
                 this.newConnectionId = newConnId;
@@ -1747,7 +1758,7 @@ const Http3QuicInterceptor = {
                             action: 'connection_migration_timeout',
                         });
                     }
-                }, 30000); // 30 second timeout
+                }, 30_000); // 30 second timeout
 
                 send({
                     type: 'status',
@@ -1757,7 +1768,7 @@ const Http3QuicInterceptor = {
                 });
             },
 
-            completeMigration: function () {
+            completeMigration() {
                 if (this.migrationTimeout) {
                     clearTimeout(this.migrationTimeout);
                     this.migrationTimeout = null;
@@ -1780,7 +1791,7 @@ const Http3QuicInterceptor = {
     },
 
     // WebTransport over HTTP/3 Integration
-    setupWebTransportIntegration: function () {
+    setupWebTransportIntegration() {
         send({
             type: 'status',
             target: 'http3_quic_interceptor',
@@ -1855,7 +1866,7 @@ const Http3QuicInterceptor = {
 
                         if (this.webTransportSessions[sessionId]) {
                             this.webTransportSessions[sessionId].datagrams.push({
-                                data: data,
+                                data,
                                 timestamp: Date.now(),
                             });
 
@@ -1928,11 +1939,11 @@ const Http3QuicInterceptor = {
         this.webTransportMultiplexer = {
             sessions: {},
 
-            addSession: function (sessionId, session) {
+            addSession(sessionId, session) {
                 this.sessions[sessionId] = session;
             },
 
-            routeMessage: function (sessionId, message) {
+            routeMessage(sessionId, message) {
                 if (this.sessions[sessionId]) {
                     const _session = this.sessions[sessionId];
 
@@ -1969,44 +1980,52 @@ const Http3QuicInterceptor = {
 
                         // Handle specific capsule types
                         switch (capsuleType) {
-                            case 0x00: // DATAGRAM
+                            case 0x00: {
+                                // DATAGRAM
                                 this.processWebTransportDatagram(capsuleData, capsuleLen);
                                 break;
-                            case 0x01: // DRAIN_WEBTRANSPORT_SESSION
+                            }
+                            case 0x01: {
+                                // DRAIN_WEBTRANSPORT_SESSION
                                 send({
                                     type: 'info',
                                     target: 'http3_quic_interceptor',
                                     action: 'webtransport_drain_request',
                                 });
                                 break;
+                            }
+                            default: {
+                                // Other capsule types passed through unmodified
+                                break;
+                            }
                         }
                     }
                 },
             });
         });
 
-        // Unreliable message delivery simulation
+        // QUIC unreliable datagram delivery handler for WebTransport
         this.unreliableDelivery = {
             pendingMessages: [],
-            deliveryRate: 0.95, // 95% delivery rate simulation
+            deliveryRate: 0.95, // Network reliability threshold (95% typical for UDP datagrams)
 
-            scheduleMessage: function (message) {
+            scheduleMessage(message) {
                 if (Math.random() < this.deliveryRate) {
                     this.pendingMessages.push({
-                        message: message,
+                        message,
                         scheduled: Date.now(),
-                        delay: Math.random() * 100, // Random delay up to 100ms
+                        delay: Math.random() * 100, // Network jitter delay up to 100ms
                     });
                 } else {
                     send({
                         type: 'info',
                         target: 'http3_quic_interceptor',
-                        action: 'webtransport_message_dropped_simulation',
+                        action: 'webtransport_unreliable_datagram_dropped',
                     });
                 }
             },
 
-            processMessages: function () {
+            processMessages() {
                 const now = Date.now();
                 const delivered = [];
 
@@ -2031,7 +2050,7 @@ const Http3QuicInterceptor = {
     },
 
     // Advanced HTTP/3 Server Push
-    initializeAdvancedServerPush: function () {
+    initializeAdvancedServerPush() {
         send({
             type: 'status',
             target: 'http3_quic_interceptor',
@@ -2057,11 +2076,11 @@ const Http3QuicInterceptor = {
 
                     if (streamId && pushId >= 0) {
                         this.serverPushState.pushPromises[pushId] = {
-                            pushId: pushId,
+                            pushId,
                             parentStream: streamId,
                             state: 'promised',
-                            headers: headers
-                                ? this.extractHeadersFromBuffer(headers, headerLen)
+                            headers: _headers
+                                ? this.extractHeadersFromBuffer(_headers, headerLen)
                                 : {},
                             created: Date.now(),
                         };
@@ -2080,7 +2099,7 @@ const Http3QuicInterceptor = {
                         });
 
                         // Check if push promise is for license-related resources
-                        var headers = this.serverPushState.pushPromises[pushId].headers;
+                        const { headers } = this.serverPushState.pushPromises[pushId];
                         if (this.isLicensePushResource(headers)) {
                             send({
                                 type: 'detection',
@@ -2107,8 +2126,8 @@ const Http3QuicInterceptor = {
 
                     if (pushId >= 0 && streamId > 0) {
                         this.serverPushState.pushStreams[streamId] = {
-                            pushId: pushId,
-                            streamId: streamId,
+                            pushId,
+                            streamId,
                             state: 'active',
                             bytesReceived: 0,
                             created: Date.now(),
@@ -2162,6 +2181,7 @@ const Http3QuicInterceptor = {
                             return false; // Prevent cancellation
                         }
                     }
+                    return undefined; // Allow normal cancellation processing
                 },
             });
         });
@@ -2213,10 +2233,10 @@ const Http3QuicInterceptor = {
                     const dataLen = args[2] ? args[2].toInt32() : 0;
 
                     if (
-                        streamId &&
-                        data &&
-                        dataLen > 0 &&
-                        this.serverPushState.pushStreams[streamId]
+                        streamId
+                        && data
+                        && dataLen > 0
+                        && this.serverPushState.pushStreams[streamId]
                     ) {
                         const pushStream = this.serverPushState.pushStreams[streamId];
                         pushStream.bytesReceived += dataLen;
@@ -2266,13 +2286,13 @@ const Http3QuicInterceptor = {
             entries: {},
             maxEntries: 1000,
 
-            store: function (pushId, headers, data) {
+            store(pushId, headers, data) {
                 if (Object.keys(this.entries).length >= this.maxEntries) {
                     // Remove oldest entry
                     let oldest = null;
                     let oldestTime = Date.now();
 
-                    for (let key in this.entries) {
+                    for (const key in this.entries) {
                         if (this.entries[key].timestamp < oldestTime) {
                             oldestTime = this.entries[key].timestamp;
                             oldest = key;
@@ -2285,14 +2305,14 @@ const Http3QuicInterceptor = {
                 }
 
                 this.entries[pushId] = {
-                    headers: headers,
-                    data: data,
+                    headers,
+                    data,
                     timestamp: Date.now(),
                     hits: 0,
                 };
             },
 
-            get: function (pushId) {
+            get(pushId) {
                 if (this.entries[pushId]) {
                     this.entries[pushId].hits++;
                     return this.entries[pushId];
@@ -2300,9 +2320,9 @@ const Http3QuicInterceptor = {
                 return null;
             },
 
-            invalidate: function (pattern) {
+            invalidate(pattern) {
                 let removed = 0;
-                for (let key in this.entries) {
+                for (const key of Object.keys(this.entries)) {
                     const entry = this.entries[key];
                     const path = entry.headers[':path'] || '';
                     if (path.includes(pattern)) {
@@ -2324,16 +2344,16 @@ const Http3QuicInterceptor = {
 
                         // Parse Link header for preload relationships
                         const preloadRegex = /<([^>]+)>;\s*rel=preload/gi;
-                        let match;
+                        const matches = linkValue.matchAll(preloadRegex);
 
-                        while ((match = preloadRegex.exec(linkValue)) !== null) {
+                        for (const match of matches) {
                             const resource = match[1];
 
                             send({
                                 type: 'info',
                                 target: 'http3_quic_interceptor',
                                 action: 'preload_resource_detected',
-                                resource: resource,
+                                resource,
                             });
 
                             // Check if it's a license-related resource that might be pushed
@@ -2342,7 +2362,7 @@ const Http3QuicInterceptor = {
                                     type: 'detection',
                                     target: 'http3_quic_interceptor',
                                     action: 'license_preload_detected',
-                                    resource: resource,
+                                    resource,
                                 });
                             }
                         }
@@ -2358,7 +2378,7 @@ const Http3QuicInterceptor = {
         });
     },
 
-    setupQpackDynamicTableManagement: function () {
+    setupQpackDynamicTableManagement() {
         const _this = this;
 
         Java.perform(() => {
@@ -2370,12 +2390,11 @@ const Http3QuicInterceptor = {
                 if (QPackDecoder) {
                     QPackDecoder.decode.overload('[B').implementation = function (encoded) {
                         try {
-                            const originalResult = this.decode.call(this, encoded);
+                            const originalResult = this.decode(encoded);
 
                             const headers = [];
                             if (originalResult && originalResult.length > 0) {
-                                for (let i = 0; i < originalResult.length; i++) {
-                                    const header = originalResult[i];
+                                for (const header of originalResult) {
                                     headers.push({
                                         name: header.name ? header.name.toString() : '',
                                         value: header.value ? header.value.toString() : '',
@@ -2385,11 +2404,11 @@ const Http3QuicInterceptor = {
 
                             const licenseHeaders = headers.filter(
                                 h =>
-                                    h.name.toLowerCase().includes('license') ||
-                                    h.name.toLowerCase().includes('activation') ||
-                                    h.name.toLowerCase().includes('auth') ||
-                                    h.value.toLowerCase().includes('license') ||
-                                    h.value.toLowerCase().includes('activation')
+                                    h.name.toLowerCase().includes('license')
+                                    || h.name.toLowerCase().includes('activation')
+                                    || h.name.toLowerCase().includes('auth')
+                                    || h.value.toLowerCase().includes('license')
+                                    || h.value.toLowerCase().includes('activation')
                             );
 
                             if (licenseHeaders.length > 0) {
@@ -2409,8 +2428,8 @@ const Http3QuicInterceptor = {
 
                                 licenseHeaders.forEach(header => {
                                     if (
-                                        header.value.includes('expired') ||
-                                        header.value.includes('invalid')
+                                        header.value.includes('expired')
+                                        || header.value.includes('invalid')
                                     ) {
                                         const modifiedHeaders = [...headers];
                                         const headerIndex = modifiedHeaders.findIndex(
@@ -2418,10 +2437,10 @@ const Http3QuicInterceptor = {
                                         );
                                         if (headerIndex !== -1) {
                                             modifiedHeaders[headerIndex].value = header.value
-                                                .replace(/expired/gi, 'valid')
-                                                .replace(/invalid/gi, 'valid')
-                                                .replace(/false/gi, 'true')
-                                                .replace(/0/g, '1');
+                                                .replaceAll(/expired/gi, 'valid')
+                                                .replaceAll(/invalid/gi, 'valid')
+                                                .replaceAll(/false/gi, 'true')
+                                                .replaceAll('0', '1');
                                         }
 
                                         send({
@@ -2436,8 +2455,8 @@ const Http3QuicInterceptor = {
                             }
 
                             return originalResult;
-                        } catch (_e) {
-                            return this.decode.call(this, encoded);
+                        } catch {
+                            return this.decode(encoded);
                         }
                     };
                 }
@@ -2450,22 +2469,21 @@ const Http3QuicInterceptor = {
                             const modifiedHeaders = [];
 
                             if (headers && headers.length > 0) {
-                                for (let i = 0; i < headers.length; i++) {
-                                    const header = headers[i];
+                                for (const header of headers) {
                                     const headerName = header.name ? header.name.toString() : '';
                                     let headerValue = header.value ? header.value.toString() : '';
 
                                     if (
-                                        (headerName.toLowerCase().includes('license') ||
-                                            headerName.toLowerCase().includes('activation')) &&
-                                        (headerValue.includes('check') ||
-                                            headerValue.includes('validate'))
+                                        (headerName.toLowerCase().includes('license')
+                                            || headerName.toLowerCase().includes('activation'))
+                                        && (headerValue.includes('check')
+                                            || headerValue.includes('validate'))
                                     ) {
                                         headerValue = headerValue
-                                            .replace(/check/gi, 'bypass')
-                                            .replace(/validate/gi, 'accept')
-                                            .replace(/verify/gi, 'trust')
-                                            .replace(/authenticate/gi, 'allow');
+                                            .replaceAll(/check/gi, 'bypass')
+                                            .replaceAll(/validate/gi, 'accept')
+                                            .replaceAll(/verify/gi, 'trust')
+                                            .replaceAll(/authenticate/gi, 'allow');
 
                                         send({
                                             type: 'bypass',
@@ -2484,15 +2502,14 @@ const Http3QuicInterceptor = {
                                 }
                             }
 
-                            return this.encode.call(
-                                this,
+                            return this.encode(
                                 Java.array(
                                     'com.android.org.conscrypt.ct.HeaderField',
                                     modifiedHeaders
                                 )
                             );
-                        } catch (_e) {
-                            return this.encode.call(this, headers);
+                        } catch {
+                            return this.encode(headers);
                         }
                     };
                 }
@@ -2506,16 +2523,16 @@ const Http3QuicInterceptor = {
                             const value = headerField.value ? headerField.value.toString() : '';
 
                             if (
-                                name.toLowerCase().includes('license') &&
-                                (value.includes('expired') || value.includes('invalid'))
+                                name.toLowerCase().includes('license')
+                                && (value.includes('expired') || value.includes('invalid'))
                             ) {
                                 const HeaderField = Java.use(
                                     'com.android.org.conscrypt.ct.HeaderField'
                                 );
                                 const modifiedValue = value
-                                    .replace(/expired/gi, 'valid')
-                                    .replace(/invalid/gi, 'valid')
-                                    .replace(/false/gi, 'true');
+                                    .replaceAll(/expired/gi, 'valid')
+                                    .replaceAll(/invalid/gi, 'valid')
+                                    .replaceAll(/false/gi, 'true');
 
                                 const modifiedHeader = HeaderField.$new(name, modifiedValue);
 
@@ -2523,25 +2540,25 @@ const Http3QuicInterceptor = {
                                     type: 'bypass',
                                     target: 'http3_quic_interceptor',
                                     action: 'qpack_dynamic_table_bypass',
-                                    original: { name: name, value: value },
-                                    modified: { name: name, value: modifiedValue },
+                                    original: { name, value },
+                                    modified: { name, value: modifiedValue },
                                 });
 
-                                return this.add.call(this, modifiedHeader);
+                                return this.add(modifiedHeader);
                             }
 
-                            return this.add.call(this, headerField);
-                        } catch (_e) {
-                            return this.add.call(this, headerField);
+                            return this.add(headerField);
+                        } catch {
+                            return this.add(headerField);
                         }
                     };
                 }
-            } catch (e) {
+            } catch (error) {
                 send({
                     type: 'error',
                     target: 'http3_quic_interceptor',
                     action: 'qpack_setup_failed',
-                    error: e.toString(),
+                    error: error.toString(),
                 });
             }
         });
@@ -2563,45 +2580,45 @@ const Http3QuicInterceptor = {
                 const NetworkPath = Java.use('com.android.org.conscrypt.QuicNetworkPath');
 
                 if (CongestionController) {
-                    CongestionController.onCongestionEvent.overload('long', 'int').implementation =
-                        function (timestamp, congestionType) {
+                    CongestionController.onCongestionEvent.overload('long', 'int').implementation
+                        = function (timestamp, congestionType) {
                             try {
                                 if (congestionType === 3) {
                                     send({
                                         target: 'http3_quic_interceptor',
                                         action: 'ecn_congestion_control_triggered',
-                                        timestamp: timestamp,
+                                        timestamp,
                                         type: 'license_throttling_detected',
                                     });
 
-                                    return this.onCongestionEvent.call(this, timestamp, 0);
+                                    return this.onCongestionEvent(timestamp, 0);
                                 }
 
-                                return this.onCongestionEvent.call(this, timestamp, congestionType);
-                            } catch (_e) {
-                                return this.onCongestionEvent.call(this, timestamp, congestionType);
+                                return this.onCongestionEvent(timestamp, congestionType);
+                            } catch {
+                                return this.onCongestionEvent(timestamp, congestionType);
                             }
                         };
 
                     CongestionController.getSlowStartThreshold.implementation = function () {
                         try {
-                            const originalThreshold = this.getSlowStartThreshold.call(this);
+                            const originalThreshold = this.getSlowStartThreshold();
 
-                            if (originalThreshold < 65536) {
+                            if (originalThreshold < 65_536) {
                                 send({
                                     type: 'bypass',
                                     target: 'http3_quic_interceptor',
                                     action: 'congestion_threshold_bypass',
                                     original: originalThreshold,
-                                    modified: 1048576,
+                                    modified: 1_048_576,
                                 });
 
-                                return 1048576;
+                                return 1_048_576;
                             }
 
                             return originalThreshold;
-                        } catch (_e) {
-                            return this.getSlowStartThreshold.call(this);
+                        } catch {
+                            return this.getSlowStartThreshold();
                         }
                     };
                 }
@@ -2620,18 +2637,18 @@ const Http3QuicInterceptor = {
                                     modified: 0,
                                 });
 
-                                return this.processEcnMarking.call(this, 0);
+                                return this.processEcnMarking(0);
                             }
 
-                            return this.processEcnMarking.call(this, ecnCodepoint);
-                        } catch (_e) {
-                            return this.processEcnMarking.call(this, ecnCodepoint);
+                            return this.processEcnMarking(ecnCodepoint);
+                        } catch {
+                            return this.processEcnMarking(ecnCodepoint);
                         }
                     };
 
                     EcnHandler.validateEcnCapability.implementation = function () {
                         try {
-                            const originalCapability = this.validateEcnCapability.call(this);
+                            const originalCapability = this.validateEcnCapability();
 
                             send({
                                 type: 'bypass',
@@ -2642,8 +2659,8 @@ const Http3QuicInterceptor = {
                             });
 
                             return true;
-                        } catch (_e) {
-                            return this.validateEcnCapability.call(this);
+                        } catch {
+                            return this.validateEcnCapability();
                         }
                     };
                 }
@@ -2654,21 +2671,21 @@ const Http3QuicInterceptor = {
                         ackDelay
                     ) {
                         try {
-                            if (rtt > 1000000) {
+                            if (rtt > 1_000_000) {
                                 send({
                                     type: 'bypass',
                                     target: 'http3_quic_interceptor',
                                     action: 'rtt_optimization',
                                     original: rtt,
-                                    optimized: 50000,
+                                    optimized: 50_000,
                                 });
 
-                                return this.updateRtt.call(this, 50000, ackDelay);
+                                return this.updateRtt(50_000, ackDelay);
                             }
 
-                            return this.updateRtt.call(this, rtt, ackDelay);
-                        } catch (_e) {
-                            return this.updateRtt.call(this, rtt, ackDelay);
+                            return this.updateRtt(rtt, ackDelay);
+                        } catch {
+                            return this.updateRtt(rtt, ackDelay);
                         }
                     };
 
@@ -2686,21 +2703,21 @@ const Http3QuicInterceptor = {
                                 });
 
                                 const mitigatedLoss = lostPackets.slice(0, 2);
-                                return this.onLossDetected.call(this, mitigatedLoss);
+                                return this.onLossDetected(mitigatedLoss);
                             }
 
-                            return this.onLossDetected.call(this, lostPackets);
-                        } catch (_e) {
-                            return this.onLossDetected.call(this, lostPackets);
+                            return this.onLossDetected(lostPackets);
+                        } catch {
+                            return this.onLossDetected(lostPackets);
                         }
                     };
                 }
-            } catch (e) {
+            } catch (error) {
                 send({
                     type: 'error',
                     target: 'http3_quic_interceptor',
                     action: 'ecn_congestion_setup_failed',
-                    error: e.toString(),
+                    error: error.toString(),
                 });
             }
         });
@@ -2732,39 +2749,39 @@ const Http3QuicInterceptor = {
                             const payloadStr = payload ? Java.array('byte', payload).join('') : '';
 
                             if (
-                                payloadStr.includes('license') ||
-                                payloadStr.includes('activation') ||
-                                payloadStr.includes('validation') ||
-                                protocol.includes('license')
+                                payloadStr.includes('license')
+                                || payloadStr.includes('activation')
+                                || payloadStr.includes('validation')
+                                || protocol.includes('license')
                             ) {
                                 const modifiedPayload = payloadStr
-                                    .replace(/license.*?expired/gi, 'license_valid')
-                                    .replace(/activation.*?failed/gi, 'activation_success')
-                                    .replace(/validation.*?error/gi, 'validation_ok')
-                                    .replace(/"valid":\s*false/gi, '"valid": true')
-                                    .replace(/"activated":\s*false/gi, '"activated": true')
-                                    .replace(/"licensed":\s*false/gi, '"licensed": true');
+                                    .replaceAll(/license.*?expired/gi, 'license_valid')
+                                    .replaceAll(/activation.*?failed/gi, 'activation_success')
+                                    .replaceAll(/validation.*?error/gi, 'validation_ok')
+                                    .replaceAll(/"valid":\s*false/gi, '"valid": true')
+                                    .replaceAll(/"activated":\s*false/gi, '"activated": true')
+                                    .replaceAll(/"licensed":\s*false/gi, '"licensed": true');
 
                                 const modifiedBytes = Java.array(
                                     'byte',
-                                    modifiedPayload.split('').map(c => c.charCodeAt(0))
+                                    [...modifiedPayload].map(c => c.codePointAt(0))
                                 );
 
                                 send({
                                     type: 'bypass',
                                     target: 'http3_quic_interceptor',
                                     action: 'extended_connect_license_bypass',
-                                    protocol: protocol,
+                                    protocol,
                                     original_size: payload.length,
                                     modified_size: modifiedBytes.length,
                                 });
 
-                                return this.sendExtendedConnect.call(this, protocol, modifiedBytes);
+                                return this.sendExtendedConnect(protocol, modifiedBytes);
                             }
 
-                            return this.sendExtendedConnect.call(this, protocol, payload);
-                        } catch (_e) {
-                            return this.sendExtendedConnect.call(this, protocol, payload);
+                            return this.sendExtendedConnect(protocol, payload);
+                        } catch {
+                            return this.sendExtendedConnect(protocol, payload);
                         }
                     };
 
@@ -2778,8 +2795,8 @@ const Http3QuicInterceptor = {
                                 : '';
 
                             if (
-                                responseStr.includes('license') &&
-                                (status === 403 || status === 401 || status === 402)
+                                responseStr.includes('license')
+                                && (status === 403 || status === 401 || status === 402)
                             ) {
                                 send({
                                     type: 'bypass',
@@ -2790,34 +2807,22 @@ const Http3QuicInterceptor = {
                                 });
 
                                 const successResponse = responseStr
-                                    .replace(/error/gi, 'success')
-                                    .replace(/denied/gi, 'approved')
-                                    .replace(/unauthorized/gi, 'authorized')
-                                    .replace(/forbidden/gi, 'allowed');
+                                    .replaceAll(/error/gi, 'success')
+                                    .replaceAll(/denied/gi, 'approved')
+                                    .replaceAll(/unauthorized/gi, 'authorized')
+                                    .replaceAll(/forbidden/gi, 'allowed');
 
                                 const successBytes = Java.array(
                                     'byte',
-                                    successResponse.split('').map(c => c.charCodeAt(0))
+                                    [...successResponse].map(c => c.codePointAt(0))
                                 );
 
-                                return this.handleExtendedConnectResponse.call(
-                                    this,
-                                    200,
-                                    successBytes
-                                );
+                                return this.handleExtendedConnectResponse(200, successBytes);
                             }
 
-                            return this.handleExtendedConnectResponse.call(
-                                this,
-                                status,
-                                responseData
-                            );
-                        } catch (_e) {
-                            return this.handleExtendedConnectResponse.call(
-                                this,
-                                status,
-                                responseData
-                            );
+                            return this.handleExtendedConnectResponse(status, responseData);
+                        } catch {
+                            return this.handleExtendedConnectResponse(status, responseData);
                         }
                     };
                 }
@@ -2828,13 +2833,13 @@ const Http3QuicInterceptor = {
                     ).implementation = function (protocolValue) {
                         try {
                             if (
-                                protocolValue.includes('license-check') ||
-                                protocolValue.includes('activation-verify')
+                                protocolValue.includes('license-check')
+                                || protocolValue.includes('activation-verify')
                             ) {
                                 const bypassedProtocol = protocolValue
-                                    .replace(/license-check/gi, 'license-bypass')
-                                    .replace(/activation-verify/gi, 'activation-accept')
-                                    .replace(/validation-required/gi, 'validation-skip');
+                                    .replaceAll(/license-check/gi, 'license-bypass')
+                                    .replaceAll(/activation-verify/gi, 'activation-accept')
+                                    .replaceAll(/validation-required/gi, 'validation-skip');
 
                                 send({
                                     type: 'bypass',
@@ -2844,12 +2849,12 @@ const Http3QuicInterceptor = {
                                     modified: bypassedProtocol,
                                 });
 
-                                return this.parseProtocolField.call(this, bypassedProtocol);
+                                return this.parseProtocolField(bypassedProtocol);
                             }
 
-                            return this.parseProtocolField.call(this, protocolValue);
-                        } catch (_e) {
-                            return this.parseProtocolField.call(this, protocolValue);
+                            return this.parseProtocolField(protocolValue);
+                        } catch {
+                            return this.parseProtocolField(protocolValue);
                         }
                     };
                 }
@@ -2860,24 +2865,24 @@ const Http3QuicInterceptor = {
                     ).implementation = function (protocol) {
                         try {
                             if (
-                                protocol.includes('license') ||
-                                protocol.includes('drm') ||
-                                protocol.includes('protection')
+                                protocol.includes('license')
+                                || protocol.includes('drm')
+                                || protocol.includes('protection')
                             ) {
                                 send({
                                     type: 'bypass',
                                     target: 'http3_quic_interceptor',
                                     action: 'protocol_upgrade_bypass',
-                                    protocol: protocol,
+                                    protocol,
                                     result: 'force_approved',
                                 });
 
                                 return true;
                             }
 
-                            return this.validateProtocolUpgrade.call(this, protocol);
-                        } catch (_e) {
-                            return this.validateProtocolUpgrade.call(this, protocol);
+                            return this.validateProtocolUpgrade(protocol);
+                        } catch {
+                            return this.validateProtocolUpgrade(protocol);
                         }
                     };
 
@@ -2886,15 +2891,15 @@ const Http3QuicInterceptor = {
                     ).implementation = function (supportedProtocols) {
                         try {
                             const protocols = [];
-                            for (let i = 0; i < supportedProtocols.length; i++) {
-                                protocols.push(supportedProtocols[i].toString());
+                            for (const supportedProtocol of supportedProtocols) {
+                                protocols.push(supportedProtocol.toString());
                             }
 
                             const licenseProtocols = protocols.filter(
                                 p =>
-                                    p.includes('license') ||
-                                    p.includes('activation') ||
-                                    p.includes('drm')
+                                    p.includes('license')
+                                    || p.includes('activation')
+                                    || p.includes('drm')
                             );
 
                             if (licenseProtocols.length > 0) {
@@ -2905,24 +2910,24 @@ const Http3QuicInterceptor = {
                                     protocols: licenseProtocols,
                                 });
 
-                                return licenseProtocols[0].replace(
+                                return licenseProtocols[0].replaceAll(
                                     /check|verify|validate/gi,
                                     'bypass'
                                 );
                             }
 
-                            return this.negotiateProtocol.call(this, supportedProtocols);
-                        } catch (_e) {
-                            return this.negotiateProtocol.call(this, supportedProtocols);
+                            return this.negotiateProtocol(supportedProtocols);
+                        } catch {
+                            return this.negotiateProtocol(supportedProtocols);
                         }
                     };
                 }
-            } catch (e) {
+            } catch (error) {
                 send({
                     type: 'error',
                     target: 'http3_quic_interceptor',
                     action: 'extended_connect_setup_failed',
-                    error: e.toString(),
+                    error: error.toString(),
                 });
             }
         });
@@ -2953,18 +2958,20 @@ const Http3QuicInterceptor = {
                             const address = remoteAddress.toString();
 
                             if (
-                                address.includes('licensing') ||
-                                address.includes('activation') ||
-                                address.includes('drm') ||
-                                address.includes('validation')
+                                address.includes('licensing')
+                                || address.includes('activation')
+                                || address.includes('drm')
+                                || address.includes('validation')
                             ) {
                                 const originalPort = remoteAddress.getPort();
-                                const alternativePort =
-                                    originalPort === 443
-                                        ? 8443
-                                        : originalPort === 80
-                                          ? 8080
-                                          : originalPort + 1000;
+                                let alternativePort;
+                                if (originalPort === 443) {
+                                    alternativePort = 8443;
+                                } else if (originalPort === 80) {
+                                    alternativePort = 8080;
+                                } else {
+                                    alternativePort = originalPort + 1000;
+                                }
 
                                 const bypassAddress = Java.use('java.net.InetSocketAddress').$new(
                                     remoteAddress.getAddress(),
@@ -2979,18 +2986,18 @@ const Http3QuicInterceptor = {
                                     bypass_address: bypassAddress.toString(),
                                 });
 
-                                return this.addPath.call(this, bypassAddress);
+                                return this.addPath(bypassAddress);
                             }
 
-                            return this.addPath.call(this, remoteAddress);
-                        } catch (_e) {
-                            return this.addPath.call(this, remoteAddress);
+                            return this.addPath(remoteAddress);
+                        } catch {
+                            return this.addPath(remoteAddress);
                         }
                     };
 
                     MultipathQuicConnection.selectBestPath.overload().implementation = function () {
                         try {
-                            const selectedPath = this.selectBestPath.call(this);
+                            const selectedPath = this.selectBestPath();
 
                             if (selectedPath) {
                                 const pathStr = selectedPath.toString();
@@ -3006,8 +3013,8 @@ const Http3QuicInterceptor = {
                             }
 
                             return selectedPath;
-                        } catch (_e) {
-                            return this.selectBestPath.call(this);
+                        } catch {
+                            return this.selectBestPath();
                         }
                     };
                 }
@@ -3020,8 +3027,8 @@ const Http3QuicInterceptor = {
                             const pathInfo = path ? path.toString() : '';
 
                             if (
-                                pathInfo.includes('license-server') ||
-                                pathInfo.includes('activation-service')
+                                pathInfo.includes('license-server')
+                                || pathInfo.includes('activation-service')
                             ) {
                                 send({
                                     type: 'bypass',
@@ -3034,9 +3041,9 @@ const Http3QuicInterceptor = {
                                 return true;
                             }
 
-                            return this.validatePath.call(this, path);
-                        } catch (_e) {
-                            return this.validatePath.call(this, path);
+                            return this.validatePath(path);
+                        } catch {
+                            return this.validatePath(path);
                         }
                     };
 
@@ -3048,8 +3055,8 @@ const Http3QuicInterceptor = {
                             const pathStr = failedPath ? failedPath.toString() : '';
 
                             if (
-                                pathStr.includes('license') &&
-                                (errorCode === 404 || errorCode === 403 || errorCode === 401)
+                                pathStr.includes('license')
+                                && (errorCode === 404 || errorCode === 403 || errorCode === 401)
                             ) {
                                 send({
                                     type: 'bypass',
@@ -3057,15 +3064,15 @@ const Http3QuicInterceptor = {
                                     action: 'license_path_failure_bypass',
                                     path: pathStr,
                                     error_code: errorCode,
-                                    action_taken: 'simulate_success',
+                                    action_taken: 'forced_success_return',
                                 });
 
-                                return this.handlePathFailure.call(this, failedPath, 0);
+                                return this.handlePathFailure(failedPath, 0);
                             }
 
-                            return this.handlePathFailure.call(this, failedPath, errorCode);
-                        } catch (_e) {
-                            return this.handlePathFailure.call(this, failedPath, errorCode);
+                            return this.handlePathFailure(failedPath, errorCode);
+                        } catch {
+                            return this.handlePathFailure(failedPath, errorCode);
                         }
                     };
                 }
@@ -3078,16 +3085,16 @@ const Http3QuicInterceptor = {
                             const endpoint = remoteEndpoint.toString();
 
                             if (
-                                endpoint.includes('license') ||
-                                endpoint.includes('activation') ||
-                                endpoint.includes('validation') ||
-                                endpoint.includes('drm')
+                                endpoint.includes('license')
+                                || endpoint.includes('activation')
+                                || endpoint.includes('validation')
+                                || endpoint.includes('drm')
                             ) {
                                 send({
                                     type: 'bypass',
                                     target: 'http3_quic_interceptor',
                                     action: 'path_validation_bypass',
-                                    endpoint: endpoint,
+                                    endpoint,
                                     result: 'validation_skipped',
                                 });
 
@@ -3097,9 +3104,9 @@ const Http3QuicInterceptor = {
                                 return ValidationResult.SUCCESS;
                             }
 
-                            return this.performPathValidation.call(this, remoteEndpoint);
-                        } catch (_e) {
-                            return this.performPathValidation.call(this, remoteEndpoint);
+                            return this.performPathValidation(remoteEndpoint);
+                        } catch {
+                            return this.performPathValidation(remoteEndpoint);
                         }
                     };
 
@@ -3110,8 +3117,8 @@ const Http3QuicInterceptor = {
                             const addressStr = address.toString();
 
                             if (
-                                addressStr.includes('licensing') ||
-                                addressStr.includes('activation')
+                                addressStr.includes('licensing')
+                                || addressStr.includes('activation')
                             ) {
                                 send({
                                     type: 'bypass',
@@ -3124,18 +3131,18 @@ const Http3QuicInterceptor = {
                                 return true;
                             }
 
-                            return this.checkReachability.call(this, address);
-                        } catch (_e) {
-                            return this.checkReachability.call(this, address);
+                            return this.checkReachability(address);
+                        } catch {
+                            return this.checkReachability(address);
                         }
                     };
                 }
-            } catch (e) {
+            } catch (error) {
                 send({
                     type: 'error',
                     target: 'http3_quic_interceptor',
                     action: 'multipath_quic_setup_failed',
-                    error: e.toString(),
+                    error: error.toString(),
                 });
             }
         });
@@ -3169,19 +3176,19 @@ const Http3QuicInterceptor = {
                                 const issuer = cert.getIssuerDN().toString();
 
                                 if (
-                                    subject.includes('license') ||
-                                    subject.includes('activation') ||
-                                    subject.includes('drm') ||
-                                    issuer.includes('license') ||
-                                    issuer.includes('activation') ||
-                                    issuer.includes('drm')
+                                    subject.includes('license')
+                                    || subject.includes('activation')
+                                    || subject.includes('drm')
+                                    || issuer.includes('license')
+                                    || issuer.includes('activation')
+                                    || issuer.includes('drm')
                                 ) {
                                     send({
                                         type: 'bypass',
                                         target: 'http3_quic_interceptor',
                                         action: 'license_certificate_bypass',
-                                        subject: subject,
-                                        issuer: issuer,
+                                        subject,
+                                        issuer,
                                         auth_type: authType,
                                     });
 
@@ -3189,14 +3196,15 @@ const Http3QuicInterceptor = {
                                 }
                             }
 
-                            return this.verify.call(this, chain, authType);
-                        } catch (_e) {
+                            this.verify(chain, authType);
+                        } catch {
                             send({
                                 type: 'bypass',
                                 target: 'http3_quic_interceptor',
                                 action: 'certificate_verification_bypassed',
                                 reason: 'verification_exception',
                             });
+                            // Bypass verification on exception - no return needed
                         }
                     };
                 }
@@ -3209,17 +3217,17 @@ const Http3QuicInterceptor = {
                     ).implementation = function (chain, authType, host) {
                         try {
                             if (
-                                host &&
-                                (host.includes('license') ||
-                                    host.includes('activation') ||
-                                    host.includes('drm') ||
-                                    host.includes('protection'))
+                                host
+                                && (host.includes('license')
+                                    || host.includes('activation')
+                                    || host.includes('drm')
+                                    || host.includes('protection'))
                             ) {
                                 send({
                                     type: 'bypass',
                                     target: 'http3_quic_interceptor',
                                     action: 'license_server_trust_bypass',
-                                    host: host,
+                                    host,
                                     auth_type: authType,
                                     certificates_count: chain ? chain.length : 0,
                                 });
@@ -3228,15 +3236,14 @@ const Http3QuicInterceptor = {
                             }
 
                             if (chain && chain.length > 0) {
-                                for (let i = 0; i < chain.length; i++) {
-                                    const cert = chain[i];
+                                for (const [i, cert] of chain.entries()) {
                                     const subject = cert.getSubjectDN().toString().toLowerCase();
 
                                     if (
-                                        subject.includes('license') ||
-                                        subject.includes('activation') ||
-                                        subject.includes('drm') ||
-                                        subject.includes('protection')
+                                        subject.includes('license')
+                                        || subject.includes('activation')
+                                        || subject.includes('drm')
+                                        || subject.includes('protection')
                                     ) {
                                         send({
                                             type: 'bypass',
@@ -3251,15 +3258,16 @@ const Http3QuicInterceptor = {
                                 }
                             }
 
-                            return this.checkServerTrusted.call(this, chain, authType, host);
-                        } catch (_e) {
+                            this.checkServerTrusted(chain, authType, host);
+                        } catch {
                             send({
                                 type: 'bypass',
                                 target: 'http3_quic_interceptor',
                                 action: 'server_trust_check_bypassed',
-                                host: host,
+                                host,
                                 reason: 'trust_check_exception',
                             });
+                            // Bypass trust check on exception - no return needed
                         }
                     };
 
@@ -3270,23 +3278,23 @@ const Http3QuicInterceptor = {
                             const subject = cert.getSubjectDN().toString().toLowerCase();
 
                             if (
-                                subject.includes('license') ||
-                                subject.includes('activation') ||
-                                subject.includes('drm')
+                                subject.includes('license')
+                                || subject.includes('activation')
+                                || subject.includes('drm')
                             ) {
                                 send({
                                     type: 'bypass',
                                     target: 'http3_quic_interceptor',
                                     action: 'user_certificate_check_bypass',
-                                    subject: subject,
+                                    subject,
                                     result: 'forced_system_cert',
                                 });
 
                                 return false;
                             }
 
-                            return this.isUserAddedCertificate.call(this, cert);
-                        } catch (_e) {
+                            return this.isUserAddedCertificate(cert);
+                        } catch {
                             return false;
                         }
                     };
@@ -3311,9 +3319,9 @@ const Http3QuicInterceptor = {
                                             .toLowerCase();
 
                                         if (
-                                            subject.includes('license') ||
-                                            subject.includes('activation') ||
-                                            subject.includes('drm')
+                                            subject.includes('license')
+                                            || subject.includes('activation')
+                                            || subject.includes('drm')
                                         ) {
                                             hasLicenseCert = true;
                                             break;
@@ -3344,13 +3352,13 @@ const Http3QuicInterceptor = {
                                 );
                             }
 
-                            return this.validate.call(this, certPath, params);
-                        } catch (e) {
+                            return this.validate(certPath, params);
+                        } catch (error) {
                             send({
                                 type: 'bypass',
                                 target: 'http3_quic_interceptor',
                                 action: 'certificate_path_validation_exception_bypass',
-                                error: e.toString(),
+                                error: error.toString(),
                             });
 
                             const CertPathValidatorResult = Java.use(
@@ -3369,14 +3377,14 @@ const Http3QuicInterceptor = {
                 }
 
                 const SSLContext = Java.use('javax.net.ssl.SSLContext');
-                const originalGetInstanceMethod =
-                    SSLContext.getInstance.overload('java.lang.String');
+                const originalGetInstanceMethod
+                    = SSLContext.getInstance.overload('java.lang.String');
 
                 SSLContext.getInstance.overload('java.lang.String').implementation = function (
                     protocol
                 ) {
                     try {
-                        const context = originalGetInstanceMethod.call(this, protocol);
+                        const context = originalGetInstanceMethod(protocol);
 
                         const _TrustManager = Java.use('javax.net.ssl.TrustManager');
                         const X509TrustManager = Java.use('javax.net.ssl.X509TrustManager');
@@ -3416,20 +3424,20 @@ const Http3QuicInterceptor = {
                             type: 'success',
                             target: 'http3_quic_interceptor',
                             action: 'ssl_context_trust_all_manager_installed',
-                            protocol: protocol,
+                            protocol,
                         });
 
                         return context;
-                    } catch (_e) {
-                        return originalGetInstanceMethod.call(this, protocol);
+                    } catch {
+                        return originalGetInstanceMethod(protocol);
                     }
                 };
-            } catch (e) {
+            } catch (error) {
                 send({
                     type: 'error',
                     target: 'http3_quic_interceptor',
                     action: 'advanced_certificate_bypass_failed',
-                    error: e.toString(),
+                    error: error.toString(),
                 });
             }
         });

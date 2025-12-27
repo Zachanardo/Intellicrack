@@ -21,6 +21,8 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import os
 from typing import Any
 
+from PyQt6.QtWidgets import QGraphicsScene
+
 from intellicrack.handlers.pyqt6_handler import (
     QAction,
     QApplication,
@@ -48,7 +50,6 @@ from intellicrack.handlers.pyqt6_handler import (
     QVBoxLayout,
     QWidget,
 )
-from PyQt6.QtWidgets import QGraphicsScene
 
 from ..utils.logger import get_logger
 from ..utils.resource_helper import get_resource_path

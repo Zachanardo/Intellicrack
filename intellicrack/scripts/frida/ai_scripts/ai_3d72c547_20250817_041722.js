@@ -20,8 +20,8 @@ if (CreateFileW) {
             if (filename?.toLowerCase().includes('license')) {
                 send({
                     type: 'license_file_access',
-                    filename: filename,
-                    accessMode: accessMode,
+                    filename,
+                    accessMode,
                     timestamp: Date.now(),
                 });
             }
@@ -29,7 +29,7 @@ if (CreateFileW) {
             // Log all file accesses
             send(`[CreateFileW] ${filename}`);
         },
-        onLeave: function (retval) {
+        onLeave(retval) {
             // Handle value can be used for further monitoring
             this.handle = retval;
         },
@@ -49,8 +49,8 @@ if (CreateFileA) {
             if (filename?.toLowerCase().includes('license')) {
                 send({
                     type: 'license_file_access',
-                    filename: filename,
-                    accessMode: accessMode,
+                    filename,
+                    accessMode,
                     timestamp: Date.now(),
                 });
             }
@@ -58,7 +58,7 @@ if (CreateFileA) {
             // Log all file accesses
             send(`[CreateFileA] ${filename}`);
         },
-        onLeave: function (retval) {
+        onLeave(retval) {
             // Handle value can be used for further monitoring
             this.handle = retval;
         },

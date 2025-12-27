@@ -17,8 +17,17 @@ import time
 import tempfile
 import os
 from pathlib import Path
+import pytest
 
-from intellicrack.core.analysis.ghidra_analyzer import run_advanced_ghidra_analysis, _run_ghidra_thread
+try:
+    from intellicrack.core.analysis.ghidra_analyzer import run_advanced_ghidra_analysis, _run_ghidra_thread
+    GHIDRA_ANALYZER_AVAILABLE = True
+except ImportError:
+    run_advanced_ghidra_analysis = None
+    _run_ghidra_thread = None
+    GHIDRA_ANALYZER_AVAILABLE = False
+
+pytestmark = pytest.mark.skipif(not GHIDRA_ANALYZER_AVAILABLE, reason="ghidra_analyzer module not available")
 
 
 class TestGhidraAnalyzerProductionCapabilities(unittest.TestCase):

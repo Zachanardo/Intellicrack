@@ -1,1886 +1,1308 @@
 {
-  "protection_schemes": {
-    "sentinel_hasp": {
-      "name": "Sentinel HASP/HL",
-      "vendor": "Thales (formerly SafeNet)",
-      "category": "hardware_dongle",
-      "description": "Hardware-based protection using USB dongles with AES encryption and secure communication",
-      "versions": [
-        "HL Pro",
-        "SL",
-        "SRM",
-        "LDK 7.x",
-        "LDK 8.x"
-      ],
-      "common_applications": [
-        "AutoCAD",
-        "SolidWorks",
-        "MATLAB",
-        "MasterCAM",
-        "CATIA",
-        "Siemens NX",
-        "ANSYS"
-      ],
-      "detection_signatures": [
-        "hasp_login",
-        "hasp_login_scope",
-        "hasp_encrypt",
-        "hasp_decrypt",
-        "hasplms.exe",
-        "aksusbd.sys",
-        "aksfridge.sys",
-        "hardlock.sys",
-        "HASP HL",
-        "Sentinel",
-        "vendorcode",
-        "haspdinst.exe",
-        "hasp_get_sessioninfo",
-        "hasp_update",
-        "hasp_get_rtc"
-      ],
-      "bypass_difficulty": "high",
-      "analysis_tips": [
-        "Hook hasp_login to capture feature IDs and vendor codes",
-        "Monitor aksusbd.sys IOCTL communications",
-        "Trace hasp_encrypt/decrypt for crypto operations",
-        "Check for network HASP via port 1947",
-        "Analyze vendor daemon for custom checks",
-        "Look for time-bomb and expiration logic"
-      ],
-      "common_mistakes": [
-        "Not emulating all HASP API functions",
-        "Missing network license scenarios",
-        "Incomplete vendor code emulation",
-        "Ignoring RTC (real-time clock) checks",
-        "Not handling feature expiration"
-      ],
-      "resources": [
-        "HASP HL API documentation",
-        "USB protocol analysis tools",
-        "Driver reverse engineering guides"
-      ],
-      "bypass_techniques": [
-        {
-          "name": "Complete Dongle Emulation",
-          "description": "Create perfect virtual dongle with memory dump and crypto keys",
-          "difficulty": "high",
-          "tools_required": [
-            "HASP Dumper",
-            "Dongle Emulator",
-            "API Monitor",
-            "WinAPIOverride"
-          ],
-          "success_rate": 0.85,
-          "time_estimate": "2-4 days",
-          "risks": [
-            "Anti-emulation checks",
-            "Time-based validations"
-          ],
-          "prerequisites": [
-            "Physical dongle access",
-            "Driver RE skills",
-            "Crypto knowledge"
-          ]
+    "protection_schemes": {
+        "sentinel_hasp": {
+            "name": "Sentinel HASP/HL",
+            "vendor": "Thales (formerly SafeNet)",
+            "category": "hardware_dongle",
+            "description": "Hardware-based protection using USB dongles with AES encryption and secure communication",
+            "versions": ["HL Pro", "SL", "SRM", "LDK 7.x", "LDK 8.x"],
+            "common_applications": [
+                "AutoCAD",
+                "SolidWorks",
+                "MATLAB",
+                "MasterCAM",
+                "CATIA",
+                "Siemens NX",
+                "ANSYS"
+            ],
+            "detection_signatures": [
+                "hasp_login",
+                "hasp_login_scope",
+                "hasp_encrypt",
+                "hasp_decrypt",
+                "hasplms.exe",
+                "aksusbd.sys",
+                "aksfridge.sys",
+                "hardlock.sys",
+                "HASP HL",
+                "Sentinel",
+                "vendorcode",
+                "haspdinst.exe",
+                "hasp_get_sessioninfo",
+                "hasp_update",
+                "hasp_get_rtc"
+            ],
+            "bypass_difficulty": "high",
+            "analysis_tips": [
+                "Hook hasp_login to capture feature IDs and vendor codes",
+                "Monitor aksusbd.sys IOCTL communications",
+                "Trace hasp_encrypt/decrypt for crypto operations",
+                "Check for network HASP via port 1947",
+                "Analyze vendor daemon for custom checks",
+                "Look for time-bomb and expiration logic"
+            ],
+            "common_mistakes": [
+                "Not emulating all HASP API functions",
+                "Missing network license scenarios",
+                "Incomplete vendor code emulation",
+                "Ignoring RTC (real-time clock) checks",
+                "Not handling feature expiration"
+            ],
+            "resources": [
+                "HASP HL API documentation",
+                "USB protocol analysis tools",
+                "Driver reverse engineering guides"
+            ],
+            "bypass_techniques": [
+                {
+                    "name": "Complete Dongle Emulation",
+                    "description": "Create perfect virtual dongle with memory dump and crypto keys",
+                    "difficulty": "high",
+                    "tools_required": [
+                        "HASP Dumper",
+                        "Dongle Emulator",
+                        "API Monitor",
+                        "WinAPIOverride"
+                    ],
+                    "success_rate": 0.85,
+                    "time_estimate": "2-4 days",
+                    "risks": ["Anti-emulation checks", "Time-based validations"],
+                    "prerequisites": [
+                        "Physical dongle access",
+                        "Driver RE skills",
+                        "Crypto knowledge"
+                    ]
+                },
+                {
+                    "name": "Advanced API Redirection",
+                    "description": "Redirect all HASP APIs through custom DLL with full emulation",
+                    "difficulty": "medium",
+                    "tools_required": ["x64dbg", "API Monitor", "Detours", "Custom DLL injector"],
+                    "success_rate": 0.9,
+                    "time_estimate": "6-12 hours",
+                    "risks": ["Integrity checks", "Hidden API calls"],
+                    "prerequisites": ["Windows API expertise", "DLL injection knowledge"]
+                },
+                {
+                    "name": "Driver-Level Bypass",
+                    "description": "Replace HASP driver with custom implementation",
+                    "difficulty": "very_high",
+                    "tools_required": ["WinDbg", "IDA Pro", "Driver signing tools"],
+                    "success_rate": 0.75,
+                    "time_estimate": "1 week",
+                    "risks": ["System instability", "Driver signature requirements"],
+                    "prerequisites": ["Kernel programming", "Driver development"]
+                },
+                {
+                    "name": "Memory Surgery",
+                    "description": "Surgical memory patches at all validation points",
+                    "difficulty": "medium",
+                    "tools_required": ["x64dbg", "Cheat Engine", "Process Hacker"],
+                    "success_rate": 0.7,
+                    "time_estimate": "4-8 hours",
+                    "risks": ["CRC checks", "Self-modifying code"],
+                    "prerequisites": ["Assembly mastery", "Debugging expertise"]
+                }
+            ]
         },
-        {
-          "name": "Advanced API Redirection",
-          "description": "Redirect all HASP APIs through custom DLL with full emulation",
-          "difficulty": "medium",
-          "tools_required": [
-            "x64dbg",
-            "API Monitor",
-            "Detours",
-            "Custom DLL injector"
-          ],
-          "success_rate": 0.9,
-          "time_estimate": "6-12 hours",
-          "risks": [
-            "Integrity checks",
-            "Hidden API calls"
-          ],
-          "prerequisites": [
-            "Windows API expertise",
-            "DLL injection knowledge"
-          ]
+        "flexlm": {
+            "name": "FlexLM/FlexNet Publisher",
+            "vendor": "Flexera Software (formerly Macrovision)",
+            "category": "network_license",
+            "description": "Enterprise floating license management with client-server architecture",
+            "versions": ["11.16.x", "2019.x", "2020.x", "2021.x", "2022.x"],
+            "common_applications": [
+                "ANSYS",
+                "Cadence",
+                "Synopsys",
+                "MATLAB",
+                "Mentor Graphics",
+                "Autodesk",
+                "PTC Creo"
+            ],
+            "detection_signatures": [
+                "lmgrd",
+                "lmutil",
+                "lmstat",
+                "lmreread",
+                "lmdown",
+                "FEATURE",
+                "INCREMENT",
+                "UPGRADE",
+                "PACKAGE",
+                "license.dat",
+                "license.lic",
+                ".flexlmrc",
+                "lc_checkout",
+                "lc_init",
+                "l_sg",
+                "l_key",
+                "vendor daemon",
+                "LM_LICENSE_FILE",
+                "FLEXLM_DIAGNOSTICS"
+            ],
+            "bypass_difficulty": "medium",
+            "analysis_tips": [
+                "Capture license checkout protocol with Wireshark",
+                "Analyze vendor daemon for custom validations",
+                "Check for borrowed license mechanisms",
+                "Monitor environment variables for license paths",
+                "Trace l_sg signature generation algorithm",
+                "Look for redundant license server configurations"
+            ],
+            "common_mistakes": [
+                "Not handling all FEATURE/INCREMENT lines",
+                "Missing vendor daemon handshake",
+                "Incomplete borrowed license emulation",
+                "Ignoring license queuing mechanisms",
+                "Not supporting all checkout options"
+            ],
+            "resources": [
+                "FlexLM Programmer's Guide",
+                "License Administration Guide",
+                "Network protocol specifications"
+            ],
+            "bypass_techniques": [
+                {
+                    "name": "Complete License Server Emulation",
+                    "description": "Full FlexLM server implementation with all protocol support",
+                    "difficulty": "medium",
+                    "tools_required": ["FlexLM Server Emulator", "License Generator", "Wireshark"],
+                    "success_rate": 0.95,
+                    "time_estimate": "4-6 hours",
+                    "risks": ["Vendor daemon validation", "Redundant servers"],
+                    "prerequisites": ["FlexLM protocol knowledge", "Network programming"]
+                },
+                {
+                    "name": "Advanced License Generation",
+                    "description": "Generate valid licenses with correct signatures and encryption",
+                    "difficulty": "high",
+                    "tools_required": ["FlexLM SDK", "Signature calculator", "Keygen tools"],
+                    "success_rate": 0.8,
+                    "time_estimate": "1-2 days",
+                    "risks": ["Vendor-specific validation", "Hostid checks"],
+                    "prerequisites": ["License format expertise", "Cryptographic skills"]
+                },
+                {
+                    "name": "Binary Patching Suite",
+                    "description": "Comprehensive patches for all FlexLM checks in binary",
+                    "difficulty": "low",
+                    "tools_required": ["IDA Pro", "x64dbg", "Binary patcher"],
+                    "success_rate": 0.85,
+                    "time_estimate": "2-4 hours",
+                    "risks": ["Checksum validation", "Self-checks"],
+                    "prerequisites": ["Binary analysis", "Pattern matching"]
+                },
+                {
+                    "name": "Vendor Daemon Replacement",
+                    "description": "Replace vendor daemon with custom implementation",
+                    "difficulty": "high",
+                    "tools_required": ["Ghidra", "Custom daemon builder"],
+                    "success_rate": 0.75,
+                    "time_estimate": "2-3 days",
+                    "risks": ["Vendor-specific features", "Encryption"],
+                    "prerequisites": ["Daemon protocol RE", "Server programming"]
+                }
+            ]
         },
-        {
-          "name": "Driver-Level Bypass",
-          "description": "Replace HASP driver with custom implementation",
-          "difficulty": "very_high",
-          "tools_required": [
-            "WinDbg",
-            "IDA Pro",
-            "Driver signing tools"
-          ],
-          "success_rate": 0.75,
-          "time_estimate": "1 week",
-          "risks": [
-            "System instability",
-            "Driver signature requirements"
-          ],
-          "prerequisites": [
-            "Kernel programming",
-            "Driver development"
-          ]
+        "winlicense": {
+            "name": "WinLicense/Themida",
+            "vendor": "Oreans Technologies",
+            "category": "software_protection",
+            "description": "Multi-layered protection with code virtualization, anti-debugging, and license management",
+            "versions": ["3.0.x", "3.1.x", "3.2.x"],
+            "common_applications": [
+                "Commercial software",
+                "Games",
+                "Security tools",
+                "Industrial software"
+            ],
+            "detection_signatures": [
+                "WinLicense",
+                "Themida",
+                "SecureEngine",
+                "Oreans",
+                ".themida",
+                ".winlicense",
+                ".wlsection",
+                "SE_InitializeEngine",
+                "SE_ActivateLicense",
+                "WLRegGetStatus",
+                "VM macros",
+                "XBundler"
+            ],
+            "bypass_difficulty": "very_high",
+            "analysis_tips": [
+                "Use StrongOD or SharpOD plugin for anti-debug bypass",
+                "Look for SecureEngine initialization routines",
+                "Trace VM macro entry/exit points",
+                "Monitor registry for license data",
+                "Check for XBundler packed resources",
+                "Analyze exception handler chains"
+            ],
+            "common_mistakes": [
+                "Using standard debuggers without plugins",
+                "Not handling all protection layers",
+                "Incomplete IAT reconstruction",
+                "Missing stolen code restoration",
+                "Ignoring hardware fingerprinting"
+            ],
+            "resources": [
+                "Oreans UnpackMe challenges",
+                "Advanced Windows debugging guides",
+                "VM analysis frameworks"
+            ],
+            "bypass_techniques": [
+                {
+                    "name": "Advanced VM Unpacking",
+                    "description": "Multi-stage unpacking with VM handler reconstruction",
+                    "difficulty": "very_high",
+                    "tools_required": ["Themida Unpacker", "x64dbg", "Scylla", "TitanEngine"],
+                    "success_rate": 0.6,
+                    "time_estimate": "1-2 weeks",
+                    "risks": ["Multiple VM layers", "Junk code", "Anti-unpacking"],
+                    "prerequisites": ["VM architecture mastery", "Advanced unpacking"]
+                },
+                {
+                    "name": "License System Attack",
+                    "description": "Direct attack on WinLicense licensing implementation",
+                    "difficulty": "high",
+                    "tools_required": ["License analyzer", "Registry tools", "API hooks"],
+                    "success_rate": 0.7,
+                    "time_estimate": "3-5 days",
+                    "risks": ["Hardware locking", "Trial checks"],
+                    "prerequisites": ["License system knowledge", "Registry expertise"]
+                },
+                {
+                    "name": "Kernel-Mode Bypass",
+                    "description": "Bypass from kernel using driver-based approach",
+                    "difficulty": "extreme",
+                    "tools_required": ["WinDbg", "Custom driver", "KPP bypass"],
+                    "success_rate": 0.5,
+                    "time_estimate": "2-3 weeks",
+                    "risks": ["BSOD", "PatchGuard", "Compatibility"],
+                    "prerequisites": ["Kernel programming", "Windows internals"]
+                },
+                {
+                    "name": "Hybrid Static-Dynamic Analysis",
+                    "description": "Combine static devirtualization with dynamic tracing",
+                    "difficulty": "very_high",
+                    "tools_required": ["IDA Pro", "Ghidra", "Intel Pin", "DynamoRIO"],
+                    "success_rate": 0.55,
+                    "time_estimate": "1-3 weeks",
+                    "risks": ["Incomplete analysis", "Performance overhead"],
+                    "prerequisites": ["Binary analysis expertise", "Instrumentation"]
+                }
+            ]
         },
-        {
-          "name": "Memory Surgery",
-          "description": "Surgical memory patches at all validation points",
-          "difficulty": "medium",
-          "tools_required": [
-            "x64dbg",
-            "Cheat Engine",
-            "Process Hacker"
-          ],
-          "success_rate": 0.7,
-          "time_estimate": "4-8 hours",
-          "risks": [
-            "CRC checks",
-            "Self-modifying code"
-          ],
-          "prerequisites": [
-            "Assembly mastery",
-            "Debugging expertise"
-          ]
+        "vmprotect": {
+            "name": "VMProtect",
+            "vendor": "VMProtect Software",
+            "category": "virtualization",
+            "description": "Industry-leading code virtualization with custom VM architecture and mutations",
+            "versions": ["3.5.x", "3.6.x", "3.7.x", "3.8.x"],
+            "common_applications": [
+                "High-value software",
+                "DRM systems",
+                "Anti-cheat engines",
+                "Cryptographic tools"
+            ],
+            "detection_signatures": [
+                "VMProtect",
+                ".vmp0",
+                ".vmp1",
+                ".vmp2",
+                "VMProtectBegin",
+                "VMProtectEnd",
+                "VMProtectIsDebuggerPresent",
+                "VMProtectIsVirtualMachinePresent",
+                "Virtualized sections",
+                "Heavy obfuscation",
+                "Mutated code patterns"
+            ],
+            "bypass_difficulty": "extreme",
+            "analysis_tips": [
+                "Map VM handler types and frequencies",
+                "Identify VM context structure layout",
+                "Track stack-based VM operations",
+                "Analyze obfuscated constant calculations",
+                "Use execution trace comparison",
+                "Look for licensing check patterns in VM"
+            ],
+            "common_mistakes": [
+                "Direct debugging attempts",
+                "Ignoring mutation engine",
+                "Incomplete handler identification",
+                "Not handling all VM instruction types",
+                "Missing indirect jump resolution"
+            ],
+            "resources": [
+                "VMProtect internals research papers",
+                "VTIL framework documentation",
+                "Devirtualization academic papers"
+            ],
+            "bypass_techniques": [
+                {
+                    "name": "Full Devirtualization Framework",
+                    "description": "Complete VM architecture reversal and x86/x64 reconstruction",
+                    "difficulty": "extreme",
+                    "tools_required": ["VMPImportFixer", "NoVmp", "VTIL-Core", "VMPDump", "Scylla"],
+                    "success_rate": 0.3,
+                    "time_estimate": "1-2 months",
+                    "risks": ["Incomplete conversion", "Logic errors", "Mutations"],
+                    "prerequisites": [
+                        "VM internals expertise",
+                        "Compiler theory",
+                        "Pattern recognition"
+                    ]
+                },
+                {
+                    "name": "Symbolic Execution Engine",
+                    "description": "Use symbolic execution to extract program logic",
+                    "difficulty": "very_high",
+                    "tools_required": ["Triton", "angr", "Miasm", "Z3 solver"],
+                    "success_rate": 0.4,
+                    "time_estimate": "2-3 weeks",
+                    "risks": ["Path explosion", "Constraint complexity"],
+                    "prerequisites": ["Symbolic execution", "SAT/SMT solvers"]
+                },
+                {
+                    "name": "Differential Cryptanalysis",
+                    "description": "Analyze VM handler patterns through differential analysis",
+                    "difficulty": "very_high",
+                    "tools_required": ["Binary diffing tools", "Statistical analyzers"],
+                    "success_rate": 0.35,
+                    "time_estimate": "2-4 weeks",
+                    "risks": ["False patterns", "Mutation variations"],
+                    "prerequisites": ["Cryptanalysis", "Statistical analysis"]
+                },
+                {
+                    "name": "Hardware-Assisted Tracing",
+                    "description": "Use Intel PT/ARM CoreSight for complete execution trace",
+                    "difficulty": "high",
+                    "tools_required": ["Intel PT", "WinIPT", "Hardware debugger"],
+                    "success_rate": 0.5,
+                    "time_estimate": "1 week",
+                    "risks": ["Trace size", "Performance impact"],
+                    "prerequisites": ["Hardware tracing", "Big data analysis"]
+                }
+            ]
+        },
+        "steam_ceg": {
+            "name": "Steam CEG/DRM Wrapper",
+            "vendor": "Valve Corporation",
+            "category": "gaming_drm",
+            "description": "Custom Executable Generation with user-specific binaries and Steam integration",
+            "versions": ["CEG v3", "CEG v4", "Steam DRM Wrapper 3.x"],
+            "common_applications": ["AAA games", "Indie games", "VR titles", "Software on Steam"],
+            "detection_signatures": [
+                "steam_api.dll",
+                "steam_api64.dll",
+                "steamclient.dll",
+                "SteamAPI_Init",
+                "SteamAPI_RestartAppIfNecessary",
+                "tier0_s.dll",
+                "vstdlib_s.dll",
+                ".bind section",
+                "Steam DRM",
+                "drm_wrapper",
+                "steam_appid.txt"
+            ],
+            "bypass_difficulty": "medium",
+            "analysis_tips": [
+                "Check .bind section for CEG data",
+                "Monitor Steam IPC communications",
+                "Look for steam_appid.txt requirements",
+                "Analyze ISteamUser interface calls",
+                "Check for achievement and stats APIs",
+                "Monitor DLC and depot checks"
+            ],
+            "common_mistakes": [
+                "Not handling all Steam interfaces",
+                "Missing steamclient dependencies",
+                "Incomplete DLC emulation",
+                "Ignoring cloud save features",
+                "Not patching overlay hooks"
+            ],
+            "resources": [
+                "Steamworks SDK documentation",
+                "Steam API reference",
+                "CEG technical details"
+            ],
+            "bypass_techniques": [
+                {
+                    "name": "Advanced CEG Unwrapping",
+                    "description": "Complete CEG removal with AES key extraction",
+                    "difficulty": "medium",
+                    "tools_required": ["Steamless_CLI", "Steamless_GUI", "CEGPolisher", "x64dbg"],
+                    "success_rate": 0.9,
+                    "time_estimate": "1-3 hours",
+                    "risks": ["Additional protections", "Integrity checks"],
+                    "prerequisites": ["CEG format knowledge", "Encryption basics"]
+                },
+                {
+                    "name": "Full Steam API Emulation",
+                    "description": "Complete Steam client and overlay emulation",
+                    "difficulty": "low",
+                    "tools_required": ["GoldbergSteamEmu", "SmartSteamEmu", "ALI213Steam"],
+                    "success_rate": 0.95,
+                    "time_estimate": "30 minutes",
+                    "risks": ["Multiplayer disabled", "Cloud saves broken"],
+                    "prerequisites": ["Steam API understanding"]
+                },
+                {
+                    "name": "DLC and Workshop Unlock",
+                    "description": "Enable all DLC and workshop content",
+                    "difficulty": "low",
+                    "tools_required": [
+                        "CreamAPI_4.5.0.0",
+                        "SteamWorkshopDownloader",
+                        "DepotDownloader"
+                    ],
+                    "success_rate": 0.9,
+                    "time_estimate": "15 minutes",
+                    "risks": ["Version mismatches", "Missing content"],
+                    "prerequisites": ["Steam file structure"]
+                },
+                {
+                    "name": "Binary Reconstruction",
+                    "description": "Rebuild clean executable from memory dump",
+                    "difficulty": "medium",
+                    "tools_required": ["PEDump", "Scylla_x64", "ImportREC", "LordPE"],
+                    "success_rate": 0.8,
+                    "time_estimate": "2-4 hours",
+                    "risks": ["Incomplete dumps", "Runtime dependencies"],
+                    "prerequisites": ["PE format expertise", "Memory analysis"]
+                }
+            ]
+        },
+        "denuvo": {
+            "name": "Denuvo Anti-Tamper",
+            "vendor": "Denuvo Software Solutions GmbH (Irdeto)",
+            "category": "gaming_drm",
+            "description": "Multi-layered anti-tamper with VM obfuscation, online activation, and performance impact",
+            "versions": ["v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12+"],
+            "common_applications": [
+                "AAA games",
+                "Major publishers",
+                "Sports titles",
+                "Racing games"
+            ],
+            "detection_signatures": [
+                "Massive code bloat",
+                "VM-protected sections",
+                "Trigger-based checks",
+                "CPUID checks",
+                "Hardware fingerprinting",
+                "Online activation",
+                "Performance degradation",
+                "SSD write amplification"
+            ],
+            "bypass_difficulty": "extreme",
+            "analysis_tips": [
+                "Map all VM entry points systematically",
+                "Monitor performance hotspots for triggers",
+                "Analyze hardware fingerprinting routines",
+                "Track online activation protocol",
+                "Look for time-bomb triggers",
+                "Check for integrity validation loops"
+            ],
+            "common_mistakes": [
+                "Underestimating protection complexity",
+                "Missing delayed triggers",
+                "Public discussion of methods",
+                "Not handling all game versions",
+                "Incomplete VM analysis"
+            ],
+            "resources": [
+                "Scene group technical notes",
+                "Performance impact studies",
+                "Limited public research"
+            ],
+            "bypass_techniques": [
+                {
+                    "name": "Complete Trigger Mapping",
+                    "description": "Identify and neutralize all protection triggers (100-300+)",
+                    "difficulty": "extreme",
+                    "tools_required": ["Ghidra", "Custom trigger mapper", "Execution tracer"],
+                    "success_rate": 0.2,
+                    "time_estimate": "2-6 months",
+                    "risks": ["Hidden triggers", "Version updates", "Server checks"],
+                    "prerequisites": ["Expert RE", "VM analysis", "Extreme patience"]
+                },
+                {
+                    "name": "Binary Reconstruction Pipeline",
+                    "description": "Rebuild clean binary from protected version",
+                    "difficulty": "extreme",
+                    "tools_required": ["Custom rebuilder", "VM devirtualizer", "Flow analyzer"],
+                    "success_rate": 0.15,
+                    "time_estimate": "3-8 months",
+                    "risks": ["Incomplete reconstruction", "Logic errors"],
+                    "prerequisites": ["Team coordination", "Deep binary knowledge"]
+                },
+                {
+                    "name": "Hardware ID Spoofing",
+                    "description": "Bypass hardware binding and activation",
+                    "difficulty": "high",
+                    "tools_required": ["HWID spoofer", "Network interceptor"],
+                    "success_rate": 0.3,
+                    "time_estimate": "1-2 weeks",
+                    "risks": ["Ban waves", "Server validation"],
+                    "prerequisites": ["Hardware emulation", "Protocol analysis"]
+                }
+            ]
+        },
+        "microsoft_activation": {
+            "name": "Microsoft Product Activation",
+            "vendor": "Microsoft Corporation",
+            "category": "enterprise",
+            "description": "Multi-method activation including KMS, MAK, OEM, and digital licenses",
+            "versions": ["Windows 10/11", "Server 2016-2022", "Office 2016-2021/365"],
+            "common_applications": [
+                "Windows OS",
+                "Microsoft Office",
+                "Visual Studio",
+                "SQL Server",
+                "Exchange"
+            ],
+            "detection_signatures": [
+                "SLMgr.vbs",
+                "OSPP.vbs",
+                "sppsvc.exe",
+                "osppsvc.exe",
+                "Software Protection Platform",
+                "KMS",
+                "MAK",
+                "GVLK",
+                "tokens.dat",
+                "Digital License",
+                "Product Key"
+            ],
+            "bypass_difficulty": "medium",
+            "analysis_tips": [
+                "Monitor SPP service communications",
+                "Check clipup.exe for license refresh",
+                "Analyze tokens.dat structure",
+                "Look for KMS client machine ID",
+                "Check scheduled tasks for validation",
+                "Monitor genuine validation URLs"
+            ],
+            "common_mistakes": [
+                "Not handling all activation methods",
+                "Missing Office integration points",
+                "Incomplete token restoration",
+                "Ignoring cloud-based checks",
+                "Not preserving HWID consistency"
+            ],
+            "resources": [
+                "Volume Activation Management Tool",
+                "KMS client setup keys",
+                "Activation troubleshooting guides"
+            ],
+            "bypass_techniques": [
+                {
+                    "name": "Advanced KMS Emulation",
+                    "description": "Full KMS v6 protocol implementation with all validation",
+                    "difficulty": "medium",
+                    "tools_required": ["KMS Server Emulator", "vlmcsd", "py-kms"],
+                    "success_rate": 0.95,
+                    "time_estimate": "20 minutes",
+                    "risks": ["Genuine validation failures", "Update detection"],
+                    "prerequisites": ["KMS protocol knowledge", "Network setup"]
+                },
+                {
+                    "name": "HWID/Digital License Generation",
+                    "description": "Generate permanent digital license with HWID binding",
+                    "difficulty": "high",
+                    "tools_required": ["HWID generator", "License injector", "gatherosstate.exe"],
+                    "success_rate": 0.8,
+                    "time_estimate": "1-2 hours",
+                    "risks": ["Hardware changes", "Cloud validation"],
+                    "prerequisites": ["Licensing system internals", "HWID structure"]
+                },
+                {
+                    "name": "Token Manipulation",
+                    "description": "Direct modification of activation tokens and certificates",
+                    "difficulty": "high",
+                    "tools_required": ["Token backup/restore", "pkeyconfig", "Certificate tools"],
+                    "success_rate": 0.7,
+                    "time_estimate": "2-3 hours",
+                    "risks": ["System corruption", "Validation loops"],
+                    "prerequisites": ["Token structure", "SPP internals"]
+                },
+                {
+                    "name": "OEM BIOS Injection",
+                    "description": "Inject SLIC tables for OEM activation",
+                    "difficulty": "very_high",
+                    "tools_required": ["SLIC toolkit", "Bootloader modifier", "ACPI tools"],
+                    "success_rate": 0.6,
+                    "time_estimate": "3-4 hours",
+                    "risks": ["Boot failures", "Secure Boot conflicts"],
+                    "prerequisites": ["BIOS/UEFI knowledge", "SLIC structure"]
+                }
+            ]
+        },
+        "ilok": {
+            "name": "iLok/PACE Anti-Piracy",
+            "vendor": "PACE Anti-Piracy Inc.",
+            "category": "hardware_dongle",
+            "description": "Hardware and software licensing for pro audio/video applications",
+            "versions": ["iLok 2", "iLok 3", "PACE Eden", "iLok Cloud"],
+            "common_applications": [
+                "Pro Tools",
+                "Cubase",
+                "Logic Pro",
+                "Adobe CC",
+                "Waves plugins",
+                "Native Instruments"
+            ],
+            "detection_signatures": [
+                "iLok License Manager",
+                "PACE License Support",
+                "iLok.com",
+                "eden.sys",
+                "PACESupport.dll",
+                "iLokHelper",
+                "com.paceap",
+                "iLok Cloud Session"
+            ],
+            "bypass_difficulty": "high",
+            "analysis_tips": [
+                "Monitor PACE driver communications",
+                "Analyze iLok License Manager traffic",
+                "Check for machine authorization",
+                "Look for cloud session tokens"
+            ],
+            "common_mistakes": [
+                "Not handling cloud licenses",
+                "Missing machine authorization",
+                "Incomplete USB emulation"
+            ],
+            "resources": ["iLok License Manager documentation", "PACE SDK information"],
+            "bypass_techniques": [
+                {
+                    "name": "iLok Emulation System",
+                    "description": "Complete iLok hardware and software emulation",
+                    "difficulty": "high",
+                    "tools_required": ["iLok Emulator", "License dumper", "USB emulator"],
+                    "success_rate": 0.7,
+                    "time_estimate": "3-5 days",
+                    "risks": ["Cloud validation", "Machine authorization"],
+                    "prerequisites": ["USB protocol", "PACE encryption"]
+                },
+                {
+                    "name": "License Memory Injection",
+                    "description": "Inject valid licenses directly into memory",
+                    "difficulty": "medium",
+                    "tools_required": ["Memory injector", "License generator"],
+                    "success_rate": 0.8,
+                    "time_estimate": "4-8 hours",
+                    "risks": ["Runtime checks", "License refresh"],
+                    "prerequisites": ["Memory manipulation", "License format"]
+                }
+            ]
+        },
+        "codemeter": {
+            "name": "CodeMeter",
+            "vendor": "Wibu-Systems AG",
+            "category": "hardware_dongle",
+            "description": "Comprehensive protection with hardware dongles and software activation",
+            "versions": ["CodeMeter 7.x", "CodeMeter 8.x"],
+            "common_applications": [
+                "Siemens software",
+                "Rockwell Automation",
+                "CAD/CAM tools",
+                "Industrial software"
+            ],
+            "detection_signatures": [
+                "CodeMeter.exe",
+                "CodeMeter Runtime Server",
+                "WibuKey",
+                "CmDongle",
+                "codemeter.service",
+                "WibuCm32.dll",
+                "WibuCm64.dll",
+                "CmActLicense"
+            ],
+            "bypass_difficulty": "very_high",
+            "analysis_tips": [
+                "Analyze CodeMeter API calls",
+                "Monitor runtime server communications",
+                "Check for CmContainer usage",
+                "Look for AxProtector integration"
+            ],
+            "common_mistakes": [
+                "Underestimating hardware security",
+                "Missing AxProtector layers",
+                "Incomplete API emulation"
+            ],
+            "resources": ["CodeMeter API documentation", "AxProtector information"],
+            "bypass_techniques": [
+                {
+                    "name": "CmDongle Emulation",
+                    "description": "Emulate CodeMeter dongle with full functionality",
+                    "difficulty": "very_high",
+                    "tools_required": ["CmDongle Emulator", "Wibu dumper"],
+                    "success_rate": 0.6,
+                    "time_estimate": "1-2 weeks",
+                    "risks": ["Firmware protection", "Secure chip"],
+                    "prerequisites": ["Hardware RE", "Cryptography"]
+                },
+                {
+                    "name": "Runtime Server Replacement",
+                    "description": "Replace CodeMeter Runtime with custom server",
+                    "difficulty": "high",
+                    "tools_required": ["Custom runtime", "Protocol analyzer"],
+                    "success_rate": 0.7,
+                    "time_estimate": "3-5 days",
+                    "risks": ["API changes", "Version detection"],
+                    "prerequisites": ["Server development", "Protocol RE"]
+                }
+            ]
+        },
+        "securom": {
+            "name": "SecuROM",
+            "vendor": "Sony DADC",
+            "category": "software_protection",
+            "description": "Disc-based copy protection with online activation and virtual machine obfuscation",
+            "versions": ["SecuROM 7.x", "SecuROM 8.x", "SecuROM PA"],
+            "common_applications": [
+                "Games (2005-2010 era)",
+                "BioShock",
+                "Mass Effect",
+                "GTA IV",
+                "Spore"
+            ],
+            "detection_signatures": [
+                "SecuROM",
+                "paul.dll",
+                "drm.data",
+                "securom_marker",
+                ".securom",
+                "CmdLineExt.dll",
+                "SecuROM_UserAccessService",
+                "securom32.dll",
+                "securom64.dll",
+                "SECDRV.SYS"
+            ],
+            "bypass_difficulty": "medium",
+            "analysis_tips": [
+                "Look for SecuROM launcher wrapper",
+                "Check for disc check triggers at runtime",
+                "Monitor registry for activation data",
+                "Analyze VM entry points for protected functions",
+                "Track hardware fingerprinting routines",
+                "Check for multiple trigger layers"
+            ],
+            "common_mistakes": [
+                "Missing delayed activation triggers",
+                "Incomplete VM code reconstruction",
+                "Not removing all SecuROM services",
+                "Ignoring online verification callbacks"
+            ],
+            "resources": [
+                "SecuROM version databases",
+                "Trigger point documentation",
+                "VM handler analysis guides"
+            ],
+            "bypass_techniques": [
+                {
+                    "name": "SecuROM Removal Tool",
+                    "description": "Complete removal of SecuROM protection layers including triggers",
+                    "difficulty": "medium",
+                    "tools_required": ["SecuROM Unpacker", "Trigger Mapper", "Import Fixer"],
+                    "success_rate": 0.85,
+                    "time_estimate": "4-8 hours",
+                    "risks": ["Trigger points", "Activation checks", "VM detection"],
+                    "prerequisites": ["SecuROM version identification", "PE reconstruction"]
+                },
+                {
+                    "name": "Activation Server Emulation",
+                    "description": "Emulate SecuROM activation servers for offline play",
+                    "difficulty": "low",
+                    "tools_required": ["SecuROM Activator", "Server Emulator"],
+                    "success_rate": 0.9,
+                    "time_estimate": "1-2 hours",
+                    "risks": ["Hardware binding", "Revocation lists"],
+                    "prerequisites": ["Network protocol knowledge"]
+                },
+                {
+                    "name": "VM Code Extraction",
+                    "description": "Extract and reconstruct virtualized code segments",
+                    "difficulty": "high",
+                    "tools_required": ["VM Analyzer", "Code Rebuilder", "IDA Pro"],
+                    "success_rate": 0.75,
+                    "time_estimate": "2-3 days",
+                    "risks": ["Incomplete extraction", "Logic errors"],
+                    "prerequisites": ["VM architecture understanding", "x86 assembly"]
+                }
+            ]
+        },
+        "starforce": {
+            "name": "StarForce",
+            "vendor": "Protection Technology",
+            "category": "software_protection",
+            "description": "Driver-level protection with anti-debugging, encryption, and disc checks",
+            "versions": ["StarForce 3", "StarForce 4", "StarForce 5", "StarForce ProActive"],
+            "common_applications": [
+                "Splinter Cell: Chaos Theory",
+                "King Kong",
+                "Trackmania",
+                "X3: Reunion"
+            ],
+            "detection_signatures": [
+                "StarForce",
+                "protect.dll",
+                "protect.sys",
+                "sfdrv01.sys",
+                "sfdrvup.exe",
+                "StarForce Helper",
+                "prodrv06.sys",
+                "StarForceA",
+                "sfhlp02.sys",
+                "Protection ID"
+            ],
+            "bypass_difficulty": "high",
+            "analysis_tips": [
+                "Disable StarForce drivers before analysis",
+                "Monitor IOCTL communications with drivers",
+                "Check for encrypted code sections",
+                "Look for IDE/SCSI miniport hooks",
+                "Analyze disc authentication protocol",
+                "Track thread creation for anti-debug"
+            ],
+            "common_mistakes": [
+                "Running with active StarForce drivers",
+                "Incomplete driver removal",
+                "Missing weak sector emulation",
+                "Not handling all protection versions"
+            ],
+            "resources": [
+                "StarForce driver analysis papers",
+                "Optical drive emulation guides",
+                "Protection removal tutorials"
+            ],
+            "bypass_techniques": [
+                {
+                    "name": "Driver-Level Neutralization",
+                    "description": "Disable StarForce drivers and protection mechanisms at kernel level",
+                    "difficulty": "high",
+                    "tools_required": ["Driver Disabler", "Kernel Debugger", "WinDbg"],
+                    "success_rate": 0.7,
+                    "time_estimate": "1 week",
+                    "risks": ["System instability", "BSOD", "Driver conflicts"],
+                    "prerequisites": ["Kernel debugging", "Driver analysis"]
+                },
+                {
+                    "name": "Protected Process Dumping",
+                    "description": "Dump and rebuild protected executable from memory",
+                    "difficulty": "medium",
+                    "tools_required": ["StarForce Dumper", "Process Monitor", "IAT Rebuilder"],
+                    "success_rate": 0.75,
+                    "time_estimate": "6-12 hours",
+                    "risks": ["Anti-dump tricks", "Encrypted sections"],
+                    "prerequisites": ["Memory forensics", "PE format"]
+                },
+                {
+                    "name": "Optical Drive Emulation",
+                    "description": "Perfect emulation of physical disc including weak sectors",
+                    "difficulty": "medium",
+                    "tools_required": ["DAEMON Tools", "Alcohol 120%", "StarForce Nightmare"],
+                    "success_rate": 0.8,
+                    "time_estimate": "2-4 hours",
+                    "risks": ["Blacklisting", "Version detection"],
+                    "prerequisites": ["Disc image formats", "SCSI emulation"]
+                }
+            ]
+        },
+        "arxan": {
+            "name": "Arxan TransformIT/GuardIT",
+            "vendor": "Arxan Technologies (now Digital.ai)",
+            "category": "software_protection",
+            "description": "Advanced application protection with code obfuscation, anti-tamper, and white-box cryptography",
+            "versions": ["TransformIT 5.x", "GuardIT 4.x", "EnsureIT"],
+            "common_applications": [
+                "Financial apps",
+                "Healthcare software",
+                "Gaming",
+                "Enterprise applications"
+            ],
+            "detection_signatures": [
+                "Arxan",
+                "TransformIT",
+                "GuardIT",
+                "White-box crypto",
+                "Control flow flattening",
+                "Instruction substitution",
+                "Anti-tamper checks",
+                "Integrity guards",
+                "Code mobility"
+            ],
+            "bypass_difficulty": "very_high",
+            "analysis_tips": [
+                "Start with control flow recovery",
+                "Map guard network before patching",
+                "Look for white-box crypto implementations",
+                "Identify obfuscation patterns systematically",
+                "Check for code mobility and polymorphism",
+                "Monitor for integrity check cascades"
+            ],
+            "common_mistakes": [
+                "Patching guards individually",
+                "Ignoring white-box crypto layers",
+                "Incomplete control flow recovery",
+                "Missing time-delayed checks"
+            ],
+            "resources": [
+                "Arxan protection whitepapers",
+                "Control flow deobfuscation research",
+                "White-box cryptography attacks"
+            ],
+            "bypass_techniques": [
+                {
+                    "name": "Advanced Deobfuscation Pipeline",
+                    "description": "Multi-stage deobfuscation with pattern recognition and symbolic execution",
+                    "difficulty": "very_high",
+                    "tools_required": ["Tigress Killer", "OLLVM Deobfuscator", "Miasm", "Z3"],
+                    "success_rate": 0.5,
+                    "time_estimate": "2-4 weeks",
+                    "risks": ["Incomplete deobfuscation", "False patterns", "Performance overhead"],
+                    "prerequisites": ["Compiler theory", "Symbolic execution", "Pattern matching"]
+                },
+                {
+                    "name": "White-Box Crypto Attack",
+                    "description": "Extract keys from white-box cryptographic implementations",
+                    "difficulty": "extreme",
+                    "tools_required": [
+                        "DFA tools",
+                        "SideChannelMarvels",
+                        "Tracer",
+                        "Custom scripts"
+                    ],
+                    "success_rate": 0.4,
+                    "time_estimate": "3-6 weeks",
+                    "risks": ["Key extraction failure", "Multiple key layers"],
+                    "prerequisites": ["Cryptanalysis", "DFA attacks", "White-box theory"]
+                },
+                {
+                    "name": "Guard Network Mapping",
+                    "description": "Map and neutralize all integrity guard checkpoints",
+                    "difficulty": "high",
+                    "tools_required": ["Guard Mapper", "Cross-reference analyzer", "IDA Pro"],
+                    "success_rate": 0.6,
+                    "time_estimate": "1-2 weeks",
+                    "risks": ["Hidden guards", "Cascading checks", "Time bombs"],
+                    "prerequisites": ["Graph analysis", "Anti-tamper knowledge"]
+                }
+            ]
+        },
+        "enigma": {
+            "name": "Enigma Protector",
+            "vendor": "The Enigma Protector Developers Team",
+            "category": "software_protection",
+            "description": "Executable protector with virtualization, licensing, and anti-debugging features",
+            "versions": ["6.x", "7.x"],
+            "common_applications": ["Shareware", "Commercial tools", "Game trainers", "Utilities"],
+            "detection_signatures": [
+                "Enigma",
+                "enigma1",
+                "enigma2",
+                "enigma_ide.dll",
+                ".enigma1",
+                ".enigma2",
+                "EP_RegHardwareID",
+                "EP_RegistrationLoadKeyA",
+                "EP_RegistrationSaveKeyA"
+            ],
+            "bypass_difficulty": "medium",
+            "analysis_tips": [
+                "Look for Enigma sections in PE header",
+                "Check registration API usage",
+                "Monitor hardware ID generation",
+                "Trace VM entry points",
+                "Analyze anti-debugging tricks"
+            ],
+            "common_mistakes": [
+                "Not fixing all imports",
+                "Missing VM protected code",
+                "Incomplete registration bypass"
+            ],
+            "resources": ["Enigma Protector documentation", "Unpacking tutorials"],
+            "bypass_techniques": [
+                {
+                    "name": "Enigma Unpacker Suite",
+                    "description": "Complete unpacking with OEP finding and import reconstruction",
+                    "difficulty": "medium",
+                    "tools_required": ["Enigma Unpacker", "OEP Finder", "ImportREC"],
+                    "success_rate": 0.8,
+                    "time_estimate": "3-6 hours",
+                    "risks": ["VM protected sections", "Anti-dump"],
+                    "prerequisites": ["Unpacking knowledge", "PE format"]
+                },
+                {
+                    "name": "Registration System Bypass",
+                    "description": "Bypass hardware-locked registration and licensing",
+                    "difficulty": "low",
+                    "tools_required": ["Registration patcher", "HWID spoofer"],
+                    "success_rate": 0.85,
+                    "time_estimate": "1-2 hours",
+                    "risks": ["Online verification", "Time checks"],
+                    "prerequisites": ["Registration system knowledge"]
+                }
+            ]
+        },
+        "asprotect": {
+            "name": "ASProtect/ASPack",
+            "vendor": "Alexey Solodovnikov",
+            "category": "software_protection",
+            "description": "Compression and protection with anti-debugging and CRC checking",
+            "versions": ["ASProtect 2.x", "ASPack 2.x"],
+            "common_applications": ["Shareware", "Cracking tools", "Small utilities"],
+            "detection_signatures": [
+                "ASProtect",
+                "ASPack",
+                ".aspack",
+                ".adata",
+                ".aspr",
+                "aspr_ide.dll",
+                "ASProtect SKE",
+                "CRC Check"
+            ],
+            "bypass_difficulty": "low",
+            "analysis_tips": [
+                "Find OEP with hardware breakpoints",
+                "Dump at OEP and fix imports",
+                "Check for CRC verification routines",
+                "Look for stolen bytes at entry point"
+            ],
+            "common_mistakes": [
+                "Not restoring stolen bytes",
+                "Missing CRC patches",
+                "Incomplete IAT reconstruction"
+            ],
+            "resources": ["ASProtect unpacking guides", "SKE documentation"],
+            "bypass_techniques": [
+                {
+                    "name": "Standard Unpacking",
+                    "description": "Unpack and rebuild original executable",
+                    "difficulty": "low",
+                    "tools_required": ["ASProtect Unpacker", "OllyDbg", "x64dbg"],
+                    "success_rate": 0.9,
+                    "time_estimate": "30-60 minutes",
+                    "risks": ["CRC checks", "Stolen bytes"],
+                    "prerequisites": ["Basic unpacking"]
+                },
+                {
+                    "name": "SKE License Bypass",
+                    "description": "Bypass ASProtect SKE registration system",
+                    "difficulty": "low",
+                    "tools_required": ["SKE patcher", "Registry editor"],
+                    "success_rate": 0.85,
+                    "time_estimate": "15-30 minutes",
+                    "risks": ["Hardware binding"],
+                    "prerequisites": ["Registry knowledge"]
+                }
+            ]
+        },
+        "obsidium": {
+            "name": "Obsidium",
+            "vendor": "Obsidium Software",
+            "category": "software_protection",
+            "description": "Software protection with strong encryption, anti-debugging, and licensing",
+            "versions": ["1.6.x", "1.7.x"],
+            "common_applications": ["Commercial software", "Games", "Professional tools"],
+            "detection_signatures": [
+                "Obsidium",
+                "obsidium.dll",
+                ".obsidium",
+                "Obsidium\u00a9",
+                "OBSIDIUM_SECTION",
+                "obsidium_vm"
+            ],
+            "bypass_difficulty": "high",
+            "analysis_tips": [
+                "Use anti-anti-debug plugins",
+                "Look for multiple protection layers",
+                "Analyze VM protected sections",
+                "Check license validation routines",
+                "Monitor API redirection"
+            ],
+            "common_mistakes": [
+                "Triggering anti-debug mechanisms",
+                "Incomplete layer removal",
+                "Missing VM code reconstruction"
+            ],
+            "resources": ["Obsidium SDK documentation", "Advanced unpacking techniques"],
+            "bypass_techniques": [
+                {
+                    "name": "Advanced Obsidium Unpacking",
+                    "description": "Multi-layer unpacking with anti-debug bypass",
+                    "difficulty": "high",
+                    "tools_required": ["Obsidium Unpacker", "ScyllaHide", "TitanEngine"],
+                    "success_rate": 0.65,
+                    "time_estimate": "1-2 days",
+                    "risks": ["VM protection", "Encrypted layers"],
+                    "prerequisites": ["Advanced unpacking", "Anti-anti-debug"]
+                },
+                {
+                    "name": "License Key Generation",
+                    "description": "Generate valid license keys through cryptanalysis",
+                    "difficulty": "high",
+                    "tools_required": ["Key analyzer", "Crypto tools"],
+                    "success_rate": 0.6,
+                    "time_estimate": "2-3 days",
+                    "risks": ["RSA protection", "Online validation"],
+                    "prerequisites": ["Cryptography", "Key algorithms"]
+                }
+            ]
+        },
+        "armadillo": {
+            "name": "SoftwarePassport/Armadillo",
+            "vendor": "Silicon Realms/Digital River",
+            "category": "software_protection",
+            "description": "Professional protection with nanomites, code splicing, and strategic code mutation",
+            "versions": ["8.x", "9.x"],
+            "common_applications": [
+                "Professional software",
+                "Engineering tools",
+                "Security applications"
+            ],
+            "detection_signatures": [
+                "Armadillo",
+                "SoftwarePassport",
+                ".arm",
+                ".data",
+                "ArmAccess.dll",
+                "nanomites",
+                "CopyMem2",
+                "Strategic Code Splicing"
+            ],
+            "bypass_difficulty": "very_high",
+            "analysis_tips": [
+                "Map all nanomite INT3 locations",
+                "Trace parent-child debugging architecture",
+                "Analyze code splicing points",
+                "Look for import elimination",
+                "Check for debugger detection loops",
+                "Monitor inter-process communication"
+            ],
+            "common_mistakes": [
+                "Not processing all nanomites",
+                "Incomplete code splicing recovery",
+                "Missing child process handling",
+                "Ignoring CopyMem2 protection"
+            ],
+            "resources": [
+                "Armadillo protection analysis papers",
+                "Nanomite handling techniques",
+                "Strategic code splicing documentation"
+            ],
+            "bypass_techniques": [
+                {
+                    "name": "Nanomite Processing",
+                    "description": "Process and remove nanomite protection with CC restoration",
+                    "difficulty": "very_high",
+                    "tools_required": ["ArmInline", "Nanomite Processor", "IDA Pro"],
+                    "success_rate": 0.6,
+                    "time_estimate": "1-2 weeks",
+                    "risks": ["Incomplete processing", "Logic errors"],
+                    "prerequisites": ["Nanomite theory", "Debugging expertise"]
+                },
+                {
+                    "name": "Code Splicing Reconstruction",
+                    "description": "Rebuild code sections split by strategic code splicing",
+                    "difficulty": "high",
+                    "tools_required": ["Code rebuilder", "Memory analyzer"],
+                    "success_rate": 0.65,
+                    "time_estimate": "3-5 days",
+                    "risks": ["Missing code fragments", "Incorrect reassembly"],
+                    "prerequisites": ["Code flow analysis", "Memory forensics"]
+                },
+                {
+                    "name": "Import Elimination Recovery",
+                    "description": "Recover eliminated imports and API redirections",
+                    "difficulty": "medium",
+                    "tools_required": ["Import reconstructor", "API tracer"],
+                    "success_rate": 0.75,
+                    "time_estimate": "4-8 hours",
+                    "risks": ["Hidden imports", "Dynamic resolution"],
+                    "prerequisites": ["IAT reconstruction", "API knowledge"]
+                }
+            ]
         }
-      ]
     },
-    "flexlm": {
-      "name": "FlexLM/FlexNet Publisher",
-      "vendor": "Flexera Software (formerly Macrovision)",
-      "category": "network_license",
-      "description": "Enterprise floating license management with client-server architecture",
-      "versions": [
-        "11.16.x",
-        "2019.x",
-        "2020.x",
-        "2021.x",
-        "2022.x"
-      ],
-      "common_applications": [
-        "ANSYS",
-        "Cadence",
-        "Synopsys",
-        "MATLAB",
-        "Mentor Graphics",
-        "Autodesk",
-        "PTC Creo"
-      ],
-      "detection_signatures": [
-        "lmgrd",
-        "lmutil",
-        "lmstat",
-        "lmreread",
-        "lmdown",
-        "FEATURE",
-        "INCREMENT",
-        "UPGRADE",
-        "PACKAGE",
-        "license.dat",
-        "license.lic",
-        ".flexlmrc",
-        "lc_checkout",
-        "lc_init",
-        "l_sg",
-        "l_key",
-        "vendor daemon",
-        "LM_LICENSE_FILE",
-        "FLEXLM_DIAGNOSTICS"
-      ],
-      "bypass_difficulty": "medium",
-      "analysis_tips": [
-        "Capture license checkout protocol with Wireshark",
-        "Analyze vendor daemon for custom validations",
-        "Check for borrowed license mechanisms",
-        "Monitor environment variables for license paths",
-        "Trace l_sg signature generation algorithm",
-        "Look for redundant license server configurations"
-      ],
-      "common_mistakes": [
-        "Not handling all FEATURE/INCREMENT lines",
-        "Missing vendor daemon handshake",
-        "Incomplete borrowed license emulation",
-        "Ignoring license queuing mechanisms",
-        "Not supporting all checkout options"
-      ],
-      "resources": [
-        "FlexLM Programmer's Guide",
-        "License Administration Guide",
-        "Network protocol specifications"
-      ],
-      "bypass_techniques": [
-        {
-          "name": "Complete License Server Emulation",
-          "description": "Full FlexLM server implementation with all protocol support",
-          "difficulty": "medium",
-          "tools_required": [
-            "FlexLM Server Emulator",
-            "License Generator",
-            "Wireshark"
-          ],
-          "success_rate": 0.95,
-          "time_estimate": "4-6 hours",
-          "risks": [
-            "Vendor daemon validation",
-            "Redundant servers"
-          ],
-          "prerequisites": [
-            "FlexLM protocol knowledge",
-            "Network programming"
-          ]
-        },
-        {
-          "name": "Advanced License Generation",
-          "description": "Generate valid licenses with correct signatures and encryption",
-          "difficulty": "high",
-          "tools_required": [
-            "FlexLM SDK",
-            "Signature calculator",
-            "Keygen tools"
-          ],
-          "success_rate": 0.8,
-          "time_estimate": "1-2 days",
-          "risks": [
-            "Vendor-specific validation",
-            "Hostid checks"
-          ],
-          "prerequisites": [
-            "License format expertise",
-            "Cryptographic skills"
-          ]
-        },
-        {
-          "name": "Binary Patching Suite",
-          "description": "Comprehensive patches for all FlexLM checks in binary",
-          "difficulty": "low",
-          "tools_required": [
-            "IDA Pro",
-            "x64dbg",
-            "Binary patcher"
-          ],
-          "success_rate": 0.85,
-          "time_estimate": "2-4 hours",
-          "risks": [
-            "Checksum validation",
-            "Self-checks"
-          ],
-          "prerequisites": [
-            "Binary analysis",
-            "Pattern matching"
-          ]
-        },
-        {
-          "name": "Vendor Daemon Replacement",
-          "description": "Replace vendor daemon with custom implementation",
-          "difficulty": "high",
-          "tools_required": [
-            "Ghidra",
-            "Custom daemon builder"
-          ],
-          "success_rate": 0.75,
-          "time_estimate": "2-3 days",
-          "risks": [
-            "Vendor-specific features",
-            "Encryption"
-          ],
-          "prerequisites": [
-            "Daemon protocol RE",
-            "Server programming"
-          ]
-        }
-      ]
+    "bypass_strategies": {
+        "hardware_dongle": [
+            "Dump dongle memory and emulate",
+            "Hook and redirect API calls",
+            "Patch validation checks",
+            "Use network redirection for network dongles",
+            "Analyze communication protocol"
+        ],
+        "network_license": [
+            "Set up local license server",
+            "Modify license files",
+            "Redirect network traffic",
+            "Patch timeout checks",
+            "Emulate vendor daemon"
+        ],
+        "software_protection": [
+            "Unpack/devirtualize protected code",
+            "Bypass anti-debugging checks",
+            "Reconstruct import table",
+            "Patch license validation",
+            "Generate valid keys"
+        ],
+        "gaming_drm": [
+            "Remove DRM wrapper",
+            "Emulate platform APIs",
+            "Patch online checks",
+            "Bypass integrity verification",
+            "Use scene releases as reference"
+        ],
+        "time_based": [
+            "Manipulate system time",
+            "Patch time checks",
+            "Extend trial period in storage",
+            "Bypass date validation",
+            "Reset trial data"
+        ]
     },
-    "winlicense": {
-      "name": "WinLicense/Themida",
-      "vendor": "Oreans Technologies",
-      "category": "software_protection",
-      "description": "Multi-layered protection with code virtualization, anti-debugging, and license management",
-      "versions": [
-        "3.0.x",
-        "3.1.x",
-        "3.2.x"
-      ],
-      "common_applications": [
-        "Commercial software",
-        "Games",
-        "Security tools",
-        "Industrial software"
-      ],
-      "detection_signatures": [
-        "WinLicense",
-        "Themida",
-        "SecureEngine",
-        "Oreans",
-        ".themida",
-        ".winlicense",
-        ".wlsection",
-        "SE_InitializeEngine",
-        "SE_ActivateLicense",
-        "WLRegGetStatus",
-        "VM macros",
-        "XBundler"
-      ],
-      "bypass_difficulty": "very_high",
-      "analysis_tips": [
-        "Use StrongOD or SharpOD plugin for anti-debug bypass",
-        "Look for SecureEngine initialization routines",
-        "Trace VM macro entry/exit points",
-        "Monitor registry for license data",
-        "Check for XBundler packed resources",
-        "Analyze exception handler chains"
-      ],
-      "common_mistakes": [
-        "Using standard debuggers without plugins",
-        "Not handling all protection layers",
-        "Incomplete IAT reconstruction",
-        "Missing stolen code restoration",
-        "Ignoring hardware fingerprinting"
-      ],
-      "resources": [
-        "Oreans UnpackMe challenges",
-        "Advanced Windows debugging guides",
-        "VM analysis frameworks"
-      ],
-      "bypass_techniques": [
-        {
-          "name": "Advanced VM Unpacking",
-          "description": "Multi-stage unpacking with VM handler reconstruction",
-          "difficulty": "very_high",
-          "tools_required": [
-            "Themida Unpacker",
-            "x64dbg",
-            "Scylla",
-            "TitanEngine"
-          ],
-          "success_rate": 0.6,
-          "time_estimate": "1-2 weeks",
-          "risks": [
-            "Multiple VM layers",
-            "Junk code",
-            "Anti-unpacking"
-          ],
-          "prerequisites": [
-            "VM architecture mastery",
-            "Advanced unpacking"
-          ]
-        },
-        {
-          "name": "License System Attack",
-          "description": "Direct attack on WinLicense licensing implementation",
-          "difficulty": "high",
-          "tools_required": [
-            "License analyzer",
-            "Registry tools",
-            "API hooks"
-          ],
-          "success_rate": 0.7,
-          "time_estimate": "3-5 days",
-          "risks": [
-            "Hardware locking",
-            "Trial checks"
-          ],
-          "prerequisites": [
-            "License system knowledge",
-            "Registry expertise"
-          ]
-        },
-        {
-          "name": "Kernel-Mode Bypass",
-          "description": "Bypass from kernel using driver-based approach",
-          "difficulty": "extreme",
-          "tools_required": [
-            "WinDbg",
-            "Custom driver",
-            "KPP bypass"
-          ],
-          "success_rate": 0.5,
-          "time_estimate": "2-3 weeks",
-          "risks": [
-            "BSOD",
-            "PatchGuard",
-            "Compatibility"
-          ],
-          "prerequisites": [
-            "Kernel programming",
-            "Windows internals"
-          ]
-        },
-        {
-          "name": "Hybrid Static-Dynamic Analysis",
-          "description": "Combine static devirtualization with dynamic tracing",
-          "difficulty": "very_high",
-          "tools_required": [
-            "IDA Pro",
-            "Ghidra",
-            "Intel Pin",
-            "DynamoRIO"
-          ],
-          "success_rate": 0.55,
-          "time_estimate": "1-3 weeks",
-          "risks": [
-            "Incomplete analysis",
-            "Performance overhead"
-          ],
-          "prerequisites": [
-            "Binary analysis expertise",
-            "Instrumentation"
-          ]
-        }
-      ]
-    },
-    "vmprotect": {
-      "name": "VMProtect",
-      "vendor": "VMProtect Software",
-      "category": "virtualization",
-      "description": "Industry-leading code virtualization with custom VM architecture and mutations",
-      "versions": [
-        "3.5.x",
-        "3.6.x",
-        "3.7.x",
-        "3.8.x"
-      ],
-      "common_applications": [
-        "High-value software",
-        "DRM systems",
-        "Anti-cheat engines",
-        "Cryptographic tools"
-      ],
-      "detection_signatures": [
-        "VMProtect",
-        ".vmp0",
-        ".vmp1",
-        ".vmp2",
-        "VMProtectBegin",
-        "VMProtectEnd",
-        "VMProtectIsDebuggerPresent",
-        "VMProtectIsVirtualMachinePresent",
-        "Virtualized sections",
-        "Heavy obfuscation",
-        "Mutated code patterns"
-      ],
-      "bypass_difficulty": "extreme",
-      "analysis_tips": [
-        "Map VM handler types and frequencies",
-        "Identify VM context structure layout",
-        "Track stack-based VM operations",
-        "Analyze obfuscated constant calculations",
-        "Use execution trace comparison",
-        "Look for licensing check patterns in VM"
-      ],
-      "common_mistakes": [
-        "Direct debugging attempts",
-        "Ignoring mutation engine",
-        "Incomplete handler identification",
-        "Not handling all VM instruction types",
-        "Missing indirect jump resolution"
-      ],
-      "resources": [
-        "VMProtect internals research papers",
-        "VTIL framework documentation",
-        "Devirtualization academic papers"
-      ],
-      "bypass_techniques": [
-        {
-          "name": "Full Devirtualization Framework",
-          "description": "Complete VM architecture reversal and x86/x64 reconstruction",
-          "difficulty": "extreme",
-          "tools_required": [
-            "VMPImportFixer",
-            "NoVmp",
-            "VTIL-Core",
-            "VMPDump",
-            "Scylla"
-          ],
-          "success_rate": 0.3,
-          "time_estimate": "1-2 months",
-          "risks": [
-            "Incomplete conversion",
-            "Logic errors",
-            "Mutations"
-          ],
-          "prerequisites": [
-            "VM internals expertise",
-            "Compiler theory",
-            "Pattern recognition"
-          ]
-        },
-        {
-          "name": "Symbolic Execution Engine",
-          "description": "Use symbolic execution to extract program logic",
-          "difficulty": "very_high",
-          "tools_required": [
-            "Triton",
-            "angr",
-            "Miasm",
-            "Z3 solver"
-          ],
-          "success_rate": 0.4,
-          "time_estimate": "2-3 weeks",
-          "risks": [
-            "Path explosion",
-            "Constraint complexity"
-          ],
-          "prerequisites": [
-            "Symbolic execution",
-            "SAT/SMT solvers"
-          ]
-        },
-        {
-          "name": "Differential Cryptanalysis",
-          "description": "Analyze VM handler patterns through differential analysis",
-          "difficulty": "very_high",
-          "tools_required": [
-            "Binary diffing tools",
-            "Statistical analyzers"
-          ],
-          "success_rate": 0.35,
-          "time_estimate": "2-4 weeks",
-          "risks": [
-            "False patterns",
-            "Mutation variations"
-          ],
-          "prerequisites": [
-            "Cryptanalysis",
-            "Statistical analysis"
-          ]
-        },
-        {
-          "name": "Hardware-Assisted Tracing",
-          "description": "Use Intel PT/ARM CoreSight for complete execution trace",
-          "difficulty": "high",
-          "tools_required": [
-            "Intel PT",
-            "WinIPT",
-            "Hardware debugger"
-          ],
-          "success_rate": 0.5,
-          "time_estimate": "1 week",
-          "risks": [
-            "Trace size",
-            "Performance impact"
-          ],
-          "prerequisites": [
-            "Hardware tracing",
-            "Big data analysis"
-          ]
-        }
-      ]
-    },
-    "steam_ceg": {
-      "name": "Steam CEG/DRM Wrapper",
-      "vendor": "Valve Corporation",
-      "category": "gaming_drm",
-      "description": "Custom Executable Generation with user-specific binaries and Steam integration",
-      "versions": [
-        "CEG v3",
-        "CEG v4",
-        "Steam DRM Wrapper 3.x"
-      ],
-      "common_applications": [
-        "AAA games",
-        "Indie games",
-        "VR titles",
-        "Software on Steam"
-      ],
-      "detection_signatures": [
-        "steam_api.dll",
-        "steam_api64.dll",
-        "steamclient.dll",
-        "SteamAPI_Init",
-        "SteamAPI_RestartAppIfNecessary",
-        "tier0_s.dll",
-        "vstdlib_s.dll",
-        ".bind section",
-        "Steam DRM",
-        "drm_wrapper",
-        "steam_appid.txt"
-      ],
-      "bypass_difficulty": "medium",
-      "analysis_tips": [
-        "Check .bind section for CEG data",
-        "Monitor Steam IPC communications",
-        "Look for steam_appid.txt requirements",
-        "Analyze ISteamUser interface calls",
-        "Check for achievement and stats APIs",
-        "Monitor DLC and depot checks"
-      ],
-      "common_mistakes": [
-        "Not handling all Steam interfaces",
-        "Missing steamclient dependencies",
-        "Incomplete DLC emulation",
-        "Ignoring cloud save features",
-        "Not patching overlay hooks"
-      ],
-      "resources": [
-        "Steamworks SDK documentation",
-        "Steam API reference",
-        "CEG technical details"
-      ],
-      "bypass_techniques": [
-        {
-          "name": "Advanced CEG Unwrapping",
-          "description": "Complete CEG removal with AES key extraction",
-          "difficulty": "medium",
-          "tools_required": [
-            "Steamless_CLI",
-            "Steamless_GUI",
-            "CEGPolisher",
-            "x64dbg"
-          ],
-          "success_rate": 0.9,
-          "time_estimate": "1-3 hours",
-          "risks": [
-            "Additional protections",
-            "Integrity checks"
-          ],
-          "prerequisites": [
-            "CEG format knowledge",
-            "Encryption basics"
-          ]
-        },
-        {
-          "name": "Full Steam API Emulation",
-          "description": "Complete Steam client and overlay emulation",
-          "difficulty": "low",
-          "tools_required": [
-            "GoldbergSteamEmu",
-            "SmartSteamEmu",
-            "ALI213Steam"
-          ],
-          "success_rate": 0.95,
-          "time_estimate": "30 minutes",
-          "risks": [
-            "Multiplayer disabled",
-            "Cloud saves broken"
-          ],
-          "prerequisites": [
-            "Steam API understanding"
-          ]
-        },
-        {
-          "name": "DLC and Workshop Unlock",
-          "description": "Enable all DLC and workshop content",
-          "difficulty": "low",
-          "tools_required": [
-            "CreamAPI_4.5.0.0",
-            "SteamWorkshopDownloader",
-            "DepotDownloader"
-          ],
-          "success_rate": 0.9,
-          "time_estimate": "15 minutes",
-          "risks": [
-            "Version mismatches",
-            "Missing content"
-          ],
-          "prerequisites": [
-            "Steam file structure"
-          ]
-        },
-        {
-          "name": "Binary Reconstruction",
-          "description": "Rebuild clean executable from memory dump",
-          "difficulty": "medium",
-          "tools_required": [
-            "PEDump",
-            "Scylla_x64",
-            "ImportREC",
-            "LordPE"
-          ],
-          "success_rate": 0.8,
-          "time_estimate": "2-4 hours",
-          "risks": [
-            "Incomplete dumps",
-            "Runtime dependencies"
-          ],
-          "prerequisites": [
-            "PE format expertise",
-            "Memory analysis"
-          ]
-        }
-      ]
-    },
-    "denuvo": {
-      "name": "Denuvo Anti-Tamper",
-      "vendor": "Denuvo Software Solutions GmbH (Irdeto)",
-      "category": "gaming_drm",
-      "description": "Multi-layered anti-tamper with VM obfuscation, online activation, and performance impact",
-      "versions": [
-        "v4",
-        "v5",
-        "v6",
-        "v7",
-        "v8",
-        "v9",
-        "v10",
-        "v11",
-        "v12+"
-      ],
-      "common_applications": [
-        "AAA games",
-        "Major publishers",
-        "Sports titles",
-        "Racing games"
-      ],
-      "detection_signatures": [
-        "Massive code bloat",
-        "VM-protected sections",
-        "Trigger-based checks",
-        "CPUID checks",
-        "Hardware fingerprinting",
-        "Online activation",
-        "Performance degradation",
-        "SSD write amplification"
-      ],
-      "bypass_difficulty": "extreme",
-      "analysis_tips": [
-        "Map all VM entry points systematically",
-        "Monitor performance hotspots for triggers",
-        "Analyze hardware fingerprinting routines",
-        "Track online activation protocol",
-        "Look for time-bomb triggers",
-        "Check for integrity validation loops"
-      ],
-      "common_mistakes": [
-        "Underestimating protection complexity",
-        "Missing delayed triggers",
-        "Public discussion of methods",
-        "Not handling all game versions",
-        "Incomplete VM analysis"
-      ],
-      "resources": [
-        "Scene group technical notes",
-        "Performance impact studies",
-        "Limited public research"
-      ],
-      "bypass_techniques": [
-        {
-          "name": "Complete Trigger Mapping",
-          "description": "Identify and neutralize all protection triggers (100-300+)",
-          "difficulty": "extreme",
-          "tools_required": [
-            "Ghidra",
-            "Custom trigger mapper",
-            "Execution tracer"
-          ],
-          "success_rate": 0.2,
-          "time_estimate": "2-6 months",
-          "risks": [
-            "Hidden triggers",
-            "Version updates",
-            "Server checks"
-          ],
-          "prerequisites": [
-            "Expert RE",
-            "VM analysis",
-            "Extreme patience"
-          ]
-        },
-        {
-          "name": "Binary Reconstruction Pipeline",
-          "description": "Rebuild clean binary from protected version",
-          "difficulty": "extreme",
-          "tools_required": [
-            "Custom rebuilder",
-            "VM devirtualizer",
-            "Flow analyzer"
-          ],
-          "success_rate": 0.15,
-          "time_estimate": "3-8 months",
-          "risks": [
-            "Incomplete reconstruction",
-            "Logic errors"
-          ],
-          "prerequisites": [
-            "Team coordination",
-            "Deep binary knowledge"
-          ]
-        },
-        {
-          "name": "Hardware ID Spoofing",
-          "description": "Bypass hardware binding and activation",
-          "difficulty": "high",
-          "tools_required": [
-            "HWID spoofer",
-            "Network interceptor"
-          ],
-          "success_rate": 0.3,
-          "time_estimate": "1-2 weeks",
-          "risks": [
-            "Ban waves",
-            "Server validation"
-          ],
-          "prerequisites": [
-            "Hardware emulation",
-            "Protocol analysis"
-          ]
-        }
-      ]
-    },
-    "microsoft_activation": {
-      "name": "Microsoft Product Activation",
-      "vendor": "Microsoft Corporation",
-      "category": "enterprise",
-      "description": "Multi-method activation including KMS, MAK, OEM, and digital licenses",
-      "versions": [
-        "Windows 10/11",
-        "Server 2016-2022",
-        "Office 2016-2021/365"
-      ],
-      "common_applications": [
-        "Windows OS",
-        "Microsoft Office",
-        "Visual Studio",
-        "SQL Server",
-        "Exchange"
-      ],
-      "detection_signatures": [
-        "SLMgr.vbs",
-        "OSPP.vbs",
-        "sppsvc.exe",
-        "osppsvc.exe",
-        "Software Protection Platform",
-        "KMS",
-        "MAK",
-        "GVLK",
-        "tokens.dat",
-        "Digital License",
-        "Product Key"
-      ],
-      "bypass_difficulty": "medium",
-      "analysis_tips": [
-        "Monitor SPP service communications",
-        "Check clipup.exe for license refresh",
-        "Analyze tokens.dat structure",
-        "Look for KMS client machine ID",
-        "Check scheduled tasks for validation",
-        "Monitor genuine validation URLs"
-      ],
-      "common_mistakes": [
-        "Not handling all activation methods",
-        "Missing Office integration points",
-        "Incomplete token restoration",
-        "Ignoring cloud-based checks",
-        "Not preserving HWID consistency"
-      ],
-      "resources": [
-        "Volume Activation Management Tool",
-        "KMS client setup keys",
-        "Activation troubleshooting guides"
-      ],
-      "bypass_techniques": [
-        {
-          "name": "Advanced KMS Emulation",
-          "description": "Full KMS v6 protocol implementation with all validation",
-          "difficulty": "medium",
-          "tools_required": [
-            "KMS Server Emulator",
-            "vlmcsd",
-            "py-kms"
-          ],
-          "success_rate": 0.95,
-          "time_estimate": "20 minutes",
-          "risks": [
-            "Genuine validation failures",
-            "Update detection"
-          ],
-          "prerequisites": [
-            "KMS protocol knowledge",
-            "Network setup"
-          ]
-        },
-        {
-          "name": "HWID/Digital License Generation",
-          "description": "Generate permanent digital license with HWID binding",
-          "difficulty": "high",
-          "tools_required": [
-            "HWID generator",
-            "License injector",
-            "gatherosstate.exe"
-          ],
-          "success_rate": 0.8,
-          "time_estimate": "1-2 hours",
-          "risks": [
-            "Hardware changes",
-            "Cloud validation"
-          ],
-          "prerequisites": [
-            "Licensing system internals",
-            "HWID structure"
-          ]
-        },
-        {
-          "name": "Token Manipulation",
-          "description": "Direct modification of activation tokens and certificates",
-          "difficulty": "high",
-          "tools_required": [
-            "Token backup/restore",
-            "pkeyconfig",
-            "Certificate tools"
-          ],
-          "success_rate": 0.7,
-          "time_estimate": "2-3 hours",
-          "risks": [
-            "System corruption",
-            "Validation loops"
-          ],
-          "prerequisites": [
-            "Token structure",
-            "SPP internals"
-          ]
-        },
-        {
-          "name": "OEM BIOS Injection",
-          "description": "Inject SLIC tables for OEM activation",
-          "difficulty": "very_high",
-          "tools_required": [
-            "SLIC toolkit",
-            "Bootloader modifier",
-            "ACPI tools"
-          ],
-          "success_rate": 0.6,
-          "time_estimate": "3-4 hours",
-          "risks": [
-            "Boot failures",
-            "Secure Boot conflicts"
-          ],
-          "prerequisites": [
-            "BIOS/UEFI knowledge",
-            "SLIC structure"
-          ]
-        }
-      ]
-    },
-    "ilok": {
-      "name": "iLok/PACE Anti-Piracy",
-      "vendor": "PACE Anti-Piracy Inc.",
-      "category": "hardware_dongle",
-      "description": "Hardware and software licensing for pro audio/video applications",
-      "versions": [
-        "iLok 2",
-        "iLok 3",
-        "PACE Eden",
-        "iLok Cloud"
-      ],
-      "common_applications": [
-        "Pro Tools",
-        "Cubase",
-        "Logic Pro",
-        "Adobe CC",
-        "Waves plugins",
-        "Native Instruments"
-      ],
-      "detection_signatures": [
-        "iLok License Manager",
-        "PACE License Support",
-        "iLok.com",
-        "eden.sys",
-        "PACESupport.dll",
-        "iLokHelper",
-        "com.paceap",
-        "iLok Cloud Session"
-      ],
-      "bypass_difficulty": "high",
-      "analysis_tips": [
-        "Monitor PACE driver communications",
-        "Analyze iLok License Manager traffic",
-        "Check for machine authorization",
-        "Look for cloud session tokens"
-      ],
-      "common_mistakes": [
-        "Not handling cloud licenses",
-        "Missing machine authorization",
-        "Incomplete USB emulation"
-      ],
-      "resources": [
-        "iLok License Manager documentation",
-        "PACE SDK information"
-      ],
-      "bypass_techniques": [
-        {
-          "name": "iLok Emulation System",
-          "description": "Complete iLok hardware and software emulation",
-          "difficulty": "high",
-          "tools_required": [
-            "iLok Emulator",
-            "License dumper",
-            "USB emulator"
-          ],
-          "success_rate": 0.7,
-          "time_estimate": "3-5 days",
-          "risks": [
-            "Cloud validation",
-            "Machine authorization"
-          ],
-          "prerequisites": [
-            "USB protocol",
-            "PACE encryption"
-          ]
-        },
-        {
-          "name": "License Memory Injection",
-          "description": "Inject valid licenses directly into memory",
-          "difficulty": "medium",
-          "tools_required": [
-            "Memory injector",
-            "License generator"
-          ],
-          "success_rate": 0.8,
-          "time_estimate": "4-8 hours",
-          "risks": [
-            "Runtime checks",
-            "License refresh"
-          ],
-          "prerequisites": [
-            "Memory manipulation",
-            "License format"
-          ]
-        }
-      ]
-    },
-    "codemeter": {
-      "name": "CodeMeter",
-      "vendor": "Wibu-Systems AG",
-      "category": "hardware_dongle",
-      "description": "Comprehensive protection with hardware dongles and software activation",
-      "versions": [
-        "CodeMeter 7.x",
-        "CodeMeter 8.x"
-      ],
-      "common_applications": [
-        "Siemens software",
-        "Rockwell Automation",
-        "CAD/CAM tools",
-        "Industrial software"
-      ],
-      "detection_signatures": [
-        "CodeMeter.exe",
-        "CodeMeter Runtime Server",
-        "WibuKey",
-        "CmDongle",
-        "codemeter.service",
-        "WibuCm32.dll",
-        "WibuCm64.dll",
-        "CmActLicense"
-      ],
-      "bypass_difficulty": "very_high",
-      "analysis_tips": [
-        "Analyze CodeMeter API calls",
-        "Monitor runtime server communications",
-        "Check for CmContainer usage",
-        "Look for AxProtector integration"
-      ],
-      "common_mistakes": [
-        "Underestimating hardware security",
-        "Missing AxProtector layers",
-        "Incomplete API emulation"
-      ],
-      "resources": [
-        "CodeMeter API documentation",
-        "AxProtector information"
-      ],
-      "bypass_techniques": [
-        {
-          "name": "CmDongle Emulation",
-          "description": "Emulate CodeMeter dongle with full functionality",
-          "difficulty": "very_high",
-          "tools_required": [
-            "CmDongle Emulator",
-            "Wibu dumper"
-          ],
-          "success_rate": 0.6,
-          "time_estimate": "1-2 weeks",
-          "risks": [
-            "Firmware protection",
-            "Secure chip"
-          ],
-          "prerequisites": [
-            "Hardware RE",
-            "Cryptography"
-          ]
-        },
-        {
-          "name": "Runtime Server Replacement",
-          "description": "Replace CodeMeter Runtime with custom server",
-          "difficulty": "high",
-          "tools_required": [
-            "Custom runtime",
-            "Protocol analyzer"
-          ],
-          "success_rate": 0.7,
-          "time_estimate": "3-5 days",
-          "risks": [
-            "API changes",
-            "Version detection"
-          ],
-          "prerequisites": [
-            "Server development",
-            "Protocol RE"
-          ]
-        }
-      ]
-    },
-    "securom": {
-      "name": "SecuROM",
-      "vendor": "Sony DADC",
-      "category": "software_protection",
-      "description": "Disc-based copy protection with online activation and virtual machine obfuscation",
-      "versions": [
-        "SecuROM 7.x",
-        "SecuROM 8.x",
-        "SecuROM PA"
-      ],
-      "common_applications": [
-        "Games (2005-2010 era)",
-        "BioShock",
-        "Mass Effect",
-        "GTA IV",
-        "Spore"
-      ],
-      "detection_signatures": [
-        "SecuROM",
-        "paul.dll",
-        "drm.data",
-        "securom_marker",
-        ".securom",
-        "CmdLineExt.dll",
-        "SecuROM_UserAccessService",
-        "securom32.dll",
-        "securom64.dll",
-        "SECDRV.SYS"
-      ],
-      "bypass_difficulty": "medium",
-      "analysis_tips": [
-        "Look for SecuROM launcher wrapper",
-        "Check for disc check triggers at runtime",
-        "Monitor registry for activation data",
-        "Analyze VM entry points for protected functions",
-        "Track hardware fingerprinting routines",
-        "Check for multiple trigger layers"
-      ],
-      "common_mistakes": [
-        "Missing delayed activation triggers",
-        "Incomplete VM code reconstruction",
-        "Not removing all SecuROM services",
-        "Ignoring online verification callbacks"
-      ],
-      "resources": [
-        "SecuROM version databases",
-        "Trigger point documentation",
-        "VM handler analysis guides"
-      ],
-      "bypass_techniques": [
-        {
-          "name": "SecuROM Removal Tool",
-          "description": "Complete removal of SecuROM protection layers including triggers",
-          "difficulty": "medium",
-          "tools_required": [
-            "SecuROM Unpacker",
-            "Trigger Mapper",
-            "Import Fixer"
-          ],
-          "success_rate": 0.85,
-          "time_estimate": "4-8 hours",
-          "risks": [
-            "Trigger points",
-            "Activation checks",
-            "VM detection"
-          ],
-          "prerequisites": [
-            "SecuROM version identification",
-            "PE reconstruction"
-          ]
-        },
-        {
-          "name": "Activation Server Emulation",
-          "description": "Emulate SecuROM activation servers for offline play",
-          "difficulty": "low",
-          "tools_required": [
-            "SecuROM Activator",
-            "Server Emulator"
-          ],
-          "success_rate": 0.9,
-          "time_estimate": "1-2 hours",
-          "risks": [
-            "Hardware binding",
-            "Revocation lists"
-          ],
-          "prerequisites": [
-            "Network protocol knowledge"
-          ]
-        },
-        {
-          "name": "VM Code Extraction",
-          "description": "Extract and reconstruct virtualized code segments",
-          "difficulty": "high",
-          "tools_required": [
-            "VM Analyzer",
-            "Code Rebuilder",
-            "IDA Pro"
-          ],
-          "success_rate": 0.75,
-          "time_estimate": "2-3 days",
-          "risks": [
-            "Incomplete extraction",
-            "Logic errors"
-          ],
-          "prerequisites": [
-            "VM architecture understanding",
-            "x86 assembly"
-          ]
-        }
-      ]
-    },
-    "starforce": {
-      "name": "StarForce",
-      "vendor": "Protection Technology",
-      "category": "software_protection",
-      "description": "Driver-level protection with anti-debugging, encryption, and disc checks",
-      "versions": [
-        "StarForce 3",
-        "StarForce 4",
-        "StarForce 5",
-        "StarForce ProActive"
-      ],
-      "common_applications": [
-        "Splinter Cell: Chaos Theory",
-        "King Kong",
-        "Trackmania",
-        "X3: Reunion"
-      ],
-      "detection_signatures": [
-        "StarForce",
-        "protect.dll",
-        "protect.sys",
-        "sfdrv01.sys",
-        "sfdrvup.exe",
-        "StarForce Helper",
-        "prodrv06.sys",
-        "StarForceA",
-        "sfhlp02.sys",
-        "Protection ID"
-      ],
-      "bypass_difficulty": "high",
-      "analysis_tips": [
-        "Disable StarForce drivers before analysis",
-        "Monitor IOCTL communications with drivers",
-        "Check for encrypted code sections",
-        "Look for IDE/SCSI miniport hooks",
-        "Analyze disc authentication protocol",
-        "Track thread creation for anti-debug"
-      ],
-      "common_mistakes": [
-        "Running with active StarForce drivers",
-        "Incomplete driver removal",
-        "Missing weak sector emulation",
-        "Not handling all protection versions"
-      ],
-      "resources": [
-        "StarForce driver analysis papers",
-        "Optical drive emulation guides",
-        "Protection removal tutorials"
-      ],
-      "bypass_techniques": [
-        {
-          "name": "Driver-Level Neutralization",
-          "description": "Disable StarForce drivers and protection mechanisms at kernel level",
-          "difficulty": "high",
-          "tools_required": [
-            "Driver Disabler",
-            "Kernel Debugger",
-            "WinDbg"
-          ],
-          "success_rate": 0.7,
-          "time_estimate": "1 week",
-          "risks": [
-            "System instability",
-            "BSOD",
-            "Driver conflicts"
-          ],
-          "prerequisites": [
-            "Kernel debugging",
-            "Driver analysis"
-          ]
-        },
-        {
-          "name": "Protected Process Dumping",
-          "description": "Dump and rebuild protected executable from memory",
-          "difficulty": "medium",
-          "tools_required": [
-            "StarForce Dumper",
-            "Process Monitor",
-            "IAT Rebuilder"
-          ],
-          "success_rate": 0.75,
-          "time_estimate": "6-12 hours",
-          "risks": [
-            "Anti-dump tricks",
-            "Encrypted sections"
-          ],
-          "prerequisites": [
-            "Memory forensics",
-            "PE format"
-          ]
-        },
-        {
-          "name": "Optical Drive Emulation",
-          "description": "Perfect emulation of physical disc including weak sectors",
-          "difficulty": "medium",
-          "tools_required": [
-            "DAEMON Tools",
-            "Alcohol 120%",
-            "StarForce Nightmare"
-          ],
-          "success_rate": 0.8,
-          "time_estimate": "2-4 hours",
-          "risks": [
-            "Blacklisting",
-            "Version detection"
-          ],
-          "prerequisites": [
-            "Disc image formats",
-            "SCSI emulation"
-          ]
-        }
-      ]
-    },
-    "arxan": {
-      "name": "Arxan TransformIT/GuardIT",
-      "vendor": "Arxan Technologies (now Digital.ai)",
-      "category": "software_protection",
-      "description": "Advanced application protection with code obfuscation, anti-tamper, and white-box cryptography",
-      "versions": [
-        "TransformIT 5.x",
-        "GuardIT 4.x",
-        "EnsureIT"
-      ],
-      "common_applications": [
-        "Financial apps",
-        "Healthcare software",
-        "Gaming",
-        "Enterprise applications"
-      ],
-      "detection_signatures": [
-        "Arxan",
-        "TransformIT",
-        "GuardIT",
-        "White-box crypto",
-        "Control flow flattening",
-        "Instruction substitution",
-        "Anti-tamper checks",
-        "Integrity guards",
-        "Code mobility"
-      ],
-      "bypass_difficulty": "very_high",
-      "analysis_tips": [
-        "Start with control flow recovery",
-        "Map guard network before patching",
-        "Look for white-box crypto implementations",
-        "Identify obfuscation patterns systematically",
-        "Check for code mobility and polymorphism",
-        "Monitor for integrity check cascades"
-      ],
-      "common_mistakes": [
-        "Patching guards individually",
-        "Ignoring white-box crypto layers",
-        "Incomplete control flow recovery",
-        "Missing time-delayed checks"
-      ],
-      "resources": [
-        "Arxan protection whitepapers",
-        "Control flow deobfuscation research",
-        "White-box cryptography attacks"
-      ],
-      "bypass_techniques": [
-        {
-          "name": "Advanced Deobfuscation Pipeline",
-          "description": "Multi-stage deobfuscation with pattern recognition and symbolic execution",
-          "difficulty": "very_high",
-          "tools_required": [
-            "Tigress Killer",
-            "OLLVM Deobfuscator",
-            "Miasm",
-            "Z3"
-          ],
-          "success_rate": 0.5,
-          "time_estimate": "2-4 weeks",
-          "risks": [
-            "Incomplete deobfuscation",
-            "False patterns",
-            "Performance overhead"
-          ],
-          "prerequisites": [
-            "Compiler theory",
-            "Symbolic execution",
-            "Pattern matching"
-          ]
-        },
-        {
-          "name": "White-Box Crypto Attack",
-          "description": "Extract keys from white-box cryptographic implementations",
-          "difficulty": "extreme",
-          "tools_required": [
-            "DFA tools",
-            "SideChannelMarvels",
-            "Tracer",
-            "Custom scripts"
-          ],
-          "success_rate": 0.4,
-          "time_estimate": "3-6 weeks",
-          "risks": [
-            "Key extraction failure",
-            "Multiple key layers"
-          ],
-          "prerequisites": [
-            "Cryptanalysis",
-            "DFA attacks",
-            "White-box theory"
-          ]
-        },
-        {
-          "name": "Guard Network Mapping",
-          "description": "Map and neutralize all integrity guard checkpoints",
-          "difficulty": "high",
-          "tools_required": [
-            "Guard Mapper",
-            "Cross-reference analyzer",
-            "IDA Pro"
-          ],
-          "success_rate": 0.6,
-          "time_estimate": "1-2 weeks",
-          "risks": [
-            "Hidden guards",
-            "Cascading checks",
-            "Time bombs"
-          ],
-          "prerequisites": [
-            "Graph analysis",
-            "Anti-tamper knowledge"
-          ]
-        }
-      ]
-    },
-    "enigma": {
-      "name": "Enigma Protector",
-      "vendor": "The Enigma Protector Developers Team",
-      "category": "software_protection",
-      "description": "Executable protector with virtualization, licensing, and anti-debugging features",
-      "versions": [
-        "6.x",
-        "7.x"
-      ],
-      "common_applications": [
-        "Shareware",
-        "Commercial tools",
-        "Game trainers",
-        "Utilities"
-      ],
-      "detection_signatures": [
-        "Enigma",
-        "enigma1",
-        "enigma2",
-        "enigma_ide.dll",
-        ".enigma1",
-        ".enigma2",
-        "EP_RegHardwareID",
-        "EP_RegistrationLoadKeyA",
-        "EP_RegistrationSaveKeyA"
-      ],
-      "bypass_difficulty": "medium",
-      "analysis_tips": [
-        "Look for Enigma sections in PE header",
-        "Check registration API usage",
-        "Monitor hardware ID generation",
-        "Trace VM entry points",
-        "Analyze anti-debugging tricks"
-      ],
-      "common_mistakes": [
-        "Not fixing all imports",
-        "Missing VM protected code",
-        "Incomplete registration bypass"
-      ],
-      "resources": [
-        "Enigma Protector documentation",
-        "Unpacking tutorials"
-      ],
-      "bypass_techniques": [
-        {
-          "name": "Enigma Unpacker Suite",
-          "description": "Complete unpacking with OEP finding and import reconstruction",
-          "difficulty": "medium",
-          "tools_required": [
-            "Enigma Unpacker",
-            "OEP Finder",
-            "ImportREC"
-          ],
-          "success_rate": 0.8,
-          "time_estimate": "3-6 hours",
-          "risks": [
-            "VM protected sections",
-            "Anti-dump"
-          ],
-          "prerequisites": [
-            "Unpacking knowledge",
-            "PE format"
-          ]
-        },
-        {
-          "name": "Registration System Bypass",
-          "description": "Bypass hardware-locked registration and licensing",
-          "difficulty": "low",
-          "tools_required": [
-            "Registration patcher",
-            "HWID spoofer"
-          ],
-          "success_rate": 0.85,
-          "time_estimate": "1-2 hours",
-          "risks": [
-            "Online verification",
-            "Time checks"
-          ],
-          "prerequisites": [
-            "Registration system knowledge"
-          ]
-        }
-      ]
-    },
-    "asprotect": {
-      "name": "ASProtect/ASPack",
-      "vendor": "Alexey Solodovnikov",
-      "category": "software_protection",
-      "description": "Compression and protection with anti-debugging and CRC checking",
-      "versions": [
-        "ASProtect 2.x",
-        "ASPack 2.x"
-      ],
-      "common_applications": [
-        "Shareware",
-        "Cracking tools",
-        "Small utilities"
-      ],
-      "detection_signatures": [
-        "ASProtect",
-        "ASPack",
-        ".aspack",
-        ".adata",
-        ".aspr",
-        "aspr_ide.dll",
-        "ASProtect SKE",
-        "CRC Check"
-      ],
-      "bypass_difficulty": "low",
-      "analysis_tips": [
-        "Find OEP with hardware breakpoints",
-        "Dump at OEP and fix imports",
-        "Check for CRC verification routines",
-        "Look for stolen bytes at entry point"
-      ],
-      "common_mistakes": [
-        "Not restoring stolen bytes",
-        "Missing CRC patches",
-        "Incomplete IAT reconstruction"
-      ],
-      "resources": [
-        "ASProtect unpacking guides",
-        "SKE documentation"
-      ],
-      "bypass_techniques": [
-        {
-          "name": "Standard Unpacking",
-          "description": "Unpack and rebuild original executable",
-          "difficulty": "low",
-          "tools_required": [
-            "ASProtect Unpacker",
-            "OllyDbg",
-            "x64dbg"
-          ],
-          "success_rate": 0.9,
-          "time_estimate": "30-60 minutes",
-          "risks": [
-            "CRC checks",
-            "Stolen bytes"
-          ],
-          "prerequisites": [
-            "Basic unpacking"
-          ]
-        },
-        {
-          "name": "SKE License Bypass",
-          "description": "Bypass ASProtect SKE registration system",
-          "difficulty": "low",
-          "tools_required": [
-            "SKE patcher",
-            "Registry editor"
-          ],
-          "success_rate": 0.85,
-          "time_estimate": "15-30 minutes",
-          "risks": [
-            "Hardware binding"
-          ],
-          "prerequisites": [
-            "Registry knowledge"
-          ]
-        }
-      ]
-    },
-    "obsidium": {
-      "name": "Obsidium",
-      "vendor": "Obsidium Software",
-      "category": "software_protection",
-      "description": "Software protection with strong encryption, anti-debugging, and licensing",
-      "versions": [
-        "1.6.x",
-        "1.7.x"
-      ],
-      "common_applications": [
-        "Commercial software",
-        "Games",
-        "Professional tools"
-      ],
-      "detection_signatures": [
-        "Obsidium",
-        "obsidium.dll",
-        ".obsidium",
-        "Obsidium\u00a9",
-        "OBSIDIUM_SECTION",
-        "obsidium_vm"
-      ],
-      "bypass_difficulty": "high",
-      "analysis_tips": [
-        "Use anti-anti-debug plugins",
-        "Look for multiple protection layers",
-        "Analyze VM protected sections",
-        "Check license validation routines",
-        "Monitor API redirection"
-      ],
-      "common_mistakes": [
-        "Triggering anti-debug mechanisms",
-        "Incomplete layer removal",
-        "Missing VM code reconstruction"
-      ],
-      "resources": [
-        "Obsidium SDK documentation",
-        "Advanced unpacking techniques"
-      ],
-      "bypass_techniques": [
-        {
-          "name": "Advanced Obsidium Unpacking",
-          "description": "Multi-layer unpacking with anti-debug bypass",
-          "difficulty": "high",
-          "tools_required": [
-            "Obsidium Unpacker",
-            "ScyllaHide",
-            "TitanEngine"
-          ],
-          "success_rate": 0.65,
-          "time_estimate": "1-2 days",
-          "risks": [
-            "VM protection",
-            "Encrypted layers"
-          ],
-          "prerequisites": [
-            "Advanced unpacking",
-            "Anti-anti-debug"
-          ]
-        },
-        {
-          "name": "License Key Generation",
-          "description": "Generate valid license keys through cryptanalysis",
-          "difficulty": "high",
-          "tools_required": [
-            "Key analyzer",
-            "Crypto tools"
-          ],
-          "success_rate": 0.6,
-          "time_estimate": "2-3 days",
-          "risks": [
-            "RSA protection",
-            "Online validation"
-          ],
-          "prerequisites": [
-            "Cryptography",
-            "Key algorithms"
-          ]
-        }
-      ]
-    },
-    "armadillo": {
-      "name": "SoftwarePassport/Armadillo",
-      "vendor": "Silicon Realms/Digital River",
-      "category": "software_protection",
-      "description": "Professional protection with nanomites, code splicing, and strategic code mutation",
-      "versions": [
-        "8.x",
-        "9.x"
-      ],
-      "common_applications": [
-        "Professional software",
-        "Engineering tools",
-        "Security applications"
-      ],
-      "detection_signatures": [
-        "Armadillo",
-        "SoftwarePassport",
-        ".arm",
-        ".data",
-        "ArmAccess.dll",
-        "nanomites",
-        "CopyMem2",
-        "Strategic Code Splicing"
-      ],
-      "bypass_difficulty": "very_high",
-      "analysis_tips": [
-        "Map all nanomite INT3 locations",
-        "Trace parent-child debugging architecture",
-        "Analyze code splicing points",
-        "Look for import elimination",
-        "Check for debugger detection loops",
-        "Monitor inter-process communication"
-      ],
-      "common_mistakes": [
-        "Not processing all nanomites",
-        "Incomplete code splicing recovery",
-        "Missing child process handling",
-        "Ignoring CopyMem2 protection"
-      ],
-      "resources": [
-        "Armadillo protection analysis papers",
-        "Nanomite handling techniques",
-        "Strategic code splicing documentation"
-      ],
-      "bypass_techniques": [
-        {
-          "name": "Nanomite Processing",
-          "description": "Process and remove nanomite protection with CC restoration",
-          "difficulty": "very_high",
-          "tools_required": [
-            "ArmInline",
-            "Nanomite Processor",
-            "IDA Pro"
-          ],
-          "success_rate": 0.6,
-          "time_estimate": "1-2 weeks",
-          "risks": [
-            "Incomplete processing",
-            "Logic errors"
-          ],
-          "prerequisites": [
-            "Nanomite theory",
-            "Debugging expertise"
-          ]
-        },
-        {
-          "name": "Code Splicing Reconstruction",
-          "description": "Rebuild code sections split by strategic code splicing",
-          "difficulty": "high",
-          "tools_required": [
-            "Code rebuilder",
-            "Memory analyzer"
-          ],
-          "success_rate": 0.65,
-          "time_estimate": "3-5 days",
-          "risks": [
-            "Missing code fragments",
-            "Incorrect reassembly"
-          ],
-          "prerequisites": [
-            "Code flow analysis",
-            "Memory forensics"
-          ]
-        },
-        {
-          "name": "Import Elimination Recovery",
-          "description": "Recover eliminated imports and API redirections",
-          "difficulty": "medium",
-          "tools_required": [
-            "Import reconstructor",
-            "API tracer"
-          ],
-          "success_rate": 0.75,
-          "time_estimate": "4-8 hours",
-          "risks": [
-            "Hidden imports",
-            "Dynamic resolution"
-          ],
-          "prerequisites": [
-            "IAT reconstruction",
-            "API knowledge"
-          ]
-        }
-      ]
+    "analysis_workflows": {
+        "initial_analysis": [
+            "Identify file type and architecture",
+            "Check for known packers/protectors",
+            "Scan for protection signatures",
+            "Analyze imports and exports",
+            "Look for encrypted/compressed sections"
+        ],
+        "static_analysis": [
+            "Disassemble with Ghidra",
+            "Identify protection initialization",
+            "Find license check functions",
+            "Analyze string references",
+            "Map out control flow"
+        ],
+        "dynamic_analysis": [
+            "Run with API monitoring",
+            "Trace system calls",
+            "Monitor file/registry access",
+            "Capture network traffic",
+            "Debug with anti-anti-debug"
+        ],
+        "protection_removal": [
+            "Identify protection entry points",
+            "Bypass/remove protection layers",
+            "Reconstruct original code",
+            "Fix imports and relocations",
+            "Test functionality"
+        ],
+        "validation": [
+            "Verify all features work",
+            "Check for hidden checks",
+            "Test edge cases",
+            "Monitor for callbacks",
+            "Ensure stability"
+        ]
     }
-  },
-  "bypass_strategies": {
-    "hardware_dongle": [
-      "Dump dongle memory and emulate",
-      "Hook and redirect API calls",
-      "Patch validation checks",
-      "Use network redirection for network dongles",
-      "Analyze communication protocol"
-    ],
-    "network_license": [
-      "Set up local license server",
-      "Modify license files",
-      "Redirect network traffic",
-      "Patch timeout checks",
-      "Emulate vendor daemon"
-    ],
-    "software_protection": [
-      "Unpack/devirtualize protected code",
-      "Bypass anti-debugging checks",
-      "Reconstruct import table",
-      "Patch license validation",
-      "Generate valid keys"
-    ],
-    "gaming_drm": [
-      "Remove DRM wrapper",
-      "Emulate platform APIs",
-      "Patch online checks",
-      "Bypass integrity verification",
-      "Use scene releases as reference"
-    ],
-    "time_based": [
-      "Manipulate system time",
-      "Patch time checks",
-      "Extend trial period in storage",
-      "Bypass date validation",
-      "Reset trial data"
-    ]
-  },
-  "analysis_workflows": {
-    "initial_analysis": [
-      "Identify file type and architecture",
-      "Check for known packers/protectors",
-      "Scan for protection signatures",
-      "Analyze imports and exports",
-      "Look for encrypted/compressed sections"
-    ],
-    "static_analysis": [
-      "Disassemble with Ghidra",
-      "Identify protection initialization",
-      "Find license check functions",
-      "Analyze string references",
-      "Map out control flow"
-    ],
-    "dynamic_analysis": [
-      "Run with API monitoring",
-      "Trace system calls",
-      "Monitor file/registry access",
-      "Capture network traffic",
-      "Debug with anti-anti-debug"
-    ],
-    "protection_removal": [
-      "Identify protection entry points",
-      "Bypass/remove protection layers",
-      "Reconstruct original code",
-      "Fix imports and relocations",
-      "Test functionality"
-    ],
-    "validation": [
-      "Verify all features work",
-      "Check for hidden checks",
-      "Test edge cases",
-      "Monitor for callbacks",
-      "Ensure stability"
-    ]
-  }
 }

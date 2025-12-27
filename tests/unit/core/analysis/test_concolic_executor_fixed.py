@@ -24,11 +24,10 @@ from intellicrack.core.analysis.concolic_executor_fixed import (
     SYMBOLIC_ENGINE,
     SYMBOLIC_ENGINE_NAME,
     ANGR_AVAILABLE,
-    SIMCONCOLIC_AVAILABLE
+    MANTICORE_AVAILABLE,
 )
 
-# Manticore is no longer supported
-MANTICORE_AVAILABLE = False
+SIMCONCOLIC_AVAILABLE = False
 import sys
 from tests.base_test import IntellicrackTestBase
 

@@ -30,6 +30,7 @@ from ..utils.logger import get_logger
 from .llm_backends import LLMManager
 from .llm_fallback_chains import FallbackManager
 
+
 if TYPE_CHECKING:
     from types import ModuleType
 else:
@@ -254,7 +255,7 @@ class ConfigAsCodeManager:
                     "items": {
                         "type": "object",
                         "properties": model_item_props,
-                        "required": ["model_id"] + llm_model_required,
+                        "required": ["model_id", *llm_model_required],
                     },
                     "minItems": 1,
                 },
@@ -761,9 +762,7 @@ class ConfigAsCodeManager:
         except Exception as e:
             logger.exception("Failed to apply fallback chains: %s", e)
 
-    def generate_config_files(
-        self, output_dir: str | Path | None = None, environments: list[str] | None = None
-    ) -> list[Path]:
+    def generate_config_files(self, output_dir: str | Path | None = None, environments: list[str] | None = None) -> list[Path]:
         """Generate configuration files for multiple environments.
 
         Args:

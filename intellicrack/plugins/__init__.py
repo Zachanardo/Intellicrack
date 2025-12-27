@@ -22,9 +22,17 @@ import importlib
 import logging
 import os
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any, Protocol
 
 from .plugin_config import PLUGIN_SYSTEM_EXPORTS
+
+
+class AppProtocol(Protocol):
+    """Protocol for app objects used in plugin functions."""
+
+    binary_path: str
+    update_output: Any
+    frida_sessions: dict[str, tuple[Any, Any]]
 
 
 # Set up package logger
@@ -151,7 +159,6 @@ def get_plugin_size(plugin_name: str, plugin_type: str = "custom") -> int:
 # Import plugin system functions
 try:
     from .plugin_system import (
-        AppProtocol,
         create_sample_plugins,
         load_plugins,
         run_custom_plugin,
@@ -163,13 +170,6 @@ try:
     )
 except ImportError as e:
     logger.warning("Failed to import plugin system functions: %s", e)
-
-    from typing import Protocol
-
-    class AppProtocol(Protocol):
-        """Fallback protocol for app interface."""
-
-        pass
 
     # Provide fallback empty functions
     def load_plugins(plugin_dir: str = "intellicrack/intellicrack/plugins") -> dict[str, list[dict[str, object]]]:

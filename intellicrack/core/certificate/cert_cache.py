@@ -120,15 +120,14 @@ import threading
 from datetime import datetime
 from pathlib import Path
 
-
-logger = logging.getLogger(__name__)
-
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes
 
 from intellicrack.core.certificate.cert_chain_generator import CertificateChain
+
+logger = logging.getLogger(__name__)
 
 
 class CertificateCache:

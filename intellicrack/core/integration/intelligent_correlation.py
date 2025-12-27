@@ -18,11 +18,11 @@ import re
 import sys
 import time
 from collections import defaultdict
+from collections.abc import Hashable, Sequence
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from typing import Any
-from collections.abc import Hashable, Sequence
 
 import joblib
 import Levenshtein
@@ -800,9 +800,7 @@ class MachineLearningCorrelator:
         # Attribute overlap
         common_attrs = set(item1.attributes.keys()) & set(item2.attributes.keys())
         attr_overlap = len(common_attrs) / max(len(item1.attributes), len(item2.attributes), 1)
-        features.extend(
-            (attr_overlap, min(abs(item1.timestamp - item2.timestamp) / 3600, 24))
-        )
+        features.extend((attr_overlap, min(abs(item1.timestamp - item2.timestamp) / 3600, 24)))
         # String length similarity
         len_ratio = min(len(item1.name), len(item2.name)) / max(len(item1.name), len(item2.name), 1)
         features.append(len_ratio)

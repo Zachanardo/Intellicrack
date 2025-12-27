@@ -124,25 +124,6 @@ intellicrack\handlers\matplotlib_handler.py: Unused function get_rectangle_class
 intellicrack\handlers\matplotlib_handler.py: Unused function subplots_adjust
 
 
-8 findings in intellicrack\cli\tutorial_system.py
-
-intellicrack\cli\tutorial_system.py: Unused function display_centered_tutorial_header
-
-intellicrack\cli\tutorial_system.py: Unused function display_step_with_syntax
-
-intellicrack\cli\tutorial_system.py: Unused function display_tutorial_cards
-
-intellicrack\cli\tutorial_system.py: Unused function display_tutorial_structure_tree
-
-intellicrack\cli\tutorial_system.py: Unused function display_tutorials_table
-
-intellicrack\cli\tutorial_system.py: Unused function get_custom_tutorial_settings
-
-intellicrack\cli\tutorial_system.py: Unused function interactive_tutorial_selection
-
-intellicrack\cli\tutorial_system.py: Unused function show_tutorial_progress_bar
-
-
 7 findings in intellicrack\utils\tools\radare2_utils.py
 
 intellicrack\utils\tools\radare2_utils.py: Unused function analyze_all
@@ -192,19 +173,6 @@ intellicrack\plugins\custom_modules\license_server_emulator.py: Unused function 
 intellicrack\plugins\custom_modules\license_server_emulator.py: Unused function set_target_binary
 
 
-5 findings in intellicrack\ai\gpu_integration.py
-
-intellicrack\ai\gpu_integration.py: Unused function get_ai_device
-
-intellicrack\ai\gpu_integration.py: Unused function get_ai_gpu_info
-
-intellicrack\ai\gpu_integration.py: Unused function get_backend_name
-
-intellicrack\ai\gpu_integration.py: Unused function prepare_ai_model
-
-intellicrack\ai\gpu_integration.py: Unused function prepare_ai_tensor
-
-
 5 findings in intellicrack\ai\llm_backends.py
 
 intellicrack\ai\llm_backends.py: Unused function add_llm
@@ -218,19 +186,6 @@ intellicrack\ai\llm_backends.py: Unused function unload_all_llms
 intellicrack\ai\llm_backends.py: Unused function unload_llm
 
 
-5 findings in intellicrack\ai\quantization_manager.py
-
-intellicrack\ai\quantization_manager.py: Unused function apply_dynamic_quantization
-
-intellicrack\ai\quantization_manager.py: Unused function get_sharding_info
-
-intellicrack\ai\quantization_manager.py: Unused function get_supported_quantization_types
-
-intellicrack\ai\quantization_manager.py: Unused function prepare_model_for_gptq_quantization
-
-intellicrack\ai\quantization_manager.py: Unused function quantize_model_with_bnb
-
-
 5 findings in intellicrack\ai\realtime_adaptation_engine.py
 
 intellicrack\ai\realtime_adaptation_engine.py: Unused function add_adaptation_rule
@@ -242,19 +197,6 @@ intellicrack\ai\realtime_adaptation_engine.py: Unused function get_adaptation_st
 intellicrack\ai\realtime_adaptation_engine.py: Unused function get_debug_insights
 
 intellicrack\ai\realtime_adaptation_engine.py: Unused function get_hook_statistics
-
-
-5 findings in intellicrack\ai\script_generation_prompts.py
-
-intellicrack\ai\script_generation_prompts.py: Unused function build_context_data
-
-intellicrack\ai\script_generation_prompts.py: Unused function get_available_prompt_types
-
-intellicrack\ai\script_generation_prompts.py: Unused function get_prompt
-
-intellicrack\ai\script_generation_prompts.py: Unused function get_prompt_manager
-
-intellicrack\ai\script_generation_prompts.py: Unused function get_prompt_requirements
 
 
 5 findings in intellicrack\cli\terminal_dashboard.py
@@ -296,17 +238,6 @@ intellicrack\utils\windows\service_manager.py: Unused function pause_service
 intellicrack\utils\windows\service_manager.py: Unused function wait_for_state
 
 
-4 findings in intellicrack\core\integration\intelligent_correlation.py
-
-intellicrack\core\integration\intelligent_correlation.py: Unused function add_mapping
-
-intellicrack\core\integration\intelligent_correlation.py: Unused function add_relocation
-
-intellicrack\core\integration\intelligent_correlation.py: Unused function detect_outliers_statistical
-
-intellicrack\core\integration\intelligent_correlation.py: Unused function set_base_address
-
-
 4 findings in intellicrack\core\resources\resource_manager.py
 
 intellicrack\core\resources\resource_manager.py: Unused function get_duration
@@ -316,6 +247,28 @@ intellicrack\core\resources\resource_manager.py: Unused function get_fallback_ha
 intellicrack\core\resources\resource_manager.py: Unused function get_resource
 
 intellicrack\core\resources\resource_manager.py: Unused function get_resource_count
+
+
+4 findings in intellicrack\plugins\custom_modules\performance_optimizer.py
+
+intellicrack\plugins\custom_modules\performance_optimizer.py: Unused function detect_compression
+
+intellicrack\plugins\custom_modules\performance_optimizer.py: Unused function get_buffer
+
+intellicrack\plugins\custom_modules\performance_optimizer.py: Unused function get_optimal_batch_size
+
+intellicrack\plugins\custom_modules\performance_optimizer.py: Unused function set_optimization_level
+
+
+4 findings in tests\base_test.py
+
+tests\base_test.py: Unused function assert_ai_script_executable
+
+tests\base_test.py: Unused function assert_binary_analysis_real
+
+tests\base_test.py: Unused function assert_exploit_works
+
+tests\base_test.py: Unused function assert_network_response_valid
 
 
 4 findings in tests\utils\secure_assertions.py
@@ -358,6 +311,15 @@ intellicrack\ai\model_download_manager.py: Unused function get_model_readme
 intellicrack\ai\model_download_manager.py: Unused function search_models
 
 
+3 findings in intellicrack\ai\quantization_manager.py
+
+intellicrack\ai\quantization_manager.py: Unused function apply_dynamic_quantization
+
+intellicrack\ai\quantization_manager.py: Unused function prepare_model_for_gptq_quantization
+
+intellicrack\ai\quantization_manager.py: Unused function quantize_model_with_bnb
+
+
 3 findings in intellicrack\core\tool_discovery.py
 
 intellicrack\core\tool_discovery.py: Unused function discover_tool_with_fallbacks
@@ -385,15 +347,6 @@ intellicrack\handlers\frida_handler.py: Unused function inject_library_blob
 intellicrack\handlers\frida_handler.py: Unused function inject_library_file
 
 
-3 findings in intellicrack\plugins\custom_modules\performance_optimizer.py
-
-intellicrack\plugins\custom_modules\performance_optimizer.py: Unused function detect_compression
-
-intellicrack\plugins\custom_modules\performance_optimizer.py: Unused function get_buffer
-
-intellicrack\plugins\custom_modules\performance_optimizer.py: Unused function set_optimization_level
-
-
 3 findings in intellicrack\utils\service_health_checker.py
 
 intellicrack\utils\service_health_checker.py: Unused function get_healthy_services
@@ -401,15 +354,6 @@ intellicrack\utils\service_health_checker.py: Unused function get_healthy_servic
 intellicrack\utils\service_health_checker.py: Unused function get_service_endpoint
 
 intellicrack\utils\service_health_checker.py: Unused function get_unhealthy_services
-
-
-3 findings in tests\base_test.py
-
-tests\base_test.py: Unused function assert_ai_script_executable
-
-tests\base_test.py: Unused function assert_binary_analysis_real
-
-tests\base_test.py: Unused function assert_network_response_valid
 
 
 3 findings in tests\test_cross_tool_integration.py
@@ -428,6 +372,15 @@ tests\unit\core\anti_analysis\test_debugger_detector.py: Unused function get_cur
 tests\unit\core\anti_analysis\test_debugger_detector.py: Unused function get_parent_process
 
 tests\unit\core\anti_analysis\test_debugger_detector.py: Unused function get_system
+
+
+3 findings in tests\unit\gui\test_main_window.py
+
+tests\unit\gui\test_main_window.py: Unused function assert_real_widget_functionality
+
+tests\unit\gui\test_main_window.py: Unused function get_qt_app
+
+tests\unit\gui\test_main_window.py: Unused function setup_app
 
 
 2 findings in intellicrack\ai\lora_adapter_manager.py
@@ -458,13 +411,6 @@ intellicrack\ai\model_format_converter.py: Unused function analyze_model_archite
 intellicrack\ai\model_format_converter.py: Unused function get_model_converter
 
 
-2 findings in intellicrack\ai\model_sharding.py
-
-intellicrack\ai\model_sharding.py: Unused function get_sharding_info
-
-intellicrack\ai\model_sharding.py: Unused function profile_model_distribution
-
-
 2 findings in intellicrack\ai\orchestrator.py
 
 intellicrack\ai\orchestrator.py: Unused function get_all_task_progress
@@ -484,13 +430,6 @@ intellicrack\ai\performance_monitor.py: Unused function profile_async
 intellicrack\ai\performance_monitor_simple.py: Unused function get_active_count
 
 intellicrack\ai\performance_monitor_simple.py: Unused function get_async_monitor
-
-
-2 findings in intellicrack\ai\performance_optimization_layer.py
-
-intellicrack\ai\performance_optimization_layer.py: Unused function get_comprehensive_stats
-
-intellicrack\ai\performance_optimization_layer.py: Unused function should_parallelize
 
 
 2 findings in intellicrack\ai\vulnerability_research_integration_helper.py
@@ -626,13 +565,6 @@ tests\unit\core\analysis\test_rop_generator.py: Unused function add_target
 tests\unit\core\analysis\test_rop_generator.py: Unused function set_generator
 
 
-2 findings in tests\unit\gui\test_main_window.py
-
-tests\unit\gui\test_main_window.py: Unused function assert_real_widget_functionality
-
-tests\unit\gui\test_main_window.py: Unused function setup_app
-
-
 2 findings in tests\validation_system\cross_version_tester.py
 
 tests\validation_system\cross_version_tester.py: Unused function generate_compatibility_verification_report
@@ -674,6 +606,11 @@ intellicrack\ai\llm_config_as_code.py: Unused function save_current_config
 intellicrack\ai\local_gguf_server.py: Unused function unload_model_endpoint
 
 
+1 findings in intellicrack\ai\model_sharding.py
+
+intellicrack\ai\model_sharding.py: Unused function profile_model_distribution
+
+
 1 findings in intellicrack\ai\pattern_library.py
 
 intellicrack\ai\pattern_library.py: Unused function update_success_rate
@@ -687,11 +624,6 @@ intellicrack\ai\qemu_test_manager_enhanced.py: Unused function analyze_binary_fo
 1 findings in intellicrack\ai\script_editor.py
 
 intellicrack\ai\script_editor.py: Unused function get_edit_suggestions
-
-
-1 findings in intellicrack\ai\semantic_code_analyzer.py
-
-intellicrack\ai\semantic_code_analyzer.py: Unused function get_semantic_insights
 
 
 1 findings in intellicrack\ai\vulnerability_research_integration.py
@@ -719,11 +651,6 @@ intellicrack\cli\interactive_mode.py: Unused function do_hexview
 intellicrack\core\adobe_injector_integration.py: Unused function set_window_pos
 
 
-1 findings in intellicrack\core\analysis\frida_script_manager.py
-
-intellicrack\core\analysis\frida_script_manager.py: Unused function get_script_categories
-
-
 1 findings in intellicrack\core\analysis\radare2_performance_optimizer.py
 
 intellicrack\core\analysis\radare2_performance_optimizer.py: Unused function benchmark_analysis_types
@@ -749,6 +676,11 @@ intellicrack\core\anti_analysis\sandbox_detector.py: Unused function distance_to
 intellicrack\core\anti_analysis\vm_detector.py: Unused function get_hardware_fingerprint
 
 
+1 findings in intellicrack\core\integration\intelligent_correlation.py
+
+intellicrack\core\integration\intelligent_correlation.py: Unused function add_relocation
+
+
 1 findings in intellicrack\core\integration\real_tool_communication.py
 
 intellicrack\core\integration\real_tool_communication.py: Unused function broadcast_message
@@ -757,11 +689,6 @@ intellicrack\core\integration\real_tool_communication.py: Unused function broadc
 1 findings in intellicrack\core\orchestration\tool_communication_bridge.py
 
 intellicrack\core\orchestration\tool_communication_bridge.py: Unused function add_message_handler
-
-
-1 findings in intellicrack\core\reporting\pdf_generator.py
-
-intellicrack\core\reporting\pdf_generator.py: Unused function isWidgetType
 
 
 1 findings in intellicrack\core\shared\bypass_config.py
@@ -907,6 +834,16 @@ intellicrack\ui\widgets\file_metadata_widget.py: Unused function get_file_histor
 1 findings in intellicrack\ui\widgets\hex_viewer_widget.py
 
 intellicrack\ui\widgets\hex_viewer_widget.py: Unused function interpret_data_at_cursor
+
+
+1 findings in intellicrack\utils\analysis\binary_analysis.py
+
+intellicrack\utils\analysis\binary_analysis.py: Unused function analyze_pe_resources
+
+
+1 findings in intellicrack\utils\exploitation\logger.py
+
+intellicrack\utils\exploitation\logger.py: Unused function get_log_file_path
 
 
 1 findings in intellicrack\utils\qemu_image_discovery.py

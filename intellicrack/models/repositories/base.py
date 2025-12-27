@@ -399,7 +399,11 @@ class APIRepositoryBase(ModelRepositoryInterface):
         # Initialize cache manager
         cache_params = cache_config or {}
         cache_dir_obj = cache_params.get("cache_dir", os.path.join(os.path.dirname(__file__), "..", "cache", repository_name))
-        cache_dir = str(cache_dir_obj) if isinstance(cache_dir_obj, (str, bytes)) else os.path.join(os.path.dirname(__file__), "..", "cache", repository_name)
+        cache_dir = (
+            str(cache_dir_obj)
+            if isinstance(cache_dir_obj, (str, bytes))
+            else os.path.join(os.path.dirname(__file__), "..", "cache", repository_name)
+        )
 
         ttl_obj = cache_params.get("ttl", 3600)
         ttl_seconds = int(ttl_obj) if isinstance(ttl_obj, (int, float)) else 3600

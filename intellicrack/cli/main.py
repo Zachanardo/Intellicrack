@@ -9,10 +9,11 @@ import sys
 from intellicrack.cli.cli import cli
 
 
-def main():
+def main() -> None:
     """Execute the CLI."""
-    return cli()
+    cli()
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()
+    sys.exit(0)

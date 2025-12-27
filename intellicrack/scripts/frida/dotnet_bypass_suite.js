@@ -108,7 +108,7 @@ const DotnetBypassSuite = {
         appLockerDotNetScriptEnforcementBypassEvents: 0,
     },
 
-    run: function () {
+    run() {
         send({
             type: 'status',
             target: 'dotnet_bypass_suite',
@@ -155,7 +155,7 @@ const DotnetBypassSuite = {
     },
 
     // Detect CLR type and version
-    detectCLR: function () {
+    detectCLR() {
         Process.enumerateModules().forEach(module => {
             const name = module.name.toLowerCase();
 
@@ -190,7 +190,7 @@ const DotnetBypassSuite = {
     },
 
     // Hook .NET Framework
-    hookDotNetFramework: function () {
+    hookDotNetFramework() {
         // Hook assembly loading
         this.hookAssemblyLoad();
 
@@ -211,7 +211,7 @@ const DotnetBypassSuite = {
     },
 
     // Hook Mono runtime
-    hookMono: function () {
+    hookMono() {
         const self = this;
 
         send({
@@ -255,7 +255,7 @@ const DotnetBypassSuite = {
         );
         if (monoCompileMethod) {
             Interceptor.attach(monoCompileMethod, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const method = args[0];
                     if (method && !method.isNull() && self.monoMethodGetName) {
                         const namePtr = self.monoMethodGetName(method);
@@ -274,12 +274,12 @@ const DotnetBypassSuite = {
                         }
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.shouldPatch && !retval.isNull()) {
                         Memory.patchCode(retval, 3, code => {
-                            code.putU8(0xb0);
+                            code.putU8(0xB0);
                             code.putU8(0x01);
-                            code.putU8(0xc3);
+                            code.putU8(0xC3);
                         });
                         self.bypassedChecks++;
                     }
@@ -290,7 +290,7 @@ const DotnetBypassSuite = {
     },
 
     // Hook .NET Core runtime
-    hookDotNetCore: function () {
+    hookDotNetCore() {
         send({
             type: 'info',
             target: 'dotnet_bypass_suite',
@@ -350,7 +350,7 @@ const DotnetBypassSuite = {
     },
 
     // Process Mono image
-    processMonoImage: function (image) {
+    processMonoImage(image) {
         send({
             type: 'info',
             target: 'dotnet_bypass_suite',
@@ -362,7 +362,7 @@ const DotnetBypassSuite = {
     },
 
     // Hook assembly loading
-    hookAssemblyLoad: function () {
+    hookAssemblyLoad() {
         const self = this;
 
         // Assembly::Load
@@ -401,10 +401,10 @@ const DotnetBypassSuite = {
         );
         if (appDomainLoad) {
             Interceptor.attach(appDomainLoad, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.assemblyPath = args[1];
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (!retval.isNull() && this.assemblyPath) {
                         const path = this.assemblyPath.readUtf16String();
                         send({
@@ -415,7 +415,7 @@ const DotnetBypassSuite = {
                         });
                         self.assemblies[retval.toString()] = {
                             handle: retval,
-                            path: path,
+                            path,
                             patched: false,
                         };
                         self.stats.assembliesPatched++;
@@ -427,7 +427,7 @@ const DotnetBypassSuite = {
     },
 
     // Process loaded assembly
-    processLoadedAssembly: function (assembly) {
+    processLoadedAssembly(assembly) {
         // Get assembly name
         const getNameMethod = this.findMethodInVTable(assembly, 'GetName');
         if (getNameMethod) {
@@ -448,7 +448,7 @@ const DotnetBypassSuite = {
     },
 
     // Hook JIT compilation
-    hookJITCompilation: function () {
+    hookJITCompilation() {
         const self = this;
 
         // getJit
@@ -465,7 +465,7 @@ const DotnetBypassSuite = {
                     .readPointer();
 
                 Interceptor.attach(compileMethod, {
-                    onEnter: function (args) {
+                    onEnter(args) {
                         const methodInfo = args[2];
 
                         if (methodInfo && !methodInfo.isNull()) {
@@ -485,7 +485,7 @@ const DotnetBypassSuite = {
                             }
                         }
                     },
-                    onLeave: function (retval) {
+                    onLeave(retval) {
                         if (this.shouldPatch && retval.toInt32() === 0) {
                             // Patch the compiled method
                             self.patchCompiledMethod(this.methodInfo);
@@ -503,14 +503,14 @@ const DotnetBypassSuite = {
     },
 
     // Hook metadata APIs
-    hookMetadataAPIs: function () {
+    hookMetadataAPIs() {
         const self = this;
 
         // MetaDataGetDispenser
         const getDispenser = Module.findExportByName(this.clrModule.name, 'MetaDataGetDispenser');
         if (getDispenser) {
             Interceptor.attach(getDispenser, {
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (retval.toInt32() === 0) {
                         // S_OK
                         const dispenser = this.context.r8.readPointer();
@@ -523,7 +523,7 @@ const DotnetBypassSuite = {
     },
 
     // Hook metadata dispenser
-    hookMetadataDispenser: function (dispenser) {
+    hookMetadataDispenser(dispenser) {
         // Hook OpenScope to intercept assembly metadata access
         const vtable = dispenser.readPointer();
         const openScope = vtable.add(0x18).readPointer(); // IMetaDataDispenser::OpenScope
@@ -537,7 +537,7 @@ const DotnetBypassSuite = {
                     type: 'info',
                     target: 'dotnet_bypass_suite',
                     action: 'opening_metadata_scope',
-                    filename: filename,
+                    filename,
                 });
 
                 // Check if it's a protected assembly
@@ -550,7 +550,7 @@ const DotnetBypassSuite = {
     },
 
     // Hook string decryption
-    hookStringDecryption: function () {
+    hookStringDecryption() {
         // Common obfuscator string decryption patterns
         const patterns = [
             // Dotfuscator pattern
@@ -584,14 +584,14 @@ const DotnetBypassSuite = {
 
                                     this.stats.stringsDecrypted++;
                                 }
-                            } catch (e) {
+                            } catch (error) {
                                 send({
                                     type: 'debug',
                                     target: 'dotnet_bypass',
                                     action: 'string_read_failed',
                                     function: 'hookStringDecryption',
-                                    error: e.toString(),
-                                    stack: e.stack || 'No stack trace available',
+                                    error: error.toString(),
+                                    stack: error.stack || 'No stack trace available',
                                 });
                             }
                         }
@@ -603,7 +603,7 @@ const DotnetBypassSuite = {
     },
 
     // Hook reflection APIs
-    hookReflectionAPIs: function () {
+    hookReflectionAPIs() {
         const self = this;
 
         // Type::InvokeMember
@@ -614,7 +614,7 @@ const DotnetBypassSuite = {
 
         if (invokeMember) {
             Interceptor.attach(invokeMember, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const memberName = args[1].readUtf16String();
                     const _bindingFlags = args[2].toInt32();
 
@@ -628,7 +628,7 @@ const DotnetBypassSuite = {
                         this.isLicenseCheck = true;
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.isLicenseCheck && !retval.isNull()) {
                         // Ensure license check returns true
                         try {
@@ -637,14 +637,14 @@ const DotnetBypassSuite = {
                                 retval.writeU8(1);
                                 self.bypassedChecks++;
                             }
-                        } catch (e) {
+                        } catch (error) {
                             send({
                                 type: 'debug',
                                 target: 'dotnet_bypass',
                                 action: 'hook_failed',
                                 function: 'dotnet_bypass_suite',
-                                error: e.toString(),
-                                stack: e.stack || 'No stack trace available',
+                                error: error.toString(),
+                                stack: error.stack || 'No stack trace available',
                             });
                         }
                     }
@@ -661,7 +661,7 @@ const DotnetBypassSuite = {
 
         if (methodInvoke) {
             Interceptor.attach(methodInvoke, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const method = args[0];
                     const methodName = self.getMethodName(method);
 
@@ -676,7 +676,7 @@ const DotnetBypassSuite = {
                         this.returnValue = args[4]; // out parameter
                     }
                 },
-                onLeave: function (_retval) {
+                onLeave(_retval) {
                     if (this.isLicenseCheck && this.returnValue) {
                         // Modify return value
                         this.returnValue.writeU8(1); // true
@@ -689,7 +689,7 @@ const DotnetBypassSuite = {
     },
 
     // Hook security APIs
-    hookSecurityAPIs: function () {
+    hookSecurityAPIs() {
         // StrongNameSignatureVerificationEx
         const strongNameVerify = Module.findExportByName(
             'mscoree.dll',
@@ -742,7 +742,7 @@ const DotnetBypassSuite = {
     },
 
     // Hook anti-tamper mechanisms
-    hookAntiTamper: function () {
+    hookAntiTamper() {
         // Common anti-tamper checks
 
         // 1. Module checksum verification
@@ -771,14 +771,14 @@ const DotnetBypassSuite = {
     },
 
     // Hook hash APIs
-    hookHashAPIs: function () {
+    hookHashAPIs() {
         const self = this;
 
         // CryptHashData
         const cryptHashData = Module.findExportByName('advapi32.dll', 'CryptHashData');
         if (cryptHashData) {
             Interceptor.attach(cryptHashData, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const _hHash = args[0];
                     const pbData = args[1];
                     const dwDataLen = args[2].toInt32();
@@ -801,7 +801,7 @@ const DotnetBypassSuite = {
         const bcryptHashData = Module.findExportByName('bcrypt.dll', 'BCryptHashData');
         if (bcryptHashData) {
             Interceptor.attach(bcryptHashData, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const _hHash = args[0];
                     const pbInput = args[1];
                     const cbInput = args[2].toInt32();
@@ -823,7 +823,7 @@ const DotnetBypassSuite = {
     },
 
     // Hook debugger detection
-    hookDebuggerDetection: function () {
+    hookDebuggerDetection() {
         const self = this;
 
         // IsDebuggerPresent
@@ -850,7 +850,7 @@ const DotnetBypassSuite = {
         );
         if (checkRemoteDebugger) {
             Interceptor.attach(checkRemoteDebugger, {
-                onLeave: function (retval) {
+                onLeave(retval) {
                     const pbDebuggerPresent = this.context.rdx;
                     if (pbDebuggerPresent) {
                         pbDebuggerPresent.writeU8(0); // FALSE
@@ -869,11 +869,11 @@ const DotnetBypassSuite = {
         );
         if (ntQueryInfoProcess) {
             Interceptor.attach(ntQueryInfoProcess, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.infoClass = args[1].toInt32();
                     this.buffer = args[2];
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (retval.toInt32() === 0) {
                         // STATUS_SUCCESS
                         // ProcessDebugPort = 7
@@ -894,7 +894,7 @@ const DotnetBypassSuite = {
     },
 
     // Hook runtime integrity checks
-    hookRuntimeIntegrity: function () {
+    hookRuntimeIntegrity() {
         // Hook CLR internal integrity checks
         const patterns = [
             // Integrity check pattern 1
@@ -926,7 +926,7 @@ const DotnetBypassSuite = {
     },
 
     // Hook known license check methods
-    hookLicenseChecks: function () {
+    hookLicenseChecks() {
         // Common license check patterns
         const licensePatterns = [
             'IsLicenseValid',
@@ -950,16 +950,15 @@ const DotnetBypassSuite = {
                                 type: 'bypass',
                                 target: 'dotnet_bypass_suite',
                                 action: 'license_check_bypassed',
-                                pattern: pattern,
+                                pattern,
                             });
                             this.bypassedChecks++;
 
                             // Return success based on method name
                             if (pattern.includes('Trial') || pattern.includes('Expired')) {
                                 return 0; // false
-                            } else {
-                                return 1; // true
                             }
+                            return 1; // true
                         },
                         'int',
                         ['pointer']
@@ -969,7 +968,7 @@ const DotnetBypassSuite = {
     },
 
     // Hook obfuscator runtime
-    hookObfuscatorRuntime: function () {
+    hookObfuscatorRuntime() {
         // ConfuserEx runtime
         this.hookConfuserExRuntime();
 
@@ -981,7 +980,7 @@ const DotnetBypassSuite = {
     },
 
     // Hook ConfuserEx runtime
-    hookConfuserExRuntime: function () {
+    hookConfuserExRuntime() {
         // ConfuserEx anti-tamper
         const antiTamperPattern = 'E8 ?? ?? ?? ?? 0A 06 72 ?? ?? ?? ?? 28 ?? ?? ?? ?? 0A 00 DE ??';
         let matches = Memory.scanSync(this.clrModule.base, this.clrModule.size, antiTamperPattern);
@@ -1022,14 +1021,14 @@ const DotnetBypassSuite = {
     },
 
     // Hook Eazfuscator runtime
-    hookEazfuscatorRuntime: function () {
+    hookEazfuscatorRuntime() {
         // Eazfuscator string encryption
         const stringPattern = '7E ?? ?? ?? ?? 02 7B ?? ?? ?? ?? 7E ?? ?? ?? ?? 28';
         const matches = Memory.scanSync(this.clrModule.base, this.clrModule.size, stringPattern);
 
         matches.forEach(match => {
             Interceptor.attach(match.address, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.stringId = args[0].toInt32();
                 },
                 onLeave: retval => {
@@ -1049,14 +1048,14 @@ const DotnetBypassSuite = {
                                 retval.writeUtf16String(valid);
                                 this.stats.stringsDecrypted++;
                             }
-                        } catch (e) {
+                        } catch (error) {
                             send({
                                 type: 'debug',
                                 target: 'dotnet_bypass',
                                 action: 'hook_failed',
                                 function: 'dotnet_bypass_suite',
-                                error: e.toString(),
-                                stack: e.stack || 'No stack trace available',
+                                error: error.toString(),
+                                stack: error.stack || 'No stack trace available',
                             });
                         }
                     }
@@ -1066,7 +1065,7 @@ const DotnetBypassSuite = {
     },
 
     // Hook Crypto Obfuscator runtime
-    hookCryptoObfuscatorRuntime: function () {
+    hookCryptoObfuscatorRuntime() {
         // Crypto Obfuscator license check
         const licensePattern = '14 0A 06 16 33 ?? 16 0A 2B ?? 17 0A 06 2A';
         const matches = Memory.scanSync(this.clrModule.base, this.clrModule.size, licensePattern);
@@ -1075,7 +1074,7 @@ const DotnetBypassSuite = {
             // Patch to always return true
             Memory.patchCode(match.address, 2, code => {
                 code.putU8(0x17); // ldc.i4.1
-                code.putU8(0x2a); // ret
+                code.putU8(0x2A); // ret
             });
             send({
                 type: 'bypass',
@@ -1087,7 +1086,7 @@ const DotnetBypassSuite = {
     },
 
     // Helper: Find export by pattern
-    findExportPattern: function (name, pattern) {
+    findExportPattern(name, pattern) {
         const func = Module.findExportByName(this.clrModule.name, name);
         if (func) {
             return func;
@@ -1103,7 +1102,7 @@ const DotnetBypassSuite = {
     },
 
     // Helper: Hook method by name
-    hookMethodByName: function (name, replacementFactory) {
+    hookMethodByName(name, replacementFactory) {
         // Search in all loaded modules
         Process.enumerateModules().forEach(module => {
             module.enumerateExports().forEach(exp => {
@@ -1123,7 +1122,7 @@ const DotnetBypassSuite = {
     },
 
     // Helper: Get method name from metadata
-    getMethodName: function (methodDef) {
+    getMethodName(methodDef) {
         try {
             const nameRva = methodDef.add(0x8).readU32();
             if (nameRva > 0 && nameRva < this.clrModule.size) {
@@ -1141,14 +1140,14 @@ const DotnetBypassSuite = {
                     }
                 }
             }
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'debug',
                 target: 'dotnet_bypass',
                 action: 'hook_failed',
                 function: 'dotnet_bypass_suite',
-                error: e.toString(),
-                stack: e.stack || 'No stack trace available',
+                error: error.toString(),
+                stack: error.stack || 'No stack trace available',
             });
         }
 
@@ -1176,8 +1175,8 @@ const DotnetBypassSuite = {
         ];
 
         name = name.toLowerCase();
-        for (let i = 0; i < keywords.length; i++) {
-            if (name.includes(keywords[i])) {
+        for (const keyword of keywords) {
+            if (name.includes(keyword)) {
                 return true;
             }
         }
@@ -1192,14 +1191,14 @@ const DotnetBypassSuite = {
         }
 
         const patterns = [
-            /^[A-Z0-9]{4,}-[A-Z0-9]{4,}/,
-            /\d{4}-\d{4}-\d{4}-\d{4}/,
-            /[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}/,
-            /licen[sc]e|serial|key|activation/i,
+            /^[\dA-Z]{4,}-[\dA-Z]{4,}/,
+            /(?:\d{4}-){3}\d{4}/,
+            /[\dA-F]{8}(?:-[\dA-F]{4}){2}/,
+            /licen[cs]e|serial|key|activation/i,
         ];
 
-        for (let i = 0; i < patterns.length; i++) {
-            if (patterns[i].test(str)) {
+        for (const pattern of patterns) {
+            if (pattern.test(str)) {
                 return true;
             }
         }
@@ -1210,11 +1209,11 @@ const DotnetBypassSuite = {
     // Helper: Generate valid license
     generateValidLicense: original => {
         // Generate a valid-looking license based on the original format
-        if (original.match(/^[A-Z0-9]{4,}-[A-Z0-9]{4,}/)) {
+        if (/^[\dA-Z]{4,}-[\dA-Z]{4,}/.test(original)) {
             return 'INTC-RACK-2024-FULL';
-        } else if (original.match(/\d{4}-\d{4}-\d{4}-\d{4}/)) {
+        } else if (/(?:\d{4}-){3}\d{4}/.test(original)) {
             return '1234-5678-9012-3456';
-        } else if (original.match(/[A-F0-9]{8}-[A-F0-9]{4}/)) {
+        } else if (/[\dA-F]{8}-[\dA-F]{4}/.test(original)) {
             return 'DEADBEEF-CAFE-BABE-F00D-123456789ABC';
         }
 
@@ -1230,22 +1229,22 @@ const DotnetBypassSuite = {
         try {
             // Check for PE header
             const dos = data.readU16();
-            if (dos === 0x5a4d) {
+            if (dos === 0x5A_4D) {
                 // MZ
-                const peOffset = data.add(0x3c).readU32();
+                const peOffset = data.add(0x3C).readU32();
                 if (peOffset < length - 4) {
                     const pe = data.add(peOffset).readU32();
-                    return pe === 0x00004550; // PE\0\0
+                    return pe === 0x00_00_45_50; // PE\0\0
                 }
             }
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'debug',
                 target: 'dotnet_bypass',
                 action: 'hook_failed',
                 function: 'dotnet_bypass_suite',
-                error: e.toString(),
-                stack: e.stack || 'No stack trace available',
+                error: error.toString(),
+                stack: error.stack || 'No stack trace available',
             });
         }
 
@@ -1253,14 +1252,13 @@ const DotnetBypassSuite = {
     },
 
     // Helper: Get known good hash
-    getKnownGoodHash: () => {
+    getKnownGoodHash: () =>
         // Return a hash that will pass validation
-        return [
-            0xde, 0xad, 0xbe, 0xef, 0xca, 0xfe, 0xba, 0xbe, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc,
-            0xde, 0xf0, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc,
-            0xdd, 0xee, 0xff, 0x00,
-        ];
-    },
+        [
+            0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE, 0xBA, 0xBE, 0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC,
+            0xDE, 0xF0, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC,
+            0xDD, 0xEE, 0xFF, 0x00,
+        ],
 
     // Helper: Check for known protections
     checkForProtections: _assembly => {
@@ -1301,14 +1299,14 @@ const DotnetBypassSuite = {
             }
 
             const antiTamperPatterns = [
-                [0x48, 0x8b, 0x05, 0x90, 0x90, 0x90, 0x90],
-                [0xe8, 0x90, 0x90, 0x90, 0x90, 0x84, 0xc0, 0x74],
-                [0x48, 0x85, 0xc0, 0x74, 0x90, 0x48, 0x8b, 0xc8],
+                [0x48, 0x8B, 0x05, 0x90, 0x90, 0x90, 0x90],
+                [0xE8, 0x90, 0x90, 0x90, 0x90, 0x84, 0xC0, 0x74],
+                [0x48, 0x85, 0xC0, 0x74, 0x90, 0x48, 0x8B, 0xC8],
             ];
 
-            const peHeader = assemblyPtr.add(0x3c).readU32();
+            const peHeader = assemblyPtr.add(0x3C).readU32();
             const codeSection = assemblyPtr.add(peHeader + 0x18);
-            const codeBase = codeSection.add(0x0c).readPointer();
+            const codeBase = codeSection.add(0x0C).readPointer();
             const codeSize = codeSection.add(0x08).readU32();
 
             antiTamperPatterns.forEach(pattern => {
@@ -1334,20 +1332,20 @@ const DotnetBypassSuite = {
                     });
                 });
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'debug',
                 target: 'dotnet_bypass',
                 action: 'anti_tamper_patch_failed',
                 function: 'patchAntiTamperChecks',
-                error: e.toString(),
-                stack: e.stack || 'No stack trace available',
+                error: error.toString(),
+                stack: error.stack || 'No stack trace available',
             });
         }
     },
 
     // Helper: Patch compiled method
-    patchCompiledMethod: function (methodInfo) {
+    patchCompiledMethod(methodInfo) {
         send({
             type: 'status',
             target: 'dotnet_bypass_suite',
@@ -1359,9 +1357,9 @@ const DotnetBypassSuite = {
         if (nativeCode && !nativeCode.isNull()) {
             // Patch to return true
             Memory.patchCode(nativeCode, 3, code => {
-                code.putU8(0xb0); // mov al, 1
+                code.putU8(0xB0); // mov al, 1
                 code.putU8(0x01);
-                code.putU8(0xc3); // ret
+                code.putU8(0xC3); // ret
             });
             this.bypassedChecks++;
         }
@@ -1380,14 +1378,14 @@ const DotnetBypassSuite = {
                     return method;
                 }
             }
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'debug',
                 target: 'dotnet_bypass',
                 action: 'hook_failed',
                 function: 'dotnet_bypass_suite',
-                error: e.toString(),
-                stack: e.stack || 'No stack trace available',
+                error: error.toString(),
+                stack: error.stack || 'No stack trace available',
             });
         }
 
@@ -1412,8 +1410,8 @@ const DotnetBypassSuite = {
         ];
 
         filename = filename.toLowerCase();
-        for (let i = 0; i < protectedNames.length; i++) {
-            if (filename.includes(protectedNames[i])) {
+        for (const protectedName of protectedNames) {
+            if (filename.includes(protectedName)) {
                 return true;
             }
         }
@@ -1424,7 +1422,7 @@ const DotnetBypassSuite = {
     // === NEW 2024-2025 MODERN .NET SECURITY BYPASS ENHANCEMENTS ===
 
     // 1. .NET 9.0/10.0 Runtime Bypass
-    hookDotNet9Runtime: function () {
+    hookDotNet9Runtime() {
         // .NET 9.0 introduces new runtime security features
         const dotNet9Patterns = [
             // .NET 9.0 runtime security check pattern
@@ -1465,8 +1463,8 @@ const DotnetBypassSuite = {
         });
 
         // Hook .NET 9.0 specific AssemblyLoadContext security
-        const dotNet9AlcPattern =
-            '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC ?? 4C 8B FA';
+        const dotNet9AlcPattern
+            = '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC ?? 4C 8B FA';
         const alcMatches = Memory.scanSync(
             this.clrModule.base,
             this.clrModule.size,
@@ -1503,7 +1501,7 @@ const DotnetBypassSuite = {
     },
 
     // 2. Native AOT (Ahead-of-Time) Compilation Bypass
-    hookNativeAotBypass: function () {
+    hookNativeAotBypass() {
         // Native AOT produces single executable without traditional CLR
         // Look for NativeAOT runtime signatures
         const nativeAotPatterns = [
@@ -1584,10 +1582,10 @@ const DotnetBypassSuite = {
     },
 
     // 3. Trimming and Single-File Deployment Bypass
-    hookTrimmingSingleFileBypass: function () {
+    hookTrimmingSingleFileBypass() {
         // Single-file deployments extract to temp directory
-        const tempExtractPattern =
-            '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F2 48 8B F9 E8 ?? ?? ?? ?? 85 C0';
+        const tempExtractPattern
+            = '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F2 48 8B F9 E8 ?? ?? ?? ?? 85 C0';
         const extractMatches = Memory.scanSync(
             this.clrModule.base,
             this.clrModule.size,
@@ -1644,7 +1642,7 @@ const DotnetBypassSuite = {
                     // Bypass trimming restrictions
                     if (retval.isNull()) {
                         // Return valid metadata pointer
-                        retval.replace(ptr(0x1000));
+                        retval.replace(ptr(0x10_00));
                         this.stats.trimmingSingleFileBypassEvents++;
                         send({
                             type: 'bypass',
@@ -1657,8 +1655,8 @@ const DotnetBypassSuite = {
         });
 
         // Hook bundled resource access
-        const bundlePattern =
-            '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 56 41 57 48 83 EC ?? 4C 8B F2';
+        const bundlePattern
+            = '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 56 41 57 48 83 EC ?? 4C 8B F2';
         const bundleMatches = Memory.scanSync(
             this.clrModule.base,
             this.clrModule.size,
@@ -1683,19 +1681,19 @@ const DotnetBypassSuite = {
                     // Allow all bundled resource access
                     if (retval.isNull()) {
                         // Return success pointer
-                        retval.replace(ptr(0x2000));
+                        retval.replace(ptr(0x20_00));
                         this.stats.trimmingSingleFileBypassEvents++;
                     }
                 },
             });
         });
 
-        this.stats.methodsHooked +=
-            extractMatches.length + trimmingMatches.length + bundleMatches.length;
+        this.stats.methodsHooked
+            += extractMatches.length + trimmingMatches.length + bundleMatches.length;
     },
 
     // 4. R2R (Ready-to-Run) Image Bypass
-    hookReadyToRunBypass: function () {
+    hookReadyToRunBypass() {
         // R2R images have pre-compiled native code
         const r2rHeaderPattern = '52 32 52 00'; // "R2R\0" signature
         const r2rMatches = Memory.scanSync(
@@ -1714,8 +1712,8 @@ const DotnetBypassSuite = {
         });
 
         // Hook R2R method resolution
-        const r2rMethodPattern =
-            '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B FA 48 8B F1 E8 ?? ?? ?? ?? 48 85 C0 75';
+        const r2rMethodPattern
+            = '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B FA 48 8B F1 E8 ?? ?? ?? ?? 48 85 C0 75';
         const methodMatches = Memory.scanSync(
             this.clrModule.base,
             this.clrModule.size,
@@ -1739,7 +1737,7 @@ const DotnetBypassSuite = {
                     // Ensure R2R method resolution succeeds
                     if (retval.isNull()) {
                         // Return valid method descriptor
-                        retval.replace(ptr(0x3000));
+                        retval.replace(ptr(0x30_00));
                         this.stats.readyToRunBypassEvents++;
                         send({
                             type: 'bypass',
@@ -1787,7 +1785,7 @@ const DotnetBypassSuite = {
     },
 
     // 5. WASM/Blazor .NET Runtime Bypass
-    hookWasmBlazorNetRuntimeBypass: function () {
+    hookWasmBlazorNetRuntimeBypass() {
         // Blazor WebAssembly runtime patterns
         const blazorModules = ['mono-wasm', 'dotnet.wasm', 'blazor.boot'];
 
@@ -1803,8 +1801,8 @@ const DotnetBypassSuite = {
                     });
 
                     // Hook Mono WebAssembly initialization
-                    const monoWasmPattern =
-                        '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F9 48 8B EA';
+                    const monoWasmPattern
+                        = '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F9 48 8B EA';
                     const wasmMatches = Memory.scanSync(
                         module,
                         Module.getSize(moduleName),
@@ -1835,15 +1833,15 @@ const DotnetBypassSuite = {
                         });
                     });
                 }
-            } catch (e) {
+            } catch (error) {
                 send({
                     type: 'debug',
                     target: 'dotnet_bypass',
                     action: 'module_not_found',
                     function: 'hookWasmBlazorNetRuntimeBypass',
                     module_name: moduleName,
-                    error: e.toString(),
-                    stack: e.stack || 'No stack trace available',
+                    error: error.toString(),
+                    stack: error.stack || 'No stack trace available',
                 });
             }
         });
@@ -1876,14 +1874,14 @@ const DotnetBypassSuite = {
                 });
                 this.stats.methodsHooked++;
             }
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'debug',
                 target: 'dotnet_bypass',
                 action: 'hook_failed',
                 function: 'dotnet_bypass_suite',
-                error: e.toString(),
-                stack: e.stack || 'No stack trace available',
+                error: error.toString(),
+                stack: error.stack || 'No stack trace available',
             });
         }
 
@@ -1916,7 +1914,7 @@ const DotnetBypassSuite = {
     },
 
     // 6. Modern Obfuscator Support (DNGuard, .NET Reactor v6, Themida .NET)
-    hookModernObfuscatorSupport: function () {
+    hookModernObfuscatorSupport() {
         // DNGuard HVM patterns
         const dnguardPatterns = [
             'DNGuard',
@@ -2016,13 +2014,13 @@ const DotnetBypassSuite = {
             // Deobfuscate control flow
             Memory.patchCode(match.address, 8, code => {
                 code.putU8(0x48);
-                code.putU8(0xc7);
-                code.putU8(0xc0); // mov rax, immediate
+                code.putU8(0xC7);
+                code.putU8(0xC0); // mov rax, immediate
                 code.putU8(0x01);
                 code.putU8(0x00);
                 code.putU8(0x00);
                 code.putU8(0x00);
-                code.putU8(0xc3); // ret
+                code.putU8(0xC3); // ret
             });
             send({
                 type: 'bypass',
@@ -2033,15 +2031,15 @@ const DotnetBypassSuite = {
             this.stats.modernObfuscatorSupportEvents++;
         });
 
-        this.stats.methodsHooked +=
-            dnguardPatterns.length +
-            reactorV6Patterns.length +
-            themidaNetPatterns.length +
-            cfoMatches.length;
+        this.stats.methodsHooked
+            += dnguardPatterns.length
+            + reactorV6Patterns.length
+            + themidaNetPatterns.length
+            + cfoMatches.length;
     },
 
     // 7. Certificate Transparency Log Bypass for .NET Code Signing
-    hookCertificateTransparencyLogDotNetBypass: function () {
+    hookCertificateTransparencyLogDotNetBypass() {
         // Hook certificate validation with CT log verification
         const ctLogPatterns = [
             '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B FA 48 8B F1 48 8B 0D',
@@ -2084,8 +2082,8 @@ const DotnetBypassSuite = {
         });
 
         // Hook .NET specific certificate chain validation with CT
-        const dotNetCertPattern =
-            '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC ?? 4D 8B E1';
+        const dotNetCertPattern
+            = '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC ?? 4D 8B E1';
         const dotNetMatches = Memory.scanSync(
             this.clrModule.base,
             this.clrModule.size,
@@ -2120,7 +2118,7 @@ const DotnetBypassSuite = {
     },
 
     // 8. Hardware Security Module (HSM) Certificate Bypass
-    hookHsmCertificateBypass: function () {
+    hookHsmCertificateBypass() {
         // Hook PKCS#11 interface for HSM communication
         const pkcs11Pattern = 'C_GetSlotList';
         try {
@@ -2149,14 +2147,14 @@ const DotnetBypassSuite = {
                 });
                 this.stats.methodsHooked++;
             }
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'debug',
                 target: 'dotnet_bypass',
                 action: 'hook_failed',
                 function: 'dotnet_bypass_suite',
-                error: e.toString(),
-                stack: e.stack || 'No stack trace available',
+                error: error.toString(),
+                stack: error.stack || 'No stack trace available',
             });
         }
 
@@ -2189,14 +2187,14 @@ const DotnetBypassSuite = {
                 });
                 this.stats.methodsHooked++;
             }
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'debug',
                 target: 'dotnet_bypass',
                 action: 'hook_failed',
                 function: 'dotnet_bypass_suite',
-                error: e.toString(),
-                stack: e.stack || 'No stack trace available',
+                error: error.toString(),
+                stack: error.stack || 'No stack trace available',
             });
         }
 
@@ -2264,7 +2262,7 @@ const DotnetBypassSuite = {
     },
 
     // 9. Windows Defender Application Control (WDAC) Bypass
-    hookWindowsDefenderApplicationControlBypass: function () {
+    hookWindowsDefenderApplicationControlBypass() {
         // Hook WDAC policy enforcement
         const wdacPatterns = [
             '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC ?? 45 33 FF',
@@ -2372,7 +2370,7 @@ const DotnetBypassSuite = {
     },
 
     // 10. AppLocker .NET Script Enforcement Bypass
-    hookAppLockerDotNetScriptEnforcementBypass: function () {
+    hookAppLockerDotNetScriptEnforcementBypass() {
         // Hook PowerShell Constrained Language Mode enforcement
         const clmPatterns = [
             'System.Management.Automation.LanguageMode',
@@ -2469,8 +2467,8 @@ const DotnetBypassSuite = {
                 Memory.patchCode(match.address, 4, code => {
                     code.putU8(0x48);
                     code.putU8(0x31);
-                    code.putU8(0xc0); // xor rax, rax
-                    code.putU8(0xc3); // ret
+                    code.putU8(0xC0); // xor rax, rax
+                    code.putU8(0xC3); // ret
                 });
                 send({
                     type: 'bypass',
@@ -2480,14 +2478,14 @@ const DotnetBypassSuite = {
                 });
                 this.stats.appLockerDotNetScriptEnforcementBypassEvents++;
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'debug',
                 target: 'dotnet_bypass',
                 action: 'hook_failed',
                 function: 'dotnet_bypass_suite',
-                error: e.toString(),
-                stack: e.stack || 'No stack trace available',
+                error: error.toString(),
+                stack: error.stack || 'No stack trace available',
             });
         }
 

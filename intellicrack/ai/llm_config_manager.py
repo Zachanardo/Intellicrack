@@ -31,7 +31,7 @@ import json
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from ..utils.deprecation_warnings import deprecated_config_method
 from ..utils.logger import get_logger
@@ -127,8 +127,8 @@ class LLMConfigManager:
     def _load_json_file(
         self,
         file_path: Path,
-        default: dict[str, object] | list[object],
-    ) -> dict[str, object] | list[object]:
+        default: dict[str, Any] | list[Any],
+    ) -> dict[str, Any] | list[Any]:
         """Load a JSON file with error handling - ONLY for migration purposes.
 
         Args:
@@ -144,7 +144,7 @@ class LLMConfigManager:
 
         try:
             with open(file_path, encoding="utf-8") as f:
-                return json.load(f)
+                return cast("dict[str, Any] | list[Any]", json.load(f))
         except Exception as e:
             logger.exception("Failed to load %s: %s", file_path, e)
             return default
@@ -652,10 +652,11 @@ class LLMConfigManager:
             include_api_keys: Whether to include API keys
 
         """
-        export_data = {
+        configs_export: dict[str, dict[str, Any]] = {}
+        export_data: dict[str, Any] = {
             "version": "1.0",
             "exported_at": datetime.now().isoformat(),
-            "configs": {},
+            "configs": configs_export,
             "profiles": self.profiles,
             "metrics": self.metrics,
         }

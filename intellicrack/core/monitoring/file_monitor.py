@@ -18,6 +18,7 @@ from watchdog.observers import Observer
 
 from intellicrack.core.monitoring.base_monitor import BaseMonitor, EventSeverity, EventSource, EventType, MonitorEvent, ProcessInfo
 
+
 if TYPE_CHECKING:
     from watchdog.observers.api import BaseObserver
 
@@ -78,7 +79,7 @@ class LicenseFileHandler(FileSystemEventHandler):
             event: File system event.
 
         """
-        src_path: str = event.src_path if isinstance(event.src_path, str) else event.src_path.decode('utf-8', errors='replace')
+        src_path: str = event.src_path if isinstance(event.src_path, str) else event.src_path.decode("utf-8", errors="replace")
         if not event.is_directory and self._is_license_file(src_path):
             self.callback(EventType.CREATE, src_path, "file_created")
 
@@ -89,7 +90,7 @@ class LicenseFileHandler(FileSystemEventHandler):
             event: File system event.
 
         """
-        src_path: str = event.src_path if isinstance(event.src_path, str) else event.src_path.decode('utf-8', errors='replace')
+        src_path: str = event.src_path if isinstance(event.src_path, str) else event.src_path.decode("utf-8", errors="replace")
         if not event.is_directory and self._is_license_file(src_path):
             self.callback(EventType.MODIFY, src_path, "file_modified")
 
@@ -100,7 +101,7 @@ class LicenseFileHandler(FileSystemEventHandler):
             event: File system event.
 
         """
-        src_path: str = event.src_path if isinstance(event.src_path, str) else event.src_path.decode('utf-8', errors='replace')
+        src_path: str = event.src_path if isinstance(event.src_path, str) else event.src_path.decode("utf-8", errors="replace")
         if not event.is_directory and self._is_license_file(src_path):
             self.callback(EventType.DELETE, src_path, "file_deleted")
 
@@ -111,8 +112,8 @@ class LicenseFileHandler(FileSystemEventHandler):
             event: File system event.
 
         """
-        src_path: str = event.src_path if isinstance(event.src_path, str) else event.src_path.decode('utf-8', errors='replace')
-        dest_path: str = event.dest_path if isinstance(event.dest_path, str) else event.dest_path.decode('utf-8', errors='replace')
+        src_path: str = event.src_path if isinstance(event.src_path, str) else event.src_path.decode("utf-8", errors="replace")
+        dest_path: str = event.dest_path if isinstance(event.dest_path, str) else event.dest_path.decode("utf-8", errors="replace")
         if not event.is_directory and (self._is_license_file(src_path) or self._is_license_file(dest_path)):
             self.callback(EventType.MODIFY, f"{src_path} -> {dest_path}", "file_moved")
 

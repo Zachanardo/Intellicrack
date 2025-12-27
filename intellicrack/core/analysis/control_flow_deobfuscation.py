@@ -35,7 +35,10 @@ from typing import TYPE_CHECKING, Any
 
 
 if TYPE_CHECKING:
-    from intellicrack.utils.tools.radare2_utils import R2Session as Radare2Session, R2SessionPoolAdapter
+    from intellicrack.utils.tools.radare2_utils import (
+        R2Session as Radare2Session,
+        R2SessionPoolAdapter,
+    )
 
 from intellicrack.utils.logger import logger
 

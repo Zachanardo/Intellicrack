@@ -135,11 +135,10 @@ def run_network_license_server(app_instance: object | None = None, **kwargs: obj
 
     """
     try:
-        # Configure server based on kwargs
         port_raw = kwargs.get("port", 27000)
         port = 27000
         try:
-            port = int(port_raw) if port_raw is not None else 27000
+            port = int(cast("str | int", port_raw)) if port_raw is not None else 27000
         except (ValueError, TypeError):
             logger.warning("Invalid port '%s' provided, using default 27000", port_raw)
             port = 27000
@@ -207,12 +206,11 @@ def run_ssl_tls_interceptor(app_instance: object | None = None, **kwargs: object
 
     """
     try:
-        # Configure interceptor based on kwargs
         target_host = kwargs.get("target_host")
         target_port_raw = kwargs.get("target_port", 443)
         target_port = 443
         try:
-            target_port = int(target_port_raw) if target_port_raw is not None else 443
+            target_port = int(cast("str | int", target_port_raw)) if target_port_raw is not None else 443
         except (ValueError, TypeError):
             logger.warning("Invalid target_port '%s' provided, using default 443", target_port_raw)
             target_port = 443
@@ -2022,8 +2020,8 @@ def _run_ghidra_thread(app: object, cmd: list[str], temp_dir: str) -> None:
         if returncode != 0:
             error_msg = f"[Ghidra Analysis] Ghidra process failed with exit code {returncode}."
             if app and hasattr(app, "update_output") and hasattr(app, "update_status"):
-                update_output = getattr(app, "update_output")
-                update_status = getattr(app, "update_status")
+                update_output = app.update_output
+                update_status = app.update_status
                 if hasattr(update_output, "emit"):
                     update_output.emit(log_message(error_msg))
                 if hasattr(update_status, "emit"):
@@ -2032,7 +2030,7 @@ def _run_ghidra_thread(app: object, cmd: list[str], temp_dir: str) -> None:
                 # Clean up stderr output for better logging
                 clean_stderr = "\n".join(line for line in (stderr.splitlines() if stderr is not None else []) if line and line.strip())
                 if clean_stderr and app and hasattr(app, "update_output"):
-                    update_output = getattr(app, "update_output")
+                    update_output = app.update_output
                     if hasattr(update_output, "emit"):
                         update_output.emit(log_message(f"[Ghidra Error Output]\n{clean_stderr}"))
             # Stop further processing if Ghidra failed
@@ -2040,7 +2038,7 @@ def _run_ghidra_thread(app: object, cmd: list[str], temp_dir: str) -> None:
 
         # Process stdout if successful
         if stdout and isinstance(stdout, (str, bytes)) and app and hasattr(app, "update_output"):
-            update_output = getattr(app, "update_output")
+            update_output = app.update_output
             for line in stdout.splitlines() if stdout is not None else []:
                 if line and line.strip() and ("INFO" not in line or "Decompiling" in line or "Analysis results written" in line):
                     if hasattr(update_output, "emit"):
@@ -2048,7 +2046,7 @@ def _run_ghidra_thread(app: object, cmd: list[str], temp_dir: str) -> None:
 
         # Log stderr even on success, might contain warnings
         if stderr and isinstance(stderr, (str, bytes)) and app and hasattr(app, "update_output"):
-            update_output = getattr(app, "update_output")
+            update_output = app.update_output
             if clean_stderr := "\n".join(line for line in stderr.splitlines() if line and line.strip() and "INFO" not in line):
                 if hasattr(update_output, "emit"):
                     update_output.emit(log_message(f"[Ghidra Warnings/Output]\n{clean_stderr}"))
@@ -2056,8 +2054,8 @@ def _run_ghidra_thread(app: object, cmd: list[str], temp_dir: str) -> None:
         # Check for output JSON file (only if process succeeded)
         json_path = os.path.join(str(Path.cwd()), "analysis_results.json")
         if os.path.exists(json_path) and app and hasattr(app, "update_output") and hasattr(app, "update_status"):
-            update_output = getattr(app, "update_output")
-            update_status = getattr(app, "update_status")
+            update_output = app.update_output
+            update_status = app.update_status
             if hasattr(update_output, "emit"):
                 update_output.emit(log_message(f"[Ghidra Analysis] Results file found: {json_path}"))
             try:
@@ -2073,8 +2071,8 @@ def _run_ghidra_thread(app: object, cmd: list[str], temp_dir: str) -> None:
                 if hasattr(update_status, "emit"):
                     update_status.emit("Error processing Ghidra results")
         elif app and hasattr(app, "update_output") and hasattr(app, "update_status"):
-            update_output = getattr(app, "update_output")
-            update_status = getattr(app, "update_status")
+            update_output = app.update_output
+            update_status = app.update_status
             if hasattr(update_output, "emit"):
                 update_output.emit(log_message("[Ghidra Analysis] No results file found. Script may have failed."))
             if hasattr(update_status, "emit"):
@@ -2084,8 +2082,8 @@ def _run_ghidra_thread(app: object, cmd: list[str], temp_dir: str) -> None:
         error_msg = f"[Ghidra Analysis] Exception during Ghidra execution: {e}"
         logger.exception(error_msg)
         if app and hasattr(app, "update_output") and hasattr(app, "update_status"):
-            update_output = getattr(app, "update_output")
-            update_status = getattr(app, "update_status")
+            update_output = app.update_output
+            update_status = app.update_status
             if hasattr(update_output, "emit"):
                 update_output.emit(log_message(error_msg))
             if hasattr(update_status, "emit"):
@@ -2204,7 +2202,7 @@ def run_frida_analysis(app_instance: object | None = None, binary_path: str | No
         logger.info("Starting Frida analysis on %s", binary_path)
 
         if app_instance and hasattr(app_instance, "update_output"):
-            update_output = getattr(app_instance, "update_output")
+            update_output = app_instance.update_output
             if hasattr(update_output, "emit"):
                 update_output.emit(log_message("[Frida Analysis] Starting dynamic instrumentation..."))
             if hasattr(app_instance, "analyze_status"):
@@ -2361,7 +2359,7 @@ def run_frida_analysis(app_instance: object | None = None, binary_path: str | No
         error_msg = f"Frida analysis failed: {e!s}"
 
         if app_instance and hasattr(app_instance, "update_output"):
-            update_output = getattr(app_instance, "update_output")
+            update_output = app_instance.update_output
             if hasattr(update_output, "emit"):
                 update_output.emit(log_message(f"[Frida Analysis] ERROR: {error_msg}"))
 
@@ -2391,7 +2389,7 @@ def run_dynamic_instrumentation(app_instance: object | None = None, binary_path:
         logger.info("Starting dynamic instrumentation on %s", binary_path)
 
         if app_instance and hasattr(app_instance, "update_output"):
-            update_output = getattr(app_instance, "update_output")
+            update_output = app_instance.update_output
             if hasattr(update_output, "emit"):
                 update_output.emit(log_message("[Dynamic Instrumentation] Starting Frida instrumentation..."))
 
@@ -2417,7 +2415,7 @@ def run_dynamic_instrumentation(app_instance: object | None = None, binary_path:
             }
 
         if app_instance and hasattr(app_instance, "update_output"):
-            update_output = getattr(app_instance, "update_output")
+            update_output = app_instance.update_output
             if hasattr(update_output, "emit"):
                 update_output.emit(log_message(f"[Dynamic Instrumentation] Using script: {script_path}"))
 
@@ -2434,7 +2432,7 @@ def run_dynamic_instrumentation(app_instance: object | None = None, binary_path:
 
         if result.get("status") == "success":
             if app_instance and hasattr(app_instance, "update_output"):
-                update_output = getattr(app_instance, "update_output")
+                update_output = app_instance.update_output
                 if hasattr(update_output, "emit"):
                     update_output.emit(log_message("[Dynamic Instrumentation] Instrumentation completed successfully"))
 
@@ -2443,16 +2441,16 @@ def run_dynamic_instrumentation(app_instance: object | None = None, binary_path:
                 "message": "Dynamic instrumentation completed",
                 "script_path": script_path,
                 "binary_path": binary_path,
-                "execution_result": cast(object, result),
+                "execution_result": cast("object", result),
             }
-        return cast(dict[str, object], result)
+        return cast("dict[str, object]", result)
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.exception("Error running dynamic instrumentation: %s", e)
         error_msg = f"Dynamic instrumentation failed: {e!s}"
 
         if app_instance and hasattr(app_instance, "update_output"):
-            update_output = getattr(app_instance, "update_output")
+            update_output = app_instance.update_output
             if hasattr(update_output, "emit"):
                 update_output.emit(log_message(f"[Dynamic Instrumentation] ERROR: {error_msg}"))
 

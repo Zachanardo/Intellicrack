@@ -1099,27 +1099,27 @@ class ProtectionLoss(nn.Module if TORCH_AVAILABLE else object):  # type: ignore[
         # Main classification loss
         if "protection_type" in outputs:
             class_loss = self.focal_loss(outputs["protection_type"], targets)
-            total_loss = total_loss + class_loss
+            total_loss += class_loss
 
         # Version regression loss
         if "version" in outputs:
             version_loss = functional.mse_loss(outputs["version"], targets.float() * 0.1)
-            total_loss = total_loss + 0.1 * version_loss
+            total_loss += 0.1 * version_loss
 
         # Complexity scoring loss
         if "complexity" in outputs:
             complexity_loss = functional.mse_loss(outputs["complexity"], targets.float() * 0.05)
-            total_loss = total_loss + 0.05 * complexity_loss
+            total_loss += 0.05 * complexity_loss
 
         # Bypass difficulty loss
         if "bypass_difficulty" in outputs:
             difficulty_loss = functional.cross_entropy(outputs["bypass_difficulty"], torch.clamp(targets // 4, 0, 4))
-            total_loss = total_loss + 0.1 * difficulty_loss
+            total_loss += 0.1 * difficulty_loss
 
         # Center loss for feature clustering
         if features is not None:
             center_loss = self.compute_center_loss(features, targets)
-            total_loss = total_loss + self.center_loss_weight * center_loss
+            total_loss += self.center_loss_weight * center_loss
 
         return total_loss
 

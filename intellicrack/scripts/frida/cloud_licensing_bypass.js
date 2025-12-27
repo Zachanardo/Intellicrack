@@ -49,7 +49,7 @@ const CloudLicensingBypass = {
             enabled: true,
             tokenTypes: ['Bearer', 'OAuth', 'JWT', 'access_token'],
             spoofValidTokens: true,
-            tokenLifetime: 86400, // 24 hours
+            tokenLifetime: 86_400, // 24 hours
             customTokens: {
                 adobe: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkFkb2JlIFVzZXIiLCJpYXQiOjE1MTYyMzkwMjJ9.valid_signature',
                 autodesk: 'Bearer_valid_autodesk_token_12345',
@@ -129,9 +129,9 @@ const CloudLicensingBypass = {
                 tier: 'premium',
                 access_token: (() => {
                     // Generate dynamic access token from process context
-                    var processId = Process.id.toString(16);
-                    var timestamp = Date.now().toString(36);
-                    var threadId = Process.getCurrentThreadId().toString(16);
+                    const processId = Process.id.toString(16);
+                    const timestamp = Date.now().toString(36);
+                    const threadId = Process.getCurrentThreadId().toString(16);
                     return `bearer_${processId}_${timestamp}_${threadId}`;
                 })(),
             },
@@ -144,7 +144,7 @@ const CloudLicensingBypass = {
     blockedRequests: 0,
     spoofedResponses: 0,
 
-    onAttach: function (pid) {
+    onAttach(pid) {
         send({
             type: 'status',
             target: 'cloud_licensing_bypass',
@@ -154,7 +154,7 @@ const CloudLicensingBypass = {
         this.processId = pid;
     },
 
-    run: function () {
+    run() {
         send({
             type: 'status',
             target: 'cloud_licensing_bypass',
@@ -185,7 +185,7 @@ const CloudLicensingBypass = {
     },
 
     // === HTTP REQUEST HOOKS ===
-    hookHttpRequests: function () {
+    hookHttpRequests() {
         send({
             type: 'info',
             target: 'cloud_licensing_bypass',
@@ -205,7 +205,7 @@ const CloudLicensingBypass = {
         this.hookGenericHttpLibraries();
     },
 
-    hookWinHttpFunctions: function () {
+    hookWinHttpFunctions() {
         send({
             type: 'info',
             target: 'cloud_licensing_bypass',
@@ -213,10 +213,10 @@ const CloudLicensingBypass = {
         });
 
         // Hook WinHttpSendRequest
-        var winHttpSendRequest = Module.findExportByName('winhttp.dll', 'WinHttpSendRequest');
+        const winHttpSendRequest = Module.findExportByName('winhttp.dll', 'WinHttpSendRequest');
         if (winHttpSendRequest) {
             Interceptor.attach(winHttpSendRequest, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.hRequest = args[0];
                     this.lpszHeaders = args[1];
                     this.dwHeadersLength = args[2].toInt32();
@@ -247,7 +247,7 @@ const CloudLicensingBypass = {
                     }
                 },
 
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.blockRequest) {
                         // Block the request by returning failure
                         retval.replace(0); // FALSE
@@ -266,21 +266,21 @@ const CloudLicensingBypass = {
                     }
                 },
 
-                getRequestDetails: function () {
+                getRequestDetails() {
                     try {
-                        var details = {};
+                        const details = {};
 
                         // Try to get URL from headers
                         if (
-                            this.lpszHeaders &&
-                            !this.lpszHeaders.isNull() &&
-                            this.dwHeadersLength > 0
+                            this.lpszHeaders
+                            && !this.lpszHeaders.isNull()
+                            && this.dwHeadersLength > 0
                         ) {
-                            var headers = this.lpszHeaders.readUtf16String(this.dwHeadersLength);
+                            const headers = this.lpszHeaders.readUtf16String(this.dwHeadersLength);
                             details.headers = headers;
 
                             // Extract Host header
-                            var hostMatch = headers.match(/Host:\s*([^\r\n]+)/i);
+                            const hostMatch = headers.match(/host:\s*([^\n\r]+)/i);
                             if (hostMatch) {
                                 details.host = hostMatch[1].trim();
                             }
@@ -288,15 +288,15 @@ const CloudLicensingBypass = {
 
                         // Get request body if present
                         if (
-                            this.lpOptional &&
-                            !this.lpOptional.isNull() &&
-                            this.dwOptionalLength > 0
+                            this.lpOptional
+                            && !this.lpOptional.isNull()
+                            && this.dwOptionalLength > 0
                         ) {
                             try {
-                                var body = this.lpOptional.readUtf8String(this.dwOptionalLength);
+                                const body = this.lpOptional.readUtf8String(this.dwOptionalLength);
                                 details.body = body;
-                            } catch (e) {
-                                var bodyBytes = this.lpOptional.readByteArray(
+                            } catch (error) {
+                                const bodyBytes = this.lpOptional.readByteArray(
                                     Math.min(this.dwOptionalLength, 1024)
                                 );
                                 details.body = `[Binary: ${bodyBytes.byteLength} bytes]`;
@@ -304,28 +304,28 @@ const CloudLicensingBypass = {
                                     type: 'error',
                                     target: 'cloud_licensing_bypass',
                                     action: 'request_body_binary_data_detected',
-                                    error: e.message,
-                                    stack: e.stack,
+                                    error: error.message,
+                                    stack: error.stack,
                                     size: this.dwOptionalLength,
                                 });
                             }
                         }
 
                         return details;
-                    } catch (e) {
+                    } catch (error) {
                         send({
                             type: 'error',
                             target: 'cloud_licensing_bypass',
                             action: 'request_details_extraction_failed',
-                            error: e.message,
-                            stack: e.stack,
+                            error: error.message,
+                            stack: error.stack,
                         });
                         return {};
                     }
                 },
 
-                isLicenseRequest: function (details) {
-                    var config = this.parent.parent.config;
+                isLicenseRequest(details) {
+                    const { config } = this.parent.parent;
 
                     if (details.host) {
                         return config.licenseServers.some(server =>
@@ -334,8 +334,8 @@ const CloudLicensingBypass = {
                     }
 
                     if (details.body) {
-                        var bodyLower = details.body.toLowerCase();
-                        var licenseKeywords = [
+                        const bodyLower = details.body.toLowerCase();
+                        const licenseKeywords = [
                             'license',
                             'activation',
                             'genuine',
@@ -354,15 +354,15 @@ const CloudLicensingBypass = {
         }
 
         // Hook WinHttpReceiveResponse for response manipulation
-        var winHttpReceiveResponse = Module.findExportByName(
+        const winHttpReceiveResponse = Module.findExportByName(
             'winhttp.dll',
             'WinHttpReceiveResponse'
         );
         if (winHttpReceiveResponse) {
             Interceptor.attach(winHttpReceiveResponse, {
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (retval.toInt32() !== 0) {
-                        var config = this.parent.parent.config;
+                        const { config } = this.parent.parent;
                         if (config.networkInterception.spoofResponses) {
                             send({
                                 type: 'info',
@@ -378,46 +378,46 @@ const CloudLicensingBypass = {
         }
 
         // Hook WinHttpReadData for response content manipulation
-        var winHttpReadData = Module.findExportByName('winhttp.dll', 'WinHttpReadData');
+        const winHttpReadData = Module.findExportByName('winhttp.dll', 'WinHttpReadData');
         if (winHttpReadData) {
             Interceptor.attach(winHttpReadData, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.hRequest = args[0];
                     this.lpBuffer = args[1];
                     this.dwNumberOfBytesToRead = args[2].toInt32();
                     this.lpdwNumberOfBytesRead = args[3];
                 },
 
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (
-                        retval.toInt32() !== 0 &&
-                        this.lpBuffer &&
-                        !this.lpBuffer.isNull() &&
-                        this.lpdwNumberOfBytesRead &&
-                        !this.lpdwNumberOfBytesRead.isNull()
+                        retval.toInt32() !== 0
+                        && this.lpBuffer
+                        && !this.lpBuffer.isNull()
+                        && this.lpdwNumberOfBytesRead
+                        && !this.lpdwNumberOfBytesRead.isNull()
                     ) {
-                        var bytesRead = this.lpdwNumberOfBytesRead.readU32();
+                        const bytesRead = this.lpdwNumberOfBytesRead.readU32();
                         if (bytesRead > 0) {
                             this.spoofResponseData(bytesRead);
                         }
                     }
                 },
 
-                spoofResponseData: function (bytesRead) {
+                spoofResponseData(bytesRead) {
                     try {
-                        var config = this.parent.parent.config;
+                        const { config } = this.parent.parent;
                         if (!config.networkInterception.spoofResponses) {
                             return;
                         }
 
-                        var responseData = this.lpBuffer.readUtf8String(bytesRead);
-                        var shouldSpoof = this.shouldSpoofResponse(responseData);
+                        const responseData = this.lpBuffer.readUtf8String(bytesRead);
+                        const shouldSpoof = this.shouldSpoofResponse(responseData);
 
                         if (shouldSpoof) {
-                            var spoofedResponse = this.generateSpoofedResponse(responseData);
+                            const spoofedResponse = this.generateSpoofedResponse(responseData);
                             if (
-                                spoofedResponse &&
-                                spoofedResponse.length <= this.dwNumberOfBytesToRead
+                                spoofedResponse
+                                && spoofedResponse.length <= this.dwNumberOfBytesToRead
                             ) {
                                 // Write spoofed response
                                 this.lpBuffer.writeUtf8String(spoofedResponse);
@@ -428,16 +428,16 @@ const CloudLicensingBypass = {
                                     type: 'bypass',
                                     target: 'cloud_licensing_bypass',
                                     action: 'winhttp_response_spoofed',
-                                    response_preview: spoofedResponse.substring(0, 100),
+                                    response_preview: spoofedResponse.slice(0, 100),
                                 });
                             }
                         }
-                    } catch (e) {
+                    } catch (error) {
                         send({
                             type: 'error',
                             target: 'cloud_licensing_bypass',
                             action: 'winhttp_response_spoofing_error',
-                            error: e.toString(),
+                            error: error.toString(),
                         });
                     }
                 },
@@ -447,8 +447,8 @@ const CloudLicensingBypass = {
                         return false;
                     }
 
-                    var lowerResponse = responseData.toLowerCase();
-                    var licenseIndicators = [
+                    const lowerResponse = responseData.toLowerCase();
+                    const licenseIndicators = [
                         'license',
                         'activation',
                         'genuine',
@@ -464,10 +464,10 @@ const CloudLicensingBypass = {
                     return licenseIndicators.some(indicator => lowerResponse.includes(indicator));
                 },
 
-                generateSpoofedResponse: function (originalResponse) {
+                generateSpoofedResponse(originalResponse) {
                     try {
                         // Try to parse as JSON first
-                        var jsonResponse = JSON.parse(originalResponse);
+                        const jsonResponse = JSON.parse(originalResponse);
 
                         // Apply license validation spoofing
                         if (Object.hasOwn(jsonResponse, 'valid')) {
@@ -506,12 +506,12 @@ const CloudLicensingBypass = {
                         jsonResponse.features = jsonResponse.features || ['all'];
 
                         return JSON.stringify(jsonResponse);
-                    } catch (e) {
+                    } catch (error) {
                         send({
                             type: 'info',
                             target: 'cloud_licensing_bypass',
                             action: 'response_not_json_trying_alternatives',
-                            error: e.message,
+                            error: error.message,
                             response_type: originalResponse.includes('<?xml') ? 'xml' : 'text',
                         });
 
@@ -525,26 +525,29 @@ const CloudLicensingBypass = {
 
                 spoofXmlResponse: xmlResponse => {
                     // Basic XML spoofing
-                    var spoofed = xmlResponse;
-                    spoofed = spoofed.replace(/(<status[^>]*>)[^<]*(<\/status>)/gi, '$1valid$2');
-                    spoofed = spoofed.replace(/(<valid[^>]*>)[^<]*(<\/valid>)/gi, '$1true$2');
-                    spoofed = spoofed.replace(/(<licensed[^>]*>)[^<]*(<\/licensed>)/gi, '$1true$2');
-                    spoofed = spoofed.replace(
+                    let spoofed = xmlResponse;
+                    spoofed = spoofed.replaceAll(/(<status[^>]*>)[^<]*(<\/status>)/gi, '$1valid$2');
+                    spoofed = spoofed.replaceAll(/(<valid[^>]*>)[^<]*(<\/valid>)/gi, '$1true$2');
+                    spoofed = spoofed.replaceAll(
+                        /(<licensed[^>]*>)[^<]*(<\/licensed>)/gi,
+                        '$1true$2'
+                    );
+                    spoofed = spoofed.replaceAll(
                         /(<authorized[^>]*>)[^<]*(<\/authorized>)/gi,
                         '$1true$2'
                     );
-                    spoofed = spoofed.replace(/(<error[^>]*>)[^<]*(<\/error>)/gi, '');
+                    spoofed = spoofed.replaceAll(/(<error[^>]*>)[^<]*(<\/error>)/gi, '');
                     return spoofed;
                 },
 
                 spoofTextResponse: textResponse => {
-                    var spoofed = textResponse;
-                    spoofed = spoofed.replace(/invalid/gi, 'valid');
-                    spoofed = spoofed.replace(/unauthorized/gi, 'authorized');
-                    spoofed = spoofed.replace(/expired/gi, 'active');
-                    spoofed = spoofed.replace(/trial/gi, 'licensed');
-                    spoofed = spoofed.replace(/demo/gi, 'full');
-                    spoofed = spoofed.replace(/error/gi, 'success');
+                    let spoofed = textResponse;
+                    spoofed = spoofed.replaceAll(/invalid/gi, 'valid');
+                    spoofed = spoofed.replaceAll(/unauthorized/gi, 'authorized');
+                    spoofed = spoofed.replaceAll(/expired/gi, 'active');
+                    spoofed = spoofed.replaceAll(/trial/gi, 'licensed');
+                    spoofed = spoofed.replaceAll(/demo/gi, 'full');
+                    spoofed = spoofed.replaceAll(/error/gi, 'success');
                     return spoofed;
                 },
             });
@@ -553,7 +556,7 @@ const CloudLicensingBypass = {
         }
     },
 
-    hookWinINetFunctions: function () {
+    hookWinINetFunctions() {
         send({
             type: 'info',
             target: 'cloud_licensing_bypass',
@@ -561,10 +564,10 @@ const CloudLicensingBypass = {
         });
 
         // Hook HttpSendRequest
-        var httpSendRequest = Module.findExportByName('wininet.dll', 'HttpSendRequestW');
+        const httpSendRequest = Module.findExportByName('wininet.dll', 'HttpSendRequestW');
         if (httpSendRequest) {
             Interceptor.attach(httpSendRequest, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.hRequest = args[0];
                     this.lpszHeaders = args[1];
                     this.dwHeadersLength = args[2].toInt32();
@@ -573,7 +576,7 @@ const CloudLicensingBypass = {
 
                     if (this.lpszHeaders && !this.lpszHeaders.isNull()) {
                         try {
-                            var headers = this.lpszHeaders.readUtf16String();
+                            const headers = this.lpszHeaders.readUtf16String();
                             if (this.isLicenseRequestByHeaders(headers)) {
                                 send({
                                     type: 'info',
@@ -583,21 +586,21 @@ const CloudLicensingBypass = {
                                 this.isLicenseReq = true;
                                 this.parent.parent.interceptedRequests++;
                             }
-                        } catch (e) {
+                        } catch (error) {
                             send({
                                 type: 'error',
                                 target: 'cloud_licensing_bypass',
                                 action: 'wininet_headers_read_failed',
-                                error: e.message,
-                                stack: e.stack,
+                                error: error.message,
+                                stack: error.stack,
                             });
                         }
                     }
                 },
 
-                isLicenseRequestByHeaders: function (headers) {
-                    var config = this.parent.parent.config;
-                    var headersLower = headers.toLowerCase();
+                isLicenseRequestByHeaders(headers) {
+                    const { config } = this.parent.parent;
+                    const headersLower = headers.toLowerCase();
 
                     // Check for license server hosts
                     return config.licenseServers.some(server =>
@@ -610,44 +613,45 @@ const CloudLicensingBypass = {
         }
 
         // Hook InternetReadFile for response manipulation
-        var internetReadFile = Module.findExportByName('wininet.dll', 'InternetReadFile');
+        const internetReadFile = Module.findExportByName('wininet.dll', 'InternetReadFile');
         if (internetReadFile) {
             Interceptor.attach(internetReadFile, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.hFile = args[0];
                     this.lpBuffer = args[1];
                     this.dwNumberOfBytesToRead = args[2].toInt32();
                     this.lpdwNumberOfBytesRead = args[3];
                 },
 
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (
-                        retval.toInt32() !== 0 &&
-                        this.lpBuffer &&
-                        !this.lpBuffer.isNull() &&
-                        this.lpdwNumberOfBytesRead &&
-                        !this.lpdwNumberOfBytesRead.isNull()
+                        retval.toInt32() !== 0
+                        && this.lpBuffer
+                        && !this.lpBuffer.isNull()
+                        && this.lpdwNumberOfBytesRead
+                        && !this.lpdwNumberOfBytesRead.isNull()
                     ) {
-                        var bytesRead = this.lpdwNumberOfBytesRead.readU32();
+                        const bytesRead = this.lpdwNumberOfBytesRead.readU32();
                         if (bytesRead > 0) {
                             this.spoofWinINetResponse(bytesRead);
                         }
                     }
                 },
 
-                spoofWinINetResponse: function (bytesRead) {
+                spoofWinINetResponse(bytesRead) {
                     try {
-                        var config = this.parent.parent.config;
+                        const { config } = this.parent.parent;
                         if (!config.networkInterception.spoofResponses) {
                             return;
                         }
 
-                        var responseData = this.lpBuffer.readUtf8String(bytesRead);
+                        const responseData = this.lpBuffer.readUtf8String(bytesRead);
                         if (this.shouldSpoofWinINetResponse(responseData)) {
-                            var spoofedResponse = this.generateWinINetSpoofedResponse(responseData);
+                            const spoofedResponse
+                                = this.generateWinINetSpoofedResponse(responseData);
                             if (
-                                spoofedResponse &&
-                                spoofedResponse.length <= this.dwNumberOfBytesToRead
+                                spoofedResponse
+                                && spoofedResponse.length <= this.dwNumberOfBytesToRead
                             ) {
                                 this.lpBuffer.writeUtf8String(spoofedResponse);
                                 this.lpdwNumberOfBytesRead.writeU32(spoofedResponse.length);
@@ -660,12 +664,12 @@ const CloudLicensingBypass = {
                                 });
                             }
                         }
-                    } catch (e) {
+                    } catch (error) {
                         send({
                             type: 'error',
                             target: 'cloud_licensing_bypass',
                             action: 'wininet_response_spoofing_error',
-                            error: e.toString(),
+                            error: error.toString(),
                         });
                     }
                 },
@@ -674,33 +678,32 @@ const CloudLicensingBypass = {
                     if (!responseData) {
                         return false;
                     }
-                    var lowerResponse = responseData.toLowerCase();
+                    const lowerResponse = responseData.toLowerCase();
                     return (
-                        lowerResponse.includes('license') ||
-                        lowerResponse.includes('activation') ||
-                        lowerResponse.includes('genuine') ||
-                        lowerResponse.includes('valid')
+                        lowerResponse.includes('license')
+                        || lowerResponse.includes('activation')
+                        || lowerResponse.includes('genuine')
+                        || lowerResponse.includes('valid')
                     );
                 },
 
-                generateWinINetSpoofedResponse: function (originalResponse) {
-                    var config = this.parent.parent.config;
+                generateWinINetSpoofedResponse(originalResponse) {
+                    const { config } = this.parent.parent;
 
                     // Use the same spoofing logic as WinHTTP
                     try {
-                        var jsonResponse = JSON.parse(originalResponse);
+                        const jsonResponse = JSON.parse(originalResponse);
 
                         // Apply positive license spoofing
                         Object.assign(jsonResponse, config.responseTemplates.license_valid);
 
                         return JSON.stringify(jsonResponse);
-                    } catch (e) {
-                        var config = this.parent.parent.parent.config;
+                    } catch (error) {
                         send({
                             type: 'info',
                             target: 'cloud_licensing_bypass',
                             action: 'wininet_response_json_parse_failed_using_template',
-                            error: e.message,
+                            error: error.message,
                         });
                         return JSON.stringify(config.responseTemplates.license_valid);
                     }
@@ -711,7 +714,7 @@ const CloudLicensingBypass = {
         }
     },
 
-    hookCurlFunctions: function () {
+    hookCurlFunctions() {
         send({
             type: 'info',
             target: 'cloud_licensing_bypass',
@@ -719,42 +722,42 @@ const CloudLicensingBypass = {
         });
 
         // Hook curl_easy_setopt for URL monitoring
-        var curlSetopt = Module.findExportByName(null, 'curl_easy_setopt');
+        const curlSetopt = Module.findExportByName(null, 'curl_easy_setopt');
         if (curlSetopt) {
             Interceptor.attach(curlSetopt, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.curl = args[0];
                     this.option = args[1].toInt32();
                     this.parameter = args[2];
 
                     // CURLOPT_URL = 10002
-                    if (this.option === 10002 && this.parameter && !this.parameter.isNull()) {
+                    if (this.option === 10_002 && this.parameter && !this.parameter.isNull()) {
                         try {
-                            var url = this.parameter.readUtf8String();
+                            const url = this.parameter.readUtf8String();
                             if (this.isLicenseUrl(url)) {
                                 send({
                                     type: 'info',
                                     target: 'cloud_licensing_bypass',
                                     action: 'curl_license_url_detected',
-                                    url: url,
+                                    url,
                                 });
                                 this.parent.parent.interceptedRequests++;
                             }
-                        } catch (e) {
+                        } catch (error) {
                             send({
                                 type: 'error',
                                 target: 'cloud_licensing_bypass',
                                 action: 'curl_url_read_failed',
-                                error: e.message,
-                                stack: e.stack,
+                                error: error.message,
+                                stack: error.stack,
                             });
                         }
                     }
                 },
 
-                isLicenseUrl: function (url) {
-                    var config = this.parent.parent.config;
-                    var urlLower = url.toLowerCase();
+                isLicenseUrl(url) {
+                    const { config } = this.parent.parent;
+                    const urlLower = url.toLowerCase();
 
                     return config.licenseServers.some(server =>
                         urlLower.includes(server.toLowerCase())
@@ -766,7 +769,7 @@ const CloudLicensingBypass = {
         }
 
         // Hook curl_easy_perform
-        var curlPerform = Module.findExportByName(null, 'curl_easy_perform');
+        const curlPerform = Module.findExportByName(null, 'curl_easy_perform');
         if (curlPerform) {
             Interceptor.attach(curlPerform, {
                 onLeave: retval => {
@@ -787,7 +790,7 @@ const CloudLicensingBypass = {
         }
     },
 
-    hookGenericHttpLibraries: function () {
+    hookGenericHttpLibraries() {
         send({
             type: 'info',
             target: 'cloud_licensing_bypass',
@@ -795,22 +798,20 @@ const CloudLicensingBypass = {
         });
 
         // Hook common HTTP functions across modules
-        var modules = Process.enumerateModules();
+        const modules = Process.enumerateModules();
 
-        for (var i = 0; i < modules.length; i++) {
-            var module = modules[i];
-
+        for (const module of modules) {
             // Skip system modules
             if (
-                module.name.toLowerCase().includes('ntdll') ||
-                module.name.toLowerCase().includes('kernel32')
+                module.name.toLowerCase().includes('ntdll')
+                || module.name.toLowerCase().includes('kernel32')
             ) {
                 continue;
             }
 
             try {
                 // Look for HTTP-related functions
-                var httpFunctions = [
+                const httpFunctions = [
                     'HTTPSend',
                     'HttpSend',
                     'httpSend',
@@ -829,39 +830,38 @@ const CloudLicensingBypass = {
                     'MakeRequest',
                 ];
 
-                for (var j = 0; j < httpFunctions.length; j++) {
-                    var funcName = httpFunctions[j];
+                for (const funcName of httpFunctions) {
                     this.hookGenericHttpFunction(module.name, funcName);
                 }
-            } catch (e) {
+            } catch (error) {
                 send({
                     type: 'error',
                     target: 'cloud_licensing_bypass',
                     action: 'generic_http_module_scan_failed',
                     module: module.name,
-                    error: e.message,
-                    stack: e.stack,
+                    error: error.message,
+                    stack: error.stack,
                 });
             }
         }
     },
 
-    hookGenericHttpFunction: function (moduleName, functionName) {
+    hookGenericHttpFunction(moduleName, functionName) {
         try {
-            var httpFunc = Module.findExportByName(moduleName, functionName);
+            const httpFunc = Module.findExportByName(moduleName, functionName);
             if (httpFunc) {
                 Interceptor.attach(httpFunc, {
-                    onEnter: function (args) {
-                        var argData = [];
-                        for (var i = 0; i < Math.min(args.length, 4); i++) {
+                    onEnter(args) {
+                        const argData = [];
+                        for (let i = 0; i < Math.min(args.length, 4); i++) {
                             try {
                                 if (args[i] && !args[i].isNull()) {
-                                    var strVal = args[i].readUtf8String(256);
+                                    const strVal = args[i].readUtf8String(256);
                                     if (strVal) {
                                         argData.push(strVal);
                                     }
                                 }
-                            } catch (_e) {
+                            } catch {
                                 argData.push(`[ptr:${args[i]}]`);
                             }
                         }
@@ -886,21 +886,21 @@ const CloudLicensingBypass = {
                     module_name: moduleName,
                 });
             }
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'cloud_licensing_bypass',
                 action: 'generic_http_function_hook_failed',
                 function: functionName,
                 module: moduleName,
-                error: e.message,
-                stack: e.stack,
+                error: error.message,
+                stack: error.stack,
             });
         }
     },
 
     // === HTTPS REQUEST HOOKS ===
-    hookHttpsRequests: function () {
+    hookHttpsRequests() {
         send({
             type: 'info',
             target: 'cloud_licensing_bypass',
@@ -926,7 +926,7 @@ const CloudLicensingBypass = {
         this.hookSecureChannelFunctions();
     },
 
-    hookSslFunctions: function () {
+    hookSslFunctions() {
         send({
             type: 'info',
             target: 'cloud_licensing_bypass',
@@ -934,17 +934,17 @@ const CloudLicensingBypass = {
         });
 
         // Hook SSL_write for outgoing HTTPS data
-        var sslWrite = Module.findExportByName(null, 'SSL_write');
+        const sslWrite = Module.findExportByName(null, 'SSL_write');
         if (sslWrite) {
             Interceptor.attach(sslWrite, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.ssl = args[0];
                     this.buf = args[1];
                     this.num = args[2].toInt32();
 
                     if (this.buf && !this.buf.isNull() && this.num > 0) {
                         try {
-                            var data = this.buf.readUtf8String(Math.min(this.num, 1024));
+                            const data = this.buf.readUtf8String(Math.min(this.num, 1024));
                             if (this.isLicenseHttpsData(data)) {
                                 send({
                                     type: 'info',
@@ -953,21 +953,21 @@ const CloudLicensingBypass = {
                                 });
                                 this.parent.parent.interceptedRequests++;
                             }
-                        } catch (e) {
+                        } catch (error) {
                             send({
                                 type: 'error',
                                 target: 'cloud_licensing_bypass',
                                 action: 'ssl_write_data_read_failed',
-                                error: e.message,
-                                stack: e.stack,
+                                error: error.message,
+                                stack: error.stack,
                             });
                         }
                     }
                 },
 
-                isLicenseHttpsData: function (data) {
-                    var config = this.parent.parent.config;
-                    var dataLower = data.toLowerCase();
+                isLicenseHttpsData(data) {
+                    const { config } = this.parent.parent;
+                    const dataLower = data.toLowerCase();
 
                     // Check for HTTP headers with license servers
                     if (dataLower.includes('host:')) {
@@ -977,7 +977,7 @@ const CloudLicensingBypass = {
                     }
 
                     // Check for license-related content
-                    var licenseKeywords = ['license', 'activation', 'genuine', 'validate'];
+                    const licenseKeywords = ['license', 'activation', 'genuine', 'validate'];
                     return licenseKeywords.some(keyword => dataLower.includes(keyword));
                 },
             });
@@ -986,26 +986,26 @@ const CloudLicensingBypass = {
         }
 
         // Hook SSL_read for incoming HTTPS data
-        var sslRead = Module.findExportByName(null, 'SSL_read');
+        const sslRead = Module.findExportByName(null, 'SSL_read');
         if (sslRead) {
             Interceptor.attach(sslRead, {
-                onLeave: function (retval) {
-                    var bytesRead = retval.toInt32();
+                onLeave(retval) {
+                    const bytesRead = retval.toInt32();
                     if (bytesRead > 0 && this.buf && !this.buf.isNull()) {
                         this.spoofSslResponse(bytesRead);
                     }
                 },
 
-                spoofSslResponse: function (bytesRead) {
+                spoofSslResponse(bytesRead) {
                     try {
-                        var config = this.parent.parent.config;
+                        const { config } = this.parent.parent;
                         if (!config.networkInterception.spoofResponses) {
                             return;
                         }
 
-                        var responseData = this.buf.readUtf8String(bytesRead);
+                        const responseData = this.buf.readUtf8String(bytesRead);
                         if (this.shouldSpoofSslResponse(responseData)) {
-                            var spoofedResponse = this.generateSslSpoofedResponse(responseData);
+                            const spoofedResponse = this.generateSslSpoofedResponse(responseData);
                             if (spoofedResponse && spoofedResponse.length <= bytesRead) {
                                 this.buf.writeUtf8String(spoofedResponse);
                                 this.parent.parent.spoofedResponses++;
@@ -1016,30 +1016,30 @@ const CloudLicensingBypass = {
                                 });
                             }
                         }
-                    } catch (e) {
+                    } catch (error) {
                         send({
                             type: 'error',
                             target: 'cloud_licensing_bypass',
                             action: 'ssl_response_spoofing_error',
-                            error: e.toString(),
+                            error: error.toString(),
                         });
                     }
                 },
 
                 shouldSpoofSslResponse: responseData => {
-                    var licenseIndicators = [
+                    const licenseIndicators = [
                         'license',
                         'activation',
                         'genuine',
                         'valid',
                         'authorized',
                     ];
-                    var dataLower = responseData.toLowerCase();
+                    const dataLower = responseData.toLowerCase();
                     return licenseIndicators.some(indicator => dataLower.includes(indicator));
                 },
 
-                generateSslSpoofedResponse: function (originalResponse) {
-                    var config = this.parent.parent.config;
+                generateSslSpoofedResponse(originalResponse) {
+                    const { config } = this.parent.parent;
 
                     // Check if it's an HTTP response
                     if (originalResponse.startsWith('HTTP/')) {
@@ -1048,47 +1048,46 @@ const CloudLicensingBypass = {
 
                     // Try JSON
                     try {
-                        var jsonResponse = JSON.parse(originalResponse);
+                        const jsonResponse = JSON.parse(originalResponse);
                         Object.assign(jsonResponse, config.responseTemplates.license_valid);
                         return JSON.stringify(jsonResponse);
-                    } catch (e) {
-                        var config = this.parent.parent.parent.config;
+                    } catch (error) {
                         send({
                             type: 'info',
                             target: 'cloud_licensing_bypass',
                             action: 'ssl_response_json_parse_failed_using_template',
-                            error: e.message,
+                            error: error.message,
                         });
                         return JSON.stringify(config.responseTemplates.license_valid);
                     }
                 },
 
-                spoofHttpResponse: function (httpResponse) {
-                    var lines = httpResponse.split('\r\n');
-                    var headerEndIndex = lines.indexOf('');
+                spoofHttpResponse(httpResponse) {
+                    const lines = httpResponse.split('\r\n');
+                    const headerEndIndex = lines.indexOf('');
 
                     if (headerEndIndex !== -1) {
                         // Extract body
-                        var body = lines.slice(headerEndIndex + 1).join('\r\n');
+                        const body = lines.slice(headerEndIndex + 1).join('\r\n');
 
                         if (body) {
                             try {
-                                var jsonBody = JSON.parse(body);
-                                var config = this.parent.parent.config;
+                                const jsonBody = JSON.parse(body);
+                                const { config } = this.parent.parent;
                                 Object.assign(jsonBody, config.responseTemplates.license_valid);
 
                                 // Rebuild HTTP response
-                                var newBody = JSON.stringify(jsonBody);
+                                const newBody = JSON.stringify(jsonBody);
                                 lines[0] = 'HTTP/1.1 200 OK'; // Success status
                                 lines[headerEndIndex + 1] = newBody;
 
                                 return lines.join('\r\n');
-                            } catch (e) {
+                            } catch (error) {
                                 send({
                                     type: 'info',
                                     target: 'cloud_licensing_bypass',
                                     action: 'http_response_body_not_json',
-                                    error: e.message,
+                                    error: error.message,
                                 });
                                 return httpResponse;
                             }
@@ -1103,7 +1102,7 @@ const CloudLicensingBypass = {
         }
     },
 
-    hookSecureChannelFunctions: function () {
+    hookSecureChannelFunctions() {
         send({
             type: 'info',
             target: 'cloud_licensing_bypass',
@@ -1111,21 +1110,21 @@ const CloudLicensingBypass = {
         });
 
         // Hook EncryptMessage
-        var encryptMessage = Module.findExportByName('secur32.dll', 'EncryptMessage');
+        const encryptMessage = Module.findExportByName('secur32.dll', 'EncryptMessage');
         if (encryptMessage) {
             Interceptor.attach(encryptMessage, {
                 onEnter: args => {
-                    var contextHandle = args[0];
-                    var qualityOfProtection = args[1].toInt32();
-                    var messageBuffer = args[2];
-                    var sequenceNumber = args[3].toInt32();
+                    const contextHandle = args[0];
+                    const qualityOfProtection = args[1].toInt32();
+                    const messageBuffer = args[2];
+                    const sequenceNumber = args[3].toInt32();
 
-                    var bufferInfo = 'null';
+                    let bufferInfo = 'null';
                     if (messageBuffer && !messageBuffer.isNull()) {
                         try {
-                            var bufferCount = messageBuffer.readU32();
+                            const bufferCount = messageBuffer.readU32();
                             bufferInfo = `buffers:${bufferCount}`;
-                        } catch (_e) {
+                        } catch {
                             bufferInfo = `ptr:${messageBuffer}`;
                         }
                     }
@@ -1146,7 +1145,7 @@ const CloudLicensingBypass = {
         }
 
         // Hook DecryptMessage
-        var decryptMessage = Module.findExportByName('secur32.dll', 'DecryptMessage');
+        const decryptMessage = Module.findExportByName('secur32.dll', 'DecryptMessage');
         if (decryptMessage) {
             Interceptor.attach(decryptMessage, {
                 onLeave: retval => {
@@ -1166,7 +1165,7 @@ const CloudLicensingBypass = {
     },
 
     // === OAUTH TOKEN HOOKS ===
-    hookOAuthTokens: function () {
+    hookOAuthTokens() {
         send({
             type: 'info',
             target: 'cloud_licensing_bypass',
@@ -1192,7 +1191,7 @@ const CloudLicensingBypass = {
         this.hookAuthorizationHeaders();
     },
 
-    hookTokenGeneration: function () {
+    hookTokenGeneration() {
         send({
             type: 'info',
             target: 'cloud_licensing_bypass',
@@ -1200,14 +1199,12 @@ const CloudLicensingBypass = {
         });
 
         // Hook common token generation patterns
-        var modules = Process.enumerateModules();
+        const modules = Process.enumerateModules();
 
-        for (var i = 0; i < modules.length; i++) {
-            var module = modules[i];
-
+        for (const module of modules) {
             try {
                 // Look for token-related functions
-                var tokenFunctions = [
+                const tokenFunctions = [
                     'generateToken',
                     'GenerateToken',
                     'CreateToken',
@@ -1226,44 +1223,43 @@ const CloudLicensingBypass = {
                     'BearerToken',
                 ];
 
-                for (var j = 0; j < tokenFunctions.length; j++) {
-                    var funcName = tokenFunctions[j];
+                for (const funcName of tokenFunctions) {
                     this.hookTokenFunction(module.name, funcName);
                 }
-            } catch (e) {
+            } catch (error) {
                 send({
                     type: 'error',
                     target: 'cloud_licensing_bypass',
                     action: 'token_generation_module_scan_failed',
                     module: module.name,
-                    error: e.message,
-                    stack: e.stack,
+                    error: error.message,
+                    stack: error.stack,
                 });
             }
         }
     },
 
-    hookTokenFunction: function (moduleName, functionName) {
+    hookTokenFunction(moduleName, functionName) {
         try {
-            var tokenFunc = Module.findExportByName(moduleName, functionName);
+            const tokenFunc = Module.findExportByName(moduleName, functionName);
             if (tokenFunc) {
                 Interceptor.attach(tokenFunc, {
-                    onLeave: function (retval) {
+                    onLeave(retval) {
                         // Spoof token generation result
                         if (retval && !retval.isNull()) {
                             this.spoofTokenResult(retval);
                         }
                     },
 
-                    spoofTokenResult: function (tokenPtr) {
+                    spoofTokenResult(tokenPtr) {
                         try {
-                            var config = this.parent.parent.parent.config;
+                            const { config } = this.parent.parent.parent;
 
                             // Try to read the token
-                            var token = tokenPtr.readUtf8String();
+                            const token = tokenPtr.readUtf8String();
                             if (token && this.looksLikeToken(token)) {
                                 // Replace with valid token
-                                var spoofedToken = config.oauth.customTokens.generic;
+                                const spoofedToken = config.oauth.customTokens.generic;
                                 tokenPtr.writeUtf8String(spoofedToken);
 
                                 send({
@@ -1273,46 +1269,43 @@ const CloudLicensingBypass = {
                                     function_name: functionName,
                                 });
                             }
-                        } catch (e) {
+                        } catch (error) {
                             send({
                                 type: 'error',
                                 target: 'cloud_licensing_bypass',
                                 action: 'oauth_token_spoof_failed',
                                 function_name: functionName,
-                                error: e.message,
-                                stack: e.stack,
+                                error: error.message,
+                                stack: error.stack,
                             });
                         }
                     },
 
-                    looksLikeToken: str => {
+                    looksLikeToken: str =>
                         // Basic token pattern detection
-                        return (
-                            str.length > 10 &&
-                            (str.includes('Bearer') ||
-                                str.includes('OAuth') ||
-                                str.includes('eyJ') ||
-                                str.match(/^[A-Za-z0-9+/=]{20,}$/))
-                        );
-                    },
+                        str.length > 10
+                        && (str.includes('Bearer')
+                            || str.includes('OAuth')
+                            || str.includes('eyJ')
+                            || str.match(/^[\d+/=A-Za-z]{20,}$/)),
                 });
 
                 this.hooksInstalled[`${functionName}_${moduleName}`] = true;
             }
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'cloud_licensing_bypass',
                 action: 'token_function_hook_failed',
                 function: functionName,
                 module: moduleName,
-                error: e.message,
-                stack: e.stack,
+                error: error.message,
+                stack: error.stack,
             });
         }
     },
 
-    hookTokenValidation: function () {
+    hookTokenValidation() {
         send({
             type: 'info',
             target: 'cloud_licensing_bypass',
@@ -1320,13 +1313,13 @@ const CloudLicensingBypass = {
         });
 
         // Hook string comparison functions for token validation
-        var strcmp = Module.findExportByName('msvcrt.dll', 'strcmp');
+        const strcmp = Module.findExportByName('msvcrt.dll', 'strcmp');
         if (strcmp) {
             Interceptor.attach(strcmp, {
-                onEnter: function (args) {
+                onEnter(args) {
                     try {
-                        var str1 = args[0].readAnsiString();
-                        var str2 = args[1].readAnsiString();
+                        const str1 = args[0].readAnsiString();
+                        const str2 = args[1].readAnsiString();
 
                         if (this.isTokenComparison(str1, str2)) {
                             send({
@@ -1336,18 +1329,18 @@ const CloudLicensingBypass = {
                             });
                             this.spoofTokenComparison = true;
                         }
-                    } catch (e) {
+                    } catch (error) {
                         send({
                             type: 'error',
                             target: 'cloud_licensing_bypass',
                             action: 'strcmp_token_string_read_failed',
-                            error: e.message,
-                            stack: e.stack,
+                            error: error.message,
+                            stack: error.stack,
                         });
                     }
                 },
 
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.spoofTokenComparison) {
                         // Make comparison succeed
                         retval.replace(0);
@@ -1359,18 +1352,18 @@ const CloudLicensingBypass = {
                     }
                 },
 
-                isTokenComparison: function (str1, str2) {
-                    var config = this.parent.parent.config;
+                isTokenComparison(str1, str2) {
+                    const { config } = this.parent.parent;
 
                     // Check if either string looks like a token
-                    var tokenPatterns = config.oauth.tokenTypes;
+                    const tokenPatterns = config.oauth.tokenTypes;
 
                     return (
                         tokenPatterns.some(
                             pattern => str1?.includes(pattern) || str2?.includes(pattern)
-                        ) ||
-                        this.looksLikeJWT(str1) ||
-                        this.looksLikeJWT(str2)
+                        )
+                        || this.looksLikeJWT(str1)
+                        || this.looksLikeJWT(str2)
                     );
                 },
 
@@ -1399,7 +1392,7 @@ const CloudLicensingBypass = {
     },
 
     // === JWT TOKEN HOOKS ===
-    hookJwtTokens: function () {
+    hookJwtTokens() {
         send({
             type: 'info',
             target: 'cloud_licensing_bypass',
@@ -1425,7 +1418,7 @@ const CloudLicensingBypass = {
         this.hookJsonParsing();
     },
 
-    hookJwtLibraries: function () {
+    hookJwtLibraries() {
         send({
             type: 'info',
             target: 'cloud_licensing_bypass',
@@ -1433,7 +1426,7 @@ const CloudLicensingBypass = {
         });
 
         // Hook common JWT function names
-        var jwtFunctions = [
+        const jwtFunctions = [
             'jwt_decode',
             'jwtDecode',
             'JWT_decode',
@@ -1449,21 +1442,18 @@ const CloudLicensingBypass = {
             'ParseJWT',
         ];
 
-        var modules = Process.enumerateModules();
+        const modules = Process.enumerateModules();
 
-        for (var i = 0; i < modules.length; i++) {
-            var module = modules[i];
-
-            for (var j = 0; j < jwtFunctions.length; j++) {
-                var funcName = jwtFunctions[j];
+        for (const module of modules) {
+            for (const funcName of jwtFunctions) {
                 this.hookJwtFunction(module.name, funcName);
             }
         }
     },
 
-    hookJwtFunction: function (moduleName, functionName) {
+    hookJwtFunction(moduleName, functionName) {
         try {
-            var jwtFunc = Module.findExportByName(moduleName, functionName);
+            const jwtFunc = Module.findExportByName(moduleName, functionName);
             if (jwtFunc) {
                 Interceptor.attach(jwtFunc, {
                     onLeave: retval => {
@@ -1482,20 +1472,20 @@ const CloudLicensingBypass = {
 
                 this.hooksInstalled[`${functionName}_${moduleName}`] = true;
             }
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'cloud_licensing_bypass',
                 action: 'jwt_function_hook_failed',
                 function: functionName,
                 module: moduleName,
-                error: e.message,
-                stack: e.stack,
+                error: error.message,
+                stack: error.stack,
             });
         }
     },
 
-    hookBase64Functions: function () {
+    hookBase64Functions() {
         send({
             type: 'info',
             target: 'cloud_licensing_bypass',
@@ -1503,7 +1493,7 @@ const CloudLicensingBypass = {
         });
 
         // Hook base64 decode functions (used by JWT)
-        var base64Functions = [
+        const base64Functions = [
             'base64_decode',
             'Base64Decode',
             'b64decode',
@@ -1512,27 +1502,24 @@ const CloudLicensingBypass = {
             'DecodeBase64',
         ];
 
-        var modules = Process.enumerateModules();
+        const modules = Process.enumerateModules();
 
-        for (var i = 0; i < modules.length; i++) {
-            var module = modules[i];
-
-            for (var j = 0; j < base64Functions.length; j++) {
-                var funcName = base64Functions[j];
+        for (const module of modules) {
+            for (const funcName of base64Functions) {
                 this.hookBase64Function(module.name, funcName);
             }
         }
     },
 
-    hookBase64Function: function (moduleName, functionName) {
+    hookBase64Function(moduleName, functionName) {
         try {
-            var b64Func = Module.findExportByName(moduleName, functionName);
+            const b64Func = Module.findExportByName(moduleName, functionName);
             if (b64Func) {
                 Interceptor.attach(b64Func, {
-                    onEnter: function (args) {
+                    onEnter(args) {
                         // Check if input looks like JWT
                         try {
-                            var input = args[0].readUtf8String();
+                            const input = args[0].readUtf8String();
                             if (input?.startsWith('eyJ')) {
                                 send({
                                     type: 'info',
@@ -1541,35 +1528,35 @@ const CloudLicensingBypass = {
                                 });
                                 this.isJwtDecode = true;
                             }
-                        } catch (e) {
+                        } catch (error) {
                             send({
                                 type: 'error',
                                 target: 'cloud_licensing_bypass',
                                 action: 'base64_decode_input_read_failed',
-                                error: e.message,
-                                stack: e.stack,
+                                error: error.message,
+                                stack: error.stack,
                             });
                         }
                     },
 
-                    onLeave: function (retval) {
+                    onLeave(retval) {
                         if (this.isJwtDecode && retval && !retval.isNull()) {
                             this.spoofJwtPayload(retval);
                         }
                     },
 
-                    spoofJwtPayload: function (payloadPtr) {
+                    spoofJwtPayload(payloadPtr) {
                         try {
-                            var config = this.parent.parent.parent.config;
-                            var payload = payloadPtr.readUtf8String();
+                            const { config } = this.parent.parent.parent;
+                            const payload = payloadPtr.readUtf8String();
 
                             if (payload?.startsWith('{')) {
-                                var jwtPayload = JSON.parse(payload);
+                                const jwtPayload = JSON.parse(payload);
 
                                 // Apply custom JWT claims
                                 Object.assign(jwtPayload, config.jwt.customClaims);
 
-                                var spoofedPayload = JSON.stringify(jwtPayload);
+                                const spoofedPayload = JSON.stringify(jwtPayload);
                                 payloadPtr.writeUtf8String(spoofedPayload);
 
                                 send({
@@ -1578,12 +1565,12 @@ const CloudLicensingBypass = {
                                     action: 'jwt_payload_spoofed',
                                 });
                             }
-                        } catch (e) {
+                        } catch (error) {
                             send({
                                 type: 'error',
                                 target: 'cloud_licensing_bypass',
                                 action: 'jwt_payload_spoofing_error',
-                                error: e.toString(),
+                                error: error.toString(),
                             });
                         }
                     },
@@ -1591,15 +1578,15 @@ const CloudLicensingBypass = {
 
                 this.hooksInstalled[`${functionName}_${moduleName}`] = true;
             }
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'cloud_licensing_bypass',
                 action: 'base64_function_hook_failed',
                 function: functionName,
                 module: moduleName,
-                error: e.message,
-                stack: e.stack,
+                error: error.message,
+                stack: error.stack,
             });
         }
     },
@@ -1611,24 +1598,25 @@ const CloudLicensingBypass = {
             action: 'installing_json_parsing_hooks_for_jwt',
         });
 
-        var jsonFunctions = ['json_parse', 'JSON.parse', 'parseJSON', 'ParseJSON'];
-        var modules = Process.enumerateModules();
+        const jsonFunctions = ['json_parse', 'JSON.parse', 'parseJSON', 'ParseJSON'];
+        const modules = Process.enumerateModules();
 
-        for (var i = 0; i < modules.length; i++) {
-            var module = modules[i];
-            for (var j = 0; j < jsonFunctions.length; j++) {
+        for (const module of modules) {
+            for (const jsonFunction of jsonFunctions) {
                 try {
-                    var jsonFunc = Module.findExportByName(module.name, jsonFunctions[j]);
+                    const jsonFunc = Module.findExportByName(module.name, jsonFunction);
                     if (jsonFunc) {
                         send({
                             type: 'info',
                             target: 'cloud_licensing_bypass',
                             action: 'json_parse_function_found',
-                            function: jsonFunctions[j],
+                            function: jsonFunction,
                             module: module.name,
                         });
                     }
-                } catch (_e) {}
+                } catch {
+                    // Module may not export this function - continue silently
+                }
             }
         }
 
@@ -1640,7 +1628,7 @@ const CloudLicensingBypass = {
     },
 
     // === LICENSE API HOOKS ===
-    hookLicenseAPIs: function () {
+    hookLicenseAPIs() {
         send({
             type: 'info',
             target: 'cloud_licensing_bypass',
@@ -1653,14 +1641,14 @@ const CloudLicensingBypass = {
         this.hookSubscriptionAPIs();
     },
 
-    hookLicenseValidationAPIs: function () {
+    hookLicenseValidationAPIs() {
         send({
             type: 'info',
             target: 'cloud_licensing_bypass',
             action: 'installing_license_validation_api_hooks',
         });
 
-        var validationFunctions = [
+        const validationFunctions = [
             'validateLicense',
             'ValidateLicense',
             'checkLicense',
@@ -1675,21 +1663,18 @@ const CloudLicensingBypass = {
             'LicenseValid',
         ];
 
-        var modules = Process.enumerateModules();
+        const modules = Process.enumerateModules();
 
-        for (var i = 0; i < modules.length; i++) {
-            var module = modules[i];
-
-            for (var j = 0; j < validationFunctions.length; j++) {
-                var funcName = validationFunctions[j];
+        for (const module of modules) {
+            for (const funcName of validationFunctions) {
                 this.hookValidationFunction(module.name, funcName);
             }
         }
     },
 
-    hookValidationFunction: function (moduleName, functionName) {
+    hookValidationFunction(moduleName, functionName) {
         try {
-            var validationFunc = Module.findExportByName(moduleName, functionName);
+            const validationFunc = Module.findExportByName(moduleName, functionName);
             if (validationFunc) {
                 Interceptor.attach(validationFunc, {
                     onLeave: retval => {
@@ -1706,27 +1691,27 @@ const CloudLicensingBypass = {
 
                 this.hooksInstalled[`${functionName}_${moduleName}`] = true;
             }
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'cloud_licensing_bypass',
                 action: 'validation_function_hook_failed',
                 function: functionName,
                 module: moduleName,
-                error: e.message,
-                stack: e.stack,
+                error: error.message,
+                stack: error.stack,
             });
         }
     },
 
-    hookActivationAPIs: function () {
+    hookActivationAPIs() {
         send({
             type: 'info',
             target: 'cloud_licensing_bypass',
             action: 'installing_activation_api_hooks',
         });
 
-        var activationFunctions = [
+        const activationFunctions = [
             'activate',
             'Activate',
             'activateLicense',
@@ -1739,21 +1724,18 @@ const CloudLicensingBypass = {
             'PerformActivation',
         ];
 
-        var modules = Process.enumerateModules();
+        const modules = Process.enumerateModules();
 
-        for (var i = 0; i < modules.length; i++) {
-            var module = modules[i];
-
-            for (var j = 0; j < activationFunctions.length; j++) {
-                var funcName = activationFunctions[j];
+        for (const module of modules) {
+            for (const funcName of activationFunctions) {
                 this.hookActivationFunction(module.name, funcName);
             }
         }
     },
 
-    hookActivationFunction: function (moduleName, functionName) {
+    hookActivationFunction(moduleName, functionName) {
         try {
-            var activationFunc = Module.findExportByName(moduleName, functionName);
+            const activationFunc = Module.findExportByName(moduleName, functionName);
             if (activationFunc) {
                 Interceptor.attach(activationFunc, {
                     onLeave: retval => {
@@ -1770,27 +1752,27 @@ const CloudLicensingBypass = {
 
                 this.hooksInstalled[`${functionName}_${moduleName}`] = true;
             }
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'cloud_licensing_bypass',
                 action: 'activation_function_hook_failed',
                 function: functionName,
                 module: moduleName,
-                error: e.message,
-                stack: e.stack,
+                error: error.message,
+                stack: error.stack,
             });
         }
     },
 
-    hookSubscriptionAPIs: function () {
+    hookSubscriptionAPIs() {
         send({
             type: 'info',
             target: 'cloud_licensing_bypass',
             action: 'installing_subscription_api_hooks',
         });
 
-        var subscriptionFunctions = [
+        const subscriptionFunctions = [
             'checkSubscription',
             'CheckSubscription',
             'verifySubscription',
@@ -1805,21 +1787,18 @@ const CloudLicensingBypass = {
             'SubscriptionActive',
         ];
 
-        var modules = Process.enumerateModules();
+        const modules = Process.enumerateModules();
 
-        for (var i = 0; i < modules.length; i++) {
-            var module = modules[i];
-
-            for (var j = 0; j < subscriptionFunctions.length; j++) {
-                var funcName = subscriptionFunctions[j];
+        for (const module of modules) {
+            for (const funcName of subscriptionFunctions) {
                 this.hookSubscriptionFunction(module.name, funcName);
             }
         }
     },
 
-    hookSubscriptionFunction: function (moduleName, functionName) {
+    hookSubscriptionFunction(moduleName, functionName) {
         try {
-            var subscriptionFunc = Module.findExportByName(moduleName, functionName);
+            const subscriptionFunc = Module.findExportByName(moduleName, functionName);
             if (subscriptionFunc) {
                 Interceptor.attach(subscriptionFunc, {
                     onLeave: retval => {
@@ -1836,21 +1815,21 @@ const CloudLicensingBypass = {
 
                 this.hooksInstalled[`${functionName}_${moduleName}`] = true;
             }
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'cloud_licensing_bypass',
                 action: 'subscription_function_hook_failed',
                 function: functionName,
                 module: moduleName,
-                error: e.message,
-                stack: e.stack,
+                error: error.message,
+                stack: error.stack,
             });
         }
     },
 
     // === NETWORK CONNECTION HOOKS ===
-    hookNetworkConnections: function () {
+    hookNetworkConnections() {
         send({
             type: 'info',
             target: 'cloud_licensing_bypass',
@@ -1867,7 +1846,7 @@ const CloudLicensingBypass = {
         this.hookConnectFunctions();
     },
 
-    hookSocketFunctions: function () {
+    hookSocketFunctions() {
         send({
             type: 'info',
             target: 'cloud_licensing_bypass',
@@ -1875,7 +1854,7 @@ const CloudLicensingBypass = {
         });
 
         // Hook socket creation
-        var socket = Module.findExportByName('ws2_32.dll', 'socket');
+        const socket = Module.findExportByName('ws2_32.dll', 'socket');
         if (socket) {
             Interceptor.attach(socket, {
                 onLeave: retval => {
@@ -1895,7 +1874,7 @@ const CloudLicensingBypass = {
         }
 
         // Hook WSASocket
-        var wsaSocket = Module.findExportByName('ws2_32.dll', 'WSASocketW');
+        const wsaSocket = Module.findExportByName('ws2_32.dll', 'WSASocketW');
         if (wsaSocket) {
             Interceptor.attach(wsaSocket, {
                 onLeave: retval => {
@@ -1914,7 +1893,7 @@ const CloudLicensingBypass = {
         }
     },
 
-    hookConnectFunctions: function () {
+    hookConnectFunctions() {
         send({
             type: 'info',
             target: 'cloud_licensing_bypass',
@@ -1922,10 +1901,10 @@ const CloudLicensingBypass = {
         });
 
         // Hook connect
-        var connect = Module.findExportByName('ws2_32.dll', 'connect');
+        const connect = Module.findExportByName('ws2_32.dll', 'connect');
         if (connect) {
             Interceptor.attach(connect, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.socket = args[0].toInt32();
                     this.addr = args[1];
                     this.addrlen = args[2].toInt32();
@@ -1944,7 +1923,7 @@ const CloudLicensingBypass = {
                     }
                 },
 
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.blockConnection) {
                         // Block connection by returning error
                         retval.replace(-1); // SOCKET_ERROR
@@ -1957,39 +1936,35 @@ const CloudLicensingBypass = {
                     }
                 },
 
-                parseSocketAddress: function () {
+                parseSocketAddress() {
                     try {
-                        var family = this.addr.readU16();
+                        const family = this.addr.readU16();
 
                         if (family === 2) {
                             // AF_INET
-                            var port = (this.addr.add(2).readU8() << 8) | this.addr.add(3).readU8();
-                            var ip = this.addr.add(4).readU32();
+                            const port
+                                = (this.addr.add(2).readU8() << 8) | this.addr.add(3).readU8();
+                            const ip = this.addr.add(4).readU32();
 
-                            var ipStr =
-                                (ip & 0xff) +
-                                '.' +
-                                ((ip >> 8) & 0xff) +
-                                '.' +
-                                ((ip >> 16) & 0xff) +
-                                '.' +
-                                ((ip >> 24) & 0xff);
+                            const ipStr = `${ip & 0xFF}.${(ip >> 8) & 0xFF}.${(ip >> 16) & 0xFF}.${
+                                (ip >> 24) & 0xFF
+                            }`;
 
                             return {
                                 family: 'IPv4',
                                 ip: ipStr,
-                                port: port,
+                                port,
                             };
                         }
 
                         return null;
-                    } catch (e) {
+                    } catch (error) {
                         send({
                             type: 'error',
                             target: 'cloud_licensing_bypass',
                             action: 'socket_address_parse_failed',
-                            error: e.message,
-                            stack: e.stack,
+                            error: error.message,
+                            stack: error.stack,
                         });
                         return null;
                     }
@@ -2000,7 +1975,7 @@ const CloudLicensingBypass = {
                         return false;
                     }
 
-                    var licensePorts = [80, 443, 8080, 8443, 9443];
+                    const licensePorts = [80, 443, 8080, 8443, 9443];
                     if (!licensePorts.includes(connInfo.port)) {
                         return false;
                     }
@@ -2023,7 +1998,7 @@ const CloudLicensingBypass = {
     },
 
     // === DNS RESOLUTION HOOKS ===
-    hookDnsResolution: function () {
+    hookDnsResolution() {
         send({
             type: 'info',
             target: 'cloud_licensing_bypass',
@@ -2031,10 +2006,10 @@ const CloudLicensingBypass = {
         });
 
         // Hook getaddrinfo
-        var getaddrinfo = Module.findExportByName('ws2_32.dll', 'getaddrinfo');
+        const getaddrinfo = Module.findExportByName('ws2_32.dll', 'getaddrinfo');
         if (getaddrinfo) {
             Interceptor.attach(getaddrinfo, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.nodename = args[0];
                     this.servname = args[1];
                     this.hints = args[2];
@@ -2052,22 +2027,22 @@ const CloudLicensingBypass = {
                                 });
                                 this.blockDnsLookup = true;
                             }
-                        } catch (e) {
+                        } catch (error) {
                             send({
                                 type: 'error',
                                 target: 'cloud_licensing_bypass',
                                 action: 'dns_hostname_read_failed',
-                                error: e.message,
-                                stack: e.stack,
+                                error: error.message,
+                                stack: error.stack,
                             });
                         }
                     }
                 },
 
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.blockDnsLookup) {
                         // Block DNS lookup by returning error
-                        retval.replace(11001); // WSAHOST_NOT_FOUND
+                        retval.replace(11_001); // WSAHOST_NOT_FOUND
                         this.parent.parent.blockedRequests++;
                         send({
                             type: 'bypass',
@@ -2078,9 +2053,9 @@ const CloudLicensingBypass = {
                     }
                 },
 
-                isLicenseServerHostname: function (hostname) {
-                    var config = this.parent.parent.config;
-                    var hostnameLower = hostname.toLowerCase();
+                isLicenseServerHostname(hostname) {
+                    const { config } = this.parent.parent;
+                    const hostnameLower = hostname.toLowerCase();
 
                     return config.licenseServers.some(server =>
                         hostnameLower.includes(server.toLowerCase())
@@ -2092,35 +2067,35 @@ const CloudLicensingBypass = {
         }
 
         // Hook gethostbyname (legacy)
-        var gethostbyname = Module.findExportByName('ws2_32.dll', 'gethostbyname');
+        const gethostbyname = Module.findExportByName('ws2_32.dll', 'gethostbyname');
         if (gethostbyname) {
             Interceptor.attach(gethostbyname, {
-                onEnter: function (args) {
+                onEnter(args) {
                     if (args[0] && !args[0].isNull()) {
                         try {
-                            var hostname = args[0].readAnsiString();
+                            const hostname = args[0].readAnsiString();
                             if (this.isLicenseServerHostname(hostname)) {
                                 send({
                                     type: 'bypass',
                                     target: 'cloud_licensing_bypass',
                                     action: 'legacy_dns_lookup_blocked',
-                                    hostname: hostname,
+                                    hostname,
                                 });
                                 this.blockLegacyDns = true;
                             }
-                        } catch (e) {
+                        } catch (error) {
                             send({
                                 type: 'error',
                                 target: 'cloud_licensing_bypass',
                                 action: 'legacy_dns_hostname_read_failed',
-                                error: e.message,
-                                stack: e.stack,
+                                error: error.message,
+                                stack: error.stack,
                             });
                         }
                     }
                 },
 
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.blockLegacyDns) {
                         retval.replace(ptr(0)); // NULL
                         send({
@@ -2131,9 +2106,9 @@ const CloudLicensingBypass = {
                     }
                 },
 
-                isLicenseServerHostname: function (hostname) {
-                    var config = this.parent.parent.config;
-                    var hostnameLower = hostname.toLowerCase();
+                isLicenseServerHostname(hostname) {
+                    const { config } = this.parent.parent;
+                    const hostnameLower = hostname.toLowerCase();
 
                     return config.licenseServers.some(server =>
                         hostnameLower.includes(server.toLowerCase())
@@ -2146,7 +2121,7 @@ const CloudLicensingBypass = {
     },
 
     // === CERTIFICATE VALIDATION HOOKS ===
-    hookCertificateValidation: function () {
+    hookCertificateValidation() {
         send({
             type: 'info',
             target: 'cloud_licensing_bypass',
@@ -2154,13 +2129,13 @@ const CloudLicensingBypass = {
         });
 
         // Hook certificate verification functions
-        var certVerifyChain = Module.findExportByName(
+        const certVerifyChain = Module.findExportByName(
             'crypt32.dll',
             'CertVerifyCertificateChainPolicy'
         );
         if (certVerifyChain) {
             Interceptor.attach(certVerifyChain, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.pszPolicyOID = args[0];
                     this.pChainContext = args[1];
                     this.pPolicyPara = args[2];
@@ -2173,11 +2148,11 @@ const CloudLicensingBypass = {
                     });
                 },
 
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (
-                        retval.toInt32() !== 0 &&
-                        this.pPolicyStatus &&
-                        !this.pPolicyStatus.isNull()
+                        retval.toInt32() !== 0
+                        && this.pPolicyStatus
+                        && !this.pPolicyStatus.isNull()
                     ) {
                         // Force certificate validation to succeed
                         this.pPolicyStatus.writeU32(0); // No errors
@@ -2195,7 +2170,7 @@ const CloudLicensingBypass = {
         }
 
         // Hook CertGetCertificateChain
-        var certGetChain = Module.findExportByName('crypt32.dll', 'CertGetCertificateChain');
+        const certGetChain = Module.findExportByName('crypt32.dll', 'CertGetCertificateChain');
         if (certGetChain) {
             Interceptor.attach(certGetChain, {
                 onLeave: retval => {
@@ -2214,7 +2189,7 @@ const CloudLicensingBypass = {
     },
 
     // === INSTALLATION SUMMARY ===
-    installSummary: function () {
+    installSummary() {
         setTimeout(() => {
             send({
                 type: 'summary',
@@ -2222,7 +2197,7 @@ const CloudLicensingBypass = {
                 action: 'installation_summary_header',
             });
 
-            var categories = {
+            const categories = {
                 'HTTP/HTTPS Interception': 0,
                 'OAuth Token Manipulation': 0,
                 'JWT Token Spoofing': 0,
@@ -2232,69 +2207,69 @@ const CloudLicensingBypass = {
                 'Certificate Validation': 0,
             };
 
-            for (var hook in this.hooksInstalled) {
+            for (const hook in this.hooksInstalled) {
                 if (
-                    hook.includes('Http') ||
-                    hook.includes('SSL') ||
-                    hook.includes('curl') ||
-                    hook.includes('Schannel')
+                    hook.includes('Http')
+                    || hook.includes('SSL')
+                    || hook.includes('curl')
+                    || hook.includes('Schannel')
                 ) {
                     categories['HTTP/HTTPS Interception']++;
                 } else if (
-                    hook.includes('token') ||
-                    hook.includes('Token') ||
-                    hook.includes('oauth') ||
-                    hook.includes('OAuth')
+                    hook.includes('token')
+                    || hook.includes('Token')
+                    || hook.includes('oauth')
+                    || hook.includes('OAuth')
                 ) {
                     categories['OAuth Token Manipulation']++;
                 } else if (
-                    hook.includes('jwt') ||
-                    hook.includes('JWT') ||
-                    hook.includes('base64') ||
-                    hook.includes('Base64')
+                    hook.includes('jwt')
+                    || hook.includes('JWT')
+                    || hook.includes('base64')
+                    || hook.includes('Base64')
                 ) {
                     categories['JWT Token Spoofing']++;
                 } else if (
-                    hook.includes('License') ||
-                    hook.includes('license') ||
-                    hook.includes('Validation') ||
-                    hook.includes('validation') ||
-                    hook.includes('Activation') ||
-                    hook.includes('activation') ||
-                    hook.includes('Subscription') ||
-                    hook.includes('subscription')
+                    hook.includes('License')
+                    || hook.includes('license')
+                    || hook.includes('Validation')
+                    || hook.includes('validation')
+                    || hook.includes('Activation')
+                    || hook.includes('activation')
+                    || hook.includes('Subscription')
+                    || hook.includes('subscription')
                 ) {
                     categories['License API Hooks']++;
                 } else if (
-                    hook.includes('socket') ||
-                    hook.includes('Socket') ||
-                    hook.includes('connect')
+                    hook.includes('socket')
+                    || hook.includes('Socket')
+                    || hook.includes('connect')
                 ) {
                     categories['Network Connection Control']++;
                 } else if (
-                    hook.includes('getaddr') ||
-                    hook.includes('gethostby') ||
-                    hook.includes('dns') ||
-                    hook.includes('DNS')
+                    hook.includes('getaddr')
+                    || hook.includes('gethostby')
+                    || hook.includes('dns')
+                    || hook.includes('DNS')
                 ) {
                     categories['DNS Resolution Blocking']++;
                 } else if (
-                    hook.includes('Cert') ||
-                    hook.includes('cert') ||
-                    hook.includes('Certificate')
+                    hook.includes('Cert')
+                    || hook.includes('cert')
+                    || hook.includes('Certificate')
                 ) {
                     categories['Certificate Validation']++;
                 }
             }
 
-            for (var category in categories) {
+            for (const category in categories) {
                 if (categories[category] > 0) {
                     send({
                         type: 'summary',
                         target: 'cloud_license',
                         action: 'hook_category_count',
                         data: {
-                            category: category,
+                            category,
                             count: categories[category],
                             message: `✓ ${category}: ${categories[category]} hooks`,
                         },
@@ -2315,7 +2290,13 @@ const CloudLicensingBypass = {
                 data: { message: 'Active Configuration:' },
             });
 
-            var config = this.config;
+            const {
+                config,
+                interceptedRequests,
+                blockedRequests,
+                spoofedResponses,
+                hooksInstalled,
+            } = this;
             if (config.networkInterception.enabled) {
                 send({
                     type: 'summary',
@@ -2334,9 +2315,9 @@ const CloudLicensingBypass = {
                     data: {
                         feature: 'License Request Blocking',
                         status: config.networkInterception.blockLicenseChecks,
-                        message:
-                            '✓ License Request Blocking: ' +
-                            config.networkInterception.blockLicenseChecks,
+                        message: `✓ License Request Blocking: ${
+                            config.networkInterception.blockLicenseChecks
+                        }`,
                     },
                 });
                 send({
@@ -2415,8 +2396,8 @@ const CloudLicensingBypass = {
                 action: 'runtime_stat',
                 data: {
                     stat: 'Intercepted Requests',
-                    value: this.interceptedRequests,
-                    message: `• Intercepted Requests: ${this.interceptedRequests}`,
+                    value: interceptedRequests,
+                    message: `• Intercepted Requests: ${interceptedRequests}`,
                 },
             });
             send({
@@ -2425,8 +2406,8 @@ const CloudLicensingBypass = {
                 action: 'runtime_stat',
                 data: {
                     stat: 'Blocked Requests',
-                    value: this.blockedRequests,
-                    message: `• Blocked Requests: ${this.blockedRequests}`,
+                    value: blockedRequests,
+                    message: `• Blocked Requests: ${blockedRequests}`,
                 },
             });
             send({
@@ -2435,8 +2416,8 @@ const CloudLicensingBypass = {
                 action: 'runtime_stat',
                 data: {
                     stat: 'Spoofed Responses',
-                    value: this.spoofedResponses,
-                    message: `• Spoofed Responses: ${this.spoofedResponses}`,
+                    value: spoofedResponses,
+                    message: `• Spoofed Responses: ${spoofedResponses}`,
                 },
             });
             send({
@@ -2460,8 +2441,8 @@ const CloudLicensingBypass = {
                 target: 'cloud_license',
                 action: 'total_hooks',
                 data: {
-                    count: Object.keys(this.hooksInstalled).length,
-                    message: `Total hooks installed: ${Object.keys(this.hooksInstalled).length}`,
+                    count: Object.keys(hooksInstalled).length,
+                    message: `Total hooks installed: ${Object.keys(hooksInstalled).length}`,
                 },
             });
             send({
@@ -2484,7 +2465,7 @@ const CloudLicensingBypass = {
 
     // === V3.0.0 ENHANCEMENTS ===
 
-    initializeDistributedLicenseCountermeasures: function () {
+    initializeDistributedLicenseCountermeasures() {
         this.distributedLicense = {
             blockchainValidation: {
                 enabled: true,
@@ -2520,7 +2501,7 @@ const CloudLicensingBypass = {
         });
     },
 
-    initializeCloudNativeProtectionBypass: function () {
+    initializeCloudNativeProtectionBypass() {
         this.cloudNativeProtection = {
             containerSecurity: {
                 enabled: true,
@@ -2558,7 +2539,7 @@ const CloudLicensingBypass = {
         });
     },
 
-    initializeAdvancedAPIInterception: function () {
+    initializeAdvancedAPIInterception() {
         this.advancedAPI = {
             graphqlInterception: {
                 enabled: true,
@@ -2601,7 +2582,7 @@ const CloudLicensingBypass = {
         });
     },
 
-    initializeQuantumResistantBypass: function () {
+    initializeQuantumResistantBypass() {
         this.quantumResistant = {
             postQuantumCryptography: {
                 enabled: true,
@@ -2635,7 +2616,7 @@ const CloudLicensingBypass = {
         });
     },
 
-    initializeZeroTrustNetworkBypass: function () {
+    initializeZeroTrustNetworkBypass() {
         this.zeroTrustNetwork = {
             identityVerification: {
                 enabled: true,
@@ -2679,7 +2660,7 @@ const CloudLicensingBypass = {
         });
     },
 
-    initializeEdgeComputingBypass: function () {
+    initializeEdgeComputingBypass() {
         this.edgeComputing = {
             edgeNodeManipulation: {
                 enabled: true,
@@ -2720,7 +2701,7 @@ const CloudLicensingBypass = {
         });
     },
 
-    initializeAIMLLicenseBypass: function () {
+    initializeAIMLLicenseBypass() {
         this.aimlLicense = {
             machineLearningModels: {
                 enabled: true,
@@ -2763,7 +2744,7 @@ const CloudLicensingBypass = {
         });
     },
 
-    initializeV3SecurityEnhancements: function () {
+    initializeV3SecurityEnhancements() {
         this.v3Security = {
             threatIntelligence: {
                 enabled: true,

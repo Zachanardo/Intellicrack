@@ -10,7 +10,7 @@ Licensed under GNU General Public License v3.0
 import json
 import os
 from pathlib import Path
-from typing import Any, TYPE_CHECKING
+from typing import Any, cast
 
 from intellicrack.core.config_manager import IntellicrackConfig
 
@@ -24,41 +24,48 @@ CONFIG_DIR_KEY = "secrets.config_directory"
 ENCRYPTION_ENABLED_KEY = "secrets.encryption_enabled"
 KEYRING_IN_USE_KEY = "secrets.keyring_in_use"
 
-# Optional dependencies with fallbacks
-if TYPE_CHECKING:
-    from intellicrack.handlers.cryptography_handler import PBKDF2HMAC, Fernet, hashes
-    import keyring as keyring_module
-    from dotenv import find_dotenv, load_dotenv
-
+Fernet: Any = None
+PBKDF2HMAC: Any = None
+hashes: Any = None
+HAS_CRYPTOGRAPHY: bool = False
 try:
-    from intellicrack.handlers.cryptography_handler import PBKDF2HMAC, Fernet, hashes
+    from intellicrack.handlers.cryptography_handler import (
+        PBKDF2HMAC as _PBKDF2HMAC,
+        Fernet as _Fernet,
+        hashes as _hashes,
+    )
 
+    Fernet = _Fernet
+    PBKDF2HMAC = _PBKDF2HMAC
+    hashes = _hashes
     HAS_CRYPTOGRAPHY = True
 except ImportError as e:
     logger.exception(IMPORT_ERROR_MSG, e)
-    HAS_CRYPTOGRAPHY = False
-    Fernet: Any = None
-    PBKDF2HMAC: Any = None
-    hashes: Any = None
 
+keyring_module: Any = None
+HAS_KEYRING: bool = False
 try:
-    import keyring as keyring_module
+    import keyring as _keyring_module
 
+    keyring_module = _keyring_module
     HAS_KEYRING = True
 except ImportError as e:
     logger.exception(IMPORT_ERROR_MSG, e)
-    HAS_KEYRING = False
-    keyring_module = None  # type: ignore[assignment]
 
+load_dotenv: Any = None
+find_dotenv: Any = None
+HAS_DOTENV: bool = False
 try:
-    from dotenv import find_dotenv, load_dotenv
+    from dotenv import (
+        find_dotenv as _find_dotenv,
+        load_dotenv as _load_dotenv,
+    )
 
+    load_dotenv = _load_dotenv
+    find_dotenv = _find_dotenv
     HAS_DOTENV = True
 except ImportError as e:
     logger.exception(IMPORT_ERROR_MSG, e)
-    HAS_DOTENV = False
-    load_dotenv = None  # type: ignore[assignment]
-    find_dotenv = None  # type: ignore[assignment]
 
 
 class SecretsManager:
@@ -333,7 +340,8 @@ class SecretsManager:
         if not HAS_KEYRING or keyring_module is None:
             return None
         try:
-            return keyring_module.get_password(self.SERVICE_NAME, key)
+            result = keyring_module.get_password(self.SERVICE_NAME, key)
+            return cast("str | None", result)
         except Exception as e:
             logger.debug("Keychain lookup failed for %s: %s", key, e, exc_info=True)
             return None
@@ -490,14 +498,13 @@ class SecretsManager:
         if salt is None:
             salt = os.urandom(16)
 
-        # Use PBKDF2HMAC with SHA256 hashing
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,
             salt=salt,
             iterations=100000,
         )
-        return kdf.derive(password.encode())
+        return cast("bytes", kdf.derive(password.encode()))
 
     def find_env_file_location(self) -> str | None:
         """Find .env file location using find_dotenv.
@@ -511,8 +518,8 @@ class SecretsManager:
             return None
 
         try:
-            # Use find_dotenv to locate the .env file
-            if env_path := find_dotenv():
+            env_path = cast("str | None", find_dotenv())
+            if env_path:
                 logger.info("Found .env file at: %s", env_path)
                 return env_path
             logger.info("No .env file found in search path")
@@ -538,16 +545,14 @@ class SecretsManager:
             return False
 
         try:
-            # Generate hash from provided password using same salt
             kdf = PBKDF2HMAC(
                 algorithm=hashes.SHA256(),
                 length=32,
                 salt=salt,
                 iterations=100000,
             )
-            derived_key = kdf.derive(password.encode())
+            derived_key = cast("bytes", kdf.derive(password.encode()))
 
-            # Compare with stored hash
             return derived_key == stored_hash
         except Exception as e:
             logger.exception("Error verifying password hash: %s", e, exc_info=True)

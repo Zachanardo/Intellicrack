@@ -6731,7 +6731,7 @@ class LicenseServerEmulator:
                         media_type=response.get("content_type", "application/json"),
                     )
                     return response_obj
-                return cast(Response, response)
+                return cast("Response", response)
             return {
                 "status": "success",
                 "licensed": True,

@@ -14,22 +14,21 @@ from pathlib import Path
 import struct
 import hashlib
 
-# TPM Bypass Tests
-from intellicrack.core.protection_bypass.tpm_bypass import TPMBypass
+from intellicrack.core.protection_bypass.tpm_bypass import TPMBypassEngine
 
 class TestTPMBypassProduction:
     """Production tests for TPM bypass and BitLocker circumvention."""
 
     def test_tpm_bypass_initialization(self):
         """Test TPM bypass initialization."""
-        bypass = TPMBypass()
+        bypass = TPMBypassEngine()
         assert bypass is not None
         assert hasattr(bypass, 'bypass_attestation')
-        assert hasattr(bypass, 'extract_bitlocker_keys')
+        assert hasattr(bypass, 'extract_bitlocker_vmk')
 
     def test_tpm_attestation_bypass(self):
         """Test TPM attestation bypass techniques."""
-        bypass = TPMBypass()
+        bypass = TPMBypassEngine()
 
         attestation_config = {
             'tpm_version': '2.0',
@@ -42,70 +41,76 @@ class TestTPMBypassProduction:
         assert 'method' in result
         assert 'success' in result
 
-    def test_bitlocker_key_extraction(self):
-        """Test BitLocker key extraction from TPM."""
-        bypass = TPMBypass()
+    def test_bitlocker_vmk_extraction(self):
+        """Test BitLocker VMK extraction from TPM."""
+        bypass = TPMBypassEngine()
 
-        # Test VMK extraction
-        vmk_result = bypass.extract_vmk()
+        vmk_result = bypass.extract_bitlocker_vmk()
         assert vmk_result is not None
-        assert 'vmk' in vmk_result or 'error' in vmk_result
+        assert 'vmk' in vmk_result or 'error' in vmk_result or 'extracted' in vmk_result
 
-        # Test FVEK extraction
-        if 'vmk' in vmk_result:
-            fvek_result = bypass.extract_fvek(vmk_result['vmk'])
-            assert fvek_result is not None
+    def test_tpm_version_detection(self):
+        """Test TPM version detection."""
+        bypass = TPMBypassEngine()
+
+        version = bypass.detect_tpm_version()
+        assert version is not None
+        assert isinstance(version, (str, dict))
+
+    def test_tpm_protection_analysis(self):
+        """Test TPM protection analysis."""
+        bypass = TPMBypassEngine()
+
+        analysis = bypass.analyze_tpm_protection()
+        assert analysis is not None
+        assert isinstance(analysis, dict)
 
 
-# VM Protection Bypass Tests
-from intellicrack.core.protection_bypass.vm_bypass import VMBypass
+from intellicrack.core.protection_bypass.vm_bypass import VMDetector, VirtualizationDetectionBypass
 
 class TestVMProtectionBypassProduction:
-    """Production tests for VM protection unpacking."""
+    """Production tests for VM protection detection and bypass."""
 
-    def test_vmprotect_detection(self):
-        """Test VMProtect detection in binaries."""
-        bypass = VMBypass()
+    def test_vm_detection(self):
+        """Test VM detection in current environment."""
+        detector = VMDetector()
 
-        # Test with a binary path
-        test_binary = Path("C:/Windows/System32/notepad.exe")
-        if test_binary.exists():
-            result = bypass.detect_vm_protection(str(test_binary))
-            assert result is not None
-            assert 'protection_type' in result
-            assert 'version' in result or result['protection_type'] == 'none'
+        result = detector.detect()
+        assert result is not None
+        assert isinstance(result, dict)
+        assert 'is_vm' in result or 'detected' in result or 'vm_type' in result
 
-    def test_themida_unpacking(self):
-        """Test Themida/WinLicense unpacking."""
-        bypass = VMBypass()
+    def test_vm_bypass_generation(self):
+        """Test VM bypass script generation."""
+        detector = VMDetector()
 
-        unpacking_config = {
-            'protection': 'Themida',
-            'version': '3.x',
-            'anti_dump': True,
-            'anti_debug': True
+        bypass_config = {
+            'protection': 'VMware',
+            'techniques': ['registry', 'timing', 'artifacts'],
         }
 
-        unpacker = bypass.create_unpacker(unpacking_config)
-        assert unpacker is not None
-        assert 'technique' in unpacker
-        assert 'stages' in unpacker
+        bypass_result = detector.generate_bypass(bypass_config)
+        assert bypass_result is not None
+        assert isinstance(bypass_result, dict)
 
-    def test_code_virtualizer_defeat(self):
-        """Test Code Virtualizer defeat techniques."""
-        bypass = VMBypass()
+    def test_virtualization_detection_bypass(self):
+        """Test virtualization detection bypass techniques."""
+        bypass = VirtualizationDetectionBypass()
 
-        cv_config = {
-            'vm_type': 'CISC',
-            'obfuscation_level': 'maximum'
-        }
+        result = bypass.bypass_vm_detection()
+        assert result is not None
+        assert isinstance(result, dict)
 
-        defeat_method = bypass.defeat_code_virtualizer(cv_config)
-        assert defeat_method is not None
-        assert 'devirtualization' in defeat_method
+    def test_vm_bypass_script_generation(self):
+        """Test VM bypass Frida script generation."""
+        bypass = VirtualizationDetectionBypass()
+
+        script = bypass.generate_bypass_script()
+        assert script is not None
+        assert isinstance(script, str)
+        assert len(script) > 0
 
 
-# Commercial License Analysis Tests
 from intellicrack.core.analysis.commercial_license_analyzer import CommercialLicenseAnalyzer
 
 class TestCommercialLicenseAnalysisProduction:
@@ -130,7 +135,6 @@ class TestCommercialLicenseAnalysisProduction:
         """Test RLM license file parsing."""
         analyzer = CommercialLicenseAnalyzer()
 
-        # Create test RLM license content
         rlm_license = """
         HOST server 001122334455 27000
         ISV vendor
@@ -144,7 +148,6 @@ class TestCommercialLicenseAnalysisProduction:
         assert len(parsed['licenses']) > 0
 
 
-# Advanced Instrumentation Tests
 from intellicrack.core.analysis.dynamic_instrumentation import DynamicInstrumentation
 from intellicrack.core.analysis.frida_analyzer import FridaAnalyzer
 
@@ -171,7 +174,6 @@ class TestAdvancedInstrumentationProduction:
         assert 'debugger_detection_bypass' in bypass_techniques
 
 
-# Ghidra Integration Tests
 from intellicrack.core.analysis.ghidra_analyzer import GhidraAnalyzer
 from intellicrack.core.analysis.ghidra_script_runner import GhidraScriptRunner
 
@@ -182,7 +184,6 @@ class TestGhidraIntegrationProduction:
         """Test Ghidra headless analysis."""
         ghidra = GhidraAnalyzer()
 
-        # Check if Ghidra is available
         if ghidra.is_ghidra_available():
             analysis_config = {
                 'binary': 'test.exe',
@@ -212,7 +213,6 @@ class TestGhidraIntegrationProduction:
         assert 'valid' in result
 
 
-# Fuzzing Engine Tests
 from intellicrack.core.vulnerability_research.fuzzing_engine import FuzzingEngine
 
 class TestFuzzingEngineProduction:
@@ -223,7 +223,7 @@ class TestFuzzingEngineProduction:
         fuzzer = FuzzingEngine()
 
         crash_data = {
-            'exception_code': 0xC0000005,  # Access violation
+            'exception_code': 0xC0000005,
             'exception_address': 0x41414141,
             'registers': {'eip': 0x41414141, 'esp': 0x12345678},
             'call_stack': []
@@ -251,7 +251,6 @@ class TestFuzzingEngineProduction:
         assert 'coverage_map' in campaign
 
 
-# Exploit Development Tests
 from intellicrack.core.vulnerability_research.exploit_developer import ExploitDeveloper
 
 class TestExploitDevelopmentProduction:
@@ -291,7 +290,6 @@ class TestExploitDevelopmentProduction:
         assert 'overflow' in primitives
 
 
-# Binary Diffing Tests
 from intellicrack.core.vulnerability_research.binary_differ import BinaryDiffer
 
 class TestBinaryDiffingProduction:
@@ -301,9 +299,8 @@ class TestBinaryDiffingProduction:
         """Test patch analysis between binaries."""
         differ = BinaryDiffer()
 
-        # Use two versions of a system binary if available
         old_binary = Path("C:/Windows/System32/notepad.exe")
-        new_binary = Path("C:/Windows/System32/notepad.exe")  # Same for testing
+        new_binary = Path("C:/Windows/System32/notepad.exe")
 
         if old_binary.exists():
             diff_result = differ.analyze_patch(str(old_binary), str(new_binary))

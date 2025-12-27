@@ -21,10 +21,11 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import json
 import time
 from collections import deque
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from intellicrack.utils.logger import logger
 

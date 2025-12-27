@@ -183,13 +183,13 @@ class GpuAnalysis:
         try:
             # Check various possible locations for binary data
             if hasattr(app, "binary_data"):
-                binary_data = getattr(app, "binary_data")
+                binary_data = app.binary_data
                 if binary_data and isinstance(binary_data, bytes):
-                    return cast(bytes, binary_data)
+                    return cast("bytes", binary_data)
 
             # Try to get from current file
             if hasattr(app, "current_file"):
-                current_file = getattr(app, "current_file")
+                current_file = app.current_file
                 if current_file:
                     file_path = Path(current_file)
                     if file_path.exists() and file_path.is_file():
@@ -197,7 +197,7 @@ class GpuAnalysis:
 
             # Try to get from loaded binary path
             if hasattr(app, "loaded_binary_path"):
-                loaded_binary_path = getattr(app, "loaded_binary_path")
+                loaded_binary_path = app.loaded_binary_path
                 if loaded_binary_path:
                     file_path = Path(loaded_binary_path)
                     if file_path.exists() and file_path.is_file():
@@ -205,9 +205,9 @@ class GpuAnalysis:
 
             # Check if there's a selected file in file browser
             if hasattr(app, "file_browser"):
-                file_browser = getattr(app, "file_browser")
+                file_browser = app.file_browser
                 if hasattr(file_browser, "selected_file"):
-                    selected_file = getattr(file_browser, "selected_file")
+                    selected_file = file_browser.selected_file
                     if selected_file:
                         file_path = Path(selected_file)
                         if file_path.is_file():
@@ -230,7 +230,7 @@ class GpuAnalysis:
             if not hasattr(app, "centralWidget"):
                 return
 
-            central_widget = getattr(app, "centralWidget")
+            central_widget = app.centralWidget
             if not callable(central_widget):
                 return
 
@@ -310,7 +310,7 @@ class GpuAnalysis:
 
             # Display results summary
             if hasattr(app, "update_output"):
-                update_output = getattr(app, "update_output")
+                update_output = app.update_output
                 framework = results.get("framework_used", "cpu")
                 gpu_available = results.get("gpu_available", False)
 
@@ -354,7 +354,7 @@ class GpuAnalysis:
         except Exception as e:
             self.logger.exception("Failed to process analysis results: %s", e)
             if hasattr(app, "update_output"):
-                update_output = getattr(app, "update_output")
+                update_output = app.update_output
                 update_output.emit(f"[ERROR] Failed to process GPU analysis results: {e}")
 
     def get_gpu_status(self) -> dict[str, Any]:

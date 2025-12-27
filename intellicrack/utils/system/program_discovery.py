@@ -117,14 +117,18 @@ class ProgramDiscoveryEngine:
 
     # Registry paths for Windows program discovery
     WINDOWS_REGISTRY_PATHS: list[tuple[int | None, str | None]] = [
-        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall") if HAS_WINREG and winreg is not None else (None, None),
+        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall")
+        if HAS_WINREG and winreg is not None
+        else (None, None),
         (
             winreg.HKEY_LOCAL_MACHINE,
             r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
         )
         if HAS_WINREG and winreg is not None
         else (None, None),
-        (winreg.HKEY_CURRENT_USER, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall") if HAS_WINREG and winreg is not None else (None, None),
+        (winreg.HKEY_CURRENT_USER, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall")
+        if HAS_WINREG and winreg is not None
+        else (None, None),
         (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Classes\Applications") if HAS_WINREG and winreg is not None else (None, None),
     ]
 

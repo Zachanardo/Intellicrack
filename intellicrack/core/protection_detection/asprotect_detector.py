@@ -12,6 +12,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+
 try:
     import pefile
 
@@ -377,7 +378,7 @@ class ASProtectDetector:
 
     def _detect_version(self, binary_data: bytes) -> ASProtectVersion:
         """Detect ASProtect version from binary signatures."""
-        version_scores: dict[ASProtectVersion, int] = {v: 0 for v in ASProtectVersion}
+        version_scores: dict[ASProtectVersion, int] = dict.fromkeys(ASProtectVersion, 0)
 
         for version, patterns in self.VERSION_SIGNATURES.items():
             for pattern in patterns:
@@ -430,7 +431,7 @@ class ASProtectDetector:
             features.anti_dumping = True
             score += 0.1
 
-        entropy = self._calculate_entropy(binary_data[:min(len(binary_data), 50000)])
+        entropy = self._calculate_entropy(binary_data[: min(len(binary_data), 50000)])
         if entropy > 7.0:
             features.compression = True
             score += 0.05
@@ -513,13 +514,11 @@ class ASProtectDetector:
             results: Any = self._yara_rules.match(str(target_path))
 
             for match in results:
-                matches.append(
-                    {
-                        "rule": str(match.rule),
-                        "version": str(match.meta.get("version", "unknown")),
-                        "description": str(match.meta.get("description", "")),
-                    }
-                )
+                matches.append({
+                    "rule": str(match.rule),
+                    "version": str(match.meta.get("version", "unknown")),
+                    "description": str(match.meta.get("description", "")),
+                })
 
         except Exception as e:
             self.logger.debug("Error in YARA signature detection: %s", e)
@@ -582,12 +581,6 @@ class ASProtectDetector:
         """Calculate overall detection confidence score."""
         registry_score = min(registry_count / 2.0, 1.0)
 
-        total_score = (
-            signature_score * 0.30
-            + section_score * 0.20
-            + feature_score * 0.25
-            + yara_score * 0.15
-            + registry_score * 0.10
-        )
+        total_score = signature_score * 0.30 + section_score * 0.20 + feature_score * 0.25 + yara_score * 0.15 + registry_score * 0.10
 
         return min(total_score, 1.0)

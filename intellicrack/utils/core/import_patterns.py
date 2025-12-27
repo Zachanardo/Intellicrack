@@ -49,12 +49,7 @@ MachO: Any = None
 psutil: Any = None
 
 try:
-    from intellicrack.handlers.capstone_handler import (
-        CS_ARCH_X86,
-        CS_MODE_32,
-        CS_MODE_64,
-        Cs,
-    )
+    from intellicrack.handlers.capstone_handler import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
 
     CAPSTONE_AVAILABLE = True
 except ImportError:

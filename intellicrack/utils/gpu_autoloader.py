@@ -15,8 +15,9 @@ import subprocess
 import sys
 from typing import TYPE_CHECKING, Any
 
+
 if TYPE_CHECKING:
-    from typing import Callable
+    from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
 

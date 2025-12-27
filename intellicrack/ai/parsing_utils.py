@@ -120,7 +120,9 @@ class ResponseLineParser:
         return categories
 
     @staticmethod
-    def extract_structured_content(response: str, patterns: list[str], section_separators: list[str] | None = None) -> list[dict[str, str | int | tuple[str | object, ...]]]:
+    def extract_structured_content(
+        response: str, patterns: list[str], section_separators: list[str] | None = None
+    ) -> list[dict[str, str | int | tuple[str | object, ...]]]:
         """Extract structured content using regex patterns.
 
         Args:

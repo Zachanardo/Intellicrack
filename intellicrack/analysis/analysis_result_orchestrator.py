@@ -21,6 +21,7 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+import contextlib
 import logging
 from typing import TYPE_CHECKING, Any, cast
 
@@ -34,19 +35,16 @@ if TYPE_CHECKING:
 _UnifiedProtectionResult: type[Any] | None = None
 _ICPScanResult: type[Any] | None = None
 
-try:
+with contextlib.suppress(ImportError):
     from ..protection.unified_protection_engine import UnifiedProtectionResult as _UnifiedProtectionResult
-except ImportError:
-    pass
 
-try:
+with contextlib.suppress(ImportError):
     from ..protection.icp_backend import ICPScanResult as _ICPScanResult
-except ImportError:
-    pass
 
 try:
     from ..utils.logger import get_logger, log_all_methods
 except ImportError:
+
     def get_logger(name: str | None = None) -> logging.Logger:
         """Create a logger instance for the given name."""
         return logging.getLogger(name or __name__)
@@ -113,7 +111,7 @@ class AnalysisResultOrchestrator(QObject):
         for handler in self.handlers:
             try:
                 if hasattr(handler, "on_analysis_complete"):
-                    getattr(handler, "on_analysis_complete")(result)
+                    handler.on_analysis_complete(result)
                     self.handler_status.emit(
                         handler.__class__.__name__,
                         "Processing complete",
@@ -142,13 +140,13 @@ class AnalysisResultOrchestrator(QObject):
         for handler in self.handlers:
             try:
                 if hasattr(handler, "on_icp_analysis_complete"):
-                    getattr(handler, "on_icp_analysis_complete")(result)
+                    handler.on_icp_analysis_complete(result)
                     self.handler_status.emit(
                         handler.__class__.__name__,
                         "ICP processing complete",
                     )
                 elif hasattr(handler, "on_analysis_complete") and hasattr(self, "_current_result") and self._current_result:
-                    getattr(handler, "on_analysis_complete")(self._current_result)
+                    handler.on_analysis_complete(self._current_result)
                     self.handler_status.emit(
                         handler.__class__.__name__,
                         "Analysis processing complete",
@@ -239,7 +237,7 @@ class AnalysisResultOrchestrator(QObject):
                 file_path_value = str(file_path_value) if file_path_value else ""
 
             result_class = cast("type[UnifiedProtectionResult]", _UnifiedProtectionResult)
-            new_result: "UnifiedProtectionResult" = result_class(
+            new_result: UnifiedProtectionResult = result_class(
                 file_path=file_path_value,
                 file_type="unknown",
                 architecture="unknown",

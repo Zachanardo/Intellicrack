@@ -29,6 +29,7 @@ from intellicrack.handlers.pyqt6_handler import QFileDialog, QHBoxLayout, QLabel
 
 from .base_tab import BaseTab
 
+
 if TYPE_CHECKING:
     from intellicrack.ui.widgets.terminal_session_widget import TerminalSessionWidget
 

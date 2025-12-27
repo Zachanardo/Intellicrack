@@ -34,7 +34,6 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import TYPE_CHECKING, Any, cast
 
-
 import numpy as np
 import numpy.typing as npt
 
@@ -55,9 +54,15 @@ from .analysis_cache import AnalysisCache, get_analysis_cache
 
 
 if TYPE_CHECKING:
-    from .icp_backend import ICPScanResult
-    from .intellicrack_protection_advanced import AdvancedProtectionAnalysis, IntellicrackAdvancedProtection, ScanMode as ProtectionScanMode
-    from .icp_backend import ScanMode as ICPScanModeType
+    from .icp_backend import (
+        ICPScanResult,
+        ScanMode as ICPScanModeType,
+    )
+    from .intellicrack_protection_advanced import (
+        AdvancedProtectionAnalysis,
+        IntellicrackAdvancedProtection,
+        ScanMode as ProtectionScanMode,
+    )
 
 logger = get_logger(__name__)
 
@@ -178,9 +183,7 @@ class UnifiedProtectionEngine:
         self.enable_heuristics = enable_heuristics
 
         # Initialize engines
-        self.protection_detector: IntellicrackAdvancedProtection | None = (
-            _get_advanced_protection()() if enable_protection else None
-        )
+        self.protection_detector: IntellicrackAdvancedProtection | None = _get_advanced_protection()() if enable_protection else None
 
         # Initialize advanced cache
         if cache_config:
@@ -354,9 +357,7 @@ class UnifiedProtectionEngine:
                 b"GetProcAddress",
             ]
 
-            found_patterns: list[str] = [
-                pattern.decode("utf-8", errors="ignore") for pattern in suspicious_patterns if pattern in header
-            ]
+            found_patterns: list[str] = [pattern.decode("utf-8", errors="ignore") for pattern in suspicious_patterns if pattern in header]
             if found_patterns:
                 heuristics["suspicious_imports"] = found_patterns
 
@@ -398,9 +399,7 @@ class UnifiedProtectionEngine:
             logger.exception("Heuristic analysis error: %s", e)
             return None
 
-    def _merge_protection_results(
-        self, result: UnifiedProtectionResult, protection_analysis: AdvancedProtectionAnalysis
-    ) -> None:
+    def _merge_protection_results(self, result: UnifiedProtectionResult, protection_analysis: AdvancedProtectionAnalysis) -> None:
         """Merge protection results into unified result."""
         result.file_type = protection_analysis.file_type
         result.architecture = protection_analysis.architecture

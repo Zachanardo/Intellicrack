@@ -304,7 +304,9 @@ class BinaryNinjaAnalyzer:
                         if hex(string_ref.start)[2:] in instr_text:
                             strings_referenced.append(string_ref.value)
 
-                    for imp_name in [sym.short_name for sym in self.bv.symbols.values() if sym.type == bn.SymbolType.ImportedFunctionSymbol]:
+                    for imp_name in [
+                        sym.short_name for sym in self.bv.symbols.values() if sym.type == bn.SymbolType.ImportedFunctionSymbol
+                    ]:
                         if imp_name in instr_text:
                             api_calls.append(imp_name)
 
@@ -331,7 +333,9 @@ class BinaryNinjaAnalyzer:
             hlil_code=hlil_code,
             is_thunk=func.is_thunk,
             is_imported=func.symbol.type == bn.SymbolType.ImportedFunctionSymbol if func.symbol else False,
-            is_exported=any(sym.address == func.start and sym.type == bn.SymbolType.FunctionSymbol for sym in self.bv.symbols.values()) if self.bv is not None else False,
+            is_exported=any(sym.address == func.start and sym.type == bn.SymbolType.FunctionSymbol for sym in self.bv.symbols.values())
+            if self.bv is not None
+            else False,
             comments=comments,
             strings_referenced=strings_referenced,
             api_calls=api_calls,

@@ -607,7 +607,7 @@ class WorkspaceTab(QWidget):
             from ...protection import protection_detector
 
             if hasattr(protection_detector, "detect_all_protections"):
-                detect_protections = getattr(protection_detector, "detect_all_protections")
+                detect_protections = protection_detector.detect_all_protections
                 protection_results = detect_protections(self.loaded_binary_path)
 
                 if protection_results:

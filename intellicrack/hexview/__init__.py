@@ -22,6 +22,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import logging
 from typing import Any
 
+
 logger = logging.getLogger(__name__)
 
 AIBinaryBridge: Any

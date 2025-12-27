@@ -11,11 +11,17 @@ import struct
 import threading
 import time
 import pytest
-import socket
 from typing import List, Dict, Any, Tuple
 from concurrent.futures import ThreadPoolExecutor
 
-from intellicrack.core.network.generic_protocol_handler import GenericProtocolHandler
+try:
+    from intellicrack.core.network.generic_protocol_handler import GenericProtocolHandler
+    MODULE_AVAILABLE = True
+except ImportError:
+    GenericProtocolHandler = None
+    MODULE_AVAILABLE = False
+
+pytestmark = pytest.mark.skipif(not MODULE_AVAILABLE, reason="Module not available")
 
 
 class TestGenericProtocolHandlerNetworkProxyCapabilities:

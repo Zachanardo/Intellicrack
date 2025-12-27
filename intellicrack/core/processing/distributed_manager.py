@@ -39,10 +39,13 @@ import time
 import traceback
 import uuid
 from collections import defaultdict
-from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 try:

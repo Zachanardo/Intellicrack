@@ -219,6 +219,7 @@ class MonitoringSession:
             True if started successfully.
 
         """
+
         def event_callback(event: MonitorEvent) -> None:
             self.aggregator.submit_event(event)
 

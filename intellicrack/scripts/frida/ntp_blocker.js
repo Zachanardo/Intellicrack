@@ -121,19 +121,19 @@ const NtpBlocker = {
     blockedIPs: new Set(),
 
     // Enhancement Function 1: Advanced SNTP Protocol Deep Inspection
-    setupAdvancedSNTPInspection: function () {
+    setupAdvancedSNTPInspection() {
         const self = this;
 
         // Hook raw socket recv for SNTP packet inspection
         const recv = Module.findExportByName(null, 'recv');
         if (recv) {
             Interceptor.attach(recv, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.sockfd = args[0].toInt32();
                     this.buf = args[1];
                     this.len = args[2].toInt32();
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (retval.toInt32() >= 48 && this.buf) {
                         // SNTP packet is 48 bytes minimum
                         const packet = this.buf.readByteArray(48);
@@ -160,9 +160,9 @@ const NtpBlocker = {
                                 type: 'bypass',
                                 target: 'ntp_blocker',
                                 action: 'sntp_packet_detected',
-                                version: version,
-                                mode: mode,
-                                stratum: stratum,
+                                version,
+                                mode,
+                                stratum,
                                 timestamps: {
                                     reference: refTimestamp[0],
                                     originate: origTimestamp[0],
@@ -180,7 +180,7 @@ const NtpBlocker = {
                                 view[i] = Math.floor(Math.random() * 256);
                             }
 
-                            Memory.writeByteArray(this.buf, Array.from(view));
+                            Memory.writeByteArray(this.buf, [...view]);
                             self.stats.connectionsBlocked++;
                         }
                     }
@@ -192,12 +192,12 @@ const NtpBlocker = {
         const socket = Module.findExportByName(null, 'socket');
         if (socket) {
             Interceptor.attach(socket, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.domain = args[0].toInt32();
                     this.type = args[1].toInt32();
                     this.protocol = args[2].toInt32();
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     const sockfd = retval.toInt32();
                     if (sockfd > 0 && this.type === 2) {
                         // SOCK_DGRAM
@@ -211,7 +211,7 @@ const NtpBlocker = {
     },
 
     // Enhancement Function 2: Chrony and systemd-timesyncd Blocking
-    blockModernTimeSyncDaemons: function () {
+    blockModernTimeSyncDaemons() {
         const self = this;
 
         // Block chrony daemon operations
@@ -226,7 +226,7 @@ const NtpBlocker = {
         const execve = Module.findExportByName(null, 'execve');
         if (execve) {
             Interceptor.attach(execve, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const pathname = args[0].readUtf8String();
 
                     if (pathname) {
@@ -245,8 +245,8 @@ const NtpBlocker = {
 
                         // Check for systemd-timesyncd
                         if (
-                            pathname.includes('systemd-timesyncd') ||
-                            pathname.includes('timedatectl')
+                            pathname.includes('systemd-timesyncd')
+                            || pathname.includes('timedatectl')
                         ) {
                             shouldBlock = true;
                             send({
@@ -274,7 +274,7 @@ const NtpBlocker = {
                         }
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.shouldBlock) {
                         retval.replace(-1);
                     }
@@ -289,30 +289,30 @@ const NtpBlocker = {
         );
         if (dbus_message_new_method_call) {
             Interceptor.attach(dbus_message_new_method_call, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const destination = args[0] ? args[0].readUtf8String() : null;
                     const _path = args[1] ? args[1].readUtf8String() : null;
                     const _iface = args[2] ? args[2].readUtf8String() : null;
                     const method = args[3] ? args[3].readUtf8String() : null;
 
                     if (
-                        destination &&
-                        (destination.includes('timesyncd') ||
-                            destination.includes('chrony') ||
-                            destination.includes('timedated'))
+                        destination
+                        && (destination.includes('timesyncd')
+                            || destination.includes('chrony')
+                            || destination.includes('timedated'))
                     ) {
                         send({
                             type: 'bypass',
                             target: 'ntp_blocker',
                             action: 'dbus_time_sync_blocked',
-                            destination: destination,
-                            method: method,
+                            destination,
+                            method,
                         });
                         this.shouldBlock = true;
                         self.stats.serviceBlocked++;
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.shouldBlock) {
                         retval.replace(0);
                     }
@@ -324,14 +324,14 @@ const NtpBlocker = {
         const open = Module.findExportByName(null, 'open');
         if (open) {
             Interceptor.attach(open, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const pathname = args[0].readUtf8String();
                     if (
-                        pathname &&
-                        (pathname.includes('systemd-timesyncd.service') ||
-                            pathname.includes('chronyd.service') ||
-                            pathname.includes('ntp.service') ||
-                            pathname.includes('ntpd.service'))
+                        pathname
+                        && (pathname.includes('systemd-timesyncd.service')
+                            || pathname.includes('chronyd.service')
+                            || pathname.includes('ntp.service')
+                            || pathname.includes('ntpd.service'))
                     ) {
                         send({
                             type: 'bypass',
@@ -343,7 +343,7 @@ const NtpBlocker = {
                         self.stats.serviceBlocked++;
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.shouldBlock) {
                         retval.replace(-1);
                     }
@@ -353,40 +353,40 @@ const NtpBlocker = {
     },
 
     // Enhancement Function 3: GPS Time Sync Blocking
-    blockGPSTimeSync: function () {
+    blockGPSTimeSync() {
         const self = this;
 
         // Block NMEA GPS time sentences
         const read = Module.findExportByName(null, 'read');
         if (read) {
             Interceptor.attach(read, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.fd = args[0].toInt32();
                     this.buf = args[1];
                     this.count = args[2].toInt32();
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (retval.toInt32() > 0 && this.buf) {
                         const data = this.buf.readUtf8String(retval.toInt32());
                         if (
-                            data &&
-                            (data.includes('$GPRMC') ||
-                                data.includes('$GPGGA') ||
-                                data.includes('$GPZDA') ||
-                                data.includes('$GNGGA'))
+                            data
+                            && (data.includes('$GPRMC')
+                                || data.includes('$GPGGA')
+                                || data.includes('$GPZDA')
+                                || data.includes('$GNGGA'))
                         ) {
                             send({
                                 type: 'bypass',
                                 target: 'ntp_blocker',
                                 action: 'gps_time_data_blocked',
-                                nmea_type: data.substring(0, 6),
+                                nmea_type: data.slice(0, 6),
                             });
 
                             // Corrupt GPS time data
                             const corrupted = data
-                                .replace(/\d{2}:\d{2}:\d{2}/g, '00:00:00')
-                                .replace(/\d{6}\.\d+/g, '000000.000')
-                                .replace(/\d{4},\d{2},\d{2}/g, '0000,00,00');
+                                .replaceAll(/\d{2}:\d{2}:\d{2}/g, '00:00:00')
+                                .replaceAll(/\d{6}\.\d+/g, '000000.000')
+                                .replaceAll(/\d{4},\d{2},\d{2}/g, '0000,00,00');
 
                             Memory.writeUtf8String(this.buf, corrupted);
                             self.stats.connectionsBlocked++;
@@ -400,14 +400,14 @@ const NtpBlocker = {
         const openat = Module.findExportByName(null, 'openat');
         if (openat) {
             Interceptor.attach(openat, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const pathname = args[1].readUtf8String();
                     if (
-                        pathname &&
-                        (pathname.includes('/dev/ttyUSB') ||
-                            pathname.includes('/dev/ttyACM') ||
-                            pathname.includes('/dev/gps') ||
-                            pathname.includes('/dev/pps'))
+                        pathname
+                        && (pathname.includes('/dev/ttyUSB')
+                            || pathname.includes('/dev/ttyACM')
+                            || pathname.includes('/dev/gps')
+                            || pathname.includes('/dev/pps'))
                     ) {
                         send({
                             type: 'bypass',
@@ -419,7 +419,7 @@ const NtpBlocker = {
                         self.stats.connectionsBlocked++;
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.shouldBlock) {
                         retval.replace(-1);
                     }
@@ -452,31 +452,31 @@ const NtpBlocker = {
     },
 
     // Enhancement Function 4: PTP (Precision Time Protocol) Blocking
-    blockPTPProtocol: function () {
+    blockPTPProtocol() {
         const self = this;
 
         // PTP uses UDP ports 319 and 320
-        const ptpPorts = [319, 320];
+        const ptpPorts = new Set([319, 320]);
 
         // Monitor raw sockets for PTP
         const socket = Module.findExportByName(null, 'socket');
         if (socket) {
             Interceptor.attach(socket, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const domain = args[0].toInt32();
                     const type = args[1].toInt32();
                     const protocol = args[2].toInt32();
 
                     // PTP uses raw sockets or UDP
                     if (
-                        (type === 3 && protocol === 0x88f7) || // SOCK_RAW with PTP ethertype
-                        (type === 2 && domain === 2)
+                        (type === 3 && protocol === 0x88_F7) // SOCK_RAW with PTP ethertype
+                        || (type === 2 && domain === 2)
                     ) {
                         // SOCK_DGRAM AF_INET
                         this.checkPTP = true;
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.checkPTP && retval.toInt32() > 0) {
                         const sockfd = retval.toInt32();
                         self.ptpSockets = self.ptpSockets || new Set();
@@ -490,7 +490,7 @@ const NtpBlocker = {
         const bind = Module.findExportByName(null, 'bind');
         if (bind) {
             Interceptor.attach(bind, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const _sockfd = args[0].toInt32();
                     const addr = args[1];
 
@@ -499,14 +499,14 @@ const NtpBlocker = {
                         if (sa_family === 2) {
                             // AF_INET
                             let port = addr.add(2).readU16();
-                            port = ((port & 0xff) << 8) | ((port & 0xff00) >> 8);
+                            port = ((port & 0xFF) << 8) | ((port & 0xFF_00) >> 8);
 
-                            if (ptpPorts.includes(port)) {
+                            if (ptpPorts.has(port)) {
                                 send({
                                     type: 'bypass',
                                     target: 'ntp_blocker',
                                     action: 'ptp_port_bind_blocked',
-                                    port: port,
+                                    port,
                                 });
                                 this.shouldBlock = true;
                                 self.stats.connectionsBlocked++;
@@ -514,7 +514,7 @@ const NtpBlocker = {
                         }
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.shouldBlock) {
                         retval.replace(-1);
                     }
@@ -526,14 +526,14 @@ const NtpBlocker = {
         const execvp = Module.findExportByName(null, 'execvp');
         if (execvp) {
             Interceptor.attach(execvp, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const file = args[0].readUtf8String();
                     if (
-                        file &&
-                        (file.includes('ptp4l') ||
-                            file.includes('phc2sys') ||
-                            file.includes('pmc') ||
-                            file.includes('ptpd'))
+                        file
+                        && (file.includes('ptp4l')
+                            || file.includes('phc2sys')
+                            || file.includes('pmc')
+                            || file.includes('ptpd'))
                     ) {
                         send({
                             type: 'bypass',
@@ -545,7 +545,7 @@ const NtpBlocker = {
                         self.stats.serviceBlocked++;
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.shouldBlock) {
                         retval.replace(-1);
                     }
@@ -557,21 +557,21 @@ const NtpBlocker = {
         const ioctl = Module.findExportByName(null, 'ioctl');
         if (ioctl) {
             Interceptor.attach(ioctl, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const _fd = args[0].toInt32();
                     const request = args[1].toInt32();
 
                     // PTP clock ioctl commands
-                    const PTP_CLOCK_GETCAPS = 0x80503d01;
-                    const PTP_SYS_OFFSET = 0x43403d05;
-                    const PTP_PIN_GETFUNC = 0xc0603d06;
-                    const PTP_PIN_SETFUNC = 0x40603d07;
+                    const PTP_CLOCK_GETCAPS = 0x80_50_3D_01;
+                    const PTP_SYS_OFFSET = 0x43_40_3D_05;
+                    const PTP_PIN_GETFUNC = 0xC0_60_3D_06;
+                    const PTP_PIN_SETFUNC = 0x40_60_3D_07;
 
                     if (
-                        request === PTP_CLOCK_GETCAPS ||
-                        request === PTP_SYS_OFFSET ||
-                        request === PTP_PIN_GETFUNC ||
-                        request === PTP_PIN_SETFUNC
+                        request === PTP_CLOCK_GETCAPS
+                        || request === PTP_SYS_OFFSET
+                        || request === PTP_PIN_GETFUNC
+                        || request === PTP_PIN_SETFUNC
                     ) {
                         send({
                             type: 'bypass',
@@ -583,7 +583,7 @@ const NtpBlocker = {
                         self.stats.connectionsBlocked++;
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.shouldBlock) {
                         retval.replace(-1);
                     }
@@ -593,7 +593,7 @@ const NtpBlocker = {
     },
 
     // Enhancement Function 5: Cloud Time API Blocking
-    blockCloudTimeAPIs: function () {
+    blockCloudTimeAPIs() {
         const self = this;
 
         // Extended list of cloud time API endpoints
@@ -625,21 +625,21 @@ const NtpBlocker = {
                         const data = buf.readUtf8String(Math.min(num, 1024));
                         if (data) {
                             // Check for time API requests in HTTP headers
-                            for (let endpoint of cloudTimeEndpoints) {
+                            for (const endpoint of cloudTimeEndpoints) {
                                 if (
-                                    data.includes(endpoint) ||
-                                    (data.includes('time') && data.includes('GET'))
+                                    data.includes(endpoint)
+                                    || (data.includes('time') && data.includes('GET'))
                                 ) {
                                     send({
                                         type: 'bypass',
                                         target: 'ntp_blocker',
                                         action: 'https_time_api_blocked',
-                                        endpoint: endpoint,
+                                        endpoint,
                                     });
 
                                     // Replace with blocked response
-                                    const blocked =
-                                        'GET /blocked HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n';
+                                    const blocked
+                                        = 'GET /blocked HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n';
                                     Memory.writeUtf8String(buf, blocked);
                                     args[2] = ptr(blocked.length);
 
@@ -657,23 +657,23 @@ const NtpBlocker = {
         const system = Module.findExportByName(null, 'system');
         if (system) {
             Interceptor.attach(system, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const command = args[0].readUtf8String();
                     if (command) {
                         let blocked = false;
 
                         // Check for curl/wget with time endpoints
                         if (
-                            (command.includes('curl') || command.includes('wget')) &&
-                            (command.includes('time') ||
-                                command.includes('ntp') ||
-                                command.includes('worldclock'))
+                            (command.includes('curl') || command.includes('wget'))
+                            && (command.includes('time')
+                                || command.includes('ntp')
+                                || command.includes('worldclock'))
                         ) {
                             blocked = true;
                         }
 
                         // Check for specific time commands
-                        for (let endpoint of cloudTimeEndpoints) {
+                        for (const endpoint of cloudTimeEndpoints) {
                             if (command.includes(endpoint)) {
                                 blocked = true;
                                 break;
@@ -685,14 +685,14 @@ const NtpBlocker = {
                                 type: 'bypass',
                                 target: 'ntp_blocker',
                                 action: 'command_time_fetch_blocked',
-                                command: command.substring(0, 100),
+                                command: command.slice(0, 100),
                             });
                             this.shouldBlock = true;
                             self.stats.httpBlocked++;
                         }
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.shouldBlock) {
                         retval.replace(-1);
                     }
@@ -703,10 +703,10 @@ const NtpBlocker = {
         // Block JavaScript Date synchronization attempts
         if (typeof XMLHttpRequest !== 'undefined') {
             const originalXHROpen = XMLHttpRequest.prototype.open;
-            XMLHttpRequest.prototype.open = function (method, url) {
+            XMLHttpRequest.prototype.open = function (method, url, ...restArgs) {
                 let blocked = false;
 
-                for (let endpoint of cloudTimeEndpoints) {
+                for (const endpoint of cloudTimeEndpoints) {
                     if (url.includes(endpoint)) {
                         blocked = true;
                         break;
@@ -718,25 +718,29 @@ const NtpBlocker = {
                         type: 'bypass',
                         target: 'ntp_blocker',
                         action: 'xhr_time_api_blocked',
-                        url: url,
+                        url,
                     });
                     self.stats.httpBlocked++;
 
-                    // Redirect to blocked URL
-                    return originalXHROpen.call(this, method, 'http://127.0.0.1:1/blocked');
+                    return originalXHROpen.call(
+                        this,
+                        method,
+                        'http://127.0.0.1:1/blocked',
+                        ...restArgs
+                    );
                 }
 
-                return originalXHROpen.apply(this, arguments);
+                return originalXHROpen.call(this, method, url, ...restArgs);
             };
         }
 
         // Block fetch API
-        if (typeof fetch !== 'undefined') {
-            const originalFetch = fetch;
-            fetch = function (url) {
-                const urlStr = url.toString();
+        if (globalThis !== undefined && globalThis.fetch !== undefined) {
+            const originalFetch = globalThis.fetch;
+            globalThis.fetch = function (input, init) {
+                const urlStr = typeof input === 'string' ? input : input.url || String(input);
 
-                for (let endpoint of cloudTimeEndpoints) {
+                for (const endpoint of cloudTimeEndpoints) {
                     if (urlStr.includes(endpoint)) {
                         send({
                             type: 'bypass',
@@ -746,32 +750,31 @@ const NtpBlocker = {
                         });
                         self.stats.httpBlocked++;
 
-                        // Return rejected promise
                         return Promise.reject(new Error('Time API blocked'));
                     }
                 }
 
-                return originalFetch.apply(this, arguments);
+                return originalFetch.call(this, input, init);
             };
         }
     },
 
     // Enhancement Function 6: Hardware Clock Direct Access Blocking
-    blockHardwareClockAccess: function () {
+    blockHardwareClockAccess() {
         const self = this;
 
         // Block RTC (Real-Time Clock) access
         const open = Module.findExportByName(null, 'open');
         if (open) {
             Interceptor.attach(open, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const pathname = args[0].readUtf8String();
                     if (
-                        pathname &&
-                        (pathname.includes('/dev/rtc') ||
-                            pathname.includes('/dev/rtc0') ||
-                            pathname.includes('/dev/misc/rtc') ||
-                            pathname.includes('/sys/class/rtc'))
+                        pathname
+                        && (pathname.includes('/dev/rtc')
+                            || pathname.includes('/dev/rtc0')
+                            || pathname.includes('/dev/misc/rtc')
+                            || pathname.includes('/sys/class/rtc'))
                     ) {
                         send({
                             type: 'bypass',
@@ -783,7 +786,7 @@ const NtpBlocker = {
                         self.stats.connectionsBlocked++;
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.shouldBlock) {
                         retval.replace(-1);
                     }
@@ -795,7 +798,7 @@ const NtpBlocker = {
         const clock_gettime = Module.findExportByName(null, 'clock_gettime');
         if (clock_gettime) {
             Interceptor.attach(clock_gettime, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const clockid = args[0].toInt32();
                     const timespec = args[1];
 
@@ -809,14 +812,14 @@ const NtpBlocker = {
                             type: 'bypass',
                             target: 'ntp_blocker',
                             action: 'clock_gettime_intercepted',
-                            clockid: clockid,
+                            clockid,
                         });
 
                         this.shouldOverride = true;
                         self.stats.connectionsBlocked++;
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.shouldOverride) {
                         retval.replace(0);
                     }
@@ -834,7 +837,7 @@ const NtpBlocker = {
                             type: 'bypass',
                             target: 'ntp_blocker',
                             action: 'clock_settime_blocked',
-                            clockid: clockid,
+                            clockid,
                         });
                         self.stats.connectionsBlocked++;
                         return -1; // EPERM
@@ -909,7 +912,7 @@ const NtpBlocker = {
     },
 
     // Enhancement Function 7: Container and VM Time Sync Blocking
-    blockVirtualizationTimeSync: function () {
+    blockVirtualizationTimeSync() {
         const self = this;
 
         // Block VMware Tools time sync
@@ -931,28 +934,28 @@ const NtpBlocker = {
             const createProcessW = Module.findExportByName('kernel32.dll', 'CreateProcessW');
             if (createProcessW) {
                 Interceptor.attach(createProcessW, {
-                    onEnter: function (args) {
+                    onEnter(args) {
                         const appName = args[0] ? args[0].readUtf16String() : '';
                         const cmdLine = args[1] ? args[1].readUtf16String() : '';
 
                         // Check for VM tools
                         if (
-                            appName.includes('vmtoolsd') ||
-                            cmdLine.includes('timesync') ||
-                            appName.includes('VBoxService') ||
-                            cmdLine.includes('--timesync')
+                            appName.includes('vmtoolsd')
+                            || cmdLine.includes('timesync')
+                            || appName.includes('VBoxService')
+                            || cmdLine.includes('--timesync')
                         ) {
                             send({
                                 type: 'bypass',
                                 target: 'ntp_blocker',
                                 action: 'vm_time_sync_blocked',
-                                process: appName || cmdLine.substring(0, 50),
+                                process: appName || cmdLine.slice(0, 50),
                             });
                             this.shouldBlock = true;
                             self.stats.serviceBlocked++;
                         }
                     },
-                    onLeave: function (retval) {
+                    onLeave(retval) {
                         if (this.shouldBlock) {
                             retval.replace(0);
                         }
@@ -978,7 +981,7 @@ const NtpBlocker = {
         const setns = Module.findExportByName(null, 'setns');
         if (setns) {
             Interceptor.attach(setns, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const _fd = args[0].toInt32();
                     const nstype = args[1].toInt32();
 
@@ -993,7 +996,7 @@ const NtpBlocker = {
                         self.stats.serviceBlocked++;
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.shouldBlock) {
                         retval.replace(-1);
                     }
@@ -1047,7 +1050,7 @@ const NtpBlocker = {
     },
 
     // Enhancement Function 8: Mobile Platform Time Sync Blocking
-    blockMobileTimeSync: function () {
+    blockMobileTimeSync() {
         const self = this;
 
         // Android-specific time sync blocking
@@ -1060,7 +1063,7 @@ const NtpBlocker = {
                         type: 'bypass',
                         target: 'ntp_blocker',
                         action: 'android_alarmmanager_settime_blocked',
-                        millis: millis,
+                        millis,
                     });
                     self.stats.serviceBlocked++;
                     // Do nothing
@@ -1080,21 +1083,21 @@ const NtpBlocker = {
                                 target: 'ntp_blocker',
                                 action: 'android_auto_time_setting_blocked',
                                 setting: name,
-                                value: value,
+                                value,
                             });
                             self.stats.registryBlocked++;
                             return 0; // Return success but don't change
                         }
                         return this.putInt(resolver, name, value);
                     };
-                } catch (e) {
+                } catch (error) {
                     send({
                         type: 'debug',
                         target: 'ntp_blocker',
                         action: 'android_settings_hook_failed',
                         function: 'blockAndroidTimeSync',
-                        error: e.toString(),
-                        stack: e.stack || 'No stack trace available',
+                        error: error.toString(),
+                        stack: error.stack || 'No stack trace available',
                     });
                 }
 
@@ -1109,32 +1112,31 @@ const NtpBlocker = {
                         });
                         self.stats.serviceBlocked++;
                     };
-                } catch (e) {
+                } catch (error) {
                     send({
                         type: 'debug',
                         target: 'ntp_blocker',
                         action: 'android_timemanager_hook_failed',
                         function: 'blockAndroidTimeSync',
-                        error: e.toString(),
-                        stack: e.stack || 'No stack trace available',
+                        error: error.toString(),
+                        stack: error.stack || 'No stack trace available',
                     });
                 }
 
                 // Block Android NITZ (Network Identity and Time Zone)
                 try {
                     const TelephonyManager = Java.use('android.telephony.TelephonyManager');
-                    TelephonyManager.getNetworkOperatorName.implementation = () => {
+                    TelephonyManager.getNetworkOperatorName.implementation = () =>
                         // Return empty to prevent NITZ time updates
-                        return '';
-                    };
-                } catch (e) {
+                        '';
+                } catch (error) {
                     send({
                         type: 'debug',
                         target: 'ntp_blocker',
                         action: 'android_nitz_hook_failed',
                         function: 'blockAndroidTimeSync',
-                        error: e.toString(),
-                        stack: e.stack || 'No stack trace available',
+                        error: error.toString(),
+                        stack: error.stack || 'No stack trace available',
                     });
                 }
             });
@@ -1164,20 +1166,20 @@ const NtpBlocker = {
             const CFHostCreateWithName = Module.findExportByName(null, 'CFHostCreateWithName');
             if (CFHostCreateWithName) {
                 Interceptor.attach(CFHostCreateWithName, {
-                    onEnter: function (args) {
+                    onEnter(args) {
                         const hostname = new ObjC.Object(args[1]).toString();
                         if (self.isTimeServer(hostname)) {
                             send({
                                 type: 'bypass',
                                 target: 'ntp_blocker',
                                 action: 'ios_cfhost_time_server_blocked',
-                                hostname: hostname,
+                                hostname,
                             });
                             this.shouldBlock = true;
                             self.stats.dnsBlocked++;
                         }
                     },
-                    onLeave: function (retval) {
+                    onLeave(retval) {
                         if (this.shouldBlock) {
                             retval.replace(0);
                         }
@@ -1188,7 +1190,7 @@ const NtpBlocker = {
     },
 
     // Enhancement Function 9: Distributed Time Protocol Blocking
-    blockDistributedTimeProtocols: function () {
+    blockDistributedTimeProtocols() {
         const self = this;
 
         // Block Berkeley Algorithm time sync
@@ -1198,7 +1200,7 @@ const NtpBlocker = {
         const clnt_create = Module.findExportByName(null, 'clnt_create');
         if (clnt_create) {
             Interceptor.attach(clnt_create, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const host = args[0].readUtf8String();
                     const prog = args[1].toInt32();
                     const _vers = args[2].toInt32();
@@ -1206,22 +1208,22 @@ const NtpBlocker = {
 
                     // Time synchronization RPC programs
                     if (
-                        prog === 100001 || // RSTATPROG
-                        prog === 100028 || // YPXFRD
-                        host.includes('time')
+                        prog === 100_001 // RSTATPROG
+                        || prog === 100_028 // YPXFRD
+                        || host.includes('time')
                     ) {
                         send({
                             type: 'bypass',
                             target: 'ntp_blocker',
                             action: 'rpc_time_sync_blocked',
-                            host: host,
+                            host,
                             program: prog,
                         });
                         this.shouldBlock = true;
                         self.stats.connectionsBlocked++;
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.shouldBlock) {
                         retval.replace(0);
                     }
@@ -1236,27 +1238,27 @@ const NtpBlocker = {
 
             // Enhanced DNS blocking for distributed protocols
             Interceptor.attach(getaddrinfo, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const hostname = args[0].readUtf8String();
 
                     // Check for master-slave time sync patterns
                     if (
-                        hostname &&
-                        (hostname.includes('master') ||
-                            hostname.includes('timekeeper') ||
-                            hostname.includes('coordinator'))
+                        hostname
+                        && (hostname.includes('master')
+                            || hostname.includes('timekeeper')
+                            || hostname.includes('coordinator'))
                     ) {
                         send({
                             type: 'bypass',
                             target: 'ntp_blocker',
                             action: 'distributed_time_master_blocked',
-                            hostname: hostname,
+                            hostname,
                         });
                         this.shouldBlock = true;
                         self.stats.dnsBlocked++;
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.shouldBlock) {
                         retval.replace(-1);
                     }
@@ -1268,13 +1270,13 @@ const NtpBlocker = {
         const msgget = Module.findExportByName(null, 'msgget');
         if (msgget) {
             Interceptor.attach(msgget, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const key = args[0].toInt32();
 
                     // Common keys for time sync IPC
                     if (
-                        key === 0x54494d45 || // 'TIME'
-                        key === 0x434c4f43
+                        key === 0x54_49_4D_45 // 'TIME'
+                        || key === 0x43_4C_4F_43
                     ) {
                         // 'CLOC'
                         send({
@@ -1287,7 +1289,7 @@ const NtpBlocker = {
                         self.stats.connectionsBlocked++;
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.shouldBlock) {
                         retval.replace(-1);
                     }
@@ -1299,14 +1301,14 @@ const NtpBlocker = {
         const shm_open = Module.findExportByName(null, 'shm_open');
         if (shm_open) {
             Interceptor.attach(shm_open, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const name = args[0].readUtf8String();
 
                     if (
-                        name &&
-                        (name.includes('timestamp') ||
-                            name.includes('lamport') ||
-                            name.includes('vector_clock'))
+                        name
+                        && (name.includes('timestamp')
+                            || name.includes('lamport')
+                            || name.includes('vector_clock'))
                     ) {
                         send({
                             type: 'bypass',
@@ -1318,7 +1320,7 @@ const NtpBlocker = {
                         self.stats.connectionsBlocked++;
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.shouldBlock) {
                         retval.replace(-1);
                     }
@@ -1328,18 +1330,18 @@ const NtpBlocker = {
     },
 
     // Enhancement Function 10: Advanced Time Correlation Attack Prevention
-    preventTimeCorrelationAttacks: function () {
+    preventTimeCorrelationAttacks() {
         const self = this;
 
         // Inject time noise and jitter
         const gettimeofday = Module.findExportByName(null, 'gettimeofday');
         if (gettimeofday) {
             Interceptor.attach(gettimeofday, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.tv = args[0];
                     this.tz = args[1];
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (retval.toInt32() === 0 && this.tv) {
                         // Add random jitter to prevent correlation
                         let tv_sec = this.tv.readU64();
@@ -1350,7 +1352,7 @@ const NtpBlocker = {
                         tv_sec = tv_sec.add(jitter);
 
                         // Add microsecond noise
-                        tv_usec = Math.floor(Math.random() * 1000000);
+                        tv_usec = Math.floor(Math.random() * 1_000_000);
 
                         this.tv.writeU64(tv_sec);
                         this.tv.add(8).writeU64(tv_usec);
@@ -1373,14 +1375,14 @@ const NtpBlocker = {
         );
         if (QueryPerformanceCounter) {
             Interceptor.attach(QueryPerformanceCounter, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.counter = args[0];
                 },
-                onLeave: function (_retval) {
+                onLeave(_retval) {
                     if (this.counter) {
                         // Add noise to high-precision counter
                         const value = this.counter.readU64();
-                        const noise = Math.floor(Math.random() * 10000);
+                        const noise = Math.floor(Math.random() * 10_000);
                         this.counter.writeU64(value.add(noise));
 
                         self.stats.connectionsBlocked++;
@@ -1400,7 +1402,7 @@ const NtpBlocker = {
                             try {
                                 // Replace RDTSC with XOR EAX,EAX; XOR EDX,EDX
                                 Memory.protect(address, 2, 'rwx');
-                                address.writeByteArray([0x31, 0xc0, 0x31, 0xd2]); // xor eax,eax; xor edx,edx
+                                address.writeByteArray([0x31, 0xC0, 0x31, 0xD2]); // xor eax,eax; xor edx,edx
 
                                 send({
                                     type: 'bypass',
@@ -1409,15 +1411,15 @@ const NtpBlocker = {
                                     address: address.toString(),
                                 });
                                 self.stats.connectionsBlocked++;
-                            } catch (e) {
+                            } catch (error) {
                                 send({
                                     type: 'debug',
                                     target: 'ntp_blocker',
                                     action: 'rdtsc_patch_failed',
                                     function: 'hookRdtscInstructions',
                                     address: address.toString(),
-                                    error: e.toString(),
-                                    stack: e.stack || 'No stack trace available',
+                                    error: error.toString(),
+                                    stack: error.stack || 'No stack trace available',
                                 });
                             }
                         },
@@ -1430,7 +1432,7 @@ const NtpBlocker = {
         const clock_gettime = Module.findExportByName(null, 'clock_gettime');
         if (clock_gettime) {
             Interceptor.attach(clock_gettime, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const clockid = args[0].toInt32();
                     const timespec = args[1];
 
@@ -1448,7 +1450,7 @@ const NtpBlocker = {
                         self.stats.connectionsBlocked++;
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.shouldOverride) {
                         retval.replace(0);
                     }
@@ -1469,7 +1471,7 @@ const NtpBlocker = {
         }
     },
 
-    run: function () {
+    run() {
         send({
             type: 'status',
             target: 'ntp_blocker',
@@ -1558,14 +1560,14 @@ const NtpBlocker = {
     },
 
     // Hook DNS resolution
-    hookDNSResolution: function () {
+    hookDNSResolution() {
         const self = this;
 
         // getaddrinfo (Windows/Linux)
         const getaddrinfo = Module.findExportByName(null, 'getaddrinfo');
         if (getaddrinfo) {
             Interceptor.attach(getaddrinfo, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const hostname = args[0].readUtf8String();
 
                     if (self.isTimeServer(hostname)) {
@@ -1573,14 +1575,14 @@ const NtpBlocker = {
                             type: 'bypass',
                             target: 'ntp_blocker',
                             action: 'dns_blocked',
-                            hostname: hostname,
+                            hostname,
                         });
                         this.shouldBlock = true;
                         self.stats.dnsBlocked++;
                         self.stats.totalBlocked++;
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.shouldBlock) {
                         retval.replace(-1); // EAI_FAIL
                     }
@@ -1597,7 +1599,7 @@ const NtpBlocker = {
         const gethostbyname = Module.findExportByName(null, 'gethostbyname');
         if (gethostbyname) {
             Interceptor.attach(gethostbyname, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const hostname = args[0].readUtf8String();
 
                     if (self.isTimeServer(hostname)) {
@@ -1605,14 +1607,14 @@ const NtpBlocker = {
                             type: 'bypass',
                             target: 'ntp_blocker',
                             action: 'dns_blocked',
-                            hostname: hostname,
+                            hostname,
                         });
                         this.shouldBlock = true;
                         self.stats.dnsBlocked++;
                         self.stats.totalBlocked++;
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.shouldBlock) {
                         retval.replace(0); // NULL
                     }
@@ -1625,7 +1627,7 @@ const NtpBlocker = {
             const dnsQuery = Module.findExportByName('dnsapi.dll', 'DnsQuery_W');
             if (dnsQuery) {
                 Interceptor.attach(dnsQuery, {
-                    onEnter: function (args) {
+                    onEnter(args) {
                         const hostname = args[0].readUtf16String();
 
                         if (self.isTimeServer(hostname)) {
@@ -1633,14 +1635,14 @@ const NtpBlocker = {
                                 type: 'bypass',
                                 target: 'ntp_blocker',
                                 action: 'windows_dns_blocked',
-                                hostname: hostname,
+                                hostname,
                             });
                             this.shouldBlock = true;
                             self.stats.dnsBlocked++;
                             self.stats.totalBlocked++;
                         }
                     },
-                    onLeave: function (retval) {
+                    onLeave(retval) {
                         if (this.shouldBlock) {
                             retval.replace(9003); // DNS_ERROR_RCODE_NAME_ERROR
                         }
@@ -1651,14 +1653,14 @@ const NtpBlocker = {
     },
 
     // Hook socket connections
-    hookSocketConnections: function () {
+    hookSocketConnections() {
         const self = this;
 
         // connect
         const connect = Module.findExportByName(null, 'connect');
         if (connect) {
             Interceptor.attach(connect, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const _sockfd = args[0].toInt32();
                     const addr = args[1];
 
@@ -1667,18 +1669,13 @@ const NtpBlocker = {
 
                         if (sa_family === 2) {
                             // AF_INET
-                            var port = addr.add(2).readU16();
-                            port = ((port & 0xff) << 8) | ((port & 0xff00) >> 8); // ntohs
+                            let port = addr.add(2).readU16();
+                            port = ((port & 0xFF) << 8) | ((port & 0xFF_00) >> 8); // ntohs
 
                             const ip = addr.add(4).readU32();
-                            const ipStr =
-                                (ip & 0xff) +
-                                '.' +
-                                ((ip >> 8) & 0xff) +
-                                '.' +
-                                ((ip >> 16) & 0xff) +
-                                '.' +
-                                ((ip >> 24) & 0xff);
+                            const ipStr = `${ip & 0xFF}.${(ip >> 8) & 0xFF}.${(ip >> 16) & 0xFF}.${
+                                (ip >> 24) & 0xFF
+                            }`;
 
                             if (self.isNTPPort(port) || self.isBlockedIP(ipStr)) {
                                 send({
@@ -1686,7 +1683,7 @@ const NtpBlocker = {
                                     target: 'ntp_blocker',
                                     action: 'connection_blocked',
                                     ip: ipStr,
-                                    port: port,
+                                    port,
                                 });
                                 this.shouldBlock = true;
                                 self.stats.connectionsBlocked++;
@@ -1694,15 +1691,15 @@ const NtpBlocker = {
                             }
                         } else if (sa_family === 10) {
                             // AF_INET6
-                            var port = addr.add(2).readU16();
-                            port = ((port & 0xff) << 8) | ((port & 0xff00) >> 8);
+                            let port = addr.add(2).readU16();
+                            port = ((port & 0xFF) << 8) | ((port & 0xFF_00) >> 8);
 
                             if (self.isNTPPort(port)) {
                                 send({
                                     type: 'bypass',
                                     target: 'ntp_blocker',
                                     action: 'ipv6_connection_blocked',
-                                    port: port,
+                                    port,
                                 });
                                 this.shouldBlock = true;
                                 self.stats.connectionsBlocked++;
@@ -1711,7 +1708,7 @@ const NtpBlocker = {
                         }
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.shouldBlock) {
                         retval.replace(-1);
                         // Set errno to ECONNREFUSED
@@ -1721,7 +1718,7 @@ const NtpBlocker = {
                                 'WSASetLastError'
                             );
                             if (WSASetLastError) {
-                                new NativeFunction(WSASetLastError, 'void', ['int'])(10061); // WSAECONNREFUSED
+                                new NativeFunction(WSASetLastError, 'void', ['int'])(10_061); // WSAECONNREFUSED
                             }
                         }
                     }
@@ -1739,21 +1736,21 @@ const NtpBlocker = {
             const wsaConnect = Module.findExportByName('ws2_32.dll', 'WSAConnect');
             if (wsaConnect) {
                 Interceptor.attach(wsaConnect, {
-                    onEnter: function (args) {
+                    onEnter(args) {
                         const addr = args[1];
                         if (addr && !addr.isNull()) {
                             const sa_family = addr.readU16();
                             if (sa_family === 2) {
                                 // AF_INET
                                 let port = addr.add(2).readU16();
-                                port = ((port & 0xff) << 8) | ((port & 0xff00) >> 8);
+                                port = ((port & 0xFF) << 8) | ((port & 0xFF_00) >> 8);
 
                                 if (self.isNTPPort(port)) {
                                     send({
                                         type: 'bypass',
                                         target: 'ntp_blocker',
                                         action: 'wsa_connect_blocked',
-                                        port: port,
+                                        port,
                                     });
                                     this.shouldBlock = true;
                                     self.stats.connectionsBlocked++;
@@ -1762,7 +1759,7 @@ const NtpBlocker = {
                             }
                         }
                     },
-                    onLeave: function (retval) {
+                    onLeave(retval) {
                         if (this.shouldBlock) {
                             retval.replace(-1); // SOCKET_ERROR
                         }
@@ -1773,14 +1770,14 @@ const NtpBlocker = {
     },
 
     // Hook UDP sockets (NTP uses UDP)
-    hookUDPSockets: function () {
+    hookUDPSockets() {
         const self = this;
 
         // sendto (UDP send)
         const sendto = Module.findExportByName(null, 'sendto');
         if (sendto) {
             Interceptor.attach(sendto, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const addr = args[4];
                     if (addr && !addr.isNull()) {
                         const sa_family = addr.readU16();
@@ -1788,17 +1785,12 @@ const NtpBlocker = {
                         if (sa_family === 2) {
                             // AF_INET
                             let port = addr.add(2).readU16();
-                            port = ((port & 0xff) << 8) | ((port & 0xff00) >> 8);
+                            port = ((port & 0xFF) << 8) | ((port & 0xFF_00) >> 8);
 
                             const ip = addr.add(4).readU32();
-                            const ipStr =
-                                (ip & 0xff) +
-                                '.' +
-                                ((ip >> 8) & 0xff) +
-                                '.' +
-                                ((ip >> 16) & 0xff) +
-                                '.' +
-                                ((ip >> 24) & 0xff);
+                            const ipStr = `${ip & 0xFF}.${(ip >> 8) & 0xFF}.${(ip >> 16) & 0xFF}.${
+                                (ip >> 24) & 0xFF
+                            }`;
 
                             if (self.isNTPPort(port) || self.isBlockedIP(ipStr)) {
                                 send({
@@ -1806,7 +1798,7 @@ const NtpBlocker = {
                                     target: 'ntp_blocker',
                                     action: 'udp_sendto_blocked',
                                     ip: ipStr,
-                                    port: port,
+                                    port,
                                 });
 
                                 // Check if it's NTP packet format
@@ -1821,7 +1813,7 @@ const NtpBlocker = {
                                             type: 'bypass',
                                             target: 'ntp_blocker',
                                             action: 'ntp_packet_blocked',
-                                            mode: mode,
+                                            mode,
                                         });
                                         this.shouldBlock = true;
                                         self.stats.connectionsBlocked++;
@@ -1832,7 +1824,7 @@ const NtpBlocker = {
                         }
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.shouldBlock) {
                         retval.replace(-1);
                     }
@@ -1849,11 +1841,11 @@ const NtpBlocker = {
         const recvfrom = Module.findExportByName(null, 'recvfrom');
         if (recvfrom) {
             Interceptor.attach(recvfrom, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.buf = args[1];
                     this.from = args[4];
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (retval.toInt32() > 0 && this.from && !this.from.isNull()) {
                         const addr = this.from.readPointer();
                         if (addr && !addr.isNull()) {
@@ -1862,14 +1854,14 @@ const NtpBlocker = {
                             if (sa_family === 2) {
                                 // AF_INET
                                 let port = addr.add(2).readU16();
-                                port = ((port & 0xff) << 8) | ((port & 0xff00) >> 8);
+                                port = ((port & 0xFF) << 8) | ((port & 0xFF_00) >> 8);
 
                                 if (self.isNTPPort(port)) {
                                     send({
                                         type: 'bypass',
                                         target: 'ntp_blocker',
                                         action: 'ntp_response_blocked',
-                                        port: port,
+                                        port,
                                     });
                                     retval.replace(-1);
                                     self.stats.connectionsBlocked++;
@@ -1884,7 +1876,7 @@ const NtpBlocker = {
     },
 
     // Hook HTTP requests
-    hookHTTPRequests: function () {
+    hookHTTPRequests() {
         const self = this;
 
         // WinHttpOpen
@@ -1892,10 +1884,10 @@ const NtpBlocker = {
             const winHttpOpen = Module.findExportByName('winhttp.dll', 'WinHttpOpen');
             if (winHttpOpen) {
                 Interceptor.attach(winHttpOpen, {
-                    onEnter: function (args) {
+                    onEnter(args) {
                         this.userAgent = args[0].readUtf16String();
                     },
-                    onLeave: function (retval) {
+                    onLeave(retval) {
                         if (!retval.isNull()) {
                             // Store handle for later checking
                             self.httpHandles = self.httpHandles || {};
@@ -1909,7 +1901,7 @@ const NtpBlocker = {
             const winHttpConnect = Module.findExportByName('winhttp.dll', 'WinHttpConnect');
             if (winHttpConnect) {
                 Interceptor.attach(winHttpConnect, {
-                    onEnter: function (args) {
+                    onEnter(args) {
                         const _handle = args[0];
                         const server = args[1].readUtf16String();
 
@@ -1918,14 +1910,14 @@ const NtpBlocker = {
                                 type: 'bypass',
                                 target: 'ntp_blocker',
                                 action: 'http_connection_blocked',
-                                server: server,
+                                server,
                             });
                             this.shouldBlock = true;
                             self.stats.httpBlocked++;
                             self.stats.totalBlocked++;
                         }
                     },
-                    onLeave: function (retval) {
+                    onLeave(retval) {
                         if (this.shouldBlock) {
                             retval.replace(0); // NULL
                         }
@@ -1937,7 +1929,7 @@ const NtpBlocker = {
             const internetOpenUrl = Module.findExportByName('wininet.dll', 'InternetOpenUrlW');
             if (internetOpenUrl) {
                 Interceptor.attach(internetOpenUrl, {
-                    onEnter: function (args) {
+                    onEnter(args) {
                         const url = args[1].readUtf16String();
 
                         if (self.isTimeURL(url)) {
@@ -1945,14 +1937,14 @@ const NtpBlocker = {
                                 type: 'bypass',
                                 target: 'ntp_blocker',
                                 action: 'http_url_blocked',
-                                url: url,
+                                url,
                             });
                             this.shouldBlock = true;
                             self.stats.httpBlocked++;
                             self.stats.totalBlocked++;
                         }
                     },
-                    onLeave: function (retval) {
+                    onLeave(retval) {
                         if (this.shouldBlock) {
                             retval.replace(0); // NULL
                         }
@@ -1975,7 +1967,7 @@ const NtpBlocker = {
                                 type: 'bypass',
                                 target: 'ntp_blocker',
                                 action: 'xhr_blocked',
-                                url: url,
+                                url,
                             });
                             args[1] = Memory.allocUtf8String('http://127.0.0.1:1/blocked');
                             self.stats.httpBlocked++;
@@ -1984,20 +1976,20 @@ const NtpBlocker = {
                     },
                 });
             }
-        } catch (_e) {
+        } catch {
             // Not in browser context
         }
     },
 
     // Hook Windows Time Service
-    hookWindowsTimeService: function () {
+    hookWindowsTimeService() {
         const self = this;
 
         // W32TimeSetConfig
         const w32TimeSetConfig = Module.findExportByName('w32time.dll', 'W32TimeSetConfig');
         if (w32TimeSetConfig) {
             Interceptor.attach(w32TimeSetConfig, {
-                onEnter: function (_args) {
+                onEnter(_args) {
                     send({
                         type: 'bypass',
                         target: 'ntp_blocker',
@@ -2007,7 +1999,7 @@ const NtpBlocker = {
                     self.stats.serviceBlocked++;
                     self.stats.totalBlocked++;
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.shouldBlock) {
                         retval.replace(-1); // ERROR
                     }
@@ -2060,13 +2052,13 @@ const NtpBlocker = {
         const createProcess = Module.findExportByName('kernel32.dll', 'CreateProcessW');
         if (createProcess) {
             Interceptor.attach(createProcess, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const appName = args[0] ? args[0].readUtf16String() : '';
                     const cmdLine = args[1] ? args[1].readUtf16String() : '';
 
                     if (
-                        appName.toLowerCase().includes('w32tm.exe') ||
-                        cmdLine.toLowerCase().includes('w32tm')
+                        appName.toLowerCase().includes('w32tm.exe')
+                        || cmdLine.toLowerCase().includes('w32tm')
                     ) {
                         send({
                             type: 'bypass',
@@ -2080,7 +2072,7 @@ const NtpBlocker = {
                         self.stats.totalBlocked++;
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.shouldBlock) {
                         retval.replace(0); // FALSE
                     }
@@ -2090,7 +2082,7 @@ const NtpBlocker = {
     },
 
     // Hook registry time updates
-    hookTimeRegistryAccess: function () {
+    hookTimeRegistryAccess() {
         const self = this;
 
         // Time-related registry keys
@@ -2105,7 +2097,7 @@ const NtpBlocker = {
             const func = Module.findExportByName('advapi32.dll', api);
             if (func) {
                 Interceptor.attach(func, {
-                    onEnter: function (args) {
+                    onEnter(args) {
                         const _hKey = args[0];
                         const valueName = api.endsWith('W')
                             ? args[1].readUtf16String()
@@ -2113,9 +2105,9 @@ const NtpBlocker = {
 
                         // Check if it's time-related
                         if (
-                            valueName &&
-                            (valueName.toLowerCase().includes('time') ||
-                                valueName.toLowerCase().includes('ntp'))
+                            valueName
+                            && (valueName.toLowerCase().includes('time')
+                                || valueName.toLowerCase().includes('ntp'))
                         ) {
                             send({
                                 type: 'bypass',
@@ -2128,7 +2120,7 @@ const NtpBlocker = {
                             self.stats.totalBlocked++;
                         }
                     },
-                    onLeave: function (retval) {
+                    onLeave(retval) {
                         if (this.shouldBlock) {
                             retval.replace(0); // ERROR_SUCCESS but don't write
                         }
@@ -2138,8 +2130,60 @@ const NtpBlocker = {
         });
     },
 
-    // Check if hostname is a time server
-    isTimeServer: function (hostname) {
+    _validateHostnameFormat(hostname) {
+        if (!hostname || hostname.length === 0 || hostname.length > 253) {
+            return false;
+        }
+        const labels = hostname.split('.');
+        for (const label of labels) {
+            if (label.length === 0 || label.length > 63) {
+                return false;
+            }
+            if (label.startsWith('-') || label.endsWith('-')) {
+                return false;
+            }
+            for (let i = 0; i < label.length; i++) {
+                const c = label.codePointAt(i);
+                const isAlphaNum = (c >= 0x30 && c <= 0x39) || (c >= 0x61 && c <= 0x7A);
+                const isHyphen = c === 0x2D;
+                if (!isAlphaNum && !isHyphen) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    },
+
+    _validateIPv4Format(ip) {
+        if (!ip) {
+            return false;
+        }
+        const parts = ip.split('.');
+        if (parts.length !== 4) {
+            return false;
+        }
+        for (const part of parts) {
+            if (part.length === 0 || part.length > 3) {
+                return false;
+            }
+            for (let i = 0; i < part.length; i++) {
+                const c = part.codePointAt(i);
+                if (c < 0x30 || c > 0x39) {
+                    return false;
+                }
+            }
+            const num = Number.parseInt(part, 10);
+            if (Number.isNaN(num) || num < 0 || num > 255) {
+                return false;
+            }
+            if (part.length > 1 && part.startsWith('0')) {
+                return false;
+            }
+        }
+        return true;
+    },
+
+    isTimeServer(hostname) {
         if (!hostname) {
             return false;
         }
@@ -2147,23 +2191,22 @@ const NtpBlocker = {
         hostname = hostname.toLowerCase().trim();
 
         // Validate hostname format first (prevents regex injection)
-        if (
-            !/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/.test(hostname) &&
-            !/^(\d{1,3}\.){3}\d{1,3}$/.test(hostname)
-        ) {
+        const isValidHostname = this._validateHostnameFormat(hostname);
+        const isValidIPv4 = this._validateIPv4Format(hostname);
+        if (!isValidHostname && !isValidIPv4) {
             return false;
         }
 
         // Check exact matches and proper subdomain matching
-        for (var i = 0; i < this.config.timeServers.length; i++) {
-            const server = this.config.timeServers[i].toLowerCase();
+        for (const serverEntry of this.config.timeServers) {
+            const server = serverEntry.toLowerCase();
 
             if (server.includes('*')) {
                 // Wildcard matching with comprehensive regex escaping
                 // Escape all regex special characters: . ^ $ * + ? ( ) [ ] { } | \
                 const escaped = server
-                    .replace(/([.^$+?()[\]{}|\\])/g, '\\$1')
-                    .replace(/\*/g, '[a-z0-9-]+');
+                    .replaceAll(/([$()+.?[\\\]^{|}])/g, '\\$1')
+                    .replaceAll('*', '[a-z0-9-]+');
                 // Ensure proper anchoring to prevent partial matches
                 const regex = new RegExp(`^${escaped}$`, 'i');
                 if (regex.test(hostname)) {
@@ -2177,15 +2220,8 @@ const NtpBlocker = {
                 // Proper subdomain validation: hostname must end with '.server'
                 // and the character before '.' must exist (prevents matching 'malicious-time.nist.gov.attacker.com')
                 if (hostname.endsWith(`.${server}`)) {
-                    // Verify this is actually a subdomain, not a domain with server appended
                     const prefix = hostname.slice(0, -(server.length + 1));
-                    // Prefix must be a valid hostname label (not empty, not ending with dot)
-                    if (
-                        prefix.length > 0 &&
-                        /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/.test(
-                            prefix
-                        )
-                    ) {
+                    if (prefix.length > 0 && this._validateHostnameFormat(prefix)) {
                         return true;
                     }
                 }
@@ -2196,12 +2232,12 @@ const NtpBlocker = {
         // Only match as complete labels to avoid false positives
         const keywords = ['time', 'ntp', 'clock', 'chrony', 'systemd-timesyncd'];
         const labels = hostname.split('.');
-        for (var i = 0; i < keywords.length; i++) {
-            for (let j = 0; j < labels.length; j++) {
+        for (const keyword of keywords) {
+            for (const label of labels) {
                 if (
-                    labels[j] === keywords[i] ||
-                    labels[j].startsWith(`${keywords[i]}-`) ||
-                    labels[j].endsWith(`-${keywords[i]}`)
+                    label === keyword
+                    || label.startsWith(`${keyword}-`)
+                    || label.endsWith(`-${keyword}`)
                 ) {
                     return true;
                 }
@@ -2212,7 +2248,7 @@ const NtpBlocker = {
     },
 
     // Check if IP is blocked
-    isBlockedIP: function (ip) {
+    isBlockedIP(ip) {
         if (this.blockedIPs.has(ip)) {
             return true;
         }
@@ -2229,24 +2265,24 @@ const NtpBlocker = {
     },
 
     // Check if port is NTP-related
-    isNTPPort: function (port) {
+    isNTPPort(port) {
         return this.config.ntpPorts.includes(port);
     },
 
     // Generate controlled monotonic time for license bypass
-    _getBaseMonotonicTime: function () {
+    _getBaseMonotonicTime() {
         const now = Date.now();
         const bootTime = this._bootTime || (this._bootTime = now - Math.floor(now * 0.1));
         const uptime = now - bootTime;
 
         return {
             seconds: Math.floor(uptime / 1000),
-            nanoseconds: (uptime % 1000) * 1000000,
+            nanoseconds: (uptime % 1000) * 1_000_000,
         };
     },
 
     // Check if URL is time-related
-    isTimeURL: function (url) {
+    isTimeURL(url) {
         if (!url) {
             return false;
         }
@@ -2254,8 +2290,8 @@ const NtpBlocker = {
         url = url.toLowerCase();
 
         // Check HTTP time service URLs
-        for (var i = 0; i < this.config.httpTimeUrls.length; i++) {
-            if (url.includes(this.config.httpTimeUrls[i])) {
+        for (const httpTimeUrl of this.config.httpTimeUrls) {
+            if (url.includes(httpTimeUrl)) {
                 return true;
             }
         }
@@ -2272,8 +2308,8 @@ const NtpBlocker = {
             '/timestamp',
         ];
 
-        for (var i = 0; i < timeEndpoints.length; i++) {
-            if (url.includes(timeEndpoints[i])) {
+        for (const endpoint of timeEndpoints) {
+            if (url.includes(endpoint)) {
                 return true;
             }
         }
@@ -2282,7 +2318,7 @@ const NtpBlocker = {
     },
 
     // Start monitoring
-    startMonitoring: function () {
+    startMonitoring() {
         // Log statistics periodically
         setInterval(() => {
             send({
@@ -2298,7 +2334,7 @@ const NtpBlocker = {
                     registry_blocked: this.stats.registryBlocked,
                 },
             });
-        }, 60000); // Every minute
+        }, 60_000); // Every minute
 
         // Monitor for new time server patterns
         this.monitorNewTimeServers();
@@ -2315,8 +2351,8 @@ const NtpBlocker = {
                     onEnter: args => {
                         const msg = args[0].readUtf16String();
                         if (
-                            msg?.toLowerCase().includes('time') &&
-                            (msg.includes('sync') || msg.includes('server'))
+                            msg?.toLowerCase().includes('time')
+                            && (msg.includes('sync') || msg.includes('server'))
                         ) {
                             send({
                                 type: 'info',
@@ -2334,7 +2370,7 @@ const NtpBlocker = {
     // Critical Modern Time Synchronization Blocking Methods
 
     // Block TLS Certificate Timestamp Validation
-    blockTLSCertificateTimestamps: function () {
+    blockTLSCertificateTimestamps() {
         // Hook OpenSSL X509 certificate verification
         const X509_verify_cert = Module.findExportByName(null, 'X509_verify_cert');
         if (X509_verify_cert) {
@@ -2349,7 +2385,7 @@ const NtpBlocker = {
                         if (set_flags) {
                             new NativeFunction(set_flags, 'void', ['pointer', 'uint32'])(
                                 ctx,
-                                0x200000
+                                0x20_00_00
                             );
                             send({
                                 type: 'bypass',
@@ -2401,7 +2437,7 @@ const NtpBlocker = {
                         if (chainPara) {
                             // Set dwFlags to include CERT_CHAIN_TIMESTAMP_TIME (0x00000200)
                             const flags = chainPara.add(8).readU32();
-                            chainPara.add(8).writeU32(flags | 0x00000200);
+                            chainPara.add(8).writeU32(flags | 0x00_00_02_00);
                         }
                     },
                 });
@@ -2426,7 +2462,7 @@ const NtpBlocker = {
     },
 
     // Block TPM and Hardware Security Module Time
-    blockTPMandHSMTime: function () {
+    blockTPMandHSMTime() {
         const self = this;
 
         // Block TPM 2.0 time queries on Windows
@@ -2438,13 +2474,13 @@ const NtpBlocker = {
             );
             if (Tbsi_Physical_Presence_Command) {
                 Interceptor.attach(Tbsi_Physical_Presence_Command, {
-                    onEnter: function (args) {
+                    onEnter(args) {
                         const cmdSize = args[1].toInt32();
                         const cmd = args[0];
                         if (cmd && cmdSize >= 10) {
                             // Check for TPM2_ReadClock command (0x00000181)
                             const commandCode = cmd.add(6).readU32();
-                            if (commandCode === 0x00000181 || commandCode === 0x81010000) {
+                            if (commandCode === 0x00_00_01_81 || commandCode === 0x81_01_00_00) {
                                 send({
                                     type: 'bypass',
                                     target: 'ntp_blocker',
@@ -2455,9 +2491,9 @@ const NtpBlocker = {
                             }
                         }
                     },
-                    onLeave: function (retval) {
+                    onLeave(retval) {
                         if (this.shouldBlock) {
-                            retval.replace(0x80280400); // TBS_E_INVALID_CMD_BUF
+                            retval.replace(0x80_28_04_00); // TBS_E_INVALID_CMD_BUF
                         }
                     },
                 });
@@ -2467,11 +2503,11 @@ const NtpBlocker = {
             const NCryptGetProperty = Module.findExportByName('ncrypt.dll', 'NCryptGetProperty');
             if (NCryptGetProperty) {
                 Interceptor.attach(NCryptGetProperty, {
-                    onEnter: function (args) {
+                    onEnter(args) {
                         const propertyName = args[1].readUtf16String();
                         if (
-                            propertyName &&
-                            (propertyName.includes('TIME') || propertyName.includes('TIMESTAMP'))
+                            propertyName
+                            && (propertyName.includes('TIME') || propertyName.includes('TIMESTAMP'))
                         ) {
                             send({
                                 type: 'bypass',
@@ -2483,9 +2519,9 @@ const NtpBlocker = {
                             self.stats.connectionsBlocked++;
                         }
                     },
-                    onLeave: function (retval) {
+                    onLeave(retval) {
                         if (this.shouldBlock) {
-                            retval.replace(0x80090029); // NTE_NOT_SUPPORTED
+                            retval.replace(0x80_09_00_29); // NTE_NOT_SUPPORTED
                         }
                     },
                 });
@@ -2496,10 +2532,10 @@ const NtpBlocker = {
         const C_GetTokenInfo = Module.findExportByName(null, 'C_GetTokenInfo');
         if (C_GetTokenInfo) {
             Interceptor.attach(C_GetTokenInfo, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.tokenInfo = args[1];
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (retval.toInt32() === 0 && this.tokenInfo) {
                         // Zero out utcTime field in CK_TOKEN_INFO structure
                         // utcTime is at offset 104 (16 bytes)
@@ -2520,7 +2556,7 @@ const NtpBlocker = {
     },
 
     // Block Intel SGX and ARM TrustZone Secure Time
-    blockSecureEnclaveTime: function () {
+    blockSecureEnclaveTime() {
         const self = this;
 
         // Block Intel SGX trusted time
@@ -2536,7 +2572,7 @@ const NtpBlocker = {
                             action: 'sgx_trusted_time_blocked',
                         });
                         self.stats.connectionsBlocked++;
-                        return 0x00003203; // SGX_ERROR_SERVICE_UNAVAILABLE
+                        return 0x00_00_32_03; // SGX_ERROR_SERVICE_UNAVAILABLE
                     },
                     'uint32',
                     ['pointer', 'pointer']
@@ -2557,7 +2593,7 @@ const NtpBlocker = {
                             action: 'sgx_pse_session_blocked',
                         });
                         self.stats.connectionsBlocked++;
-                        return 0x00003203; // SGX_ERROR_SERVICE_UNAVAILABLE
+                        return 0x00_00_32_03; // SGX_ERROR_SERVICE_UNAVAILABLE
                     },
                     'uint32',
                     []
@@ -2574,7 +2610,7 @@ const NtpBlocker = {
                     time => {
                         if (time) {
                             // Return static time
-                            time.writeU32(1609459200); // 2021-01-01 00:00:00
+                            time.writeU32(1_609_459_200); // 2021-01-01 00:00:00
                             time.add(4).writeU32(0); // millis
                         }
                         send({
@@ -2594,12 +2630,12 @@ const NtpBlocker = {
         const QSEECom_send_cmd = Module.findExportByName(null, 'QSEECom_send_cmd');
         if (QSEECom_send_cmd) {
             Interceptor.attach(QSEECom_send_cmd, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const cmd = args[1];
                     if (cmd) {
                         const cmdId = cmd.readU32();
                         // QSEE_GET_SECURE_TIME = 0x1005
-                        if (cmdId === 0x1005) {
+                        if (cmdId === 0x10_05) {
                             send({
                                 type: 'bypass',
                                 target: 'ntp_blocker',
@@ -2610,7 +2646,7 @@ const NtpBlocker = {
                         }
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.shouldBlock) {
                         retval.replace(-1);
                     }
@@ -2620,7 +2656,7 @@ const NtpBlocker = {
     },
 
     // Block Cloud Metadata Service Time Endpoints
-    blockCloudMetadataTime: function () {
+    blockCloudMetadataTime() {
         // Cloud metadata endpoints
         const metadataEndpoints = [
             '169.254.169.254', // AWS
@@ -2647,18 +2683,13 @@ const NtpBlocker = {
                             if (sa_family === 2) {
                                 // AF_INET
                                 const ip = addr.add(4).readU32();
-                                const ipStr =
-                                    (ip & 0xff) +
-                                    '.' +
-                                    ((ip >> 8) & 0xff) +
-                                    '.' +
-                                    ((ip >> 16) & 0xff) +
-                                    '.' +
-                                    ((ip >> 24) & 0xff);
+                                const ipStr = `${ip & 0xFF}.${(ip >> 8) & 0xFF}.${
+                                    (ip >> 16) & 0xFF
+                                }.${(ip >> 24) & 0xFF}`;
 
                                 // Check if it's a metadata endpoint
-                                for (let i = 0; i < metadataEndpoints.length; i++) {
-                                    if (metadataEndpoints[i].includes(ipStr)) {
+                                for (const metadataEndpoint of metadataEndpoints) {
+                                    if (metadataEndpoint.includes(ipStr)) {
                                         send({
                                             type: 'bypass',
                                             target: 'ntp_blocker',
@@ -2695,13 +2726,13 @@ const NtpBlocker = {
                         const hostname = node ? node.readUtf8String() : null;
 
                         if (hostname) {
-                            for (let i = 0; i < metadataEndpoints.length; i++) {
-                                if (hostname.includes(metadataEndpoints[i].split(':')[0])) {
+                            for (const metadataEndpoint of metadataEndpoints) {
+                                if (hostname.includes(metadataEndpoint.split(':')[0])) {
                                     send({
                                         type: 'bypass',
                                         target: 'ntp_blocker',
                                         action: 'cloud_metadata_dns_blocked',
-                                        hostname: hostname,
+                                        hostname,
                                     });
                                     this.stats.dnsBlocked++;
                                     return -2; // EAI_NONAME
@@ -2718,7 +2749,7 @@ const NtpBlocker = {
     },
 
     // Block WebRTC STUN/TURN Time Headers
-    blockWebRTCTimeHeaders: function () {
+    blockWebRTCTimeHeaders() {
         const self = this;
 
         // STUN servers commonly used
@@ -2747,10 +2778,13 @@ const NtpBlocker = {
                         if (buf && len >= 20) {
                             // Check for STUN message (first 2 bits are 00)
                             const messageType = buf.readU16();
-                            if ((messageType & 0xc000) === 0) {
+                            if ((messageType & 0xC0_00) === 0) {
                                 // Check magic cookie (0x2112A442)
                                 const magicCookie = buf.add(4).readU32();
-                                if (magicCookie === 0x2112a442 || magicCookie === 0x42a41221) {
+                                if (
+                                    magicCookie === 0x21_12_A4_42
+                                    || magicCookie === 0x42_A4_12_21
+                                ) {
                                     send({
                                         type: 'bypass',
                                         target: 'ntp_blocker',
@@ -2776,7 +2810,7 @@ const NtpBlocker = {
         );
         if (RTCDataChannel_send) {
             Interceptor.attach(RTCDataChannel_send, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const data = args[1];
                     const size = args[2].toInt32();
 
@@ -2784,10 +2818,10 @@ const NtpBlocker = {
                         // Check for timestamp patterns in data
                         const content = data.readUtf8String(Math.min(size, 100));
                         if (
-                            content &&
-                            (content.includes('timestamp') ||
-                                content.includes('time') ||
-                                content.includes('clock'))
+                            content
+                            && (content.includes('timestamp')
+                                || content.includes('time')
+                                || content.includes('clock'))
                         ) {
                             send({
                                 type: 'bypass',
@@ -2799,7 +2833,7 @@ const NtpBlocker = {
                         }
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.shouldBlock) {
                         retval.replace(0);
                     }
@@ -2809,7 +2843,7 @@ const NtpBlocker = {
     },
 
     // Block QUIC Protocol Timestamp
-    blockQUICTimestamps: function () {
+    blockQUICTimestamps() {
         const self = this;
 
         // Hook QUIC frame processing
@@ -2819,7 +2853,7 @@ const NtpBlocker = {
         );
         if (process_quic_frame) {
             Interceptor.attach(process_quic_frame, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const frameData = args[1];
                     const frameSize = args[2].toInt32();
 
@@ -2837,7 +2871,7 @@ const NtpBlocker = {
                         }
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.shouldBlock) {
                         retval.replace(0);
                     }
@@ -2865,14 +2899,14 @@ const NtpBlocker = {
     },
 
     // Block 5G Network Time Protocol
-    block5GNetworkTime: function () {
+    block5GNetworkTime() {
         const self = this;
 
         // Block 5G NAS time sync messages
         const nas_decode_msg = Module.findExportByName(null, 'nas_decode_msg');
         if (nas_decode_msg) {
             Interceptor.attach(nas_decode_msg, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const msgType = args[1].readU8();
                     // 5GMM Time Sync Message = 0x54
                     if (msgType === 0x54) {
@@ -2885,7 +2919,7 @@ const NtpBlocker = {
                         self.stats.connectionsBlocked++;
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.shouldBlock) {
                         retval.replace(-1);
                     }
@@ -2916,7 +2950,7 @@ const NtpBlocker = {
     },
 
     // Block Blockchain and Smart Contract Timestamps
-    blockBlockchainTimestamps: function () {
+    blockBlockchainTimestamps() {
         // Block Ethereum block.timestamp
         const eth_getBlockByNumber = Module.findExportByName(null, 'eth_getBlockByNumber');
         if (eth_getBlockByNumber) {
@@ -2953,7 +2987,7 @@ const NtpBlocker = {
     },
 
     // Block Secure Boot and UEFI Time
-    blockUEFITime: function () {
+    blockUEFITime() {
         const self = this;
 
         if (Process.platform === 'windows') {
@@ -2964,7 +2998,7 @@ const NtpBlocker = {
             );
             if (GetFirmwareEnvironmentVariable) {
                 Interceptor.attach(GetFirmwareEnvironmentVariable, {
-                    onEnter: function (args) {
+                    onEnter(args) {
                         const varName = args[0].readUtf16String();
                         if (varName && (varName.includes('Time') || varName.includes('DATE'))) {
                             send({
@@ -2977,7 +3011,7 @@ const NtpBlocker = {
                             self.stats.connectionsBlocked++;
                         }
                     },
-                    onLeave: function (retval) {
+                    onLeave(retval) {
                         if (this.shouldBlock) {
                             retval.replace(0);
                         }
@@ -3005,7 +3039,7 @@ const NtpBlocker = {
     },
 
     // Block Authentication Token Time Claims
-    blockAuthTokenTimeClaims: function () {
+    blockAuthTokenTimeClaims() {
         // Block JWT exp and iat claims validation
         const jwt_decode = Module.findExportByName(null, 'jwt_decode');
         if (jwt_decode) {
@@ -3033,7 +3067,7 @@ const NtpBlocker = {
                     (_context, timeret) => {
                         if (timeret) {
                             // Return fixed time
-                            timeret.writeU32(1609459200); // 2021-01-01
+                            timeret.writeU32(1_609_459_200); // 2021-01-01
                         }
                         send({
                             type: 'bypass',
@@ -3084,7 +3118,7 @@ const NtpBlocker = {
     },
 
     // Block Code Signing Timestamp Authorities
-    blockCodeSigningTimestamps: function () {
+    blockCodeSigningTimestamps() {
         if (Process.platform === 'windows') {
             // Block Authenticode timestamp validation
             const WinVerifyTrustEx = Module.findExportByName('wintrust.dll', 'WinVerifyTrustEx');
@@ -3117,7 +3151,7 @@ const NtpBlocker = {
                                 action: 'rfc3161_timestamp_blocked',
                             });
                             this.stats.connectionsBlocked++;
-                            return 0x80092013; // CRYPT_E_REVOCATION_OFFLINE
+                            return 0x80_09_20_13; // CRYPT_E_REVOCATION_OFFLINE
                         },
                         'uint32',
                         [
@@ -3152,7 +3186,7 @@ const NtpBlocker = {
     },
 
     // Block Container and Orchestration Timestamps
-    blockContainerTimestamps: function () {
+    blockContainerTimestamps() {
         // Block Docker container time sync
         const docker_time_sync = Module.findExportByName(null, '_ZN6docker9container8timeSyncEv');
         if (docker_time_sync) {
@@ -3175,10 +3209,10 @@ const NtpBlocker = {
         }
 
         // Block Kubernetes API server time
-        const k8s_api_time = Module.findExportByName(null, '_ZN10kubernetes9apiserver7getTimeEv');
-        if (k8s_api_time) {
+        const k8sApiTime = Module.findExportByName(null, '_ZN10kubernetes9apiserver7getTimeEv');
+        if (k8sApiTime) {
             Interceptor.replace(
-                k8s_api_time,
+                k8sApiTime,
                 new NativeCallback(
                     () => {
                         send({
@@ -3187,7 +3221,7 @@ const NtpBlocker = {
                             action: 'kubernetes_api_time_blocked',
                         });
                         this.stats.connectionsBlocked++;
-                        return 1609459200; // Fixed time
+                        return 1_609_459_200; // Fixed time
                     },
                     'uint32',
                     []
@@ -3203,7 +3237,7 @@ const NtpBlocker = {
                 new NativeCallback(
                     timespec => {
                         if (timespec) {
-                            timespec.writeU64(1609459200);
+                            timespec.writeU64(1_609_459_200);
                             timespec.add(8).writeU64(0);
                         }
                         send({
@@ -3222,7 +3256,7 @@ const NtpBlocker = {
     },
 
     // Block Hardware Device Time Sources
-    blockHardwareDeviceTime: function () {
+    blockHardwareDeviceTime() {
         // Block GPS module time
         const gpsd_get_time = Module.findExportByName(null, 'gpsd_get_time');
         if (gpsd_get_time) {
@@ -3288,7 +3322,7 @@ const NtpBlocker = {
     },
 
     // Block DRM and Anti-Cheat Time Verification
-    blockDRMTimeVerification: function () {
+    blockDRMTimeVerification() {
         // Block Denuvo time checks
         const denuvo_check_time = Module.findExportByName(null, '_ZN6denuvo9checkTimeEv');
         if (denuvo_check_time) {
@@ -3326,7 +3360,7 @@ const NtpBlocker = {
                             action: 'steam_server_time_blocked',
                         });
                         this.stats.connectionsBlocked++;
-                        return 1609459200;
+                        return 1_609_459_200;
                     },
                     'uint32',
                     []
@@ -3347,7 +3381,7 @@ const NtpBlocker = {
                             action: 'eac_server_time_blocked',
                         });
                         this.stats.connectionsBlocked++;
-                        return 1609459200;
+                        return 1_609_459_200;
                     },
                     'uint64',
                     []
@@ -3368,7 +3402,7 @@ const NtpBlocker = {
                             action: 'battleye_time_blocked',
                         });
                         this.stats.connectionsBlocked++;
-                        return 1609459200;
+                        return 1_609_459_200;
                     },
                     'uint64',
                     []
@@ -3378,7 +3412,7 @@ const NtpBlocker = {
     },
 
     // Block Industrial and Automotive Time Protocols
-    blockIndustrialTimeProtocols: function () {
+    blockIndustrialTimeProtocols() {
         // Block OPC UA time synchronization
         const UA_DateTime_now = Module.findExportByName(null, 'UA_DateTime_now');
         if (UA_DateTime_now) {
@@ -3465,17 +3499,17 @@ const NtpBlocker = {
     },
 
     // Database Replication Timestamp Blocking
-    blockDatabaseReplicationTimestamps: function () {
+    blockDatabaseReplicationTimestamps() {
         const self = this;
 
         // MySQL replication timestamps
         const mysql_make_datetime = Module.findExportByName(null, 'mysql_make_datetime');
         if (mysql_make_datetime) {
             Interceptor.attach(mysql_make_datetime, {
-                onEnter: function (_args) {
+                onEnter(_args) {
                     this.shouldBlock = true;
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.shouldBlock) {
                         retval.replace(ptr(0));
                         send({
@@ -3516,7 +3550,7 @@ const NtpBlocker = {
             Interceptor.attach(bson_append_timestamp, {
                 onEnter: args => {
                     if (args[3]) {
-                        args[3].writeU32(1704067200);
+                        args[3].writeU32(1_704_067_200);
                         send({
                             type: 'bypass',
                             target: 'ntp_blocker',
@@ -3551,7 +3585,7 @@ const NtpBlocker = {
     },
 
     // Message Queue Timestamp Blocking
-    blockMessageQueueTimestamps: function () {
+    blockMessageQueueTimestamps() {
         // Kafka timestamps
         const rd_kafka_message_timestamp = Module.findExportByName(
             null,
@@ -3587,7 +3621,7 @@ const NtpBlocker = {
                     const props = args[6];
                     if (props) {
                         let flags = props.readU16();
-                        flags &= ~0x0008;
+                        flags &= ~0x00_08;
                         props.writeU16(flags);
                         send({
                             type: 'bypass',
@@ -3646,7 +3680,7 @@ const NtpBlocker = {
     },
 
     // CDN Edge Server Time Synchronization Blocking
-    blockCDNEdgeServerTime: function () {
+    blockCDNEdgeServerTime() {
         // CloudFlare Worker time
         Module.enumerateExports('v8').forEach(exp => {
             if (exp.name.includes('Date') && exp.name.includes('Now')) {
@@ -3660,7 +3694,7 @@ const NtpBlocker = {
                                 action: 'cloudflare_worker_time_blocked',
                             });
                             this.stats.connectionsBlocked++;
-                            return 1704067200000;
+                            return 1_704_067_200_000;
                         },
                         'double',
                         []
@@ -3676,9 +3710,9 @@ const NtpBlocker = {
                 onEnter: args => {
                     const header = args[1].readUtf8String();
                     if (
-                        header &&
-                        (header.includes('X-Akamai-Request-Time') ||
-                            header.includes('X-Edge-Request-Time'))
+                        header
+                        && (header.includes('X-Akamai-Request-Time')
+                            || header.includes('X-Edge-Request-Time'))
                     ) {
                         args[1] = Memory.allocUtf8String('X-Blocked-Header');
                         send({
@@ -3705,7 +3739,7 @@ const NtpBlocker = {
                             action: 'fastly_vcl_time_blocked',
                         });
                         this.stats.connectionsBlocked++;
-                        return 1704067200.0;
+                        return 1_704_067_200;
                     },
                     'double',
                     []
@@ -3736,13 +3770,13 @@ const NtpBlocker = {
     },
 
     // Distributed Cache Timestamp Blocking
-    blockDistributedCacheTimestamps: function () {
+    blockDistributedCacheTimestamps() {
         // Redis cache timestamps
         const redisSetWithExpire = Module.findExportByName(null, 'redisSetex');
         if (redisSetWithExpire) {
             Interceptor.attach(redisSetWithExpire, {
                 onEnter: args => {
-                    args[2] = ptr(0x7fffffff);
+                    args[2] = ptr(0x7F_FF_FF_FF);
                     send({
                         type: 'bypass',
                         target: 'ntp_blocker',
@@ -3812,7 +3846,7 @@ const NtpBlocker = {
     },
 
     // Game Engine Time Synchronization Blocking
-    blockGameEngineTimeSync: function () {
+    blockGameEngineTimeSync() {
         // Unity Time.realtimeSinceStartup
         let unity_get_realtime = Module.findExportByName(
             null,
@@ -3832,7 +3866,7 @@ const NtpBlocker = {
                             action: 'unity_realtime_blocked',
                         });
                         this.stats.connectionsBlocked++;
-                        return 100.0;
+                        return 100;
                     },
                     'float',
                     []
@@ -3856,7 +3890,7 @@ const NtpBlocker = {
                             action: 'unreal_worldtime_blocked',
                         });
                         this.stats.connectionsBlocked++;
-                        return 100.0;
+                        return 100;
                     },
                     'float',
                     ['pointer']
@@ -3898,7 +3932,7 @@ const NtpBlocker = {
                             action: 'godot_ticks_blocked',
                         });
                         this.stats.connectionsBlocked++;
-                        return 100000;
+                        return 100_000;
                     },
                     'uint64',
                     []
@@ -3922,7 +3956,7 @@ const NtpBlocker = {
                             action: 'steam_servertime_blocked',
                         });
                         this.stats.connectionsBlocked++;
-                        return 1704067200;
+                        return 1_704_067_200;
                     },
                     'uint32',
                     ['pointer']
@@ -3932,7 +3966,7 @@ const NtpBlocker = {
     },
 
     // IoT Protocol Timestamp Blocking
-    blockIoTProtocolTimestamps: function () {
+    blockIoTProtocolTimestamps() {
         // MQTT timestamp properties
         const mqtt_property_set_timestamp = Module.findExportByName(
             null,
@@ -4009,8 +4043,8 @@ const NtpBlocker = {
             Interceptor.attach(lorawan_process_mac_commands, {
                 onEnter: args => {
                     const cmd = args[0].readU8();
-                    if (cmd === 0x0d) {
-                        args[0] = ptr(0xff);
+                    if (cmd === 0x0D) {
+                        args[0] = ptr(0xFF);
                         send({
                             type: 'bypass',
                             target: 'ntp_blocker',
@@ -4035,7 +4069,7 @@ const NtpBlocker = {
                             action: 'openthread_time_blocked',
                         });
                         this.stats.connectionsBlocked++;
-                        return 100000;
+                        return 100_000;
                     },
                     'uint32',
                     []
@@ -4045,7 +4079,7 @@ const NtpBlocker = {
     },
 
     // Virtualization Guest Additions Time Sync Blocking
-    blockVirtualizationGuestTimeSync: function () {
+    blockVirtualizationGuestTimeSync() {
         // VMware Tools time sync
         const vmware_guestd_time_sync = Module.findExportByName(null, 'VMTools_TimeSync');
         if (vmware_guestd_time_sync) {
@@ -4073,8 +4107,8 @@ const NtpBlocker = {
             Interceptor.attach(vboxguest_ioctl, {
                 onEnter: args => {
                     const cmd = args[1].readU32();
-                    if (cmd === 0x00000010) {
-                        args[1] = ptr(0xffffffff);
+                    if (cmd === 0x00_00_00_10) {
+                        args[1] = ptr(0xFF_FF_FF_FF);
                         send({
                             type: 'bypass',
                             target: 'ntp_blocker',
@@ -4151,7 +4185,7 @@ const NtpBlocker = {
     },
 
     // License Server Time Validation Blocking
-    blockLicenseServerTimeValidation: function () {
+    blockLicenseServerTimeValidation() {
         // FlexLM/FlexNet time validation
         const lc_checkout = Module.findExportByName(null, 'lc_checkout');
         if (lc_checkout) {
@@ -4160,7 +4194,7 @@ const NtpBlocker = {
                     const policy = args[3];
                     if (policy) {
                         let flags = policy.add(8).readU32();
-                        flags |= 0x00000800;
+                        flags |= 0x00_00_08_00;
                         policy.add(8).writeU32(flags);
                         send({
                             type: 'bypass',
@@ -4181,7 +4215,7 @@ const NtpBlocker = {
                 new NativeCallback(
                     (_handle, rtc_time) => {
                         if (rtc_time) {
-                            rtc_time.writeU64(1704067200);
+                            rtc_time.writeU64(1_704_067_200);
                         }
                         send({
                             type: 'bypass',
@@ -4208,7 +4242,7 @@ const NtpBlocker = {
                 new NativeCallback(
                     (_hcmse, time_update) => {
                         if (time_update) {
-                            time_update.writeU64(1704067200);
+                            time_update.writeU64(1_704_067_200);
                         }
                         send({
                             type: 'bypass',
@@ -4245,7 +4279,7 @@ const NtpBlocker = {
     },
 
     // Email Protocol Timestamp Blocking
-    blockEmailProtocolTimestamps: function () {
+    blockEmailProtocolTimestamps() {
         // SMTP Date header
         const smtp_add_header = Module.findExportByName(null, 'smtp_add_header');
         if (smtp_add_header) {
@@ -4297,7 +4331,7 @@ const NtpBlocker = {
                             action: 'pop3_date_blocked',
                         });
                         this.stats.connectionsBlocked++;
-                        return 1704067200;
+                        return 1_704_067_200;
                     },
                     'uint32',
                     ['pointer']
@@ -4318,7 +4352,7 @@ const NtpBlocker = {
                             action: 'activesync_timestamp_blocked',
                         });
                         this.stats.connectionsBlocked++;
-                        return 1704067200000;
+                        return 1_704_067_200_000;
                     },
                     'uint64',
                     []
@@ -4328,7 +4362,7 @@ const NtpBlocker = {
     },
 
     // VoIP/SIP Time Synchronization Blocking
-    blockVoIPTimeSync: function () {
+    blockVoIPTimeSync() {
         // RTP timestamp generation
         const rtp_get_timestamp = Module.findExportByName(null, 'rtp_get_timestamp');
         if (rtp_get_timestamp) {
@@ -4342,7 +4376,7 @@ const NtpBlocker = {
                             action: 'rtp_timestamp_blocked',
                         });
                         this.stats.connectionsBlocked++;
-                        return 160000;
+                        return 160_000;
                     },
                     'uint32',
                     ['pointer']
@@ -4378,7 +4412,7 @@ const NtpBlocker = {
                 onEnter: args => {
                     const sr = args[1];
                     if (sr) {
-                        sr.add(8).writeU32(0x83aa7e80);
+                        sr.add(8).writeU32(0x83_AA_7E_80);
                         sr.add(12).writeU32(0);
                         send({
                             type: 'bypass',

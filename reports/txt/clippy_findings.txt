@@ -90,8 +90,6 @@ src\process_manager.rs:807:5: [warning] docs for function which may panic missin
 
 src\process_manager.rs:808:25: [warning] docs for function which may panic missing `# Panics` section
 
-src\process_manager.rs:185:5: [warning] unused `async` for function with no await statements
-
 src\process_manager.rs:1153:25: [warning] variables can be used directly in the `format!` string
 
 src\process_manager.rs:1157:32: [warning] variables can be used directly in the `format!` string
@@ -101,6 +99,8 @@ src\process_manager.rs:1165:25: [warning] variables can be used directly in the 
 src\process_manager.rs:1169:29: [warning] variables can be used directly in the `format!` string
 
 src\process_manager.rs:1198:9: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`
+
+src\process_manager.rs:185:5: [warning] unused `async` for function with no await statements
 
 
 31 findings in src\dependencies.rs
@@ -269,13 +269,13 @@ src\python_integration.rs:551:5: [warning] docs for function returning `Result` 
 
 src\python_integration.rs:564:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-src\python_integration.rs:161:28: [warning] this argument is a mutable reference, but not used mutably
-
 src\python_integration.rs:795:9: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`
 
 src\python_integration.rs:852:9: [warning] adding items after statements is confusing, since items exist from the start of the scope
 
 src\python_integration.rs:896:27: [warning] variables can be used directly in the `format!` string
+
+src\python_integration.rs:161:28: [warning] this argument is a mutable reference, but not used mutably
 
 
 25 findings in src\diagnostics.rs
@@ -612,16 +612,6 @@ src\flask_validator.rs:11:5: [warning] this function has too many lines (114/100
 
 src\flask_validator.rs:203:29: [warning] this `continue` expression is redundant
 
-src\flask_validator.rs:141:5: [warning] unused `async` for function with no await statements
-
-src\flask_validator.rs:168:5: [warning] unused `async` for function with no await statements
-
-src\flask_validator.rs:216:5: [warning] unused `async` for function with no await statements
-
-src\flask_validator.rs:304:5: [warning] unused `async` for function with no await statements
-
-src\flask_validator.rs:384:5: [warning] unused `async` for function with no await statements
-
 src\flask_validator.rs:550:45: [warning] redundant closure
 
 src\flask_validator.rs:568:9: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`
@@ -633,6 +623,16 @@ src\flask_validator.rs:610:9: [warning] you seem to be trying to use `match` for
 src\flask_validator.rs:627:13: [warning] binding to `_` prefixed variable with no side-effect
 
 src\flask_validator.rs:682:25: [warning] variables can be used directly in the `format!` string
+
+src\flask_validator.rs:141:5: [warning] unused `async` for function with no await statements
+
+src\flask_validator.rs:168:5: [warning] unused `async` for function with no await statements
+
+src\flask_validator.rs:216:5: [warning] unused `async` for function with no await statements
+
+src\flask_validator.rs:304:5: [warning] unused `async` for function with no await statements
+
+src\flask_validator.rs:384:5: [warning] unused `async` for function with no await statements
 
 
 14 findings in src\process_optimization.rs
@@ -697,6 +697,8 @@ src\startup_checks.rs:91:5: [warning] docs for function returning `Result` missi
 
 src\startup_checks.rs:97:5: [warning] docs for function returning `Result` missing `# Errors` section
 
+src\startup_checks.rs:1592:13: [warning] consider adding a `;` to the last statement for consistent formatting
+
 src\startup_checks.rs:172:5: [warning] unused `async` for function with no await statements
 
 src\startup_checks.rs:372:5: [warning] unused `async` for function with no await statements
@@ -710,8 +712,6 @@ src\startup_checks.rs:937:5: [warning] unused `async` for function with no await
 src\startup_checks.rs:942:5: [warning] unused `async` for function with no await statements
 
 src\startup_checks.rs:1020:5: [warning] unused `async` for function with no await statements
-
-src\startup_checks.rs:1592:13: [warning] consider adding a `;` to the last statement for consistent formatting
 
 
 9 findings in benches\process_benchmarks.rs
@@ -791,17 +791,6 @@ tests\process_optimization_tests.rs:105:76: [warning] redundant clone
 tests\process_optimization_tests.rs:127:32: [warning] redundant closure
 
 
-4 findings in benches\performance_benchmarks.rs
-
-benches\performance_benchmarks.rs:116:9: [warning] binding to `_` prefixed variable with no side-effect
-
-benches\performance_benchmarks.rs:180:78: [warning] used underscore-prefixed binding
-
-benches\performance_benchmarks.rs:179:17: [warning] used underscore-prefixed binding
-
-benches\performance_benchmarks.rs:190:18: [warning] avoid using `collect()` when not needed
-
-
 4 findings in src\main.rs
 
 src\main.rs:21:7: [warning] this function has too many lines (144/100)
@@ -811,6 +800,17 @@ src\main.rs:39:9: [warning] variables can be used directly in the `format!` stri
 src\main.rs:123:13: [warning] adding items after statements is confusing, since items exist from the start of the scope
 
 src\main.rs:148:9: [warning] variables can be used directly in the `format!` string
+
+
+4 findings in benches\performance_benchmarks.rs
+
+benches\performance_benchmarks.rs:116:9: [warning] binding to `_` prefixed variable with no side-effect
+
+benches\performance_benchmarks.rs:180:78: [warning] used underscore-prefixed binding
+
+benches\performance_benchmarks.rs:179:17: [warning] used underscore-prefixed binding
+
+benches\performance_benchmarks.rs:190:18: [warning] avoid using `collect()` when not needed
 
 
 3 findings in src\intel_gpu.rs

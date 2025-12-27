@@ -39,7 +39,7 @@ except ImportError as e:
     logger.warning("Failed to import security_enforcement: %s", e)
 
 try:
-    from ..security_utils import *
+    from ..security_utils import *  # type: ignore[assignment]
 except ImportError as e:
     logger.warning("Failed to import security_utils: %s", e)
 
@@ -53,7 +53,7 @@ try:
     from .. import security_enforcement
 
     if hasattr(security_enforcement, "__all__"):
-        __all__.extend(security_enforcement.__all__)
+        __all__.extend(security_enforcement.__all__)  # type: ignore[union-attr]
 except (ImportError, AttributeError):
     pass
 

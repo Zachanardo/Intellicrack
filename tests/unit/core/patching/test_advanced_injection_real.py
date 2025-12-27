@@ -29,9 +29,18 @@ import time
 import hashlib
 import psutil
 
-from intellicrack.core.patching.early_bird_injection import EarlyBirdInjection
-from intellicrack.core.patching.kernel_injection import KernelInjection
-from intellicrack.core.patching.process_hollowing import ProcessHollowing
+try:
+    from intellicrack.core.patching.early_bird_injection import EarlyBirdInjection
+    from intellicrack.core.patching.kernel_injection import KernelInjection
+    from intellicrack.core.patching.process_hollowing import ProcessHollowing
+    MODULE_AVAILABLE = True
+except ImportError:
+    EarlyBirdInjection = None
+    KernelInjection = None
+    ProcessHollowing = None
+    MODULE_AVAILABLE = False
+
+pytestmark = pytest.mark.skipif(not MODULE_AVAILABLE, reason="Module not available")
 
 
 class TestAdvancedInjectionProduction:

@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+# Optional GPU backend imports
+from types import ModuleType
 from typing import Any
 
 from intellicrack.handlers.numpy_handler import numpy as np
@@ -29,11 +31,9 @@ from ...utils.gpu_autoloader import get_device, get_gpu_info, gpu_autoloader
 from ...utils.logger import get_logger
 
 
-# Optional GPU backend imports
-from types import ModuleType
-
 try:
     import pyopencl.array as cl_array
+
     cl_array_module: ModuleType | None = cl_array
 except ImportError as e:
     logger.error("Import error in gpu_accelerator: %s", e)

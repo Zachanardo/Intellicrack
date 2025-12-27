@@ -1024,10 +1024,10 @@ class CFGExplorer:
             has_return = any("ret" in op.get("disasm", "") for op in block_ops)
 
             # Analyze for security-relevant instructions
-            crypto_ops = sum(any((kw in op.get("disasm", "").lower() for kw in ["aes", "crypt", "hash", "rsa"])) for op in block_ops)
+            crypto_ops = sum(any(kw in op.get("disasm", "").lower() for kw in ["aes", "crypt", "hash", "rsa"]) for op in block_ops)
 
             license_ops = sum(
-                any((kw in op.get("disasm", "").lower() for kw in ["license", "valid", "check", "trial", "serial"])) for op in block_ops
+                any(kw in op.get("disasm", "").lower() for kw in ["license", "valid", "check", "trial", "serial"]) for op in block_ops
             )
 
             # Add enhanced node with comprehensive metadata

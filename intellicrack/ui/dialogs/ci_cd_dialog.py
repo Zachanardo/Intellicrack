@@ -249,7 +249,6 @@ class CICDDialog(PluginDialogBase):
         result_label.setAlignment(Qt.AlignmentFlag.AlignRight)
         layout.addWidget(result_label)
 
-        # Store references
         setattr(widget, "status_label", status_label)
         setattr(widget, "progress", progress)
         setattr(widget, "result_label", result_label)
@@ -736,10 +735,14 @@ class CICDDialog(PluginDialogBase):
                 widget.setObjectName("pipelineStageError")
 
         # Update progress
-        completed = sum(bool(hasattr(w, "status_label")
-                                and getattr(w, "status_label", None) is not None
-                                and getattr(getattr(w, "status_label", None), "text", lambda: "")() in ["OK", "ERROR"])
-                    for w in self.stage_widgets.values())
+        completed = sum(
+            bool(
+                hasattr(w, "status_label")
+                and getattr(w, "status_label", None) is not None
+                and getattr(getattr(w, "status_label", None), "text", lambda: "")() in ["OK", "ERROR"]
+            )
+            for w in self.stage_widgets.values()
+        )
         self.progress_bar.setValue(completed)
 
         # Log errors

@@ -24,13 +24,13 @@ import os
 import platform
 import shutil
 import time
-from typing import Any, Callable, cast
-
-from intellicrack.utils.type_safety import validate_type
+from collections.abc import Callable
+from typing import Any, cast
 
 import psutil
 
 from intellicrack.utils.logger import logger
+from intellicrack.utils.type_safety import validate_type
 
 from .base_detector import BaseDetector
 
@@ -1063,9 +1063,7 @@ class DebuggerDetector(BaseDetector):
         elapsed = time.time() - start_time
         return False, elapsed, details
 
-    def _check_hardware_breakpoints_windows(
-        self, details: dict[str, Any]
-    ) -> tuple[bool, float, dict[str, Any]]:
+    def _check_hardware_breakpoints_windows(self, details: dict[str, Any]) -> tuple[bool, float, dict[str, Any]]:
         """Check for hardware breakpoints on Windows using debug registers.
 
         Reads the CONTEXT structure to access debug registers and analyze
@@ -1154,9 +1152,7 @@ class DebuggerDetector(BaseDetector):
 
                 # Check DR6 status for triggered breakpoints
                 if dr6_status & 0x0000000F:  # B0-B3 bits indicate triggered breakpoints
-                    triggered_breakpoints: list[str] = [
-                        f"DR{i}" for i in range(4) if dr6_status & (1 << i)
-                    ]
+                    triggered_breakpoints: list[str] = [f"DR{i}" for i in range(4) if dr6_status & (1 << i)]
                     details["triggered_breakpoints"] = triggered_breakpoints
 
                 elapsed = time.time() - start_time
@@ -1173,9 +1169,7 @@ class DebuggerDetector(BaseDetector):
         elapsed = time.time() - start_time
         return False, elapsed, details
 
-    def _check_hardware_breakpoints_linux(
-        self, details: dict[str, Any]
-    ) -> tuple[bool, float, dict[str, Any]]:
+    def _check_hardware_breakpoints_linux(self, details: dict[str, Any]) -> tuple[bool, float, dict[str, Any]]:
         """Check for hardware breakpoints on Linux using ptrace.
 
         Uses ptrace and /proc filesystem to detect debug registers and

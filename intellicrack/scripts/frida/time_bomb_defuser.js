@@ -50,8 +50,8 @@ const TimeBombDefuser = {
         timeProgression: {
             enabled: true,
             rate: 0.1, // 1 day passes every 10 days real time
-            maxDrift: 86400000, // Max 1 day drift from target
-            randomVariation: 300000, // ±5 minutes random variation
+            maxDrift: 86_400_000, // Max 1 day drift from target
+            randomVariation: 300_000, // ±5 minutes random variation
         },
 
         // Process-specific time isolation
@@ -176,7 +176,7 @@ const TimeBombDefuser = {
     },
 
     // Main initialization
-    run: function () {
+    run() {
         send({
             type: 'status',
             target: 'time_bomb_defuser',
@@ -231,7 +231,7 @@ const TimeBombDefuser = {
     },
 
     // Platform detection and capability assessment
-    detectPlatform: function () {
+    detectPlatform() {
         this.platform = {
             os: Process.platform,
             arch: Process.arch,
@@ -248,12 +248,23 @@ const TimeBombDefuser = {
         };
 
         // Platform-specific capability detection
-        if (Process.platform === 'windows') {
-            this.detectWindowsCapabilities();
-        } else if (Process.platform === 'darwin') {
-            this.detectMacOSCapabilities();
-        } else if (Process.platform === 'linux') {
-            this.detectLinuxCapabilities();
+        switch (Process.platform) {
+            case 'windows': {
+                this.detectWindowsCapabilities();
+
+                break;
+            }
+            case 'darwin': {
+                this.detectMacOSCapabilities();
+
+                break;
+            }
+            case 'linux': {
+                this.detectLinuxCapabilities();
+
+                break;
+            }
+            // No default
         }
 
         send({
@@ -265,14 +276,14 @@ const TimeBombDefuser = {
     },
 
     // Windows capability detection
-    detectWindowsCapabilities: function () {
+    detectWindowsCapabilities() {
         // Check for .NET runtime
         Process.enumerateModules().forEach(function (module) {
             const name = module.name.toLowerCase();
             if (
-                name.includes('clr.dll') ||
-                name.includes('coreclr.dll') ||
-                name.includes('mscorlib')
+                name.includes('clr.dll')
+                || name.includes('coreclr.dll')
+                || name.includes('mscorlib')
             ) {
                 this.platform.capabilities.dotnet = true;
             }
@@ -280,7 +291,7 @@ const TimeBombDefuser = {
     },
 
     // macOS capability detection
-    detectMacOSCapabilities: function () {
+    detectMacOSCapabilities() {
         // Check for Objective-C runtime
         if (ObjC.available) {
             this.platform.capabilities.objc = true;
@@ -288,7 +299,7 @@ const TimeBombDefuser = {
     },
 
     // Linux capability detection
-    detectLinuxCapabilities: function () {
+    detectLinuxCapabilities() {
         // Check for glibc
         Process.enumerateModules().forEach(function (module) {
             if (module.name.includes('libc.so')) {
@@ -298,7 +309,7 @@ const TimeBombDefuser = {
     },
 
     // Initialize process tracking for per-process time isolation
-    initializeProcessTracking: function () {
+    initializeProcessTracking() {
         const processName = this.getCurrentProcessName();
 
         if (!this.processStartTimes[processName]) {
@@ -316,13 +327,13 @@ const TimeBombDefuser = {
     getCurrentProcessName: () => {
         try {
             return Process.enumerateModules()[0].name;
-        } catch (_e) {
+        } catch {
             return 'unknown_process';
         }
     },
 
     // Initialize machine learning detection system
-    initializeML: function () {
+    initializeML() {
         send({
             type: 'status',
             target: 'time_bomb_defuser',
@@ -351,8 +362,8 @@ const TimeBombDefuser = {
 
         knownPatterns.forEach(pattern => {
             this.mlModel.patterns.push({
-                pattern: pattern,
-                confidence: 1.0,
+                pattern,
+                confidence: 1,
                 category: 'system_time',
             });
         });
@@ -366,12 +377,12 @@ const TimeBombDefuser = {
     },
 
     // Machine learning prediction engine
-    predictTimeCheck: function (context) {
+    predictTimeCheck(context) {
         let score = 0;
         const features = this.extractFeatures(context);
 
         // Calculate weighted score
-        for (let feature in features) {
+        for (const feature in features) {
             if (this.mlModel.weights.has(feature)) {
                 score += features[feature] * this.mlModel.weights.get(feature);
             }
@@ -393,20 +404,20 @@ const TimeBombDefuser = {
                     features.timeKeywords += 0.2;
                 }
             });
-            features.timeKeywords = Math.min(features.timeKeywords, 1.0);
+            features.timeKeywords = Math.min(features.timeKeywords, 1);
         }
 
         // Check for comparison operations
-        features.comparisons = context.hasComparisons ? 1.0 : 0.0;
+        features.comparisons = context.hasComparisons ? 1 : 0;
 
         // Check for system call patterns
-        features.systemCalls = context.isSystemCall ? 1.0 : 0.0;
+        features.systemCalls = context.isSystemCall ? 1 : 0;
 
         return features;
     },
 
     // Install comprehensive time manipulation hooks
-    installTimeHooks: function () {
+    installTimeHooks() {
         send({
             type: 'status',
             target: 'time_bomb_defuser',
@@ -415,12 +426,23 @@ const TimeBombDefuser = {
         });
 
         // Install platform-specific hooks
-        if (Process.platform === 'windows') {
-            this.installWindowsTimeHooks();
-        } else if (Process.platform === 'darwin') {
-            this.installMacOSTimeHooks();
-        } else if (Process.platform === 'linux') {
-            this.installLinuxTimeHooks();
+        switch (Process.platform) {
+            case 'windows': {
+                this.installWindowsTimeHooks();
+
+                break;
+            }
+            case 'darwin': {
+                this.installMacOSTimeHooks();
+
+                break;
+            }
+            case 'linux': {
+                this.installLinuxTimeHooks();
+
+                break;
+            }
+            // No default
         }
 
         // Install cross-platform CRT hooks
@@ -428,15 +450,15 @@ const TimeBombDefuser = {
     },
 
     // Windows time manipulation hooks
-    installWindowsTimeHooks: function () {
+    installWindowsTimeHooks() {
         const self = this;
 
         // GetSystemTime
         this.safeHook('kernel32.dll', 'GetSystemTime', {
-            onEnter: function (args) {
+            onEnter(args) {
                 this.lpSystemTime = args[0];
             },
-            onLeave: function (_retval) {
+            onLeave(_retval) {
                 if (this.lpSystemTime && !this.lpSystemTime.isNull()) {
                     const spoofedTime = self.getSpoofedTime();
                     self.dateToSystemTime(spoofedTime, this.lpSystemTime);
@@ -447,15 +469,15 @@ const TimeBombDefuser = {
 
         // GetLocalTime
         this.safeHook('kernel32.dll', 'GetLocalTime', {
-            onEnter: function (args) {
+            onEnter(args) {
                 this.lpSystemTime = args[0];
             },
-            onLeave: function (_retval) {
+            onLeave(_retval) {
                 if (this.lpSystemTime && !this.lpSystemTime.isNull()) {
                     const spoofedTime = self.getSpoofedTime();
                     // Convert to local time
                     const localTime = new Date(
-                        spoofedTime.getTime() - new Date().getTimezoneOffset() * 60000
+                        spoofedTime.getTime() - new Date().getTimezoneOffset() * 60_000
                     );
                     self.dateToSystemTime(localTime, this.lpSystemTime);
                     self.statistics.timeCalls++;
@@ -465,10 +487,10 @@ const TimeBombDefuser = {
 
         // GetSystemTimeAsFileTime
         this.safeHook('kernel32.dll', 'GetSystemTimeAsFileTime', {
-            onEnter: function (args) {
+            onEnter(args) {
                 this.lpSystemTimeAsFileTime = args[0];
             },
-            onLeave: function (_retval) {
+            onLeave(_retval) {
                 if (this.lpSystemTimeAsFileTime && !this.lpSystemTimeAsFileTime.isNull()) {
                     const spoofedTime = self.getSpoofedTime();
                     const filetime = self.dateToFileTime(spoofedTime);
@@ -479,13 +501,13 @@ const TimeBombDefuser = {
         });
 
         // GetTickCount and GetTickCount64
-        const baseTickCount = Math.floor(Math.random() * 3600000);
+        const baseTickCount = Math.floor(Math.random() * 3_600_000);
 
         this.safeHook('kernel32.dll', 'GetTickCount', {
             onLeave: retval => {
                 const elapsed = Date.now() - self.startTime;
                 const progressed = elapsed * self.config.timeProgression.rate;
-                const spoofed = (baseTickCount + progressed) & 0xffffffff;
+                const spoofed = (baseTickCount + progressed) & 0xFF_FF_FF_FF;
                 retval.replace(spoofed);
                 self.statistics.timeCalls++;
             },
@@ -502,14 +524,14 @@ const TimeBombDefuser = {
         });
 
         // QueryPerformanceCounter
-        const baseCounter = Math.floor(Math.random() * 1000000000);
-        const frequency = 10000000; // 10 MHz
+        const baseCounter = Math.floor(Math.random() * 1_000_000_000);
+        const frequency = 10_000_000; // 10 MHz
 
         this.safeHook('kernel32.dll', 'QueryPerformanceCounter', {
-            onEnter: function (args) {
+            onEnter(args) {
                 this.lpPerformanceCount = args[0];
             },
-            onLeave: function (retval) {
+            onLeave(retval) {
                 if (this.lpPerformanceCount && !this.lpPerformanceCount.isNull()) {
                     const elapsed = Date.now() - self.startTime;
                     const ticks = baseCounter + (elapsed * frequency) / 1000;
@@ -522,10 +544,10 @@ const TimeBombDefuser = {
 
         // QueryPerformanceFrequency
         this.safeHook('kernel32.dll', 'QueryPerformanceFrequency', {
-            onEnter: function (args) {
+            onEnter(args) {
                 this.lpFrequency = args[0];
             },
-            onLeave: function (retval) {
+            onLeave(retval) {
                 if (this.lpFrequency && !this.lpFrequency.isNull()) {
                     this.lpFrequency.writeU64(frequency);
                 }
@@ -535,10 +557,10 @@ const TimeBombDefuser = {
 
         // NtQuerySystemTime (Native API)
         this.safeHook('ntdll.dll', 'NtQuerySystemTime', {
-            onEnter: function (args) {
+            onEnter(args) {
                 this.systemTime = args[0];
             },
-            onLeave: function (retval) {
+            onLeave(retval) {
                 if (this.systemTime && !this.systemTime.isNull() && retval.toInt32() === 0) {
                     const spoofedTime = self.getSpoofedTime();
                     const ntTime = self.dateToNtTime(spoofedTime);
@@ -556,16 +578,16 @@ const TimeBombDefuser = {
     },
 
     // macOS time manipulation hooks
-    installMacOSTimeHooks: function () {
+    installMacOSTimeHooks() {
         const self = this;
 
         // gettimeofday
         this.safeHook(null, 'gettimeofday', {
-            onEnter: function (args) {
+            onEnter(args) {
                 this.tv = args[0];
                 this.tz = args[1];
             },
-            onLeave: function (retval) {
+            onLeave(retval) {
                 if (retval.toInt32() === 0 && this.tv && !this.tv.isNull()) {
                     const spoofedTime = self.getSpoofedTime();
                     const unixTime = Math.floor(spoofedTime.getTime() / 1000);
@@ -580,15 +602,15 @@ const TimeBombDefuser = {
 
         // clock_gettime
         this.safeHook(null, 'clock_gettime', {
-            onEnter: function (args) {
+            onEnter(args) {
                 this.clockid = args[0];
                 this.tp = args[1];
             },
-            onLeave: function (retval) {
+            onLeave(retval) {
                 if (retval.toInt32() === 0 && this.tp && !this.tp.isNull()) {
                     const spoofedTime = self.getSpoofedTime();
                     const unixTime = Math.floor(spoofedTime.getTime() / 1000);
-                    const nanoseconds = (spoofedTime.getTime() % 1000) * 1000000;
+                    const nanoseconds = (spoofedTime.getTime() % 1000) * 1_000_000;
 
                     this.tp.writeU64(unixTime);
                     this.tp.add(8).writeU64(nanoseconds);
@@ -602,7 +624,7 @@ const TimeBombDefuser = {
             onLeave: retval => {
                 const elapsed = Date.now() - self.startTime;
                 const progressed = elapsed * self.config.timeProgression.rate;
-                const machTime = 1000000000 + progressed * 1000000; // Base + progressed time in nanoseconds
+                const machTime = 1_000_000_000 + progressed * 1_000_000; // Base + progressed time in nanoseconds
                 retval.replace(machTime);
                 self.statistics.timeCalls++;
             },
@@ -633,15 +655,15 @@ const TimeBombDefuser = {
     },
 
     // Linux time manipulation hooks
-    installLinuxTimeHooks: function () {
+    installLinuxTimeHooks() {
         const self = this;
 
         // time()
         this.safeHook(null, 'time', {
-            onEnter: function (args) {
+            onEnter(args) {
                 this.tloc = args[0];
             },
-            onLeave: function (retval) {
+            onLeave(retval) {
                 const spoofedTime = self.getSpoofedTime();
                 const unixTime = Math.floor(spoofedTime.getTime() / 1000);
 
@@ -656,11 +678,11 @@ const TimeBombDefuser = {
 
         // gettimeofday
         this.safeHook(null, 'gettimeofday', {
-            onEnter: function (args) {
+            onEnter(args) {
                 this.tv = args[0];
                 this.tz = args[1];
             },
-            onLeave: function (retval) {
+            onLeave(retval) {
                 if (retval.toInt32() === 0 && this.tv && !this.tv.isNull()) {
                     const spoofedTime = self.getSpoofedTime();
                     const unixTime = Math.floor(spoofedTime.getTime() / 1000);
@@ -675,15 +697,15 @@ const TimeBombDefuser = {
 
         // clock_gettime (multiple clock types)
         this.safeHook(null, 'clock_gettime', {
-            onEnter: function (args) {
+            onEnter(args) {
                 this.clockid = args[0];
                 this.tp = args[1];
             },
-            onLeave: function (retval) {
+            onLeave(retval) {
                 if (retval.toInt32() === 0 && this.tp && !this.tp.isNull()) {
                     const spoofedTime = self.getSpoofedTime();
                     const unixTime = Math.floor(spoofedTime.getTime() / 1000);
-                    const nanoseconds = (spoofedTime.getTime() % 1000) * 1000000;
+                    const nanoseconds = (spoofedTime.getTime() % 1000) * 1_000_000;
 
                     this.tp.writeU64(unixTime);
                     this.tp.add(8).writeU64(nanoseconds);
@@ -695,10 +717,10 @@ const TimeBombDefuser = {
         // stat family functions for file timestamps
         ['stat', 'lstat', 'fstat', 'stat64', 'lstat64', 'fstat64'].forEach(func => {
             self.safeHook(null, func, {
-                onEnter: function (args) {
-                    this.statbuf = args[args.length - 1];
+                onEnter(args) {
+                    this.statbuf = args.at(-1);
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (retval.toInt32() === 0 && this.statbuf && !this.statbuf.isNull()) {
                         self.spoofStatTime(this.statbuf);
                         self.statistics.timeCalls++;
@@ -715,7 +737,7 @@ const TimeBombDefuser = {
     },
 
     // Cross-platform hooks
-    installCrossPlatformHooks: function () {
+    installCrossPlatformHooks() {
         // Hook JavaScript Date if in a JS environment
         if (typeof Date !== 'undefined') {
             this.hookJavaScriptDate();
@@ -734,7 +756,7 @@ const TimeBombDefuser = {
     },
 
     // Hook with caching and performance optimization
-    hookWithCache: function (module, func, wrapper) {
+    hookWithCache(module, func, wrapper) {
         const cacheKey = `${module}!${func}`;
 
         // Check cache first
@@ -771,7 +793,7 @@ const TimeBombDefuser = {
     },
 
     // ML-guided hook installation
-    installMLGuidedHooks: function () {
+    installMLGuidedHooks() {
         send({
             type: 'status',
             target: 'time_bomb_defuser',
@@ -796,7 +818,7 @@ const TimeBombDefuser = {
     },
 
     // Analyze execution pattern with ML
-    analyzeExecutionPattern: function (events) {
+    analyzeExecutionPattern(events) {
         const parsed = Stalker.parse(events);
         parsed.forEach(event => {
             if (event.type === 'call') {
@@ -824,7 +846,7 @@ const TimeBombDefuser = {
     },
 
     // Dynamic hooking based on ML detection
-    dynamicHook: function (address) {
+    dynamicHook(address) {
         const self = this;
 
         if (this.hooks[address.toString()]) {
@@ -832,7 +854,7 @@ const TimeBombDefuser = {
         }
 
         Interceptor.attach(address, {
-            onEnter: function (args) {
+            onEnter(args) {
                 // Analyze function parameters
                 const timeRelated = self.analyzeParameters(args);
                 if (timeRelated) {
@@ -840,7 +862,7 @@ const TimeBombDefuser = {
                     this.originalArgs = args;
                 }
             },
-            onLeave: function (retval) {
+            onLeave(retval) {
                 if (this.shouldIntercept) {
                     // Modify return value if it's time-related
                     const spoofed = self.spoofReturnValue(retval, this.originalArgs);
@@ -857,7 +879,7 @@ const TimeBombDefuser = {
     },
 
     // Polymorphic code engine
-    startPolymorphicEngine: function () {
+    startPolymorphicEngine() {
         send({
             type: 'status',
             target: 'time_bomb_defuser',
@@ -867,18 +889,18 @@ const TimeBombDefuser = {
         // Periodically mutate hook code
         setInterval(() => {
             this.mutateHooks();
-        }, 30000); // Every 30 seconds
+        }, 30_000); // Every 30 seconds
 
         // Rotate hook methods
         if (this.config.antiDetection.hookRotation) {
             setInterval(() => {
                 this.rotateHooks();
-            }, 60000); // Every minute
+            }, 60_000); // Every minute
         }
     },
 
     // Mutate hooks to avoid detection
-    mutateHooks: function () {
+    mutateHooks() {
         const mutations = [
             this.addJunkCode,
             this.reorderInstructions,
@@ -894,14 +916,14 @@ const TimeBombDefuser = {
     },
 
     // Should spoof time (intelligent decision)
-    shouldSpoofTime: function () {
+    shouldSpoofTime() {
         // Check current context
         const backtrace = Thread.backtrace(this.context, Backtracer.ACCURATE);
 
         // Use ML prediction if available
         if (this.mlModel) {
             const prediction = this.mlModel.predict({
-                backtrace: backtrace,
+                backtrace,
                 timestamp: Date.now(),
             });
 
@@ -911,8 +933,8 @@ const TimeBombDefuser = {
         }
 
         // Fallback to pattern matching
-        for (let i = 0; i < backtrace.length; i++) {
-            const module = Process.findModuleByAddress(backtrace[i]);
+        for (const element of backtrace) {
+            const module = Process.findModuleByAddress(element);
             if (module && this.isLicenseModule(module.name)) {
                 return true;
             }
@@ -922,7 +944,7 @@ const TimeBombDefuser = {
     },
 
     // Write spoofed system time
-    writeSpoofedSystemTime: function (lpSystemTime) {
+    writeSpoofedSystemTime(lpSystemTime) {
         const target = this.config.targetDate;
         lpSystemTime.writeU16(target.year); // wYear
         lpSystemTime.add(2).writeU16(target.month); // wMonth
@@ -935,7 +957,7 @@ const TimeBombDefuser = {
     },
 
     // Get spoofed file time
-    getSpoofedFileTime: function () {
+    getSpoofedFileTime() {
         // Convert target date to Windows FILETIME
         const date = new Date(
             this.config.targetDate.year,
@@ -949,11 +971,11 @@ const TimeBombDefuser = {
         // Windows FILETIME is 100-nanosecond intervals since January 1, 1601
         const windowsEpoch = new Date(1601, 0, 1).getTime();
         const unixTime = date.getTime();
-        return (unixTime - windowsEpoch) * 10000;
+        return (unixTime - windowsEpoch) * 10_000;
     },
 
     // Performance monitoring
-    initializePerformanceMonitor: function () {
+    initializePerformanceMonitor() {
         this.performanceMonitor = {
             startTime: Date.now(),
             hookOverhead: {},
@@ -986,7 +1008,7 @@ const TimeBombDefuser = {
     },
 
     // CRT time functions hooking
-    hookCRTTimeFunctions: function (dll) {
+    hookCRTTimeFunctions(dll) {
         // time()
         this.hookWithCache(dll, 'time', original => timer => {
             if (this.shouldSpoofTime()) {
@@ -1047,10 +1069,10 @@ const TimeBombDefuser = {
     },
 
     // .NET time hooks
-    installDotNetTimeHooks: function () {
+    installDotNetTimeHooks() {
         // Find CLR module
-        const clrModule =
-            Process.findModuleByName('clr.dll') || Process.findModuleByName('coreclr.dll');
+        const clrModule
+            = Process.findModuleByName('clr.dll') || Process.findModuleByName('coreclr.dll');
 
         if (!clrModule) {
             return;
@@ -1111,7 +1133,7 @@ const TimeBombDefuser = {
     },
 
     // Certificate time validation hooks
-    installCertificateTimeHooks: function () {
+    installCertificateTimeHooks() {
         const self = this;
 
         send({
@@ -1156,7 +1178,7 @@ const TimeBombDefuser = {
                         arguments[2] = safeTime;
                         self.stats.timeSpoofs++;
                     }
-                    return original.apply(this, arguments);
+                    return Reflect.apply(original, this, arguments);
                 }
         );
 
@@ -1165,7 +1187,7 @@ const TimeBombDefuser = {
     },
 
     // Registry time hooks
-    installRegistryTimeHooks: function () {
+    installRegistryTimeHooks() {
         const self = this;
 
         send({
@@ -1181,7 +1203,7 @@ const TimeBombDefuser = {
                 func,
                 original =>
                     function (_hKey, lpValueName, _lpReserved, lpType, lpData, lpcbData) {
-                        const result = original.apply(this, arguments);
+                        const result = Reflect.apply(original, this, arguments);
 
                         if (result === 0 && lpData && lpValueName) {
                             const valueName = func.endsWith('W')
@@ -1215,7 +1237,7 @@ const TimeBombDefuser = {
                         lpData,
                         lpcbData
                     ) {
-                        const result = original.apply(this, arguments);
+                        const result = Reflect.apply(original, this, arguments);
 
                         if (result === 0 && lpData && lpValueName) {
                             const valueName = func.endsWith('W')
@@ -1262,7 +1284,7 @@ const TimeBombDefuser = {
     },
 
     // Helper functions
-    getSpoofedUnixTime: function () {
+    getSpoofedUnixTime() {
         const date = new Date(
             this.config.targetDate.year,
             this.config.targetDate.month - 1,
@@ -1275,13 +1297,13 @@ const TimeBombDefuser = {
         const seconds = Math.floor(date.getTime() / 1000);
 
         return {
-            seconds: seconds,
+            seconds,
             microseconds: 0,
             nanoseconds: 0,
         };
     },
 
-    getSpoofedDotNetTicks: function () {
+    getSpoofedDotNetTicks() {
         const date = new Date(
             this.config.targetDate.year,
             this.config.targetDate.month - 1,
@@ -1293,7 +1315,7 @@ const TimeBombDefuser = {
 
         // .NET ticks are 100-nanosecond intervals since January 1, 0001
         const dotNetEpoch = new Date(1, 0, 1).getTime();
-        return (date.getTime() - dotNetEpoch) * 10000;
+        return (date.getTime() - dotNetEpoch) * 10_000;
     },
 
     // Module detection
@@ -1318,7 +1340,7 @@ const TimeBombDefuser = {
     },
 
     // Performance optimization
-    optimizeHook: function (hookName) {
+    optimizeHook(hookName) {
         send({
             type: 'info',
             target: 'time_bomb_defuser',
@@ -1338,7 +1360,7 @@ const TimeBombDefuser = {
     },
 
     // Statistics and monitoring
-    getStatistics: function () {
+    getStatistics() {
         return {
             uptime: Date.now() - this.startTime,
             hooksInstalled: this.stats.hooksInstalled,
@@ -1350,7 +1372,7 @@ const TimeBombDefuser = {
     },
 
     // Get spoofed time for current process
-    getSpoofedTime: function () {
+    getSpoofedTime() {
         const processName = Process.enumerateModules()[0].name;
         const processTime = this.config.processTimeMap[processName];
 
@@ -1365,8 +1387,8 @@ const TimeBombDefuser = {
 
             // Add random variation
             if (this.config.timeProgression.randomVariation > 0) {
-                const variation =
-                    (Math.random() - 0.5) * this.config.timeProgression.randomVariation;
+                const variation
+                    = (Math.random() - 0.5) * this.config.timeProgression.randomVariation;
                 progression += variation;
             }
 
@@ -1393,20 +1415,20 @@ const TimeBombDefuser = {
 
     // Convert Date to FILETIME (100-nanosecond intervals since Jan 1, 1601)
     dateToFileTime: date => {
-        const EPOCH_DIFFERENCE = 11644473600000; // milliseconds between 1601 and 1970
-        return (date.getTime() + EPOCH_DIFFERENCE) * 10000;
+        const EPOCH_DIFFERENCE = 11_644_473_600_000; // milliseconds between 1601 and 1970
+        return (date.getTime() + EPOCH_DIFFERENCE) * 10_000;
     },
 
     // Hook .NET DateTime functions
-    hookDotNetDateTime: function () {
+    hookDotNetDateTime() {
         // Find CLR module
         let clrModule = null;
         Process.enumerateModules().forEach(module => {
             const moduleName = module.name.toLowerCase();
             if (
-                moduleName.indexOf('clr.dll') !== -1 ||
-                moduleName.indexOf('coreclr.dll') !== -1 ||
-                moduleName.indexOf('mscorlib.ni.dll') !== -1
+                moduleName.includes('clr.dll')
+                || moduleName.includes('coreclr.dll')
+                || moduleName.includes('mscorlib.ni.dll')
             ) {
                 clrModule = module;
             }
@@ -1431,8 +1453,8 @@ const TimeBombDefuser = {
                     onLeave: retval => {
                         const spoofedTime = this.getSpoofedTime();
                         const dotNetEpoch = new Date('0001-01-01T00:00:00Z');
-                        let ticks = (spoofedTime.getTime() - dotNetEpoch.getTime()) * 10000;
-                        ticks |= 0x4000000000000000; // UTC flag
+                        let ticks = (spoofedTime.getTime() - dotNetEpoch.getTime()) * 10_000;
+                        ticks |= 0x40_00_00_00_00_00_00_00; // UTC flag
                         retval.replace(ptr(ticks));
                         this.stats.timeSpoofs++;
                     },
@@ -1453,8 +1475,8 @@ const TimeBombDefuser = {
                     onLeave: retval => {
                         const spoofedTime = this.getSpoofedTime();
                         const dotNetEpoch = new Date('0001-01-01T00:00:00Z');
-                        let ticks = (spoofedTime.getTime() - dotNetEpoch.getTime()) * 10000;
-                        ticks |= 0x8000000000000000; // UTC flag
+                        let ticks = (spoofedTime.getTime() - dotNetEpoch.getTime()) * 10_000;
+                        ticks |= 0x80_00_00_00_00_00_00_00; // UTC flag
                         retval.replace(ptr(ticks));
                         this.stats.timeSpoofs++;
                     },
@@ -1465,18 +1487,18 @@ const TimeBombDefuser = {
                     action: 'hooked_dotnet_datetime_utcnow',
                 });
             }
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'time_bomb_defuser',
                 action: 'dotnet_hook_failed',
-                error: e.toString(),
+                error: error.toString(),
             });
         }
     },
 
     // Hook network time protocols
-    hookNetworkTime: function () {
+    hookNetworkTime() {
         const self = this;
 
         if (!this.config.blockNetworkTime) {
@@ -1488,16 +1510,16 @@ const TimeBombDefuser = {
             Module.findExportByName('ws2_32.dll', 'getaddrinfo'),
             'NetworkTime_GetAddrInfo',
             _args => ({
-                onEnter: function (args) {
+                onEnter(args) {
                     const hostname = args[0].readUtf8String();
                     if (hostname) {
                         for (let i = 0; i < self.config.ntpServers.length; i++) {
-                            if (hostname.toLowerCase().indexOf(self.config.ntpServers[i]) !== -1) {
+                            if (hostname.toLowerCase().includes(self.config.ntpServers[i])) {
                                 send({
                                     type: 'bypass',
                                     target: 'time_bomb_defuser',
                                     action: 'ntp_server_blocked',
-                                    hostname: hostname,
+                                    hostname,
                                 });
                                 this.blockNtp = true;
                                 break;
@@ -1505,7 +1527,7 @@ const TimeBombDefuser = {
                         }
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.blockNtp) {
                         retval.replace(-1); // SOCKET_ERROR
                     }
@@ -1518,14 +1540,14 @@ const TimeBombDefuser = {
             Module.findExportByName('ws2_32.dll', 'connect'),
             'NetworkTime_Connect',
             _args => ({
-                onEnter: function (args) {
+                onEnter(args) {
                     const sockaddr = args[1];
                     if (sockaddr && !sockaddr.isNull()) {
                         const family = sockaddr.readU16();
                         if (family === 2) {
                             // AF_INET
                             let port = sockaddr.add(2).readU16();
-                            port = ((port & 0xff) << 8) | ((port & 0xff00) >> 8); // ntohs
+                            port = ((port & 0xFF) << 8) | ((port & 0xFF_00) >> 8); // ntohs
                             if (port === 123) {
                                 // NTP port
                                 send({
@@ -1539,7 +1561,7 @@ const TimeBombDefuser = {
                         }
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.blockConnection) {
                         retval.replace(-1); // SOCKET_ERROR
                     }
@@ -1552,10 +1574,10 @@ const TimeBombDefuser = {
             Module.findExportByName('winhttp.dll', 'WinHttpOpen'),
             'NetworkTime_WinHttpOpen',
             _args => ({
-                onEnter: function (args) {
+                onEnter(args) {
                     if (args[0] && !args[0].isNull()) {
                         const userAgent = args[0].readUtf16String();
-                        if (userAgent && userAgent.toLowerCase().indexOf('time') !== -1) {
+                        if (userAgent && userAgent.toLowerCase().includes('time')) {
                             send({
                                 type: 'bypass',
                                 target: 'time_bomb_defuser',
@@ -1566,7 +1588,7 @@ const TimeBombDefuser = {
                         }
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.blockHttp) {
                         retval.replace(0); // NULL handle
                     }
@@ -1582,7 +1604,7 @@ const TimeBombDefuser = {
     },
 
     // Hook certificate validation
-    hookCertificateValidation: function () {
+    hookCertificateValidation() {
         if (!this.config.spoofCertificateDates) {
             return;
         }
@@ -1631,7 +1653,7 @@ const TimeBombDefuser = {
                     // Set ISC_REQ_MANUAL_CRED_VALIDATION flag to bypass time checks
                     if (args[5]) {
                         let flags = args[5].readU32();
-                        flags |= 0x00100000; // ISC_REQ_MANUAL_CRED_VALIDATION
+                        flags |= 0x00_10_00_00; // ISC_REQ_MANUAL_CRED_VALIDATION
                         args[5].writeU32(flags);
                     }
                 },
@@ -1646,16 +1668,16 @@ const TimeBombDefuser = {
     },
 
     // Hook timezone functions
-    hookTimezones: function () {
+    hookTimezones() {
         // GetTimeZoneInformation
         this.safeHook(
             Module.findExportByName('kernel32.dll', 'GetTimeZoneInformation'),
             'Timezone_GetTimeZoneInformation',
             _args => ({
-                onEnter: function (args) {
+                onEnter(args) {
                     this.tzInfo = args[0];
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.tzInfo && !this.tzInfo.isNull()) {
                         // Set to UTC (no daylight saving)
                         this.tzInfo.writeU32(0); // Bias = 0 (UTC)
@@ -1670,10 +1692,10 @@ const TimeBombDefuser = {
             Module.findExportByName('kernel32.dll', 'GetDynamicTimeZoneInformation'),
             'Timezone_GetDynamicTimeZoneInformation',
             _args => ({
-                onEnter: function (args) {
+                onEnter(args) {
                     this.tzInfo = args[0];
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.tzInfo && !this.tzInfo.isNull()) {
                         this.tzInfo.writeU32(0); // Bias = 0
                         retval.replace(0);
@@ -1690,7 +1712,7 @@ const TimeBombDefuser = {
     },
 
     // Hook CRT time functions
-    hookCRTTime: function () {
+    hookCRTTime() {
         // time()
         let timeFunc = Module.findExportByName('msvcrt.dll', 'time');
         if (!timeFunc) {
@@ -1770,7 +1792,7 @@ const TimeBombDefuser = {
                         if (funcName.includes('64')) {
                             args[0] = ptr(unixTime);
                         } else {
-                            args[0] = ptr(unixTime & 0xffffffff);
+                            args[0] = ptr(unixTime & 0xFF_FF_FF_FF);
                         }
                         this.stats.timeSpoofs++;
                     },
@@ -1786,7 +1808,7 @@ const TimeBombDefuser = {
     },
 
     // Setup process tracking
-    setupProcessTracking: function () {
+    setupProcessTracking() {
         const self = this;
         const processName = Process.enumerateModules()[0].name;
 
@@ -1806,15 +1828,15 @@ const TimeBombDefuser = {
             Module.findExportByName('kernel32.dll', 'CreateProcessW'),
             'Process_CreateProcessW',
             _args => ({
-                onEnter: function (args) {
+                onEnter(args) {
                     if (args[1]) {
                         this.cmdLine = args[1].readUtf16String();
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (retval.toInt32() !== 0 && this.cmdLine) {
                         // Extract process name from command line
-                        const match = this.cmdLine.match(/([^\\\\/]+)\.exe/i);
+                        const match = this.cmdLine.match(/([^/\\]+)\.exe/i);
                         if (match) {
                             const childProcess = `${match[1]}.exe`;
                             self.processStartTimes[childProcess] = Date.now();
@@ -1832,10 +1854,10 @@ const TimeBombDefuser = {
     },
 
     // Start time progression timer
-    startProgressionTimer: function () {
+    startProgressionTimer() {
         setInterval(() => {
             // Update process-specific times
-            for (let process in this.processStartTimes) {
+            for (const process in this.processStartTimes) {
                 const elapsed = Date.now() - this.processStartTimes[process];
                 const progressed = elapsed * this.config.timeProgression.rate;
 
@@ -1854,7 +1876,7 @@ const TimeBombDefuser = {
                 action: 'statistics_report',
                 stats: this.getStatistics(),
             });
-        }, 60000); // Every minute
+        }, 60_000); // Every minute
     },
 };
 

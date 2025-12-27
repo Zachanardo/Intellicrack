@@ -23,7 +23,6 @@ import logging
 import os
 from typing import Any, Protocol, cast
 
-from intellicrack.utils.type_safety import validate_type
 from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
     QComboBox,
@@ -54,6 +53,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QWidget,
     pyqtSignal,
 )
+from intellicrack.utils.type_safety import validate_type
 
 from ..core.analysis.cfg_explorer import CFGExplorer
 from ..core.analysis.radare2_ai_integration import R2AIEngine
@@ -308,9 +308,7 @@ class R2ConfigurationDialog(QDialog):
         layout.addWidget(advanced_group)
 
         # Dialog buttons
-        buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-        )
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
@@ -741,9 +739,7 @@ class R2IntegrationWidget(QWidget):
         for i, (name, analysis_type, tooltip) in enumerate(button_configs):
             button = QPushButton(name)
             button.setToolTip(tooltip)
-            button.clicked.connect(
-                lambda checked, t=analysis_type: self._start_analysis(t)
-            )
+            button.clicked.connect(lambda checked, t=analysis_type: self._start_analysis(t))
             button.setEnabled(False)
 
             row, col = divmod(i, 4)

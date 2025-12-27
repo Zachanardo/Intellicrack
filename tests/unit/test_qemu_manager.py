@@ -8,7 +8,21 @@ import unittest
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
-from intellicrack.ai.qemu_manager import QEMUManager, QEMUSnapshot
+import pytest
+
+try:
+    from intellicrack.ai.qemu_manager import QEMUManager, QEMUSnapshot
+    QEMU_MANAGER_AVAILABLE = True
+except ImportError:
+    QEMU_MANAGER_AVAILABLE = False
+    QEMUManager = None
+    QEMUSnapshot = None
+
+
+pytestmark = pytest.mark.skipif(
+    not QEMU_MANAGER_AVAILABLE,
+    reason="QEMU manager not available"
+)
 
 
 class TestQEMUManager(unittest.TestCase):

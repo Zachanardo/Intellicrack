@@ -799,8 +799,6 @@ class TaintAnalysisEngine:
 
         for path_group in self.taint_propagation:
             for path_dict in path_group:
-                if not isinstance(path_dict, dict):
-                    continue
                 path_list = path_dict.get("path", [])
                 if not isinstance(path_list, list):
                     continue
@@ -1465,8 +1463,6 @@ class TaintAnalysisEngine:
                 continue
 
             for path_item in path_group:
-                if not isinstance(path_item, dict):
-                    continue
                 source_step = None
                 sink_step = None
 

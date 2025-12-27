@@ -18,7 +18,6 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
-
 from typing import Any, cast
 
 from intellicrack.core.config_manager import IntellicrackConfig, get_config

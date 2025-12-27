@@ -8,11 +8,12 @@ Licensed under GNU General Public License v3.0
 """
 
 import time
-from typing import Any, cast
+from typing import Any
 
 import frida
 
 from intellicrack.core.monitoring.base_monitor import BaseMonitor, EventSeverity, EventSource, EventType, MonitorEvent, ProcessInfo
+from intellicrack.core.monitoring.frida_types import parse_frida_message
 
 
 class APIMonitor(BaseMonitor):
@@ -79,15 +80,17 @@ class APIMonitor(BaseMonitor):
             data: Additional data payload.
 
         """
-        message_dict = cast(dict[str, Any], message)
-        if message_dict.get("type") == "send":
-            payload = cast(dict[str, Any], message_dict.get("payload", {}))
-            event_type = payload.get("event_type")
+        msg_type, payload = parse_frida_message(message)
+        if msg_type != "send":
+            return
 
-            if event_type == "api_call":
-                self._handle_api_call(payload)
-            elif event_type == "error":
-                self._handle_error(Exception(payload.get("message", "Unknown error")))
+        event_type = payload.get("event_type")
+
+        if event_type == "api_call":
+            self._handle_api_call(payload)
+        elif event_type == "error":
+            error_msg = payload.get("message")
+            self._handle_error(Exception(error_msg if isinstance(error_msg, str) else "Unknown error"))
 
     def _handle_api_call(self, payload: dict[str, Any]) -> None:
         """Handle API call event from Frida.

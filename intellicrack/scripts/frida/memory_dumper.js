@@ -228,7 +228,7 @@ const AdvancedMemoryDumper = {
 
         performance: {
             targetThroughput: 1_073_741_824,
-            chunkSize: 0x0040_0000,
+            chunkSize: 0x00_40_00_00,
             parallelProcessing: true,
             numThreads: 16,
             compressionEnabled: true,
@@ -289,19 +289,19 @@ const AdvancedMemoryDumper = {
     },
 
     memoryRegionTypes: {
-        EXECUTABLE_IMAGE: 0x0100_0000,
-        MAPPED_FILE: 0x0004_0000,
-        PRIVATE_HEAP: 0x0002_0000,
-        SHARED_MEMORY: 0x0008_0000,
-        STACK_REGION: 0x0010_0000,
-        THREAD_LOCAL: 0x0020_0000,
-        KERNEL_SHARED: 0x0040_0000,
-        MANAGED_HEAP: 0x0080_0000,
-        ENCRYPTED_SEGMENT: 0x0200_0000,
-        COMPRESSED_REGION: 0x0400_0000,
-        NETWORK_BUFFER: 0x0800_0000,
-        GPU_MEMORY: 0x1000_0000,
-        SECURE_ENCLAVE: 0x2000_0000,
+        EXECUTABLE_IMAGE: 0x01_00_00_00,
+        MAPPED_FILE: 0x00_04_00_00,
+        PRIVATE_HEAP: 0x00_02_00_00,
+        SHARED_MEMORY: 0x00_08_00_00,
+        STACK_REGION: 0x00_10_00_00,
+        THREAD_LOCAL: 0x00_20_00_00,
+        KERNEL_SHARED: 0x00_40_00_00,
+        MANAGED_HEAP: 0x00_80_00_00,
+        ENCRYPTED_SEGMENT: 0x02_00_00_00,
+        COMPRESSED_REGION: 0x04_00_00_00,
+        NETWORK_BUFFER: 0x08_00_00_00,
+        GPU_MEMORY: 0x10_00_00_00,
+        SECURE_ENCLAVE: 0x20_00_00_00,
     },
 
     initialize() {
@@ -530,12 +530,23 @@ const AdvancedMemoryDumper = {
             };
 
             // Initialize platform-specific components
-            if (platform === 'windows') {
-                this.initializeWindowsHandlers();
-            } else if (platform === 'linux') {
-                this.initializeLinuxHandlers();
-            } else if (platform === 'darwin') {
-                this.initializeMacOSHandlers();
+            switch (platform) {
+                case 'windows': {
+                    this.initializeWindowsHandlers();
+
+                    break;
+                }
+                case 'linux': {
+                    this.initializeLinuxHandlers();
+
+                    break;
+                }
+                case 'darwin': {
+                    this.initializeMacOSHandlers();
+
+                    break;
+                }
+                // No default
             }
 
             console.log(
@@ -958,12 +969,23 @@ const AdvancedMemoryDumper = {
             const platformData = new Map();
             const { platform } = Process;
 
-            if (platform === 'windows') {
-                platformData.set('windows', this.extractWindowsSpecificMemory());
-            } else if (platform === 'linux') {
-                platformData.set('linux', this.extractLinuxSpecificMemory());
-            } else if (platform === 'darwin') {
-                platformData.set('macos', this.extractMacOSSpecificMemory());
+            switch (platform) {
+                case 'windows': {
+                    platformData.set('windows', this.extractWindowsSpecificMemory());
+
+                    break;
+                }
+                case 'linux': {
+                    platformData.set('linux', this.extractLinuxSpecificMemory());
+
+                    break;
+                }
+                case 'darwin': {
+                    platformData.set('macos', this.extractMacOSSpecificMemory());
+
+                    break;
+                }
+                // No default
             }
 
             // Extract platform-neutral memory regions
@@ -1166,16 +1188,14 @@ const AdvancedMemoryDumper = {
             crypto.getRandomValues(randomBytes);
         } else {
             const now = Date.now();
-            const perfNow = typeof performance !== 'undefined' ? performance.now() : 0;
+            const perfNow = typeof performance === 'undefined' ? 0 : performance.now();
             let seed = now ^ (perfNow * 1_000_000);
             for (let i = 0; i < 6; i++) {
-                seed = ((seed * 1_103_515_245) + 12_345) >>> 0;
-                randomBytes[i] = (seed >>> 16) & 0xff;
+                seed = (seed * 1_103_515_245 + 12_345) >>> 0;
+                randomBytes[i] = (seed >>> 16) & 0xFF;
             }
         }
-        const randomHex = [...randomBytes]
-            .map(b => b.toString(16).padStart(2, '0'))
-            .join('');
+        const randomHex = [...randomBytes].map(b => b.toString(16).padStart(2, '0')).join('');
         return `session_${timestamp}_${randomHex}`;
     },
 
@@ -1188,8 +1208,8 @@ const AdvancedMemoryDumper = {
             this.aiEngine.patternDatabase.set(
                 'malware_signatures',
                 new Map([
-                    ['packed_executable', [0x4d, 0x5a, 0x90, 0x00, 0x03]],
-                    ['shellcode_patterns', [0x31, 0xc0, 0x50, 0x68]],
+                    ['packed_executable', [0x4D, 0x5A, 0x90, 0x00, 0x03]],
+                    ['shellcode_patterns', [0x31, 0xC0, 0x50, 0x68]],
                     ['encryption_constants', [0x67, 0x45, 0x23, 0x01]],
                 ])
             );
@@ -1198,9 +1218,9 @@ const AdvancedMemoryDumper = {
             this.aiEngine.patternDatabase.set(
                 'compression_signatures',
                 new Map([
-                    ['zlib_header', [0x78, 0x9c]],
-                    ['gzip_header', [0x1f, 0x8b]],
-                    ['lzma_header', [0x5d, 0x00, 0x00]],
+                    ['zlib_header', [0x78, 0x9C]],
+                    ['gzip_header', [0x1F, 0x8B]],
+                    ['lzma_header', [0x5D, 0x00, 0x00]],
                 ])
             );
 
@@ -1234,19 +1254,29 @@ const AdvancedMemoryDumper = {
                     // Weights for detecting specific byte patterns
                     if (i % 4 === 0) {
                         // PE header detection weights (MZ signature)
-                        inputLayerWeights[idx] =
-                            i === 0x4d && j === 0 ? 0.95 : i === 0x5a && j === 1 ? 0.95 : -0.1;
+                        let peWeight = -0.1;
+                        if (i === 0x4D && j === 0) {
+                            peWeight = 0.95;
+                        } else if (i === 0x5A && j === 1) {
+                            peWeight = 0.95;
+                        }
+                        inputLayerWeights[idx] = peWeight;
                     } else if (i % 4 === 1) {
                         // ELF header detection weights (0x7F ELF)
-                        inputLayerWeights[idx] =
-                            i === 0x7f && j < 4 ? 0.9 : i === 0x45 && j === 1 ? 0.9 : -0.05;
+                        let elfWeight = -0.05;
+                        if (i === 0x7F && j < 4) {
+                            elfWeight = 0.9;
+                        } else if (i === 0x45 && j === 1) {
+                            elfWeight = 0.9;
+                        }
+                        inputLayerWeights[idx] = elfWeight;
                     } else if (i % 4 === 2) {
                         // Crypto signature weights (AES S-box patterns)
-                        const aesPattern = [0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5];
+                        const aesPattern = [0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5];
                         inputLayerWeights[idx] = aesPattern.includes(i % 256) ? 0.7 : -0.2;
                     } else {
                         // Compression header weights (ZIP, GZIP, etc.)
-                        const compressionSigs = [0x1f, 0x8b, 0x50, 0x4b, 0x42, 0x5a];
+                        const compressionSigs = [0x1F, 0x8B, 0x50, 0x4B, 0x42, 0x5A];
                         inputLayerWeights[idx] = compressionSigs.includes(i % 256) ? 0.8 : -0.15;
                     }
                 }
@@ -1780,8 +1810,8 @@ const AdvancedMemoryDumper = {
             const modules = Process.enumerateModules();
             for (const module of modules) {
                 if (
-                    module.name.toLowerCase().includes('coreclr.dll') ||
-                    module.name.toLowerCase().includes('clr.dll')
+                    module.name.toLowerCase().includes('coreclr.dll')
+                    || module.name.toLowerCase().includes('clr.dll')
                 ) {
                     return module.base;
                 }
@@ -1806,11 +1836,11 @@ const AdvancedMemoryDumper = {
             // Search for AppDomain structures in CLR memory
             const ranges = Process.enumerateRanges('rw-');
             for (const range of ranges) {
-                if (range.base >= clrBase && range.base < clrBase.add(0x1000000)) {
+                if (range.base >= clrBase && range.base < clrBase.add(0x1_00_00_00)) {
                     try {
                         const data = Memory.readByteArray(
                             range.base,
-                            Math.min(range.size, 0x10000)
+                            Math.min(range.size, 0x1_00_00)
                         );
                         const domainInfo = this.parseAppDomainStructures(data, range.base);
                         if (domainInfo.length > 0) {
@@ -1911,7 +1941,9 @@ const AdvancedMemoryDumper = {
                     if (jvmModule) {
                         break;
                     }
-                } catch (error) { console.error('[AdvancedMemoryDumper] Operation failed:', error.message); }
+                } catch (error) {
+                    console.error('[AdvancedMemoryDumper] Operation failed:', error.message);
+                }
             }
 
             if (jvmModule) {
@@ -1922,12 +1954,12 @@ const AdvancedMemoryDumper = {
                         // Call the function to get version info
                         const getInitArgs = new NativeFunction(exp.address, 'int', ['pointer']);
                         const vmArgs = Memory.alloc(Process.pointerSize * 4);
-                        Memory.writeU32(vmArgs, 0x00010008); // JNI_VERSION_1_8
+                        Memory.writeU32(vmArgs, 0x00_01_00_08); // JNI_VERSION_1_8
                         const result = getInitArgs(vmArgs);
                         if (result === 0) {
                             const version = Memory.readU32(vmArgs);
-                            const major = (version >> 16) & 0xff;
-                            const minor = version & 0xff;
+                            const major = (version >> 16) & 0xFF;
+                            const minor = version & 0xFF;
                             return `Java ${major}.${minor}`;
                         }
                     }
@@ -1939,14 +1971,56 @@ const AdvancedMemoryDumper = {
                     try {
                         const bytes = Memory.readByteArray(
                             range.base,
-                            Math.min(range.size, 0x10000)
+                            Math.min(range.size, 0x1_00_00)
                         );
                         const view = new Uint8Array(bytes);
                         const decoder = new TextDecoder('utf-8', { fatal: false });
                         const text = decoder.decode(view);
 
-                        // Look for Java version patterns
-                        const versionMatch = text.match(/(?:Java|JDK|OpenJDK)\s+(\d+(?:\.\d+)*)/);
+                        // Look for Java version patterns - use indexOf and substring for safety
+                        let versionMatch = null;
+                        const javaIdx = text.indexOf('Java ');
+                        const jdkIdx = text.indexOf('JDK ');
+                        const openJdkIdx = text.indexOf('OpenJDK ');
+
+                        // Parse version using pure string operations to avoid regex backtracking
+                        const extractVersion = (str, idx, prefixLen) => {
+                            const verStart = idx + prefixLen;
+                            let verEnd = verStart;
+                            while (verEnd < str.length && verEnd < verStart + 20) {
+                                const codePoint = str.codePointAt(verEnd);
+                                // Allow digits (48-57) and dot (46)
+                                if ((codePoint >= 48 && codePoint <= 57) || codePoint === 46) {
+                                    verEnd++;
+                                } else {
+                                    break;
+                                }
+                            }
+                            const ver = str.slice(verStart, verEnd);
+                            // Validate it starts with a digit
+                            const firstCodePoint = ver.codePointAt(0);
+                            if (ver.length > 0 && firstCodePoint >= 48 && firstCodePoint <= 57) {
+                                return ver;
+                            }
+                            return null;
+                        };
+
+                        if (javaIdx !== -1) {
+                            const ver = extractVersion(text, javaIdx, 5);
+                            if (ver) {
+                                versionMatch = [`Java ${ver}`];
+                            }
+                        } else if (jdkIdx !== -1) {
+                            const ver = extractVersion(text, jdkIdx, 4);
+                            if (ver) {
+                                versionMatch = [`JDK ${ver}`];
+                            }
+                        } else if (openJdkIdx !== -1) {
+                            const ver = extractVersion(text, openJdkIdx, 8);
+                            if (ver) {
+                                versionMatch = [`OpenJDK ${ver}`];
+                            }
+                        }
                         if (versionMatch) {
                             return versionMatch[0];
                         }
@@ -1956,7 +2030,9 @@ const AdvancedMemoryDumper = {
                         if (propMatch) {
                             return `Java ${propMatch[1]}`;
                         }
-                    } catch (error) { console.error('[AdvancedMemoryDumper] Operation failed:', error.message); }
+                    } catch (error) {
+                        console.error('[AdvancedMemoryDumper] Operation failed:', error.message);
+                    }
                 }
 
                 // Method 3: Try to find version through system properties
@@ -2023,11 +2099,68 @@ const AdvancedMemoryDumper = {
      * Enumerate JVM class loaders
      */
     enumerateClassLoaders: () => {
-        try {
-            return [];
-        } catch {
-            return [];
+        const classLoaders = [];
+
+        if (!Java.available) {
+            return classLoaders;
         }
+
+        Java.perform(() => {
+            try {
+                Java.enumerateClassLoaders({
+                    onMatch: loader => {
+                        const loaderInfo = {
+                            name: loader.toString(),
+                            class: loader.$className,
+                            parent: null,
+                            loadedClasses: [],
+                        };
+
+                        try {
+                            const parent = loader.getParent();
+                            if (parent) {
+                                loaderInfo.parent = parent.toString();
+                            }
+                        } catch (parentError) {
+                            console.error(
+                                '[AdvancedMemoryDumper] Failed to get parent loader:',
+                                parentError.message
+                            );
+                        }
+
+                        try {
+                            Java.enumerateLoadedClasses({
+                                onMatch: className => {
+                                    if (loaderInfo.loadedClasses.length < 100) {
+                                        loaderInfo.loadedClasses.push(className);
+                                    }
+                                },
+                                onComplete: () => {
+                                    // Enumeration complete for this loader
+                                },
+                            });
+                        } catch (classError) {
+                            console.error(
+                                '[AdvancedMemoryDumper] Failed to enumerate classes:',
+                                classError.message
+                            );
+                        }
+
+                        classLoaders.push(loaderInfo);
+                    },
+                    onComplete: () => {
+                        // All class loaders enumerated
+                    },
+                });
+            } catch (error) {
+                console.error(
+                    '[AdvancedMemoryDumper] Class loader enumeration failed:',
+                    error.message
+                );
+            }
+        });
+
+        return classLoaders;
     },
 
     /**
@@ -2189,7 +2322,9 @@ const AdvancedMemoryDumper = {
                     if (nodeModule) {
                         break;
                     }
-                } catch (error) { console.error('[AdvancedMemoryDumper] Operation failed:', error.message); }
+                } catch (error) {
+                    console.error('[AdvancedMemoryDumper] Operation failed:', error.message);
+                }
             }
 
             if (nodeModule) {
@@ -2218,7 +2353,7 @@ const AdvancedMemoryDumper = {
                     try {
                         const bytes = Memory.readByteArray(
                             range.base,
-                            Math.min(range.size, 0x20000)
+                            Math.min(range.size, 0x2_00_00)
                         );
                         const view = new Uint8Array(bytes);
                         const decoder = new TextDecoder('utf-8', { fatal: false });
@@ -2228,9 +2363,8 @@ const AdvancedMemoryDumper = {
                         const nodeVersionMatch = text.match(/v(\d+\.\d+\.\d+)/);
                         if (nodeVersionMatch) {
                             // Verify it's actually the Node version by checking context
-                            const contextCheck =
-                                text.indexOf('node.js') !== -1 ||
-                                text.indexOf('NODE_VERSION') !== -1;
+                            const contextCheck
+                                = text.includes('node.js') || text.includes('NODE_VERSION');
                             if (contextCheck) {
                                 return `v${nodeVersionMatch[1]}`;
                             }
@@ -2243,7 +2377,9 @@ const AdvancedMemoryDumper = {
                         if (processVersionMatch) {
                             return `v${processVersionMatch[1]}`;
                         }
-                    } catch (error) { console.error('[AdvancedMemoryDumper] Operation failed:', error.message); }
+                    } catch (error) {
+                        console.error('[AdvancedMemoryDumper] Operation failed:', error.message);
+                    }
                 }
 
                 // Method 3: Try to execute process.version if V8 context is available
@@ -2329,8 +2465,8 @@ const AdvancedMemoryDumper = {
             const ranges = Process.enumerateRanges('r-x');
             for (const range of ranges) {
                 try {
-                    const data = Memory.readByteArray(range.base, Math.min(range.size, 0x1000));
-                    const wasmSignature = new Uint8Array([0x00, 0x61, 0x73, 0x6d]); // WASM magic
+                    const data = Memory.readByteArray(range.base, Math.min(range.size, 0x10_00));
+                    const wasmSignature = new Uint8Array([0x00, 0x61, 0x73, 0x6D]); // WASM magic
 
                     if (this.containsSignature(data, wasmSignature)) {
                         return true;
@@ -2745,7 +2881,7 @@ const AdvancedMemoryDumper = {
     isManagedHeapRegion(range) {
         try {
             // Check for GC heap characteristics
-            const data = Memory.readByteArray(range.base, Math.min(range.size, 0x1000));
+            const data = Memory.readByteArray(range.base, Math.min(range.size, 0x10_00));
             const bytes = new Uint8Array(data);
 
             // Look for managed object headers
@@ -2768,7 +2904,7 @@ const AdvancedMemoryDumper = {
     determineGCGeneration(range) {
         try {
             // Analyze object patterns to determine generation
-            const data = Memory.readByteArray(range.base, Math.min(range.size, 0x1000));
+            const data = Memory.readByteArray(range.base, Math.min(range.size, 0x10_00));
             const bytes = new Uint8Array(data);
 
             let youngObjects = 0;
@@ -2803,7 +2939,7 @@ const AdvancedMemoryDumper = {
     extractManagedObjects(range) {
         try {
             const objects = [];
-            const data = Memory.readByteArray(range.base, Math.min(range.size, 0x10000));
+            const data = Memory.readByteArray(range.base, Math.min(range.size, 0x1_00_00));
             const bytes = new Uint8Array(data);
 
             for (let i = 0; i < bytes.length - 8; i += 4) {
@@ -2829,7 +2965,7 @@ const AdvancedMemoryDumper = {
      */
     calculateManagedHeapFreeSpace: range => {
         try {
-            const data = Memory.readByteArray(range.base, Math.min(range.size, 0x10000));
+            const data = Memory.readByteArray(range.base, Math.min(range.size, 0x1_00_00));
             const bytes = new Uint8Array(data);
 
             let freeBytes = 0;
@@ -2862,7 +2998,7 @@ const AdvancedMemoryDumper = {
 
             for (const range of ranges) {
                 try {
-                    const data = Memory.readByteArray(range.base, Math.min(range.size, 0x1000));
+                    const data = Memory.readByteArray(range.base, Math.min(range.size, 0x10_00));
                     const tables = this.parseMethodTableStructures(data, range.base);
                     methodTables.push(...tables);
                 } catch {
@@ -2886,7 +3022,7 @@ const AdvancedMemoryDumper = {
 
             for (const range of ranges) {
                 try {
-                    const data = Memory.readByteArray(range.base, Math.min(range.size, 0x1000));
+                    const data = Memory.readByteArray(range.base, Math.min(range.size, 0x10_00));
                     const assemblyInfo = this.parseAssemblyStructures(data, range.base);
                     if (assemblyInfo.length > 0) {
                         assemblies.push(...assemblyInfo);
@@ -2949,8 +3085,8 @@ const AdvancedMemoryDumper = {
 
         for (let i = 0; i <= bytes.length - sigBytes.length; i++) {
             let match = true;
-            for (let j = 0; j < sigBytes.length; j++) {
-                if (bytes[i + j] !== sigBytes[j]) {
+            for (const [j, sigByte] of sigBytes.entries()) {
+                if (bytes[i + j] !== sigByte) {
                     match = false;
                     break;
                 }
@@ -3021,7 +3157,7 @@ const AdvancedMemoryDumper = {
                 mode: 'none',
             };
 
-            const data = Memory.readByteArray(range.base, Math.min(range.size, 0x1000));
+            const data = Memory.readByteArray(range.base, Math.min(range.size, 0x10_00));
             const entropy = this.calculateRegionEntropy(range);
 
             if (entropy > 7.5) {
@@ -3068,7 +3204,7 @@ const AdvancedMemoryDumper = {
                 strength: 0,
             };
 
-            const data = Memory.readByteArray(range.base, Math.min(range.size, 0x1000));
+            const data = Memory.readByteArray(range.base, Math.min(range.size, 0x10_00));
             const entropy = this.calculateRegionEntropy(range);
 
             if (entropy > 7 && entropy < 7.5) {
@@ -3185,12 +3321,12 @@ const AdvancedMemoryDumper = {
      */
     calculateRegionEntropy: range => {
         try {
-            const data = Memory.readByteArray(range.base, Math.min(range.size, 0x10000));
+            const data = Memory.readByteArray(range.base, Math.min(range.size, 0x1_00_00));
             const bytes = new Uint8Array(data);
-            const frequency = new Array(256).fill(0);
+            const frequency = Array.from({ length: 256 }).fill(0);
 
-            for (let i = 0; i < bytes.length; i++) {
-                frequency[bytes[i]]++;
+            for (const byte of bytes) {
+                frequency[byte]++;
             }
 
             let entropy = 0;
@@ -3211,23 +3347,20 @@ const AdvancedMemoryDumper = {
      * Read 32-bit unsigned integer from byte array
      */
     readUInt32: (bytes, offset) =>
-        (bytes[offset + 3] << 24) |
-        (bytes[offset + 2] << 16) |
-        (bytes[offset + 1] << 8) |
-        bytes[offset],
+        (bytes[offset + 3] << 24)
+        | (bytes[offset + 2] << 16)
+        | (bytes[offset + 1] << 8)
+        | bytes[offset],
 
     /**
      * Check if bytes at offset represent AppDomain structure
      */
-    isAppDomainStructure: (bytes, offset) => {
+    isAppDomainStructure: (bytes, offset) =>
         // Check for AppDomain signature pattern
-        return (
-            bytes[offset] === 0xad &&
-            bytes[offset + 1] === 0xde &&
-            bytes[offset + 2] === 0xef &&
-            bytes[offset + 3] === 0xbe
-        );
-    },
+        bytes[offset] === 0xAD
+        && bytes[offset + 1] === 0xDE
+        && bytes[offset + 2] === 0xEF
+        && bytes[offset + 3] === 0xBE,
 
     /**
      * Check if bytes at offset represent managed object header
@@ -3235,7 +3368,7 @@ const AdvancedMemoryDumper = {
     isManagedObjectHeader(bytes, offset) {
         // Look for method table pointer pattern
         const methodTablePtr = this.readUInt32(bytes, offset);
-        return methodTablePtr > 0x10000000 && (methodTablePtr & 0x3) === 0;
+        return methodTablePtr > 0x10_00_00_00 && (methodTablePtr & 0x3) === 0;
     },
 
     /**
@@ -3244,7 +3377,7 @@ const AdvancedMemoryDumper = {
     estimateObjectAge: (bytes, offset) => {
         // Simple heuristic based on header patterns
         const flags = bytes[offset + 4];
-        return (flags & 0x0f) * 10; // Rough age estimation
+        return (flags & 0x0F) * 10; // Rough age estimation
     },
 
     /**
@@ -3260,7 +3393,7 @@ const AdvancedMemoryDumper = {
      */
     extractObjectSize(bytes, offset) {
         // Size is typically stored after the method table pointer
-        return this.readUInt32(bytes, offset + 4) & 0xffffff;
+        return this.readUInt32(bytes, offset + 4) & 0xFF_FF_FF;
     },
 
     /**
@@ -3276,7 +3409,7 @@ const AdvancedMemoryDumper = {
      */
     containsPythonObjects(range) {
         try {
-            const data = Memory.readByteArray(range.base, Math.min(range.size, 0x1000));
+            const data = Memory.readByteArray(range.base, Math.min(range.size, 0x10_00));
             const bytes = new Uint8Array(data);
 
             // Look for Python object signatures
@@ -3301,7 +3434,7 @@ const AdvancedMemoryDumper = {
         const refCount = this.readUInt32(bytes, offset);
         const typePtr = this.readUInt32(bytes, offset + 4);
 
-        return refCount > 0 && refCount < 0x10000 && typePtr > 0x10000000;
+        return refCount > 0 && refCount < 0x1_00_00 && typePtr > 0x10_00_00_00;
     },
 
     /**
@@ -3311,28 +3444,31 @@ const AdvancedMemoryDumper = {
         try {
             const sections = [];
             const peHeader = Memory.readByteArray(
-                module.base.add(Memory.readU32(module.base.add(0x3c))),
-                0x100
+                module.base.add(Memory.readU32(module.base.add(0x3C))),
+                0x1_00
             );
             const peBytes = new Uint8Array(peHeader);
             const numberOfSections = peBytes[0x06] | (peBytes[0x07] << 8);
-            const sectionTableOffset = 0xf8;
+            const sectionTableOffset = 0xF8;
 
             for (let i = 0; i < numberOfSections; i++) {
                 const sectionOffset = sectionTableOffset + i * 0x28;
                 const nameBytes = Memory.readByteArray(
-                    module.base.add(Memory.readU32(module.base.add(0x3c))).add(sectionOffset),
+                    module.base.add(Memory.readU32(module.base.add(0x3C))).add(sectionOffset),
                     8
                 );
-                const name = String.fromCharCode(...new Uint8Array(nameBytes)).replace(/\0.*$/, '');
+                const name = String.fromCodePoint(...new Uint8Array(nameBytes)).replace(
+                    /\0.*$/,
+                    ''
+                );
                 const virtualAddress = Memory.readU32(
-                    module.base.add(Memory.readU32(module.base.add(0x3c))).add(sectionOffset + 0x0c)
+                    module.base.add(Memory.readU32(module.base.add(0x3C))).add(sectionOffset + 0x0C)
                 );
                 const virtualSize = Memory.readU32(
-                    module.base.add(Memory.readU32(module.base.add(0x3c))).add(sectionOffset + 0x08)
+                    module.base.add(Memory.readU32(module.base.add(0x3C))).add(sectionOffset + 0x08)
                 );
                 const characteristics = Memory.readU32(
-                    module.base.add(Memory.readU32(module.base.add(0x3c))).add(sectionOffset + 0x24)
+                    module.base.add(Memory.readU32(module.base.add(0x3C))).add(sectionOffset + 0x24)
                 );
 
                 sections.push({
@@ -3340,9 +3476,9 @@ const AdvancedMemoryDumper = {
                     virtualAddress,
                     virtualSize,
                     characteristics,
-                    readable: (characteristics & 0x40000000) !== 0,
-                    writable: (characteristics & 0x80000000) !== 0,
-                    executable: (characteristics & 0x20000000) !== 0,
+                    readable: (characteristics & 0x40_00_00_00) !== 0,
+                    writable: (characteristics & 0x80_00_00_00) !== 0,
+                    executable: (characteristics & 0x20_00_00_00) !== 0,
                 });
             }
 
@@ -3369,29 +3505,32 @@ const AdvancedMemoryDumper = {
             // Check DEP (NX bit) support
             try {
                 const peHeader = Memory.readByteArray(
-                    module.base.add(Memory.readU32(module.base.add(0x3c))),
-                    0x100
+                    module.base.add(Memory.readU32(module.base.add(0x3C))),
+                    0x1_00
                 );
                 const peBytes = new Uint8Array(peHeader);
                 const characteristics = peBytes[0x16] | (peBytes[0x17] << 8);
-                protection.dep = (characteristics & 0x0100) !== 0; // IMAGE_DLLCHARACTERISTICS_NX_COMPAT
-                protection.aslr = (characteristics & 0x0040) !== 0; // IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE
-            } catch (e) {
+                protection.dep = (characteristics & 0x01_00) !== 0; // IMAGE_DLLCHARACTERISTICS_NX_COMPAT
+                protection.aslr = (characteristics & 0x00_40) !== 0; // IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE
+            } catch (error) {
                 send({
                     type: 'debug',
                     target: 'memory_dumper',
                     action: 'pe_header_protection_analysis_failed',
                     module: module.name,
-                    error: e.toString(),
+                    error: error.toString(),
                 });
             }
 
             // Check for packing by analyzing entropy
             try {
-                const sampleData = Memory.readByteArray(module.base, Math.min(module.size, 0x1000));
+                const sampleData = Memory.readByteArray(
+                    module.base,
+                    Math.min(module.size, 0x10_00)
+                );
                 const entropy = this.calculateRegionEntropy({
                     base: module.base,
-                    size: Math.min(module.size, 0x1000),
+                    size: Math.min(module.size, 0x10_00),
                 });
                 protection.packed = entropy > 7.5;
 
@@ -3401,13 +3540,13 @@ const AdvancedMemoryDumper = {
                     protection.hasHighEntropy = entropy > 7;
                     protection.sampleSize = sampleData.byteLength;
                 }
-            } catch (e) {
+            } catch (error) {
                 send({
                     type: 'debug',
                     target: 'memory_dumper',
                     action: 'entropy_calculation_failed',
                     module: module.name,
-                    error: e.toString(),
+                    error: error.toString(),
                 });
             }
 
@@ -3439,9 +3578,9 @@ const AdvancedMemoryDumper = {
 
             // Check if security directory exists
             try {
-                const peOffset = Memory.readU32(module.base.add(0x3c));
+                const peOffset = Memory.readU32(module.base.add(0x3C));
                 const securityDirRVA = Memory.readU32(module.base.add(peOffset + 0x98));
-                const securityDirSize = Memory.readU32(module.base.add(peOffset + 0x9c));
+                const securityDirSize = Memory.readU32(module.base.add(peOffset + 0x9C));
 
                 if (securityDirRVA !== 0 && securityDirSize > 0) {
                     signature.present = true;
@@ -3449,7 +3588,7 @@ const AdvancedMemoryDumper = {
                     // Read certificate data
                     const certData = Memory.readByteArray(
                         module.base.add(securityDirRVA),
-                        Math.min(securityDirSize, 0x1000)
+                        Math.min(securityDirSize, 0x10_00)
                     );
                     const certBytes = new Uint8Array(certData);
 
@@ -3461,7 +3600,9 @@ const AdvancedMemoryDumper = {
                         signature.timestamp = new Date().toISOString();
                     }
                 }
-            } catch (error) { console.error('[AdvancedMemoryDumper] Operation failed:', error.message); }
+            } catch (error) {
+                console.error('[AdvancedMemoryDumper] Operation failed:', error.message);
+            }
 
             return signature;
         } catch {
@@ -3488,23 +3629,23 @@ const AdvancedMemoryDumper = {
 
             // Check common packer signatures
             const entryPoint = module.base.add(
-                Memory.readU32(module.base.add(Memory.readU32(module.base.add(0x3c)) + 0x28))
+                Memory.readU32(module.base.add(Memory.readU32(module.base.add(0x3C)) + 0x28))
             );
-            const entryCode = Memory.readByteArray(entryPoint, 0x100);
+            const entryCode = Memory.readByteArray(entryPoint, 0x1_00);
             const entryBytes = new Uint8Array(entryCode);
 
-            if (entryBytes[0] === 0x60 && entryBytes[1] === 0xbe) {
+            if (entryBytes[0] === 0x60 && entryBytes[1] === 0xBE) {
                 packerInfo.packed = true;
                 packerInfo.packer = 'UPX';
                 packerInfo.confidence = 0.9;
-            } else if (entryBytes[0] === 0x60 && entryBytes[1] === 0xe8) {
+            } else if (entryBytes[0] === 0x60 && entryBytes[1] === 0xE8) {
                 packerInfo.packed = true;
                 packerInfo.packer = 'ASPack';
                 packerInfo.confidence = 0.85;
             } else {
                 const entropy = this.calculateRegionEntropy({
                     base: entryPoint,
-                    size: 0x100,
+                    size: 0x1_00,
                 });
                 if (entropy > 7.5) {
                     packerInfo.packed = true;
@@ -3534,11 +3675,11 @@ const AdvancedMemoryDumper = {
             } else if (protection.includes('r')) {
                 // Further classify read-only regions
                 try {
-                    const data = Memory.readByteArray(range.base, Math.min(range.size, 0x100));
+                    const data = Memory.readByteArray(range.base, Math.min(range.size, 0x1_00));
                     const bytes = new Uint8Array(data);
 
                     // Check for PE header
-                    if (bytes[0] === 0x4d && bytes[1] === 0x5a) {
+                    if (bytes[0] === 0x4D && bytes[1] === 0x5A) {
                         return 'pe_image';
                     }
 
@@ -3578,19 +3719,19 @@ const AdvancedMemoryDumper = {
                 characteristics.entropy = this.calculateRegionEntropy(range);
 
                 // Analyze content
-                const sampleSize = Math.min(range.size, 0x1000);
+                const sampleSize = Math.min(range.size, 0x10_00);
                 const data = Memory.readByteArray(range.base, sampleSize);
                 const bytes = new Uint8Array(data);
 
                 // Check for strings
                 let stringCount = 0;
                 for (let i = 0; i < bytes.length - 4; i++) {
-                    if (bytes[i] >= 0x20 && bytes[i] <= 0x7e) {
+                    if (bytes[i] >= 0x20 && bytes[i] <= 0x7E) {
                         let strlen = 0;
                         while (
-                            i + strlen < bytes.length &&
-                            bytes[i + strlen] >= 0x20 &&
-                            bytes[i + strlen] <= 0x7e
+                            i + strlen < bytes.length
+                            && bytes[i + strlen] >= 0x20
+                            && bytes[i + strlen] <= 0x7E
                         ) {
                             strlen++;
                         }
@@ -3606,21 +3747,23 @@ const AdvancedMemoryDumper = {
                 let pointerCount = 0;
                 for (let i = 0; i < bytes.length - 4; i += 4) {
                     const value = this.readUInt32(bytes, i);
-                    if (value > 0x10000000 && value < 0x80000000) {
+                    if (value > 0x10_00_00_00 && value < 0x80_00_00_00) {
                         pointerCount++;
                     }
                 }
                 characteristics.hasPointers = pointerCount > bytes.length / 32;
 
                 // Determine alignment
-                if (range.base.and(0xfff).toInt32() === 0) {
+                if (range.base.and(0xF_FF).toInt32() === 0) {
                     characteristics.alignment = 'page_aligned';
-                } else if (range.base.and(0xf).toInt32() === 0) {
+                } else if (range.base.and(0xF).toInt32() === 0) {
                     characteristics.alignment = 'paragraph_aligned';
                 } else {
                     characteristics.alignment = 'unaligned';
                 }
-            } catch (error) { console.error('[AdvancedMemoryDumper] Operation failed:', error.message); }
+            } catch (error) {
+                console.error('[AdvancedMemoryDumper] Operation failed:', error.message);
+            }
 
             return characteristics;
         } catch {
@@ -3652,7 +3795,7 @@ const AdvancedMemoryDumper = {
             try {
                 // Get the actual thread object
                 const threads = Process.enumerateThreads();
-                const targetThread = threads.find(t => t.id === threadId) || threads[0];
+                const targetThread = threads.find(t => t.id === thread.id) || threads[0];
 
                 if (targetThread?.context) {
                     // Get real register values from thread context
@@ -3669,22 +3812,36 @@ const AdvancedMemoryDumper = {
                             context.basePointer = ctx.ebp || ptr(0);
                         }
                     } else if (Process.platform === 'linux' || Process.platform === 'darwin') {
-                        if (Process.arch === 'x64') {
-                            context.programCounter = ctx.rip || ctx.pc || ptr(0);
-                            context.stackPointer = ctx.rsp || ctx.sp || ptr(0);
-                            context.basePointer = ctx.rbp || ctx.fp || ptr(0);
-                        } else if (Process.arch === 'ia32') {
-                            context.programCounter = ctx.eip || ctx.pc || ptr(0);
-                            context.stackPointer = ctx.esp || ctx.sp || ptr(0);
-                            context.basePointer = ctx.ebp || ctx.fp || ptr(0);
-                        } else if (Process.arch === 'arm64') {
-                            context.programCounter = ctx.pc || ptr(0);
-                            context.stackPointer = ctx.sp || ptr(0);
-                            context.basePointer = ctx.x29 || ctx.fp || ptr(0);
-                        } else if (Process.arch === 'arm') {
-                            context.programCounter = ctx.pc || ptr(0);
-                            context.stackPointer = ctx.sp || ptr(0);
-                            context.basePointer = ctx.r11 || ctx.fp || ptr(0);
+                        switch (Process.arch) {
+                            case 'x64': {
+                                context.programCounter = ctx.rip || ctx.pc || ptr(0);
+                                context.stackPointer = ctx.rsp || ctx.sp || ptr(0);
+                                context.basePointer = ctx.rbp || ctx.fp || ptr(0);
+
+                                break;
+                            }
+                            case 'ia32': {
+                                context.programCounter = ctx.eip || ctx.pc || ptr(0);
+                                context.stackPointer = ctx.esp || ctx.sp || ptr(0);
+                                context.basePointer = ctx.ebp || ctx.fp || ptr(0);
+
+                                break;
+                            }
+                            case 'arm64': {
+                                context.programCounter = ctx.pc || ptr(0);
+                                context.stackPointer = ctx.sp || ptr(0);
+                                context.basePointer = ctx.x29 || ctx.fp || ptr(0);
+
+                                break;
+                            }
+                            case 'arm': {
+                                context.programCounter = ctx.pc || ptr(0);
+                                context.stackPointer = ctx.sp || ptr(0);
+                                context.basePointer = ctx.r11 || ctx.fp || ptr(0);
+
+                                break;
+                            }
+                            // No default
                         }
                     }
 
@@ -3696,8 +3853,10 @@ const AdvancedMemoryDumper = {
                         }
                     }
                 }
-            } catch (e) {
-                console.warn(`[AdvancedMemoryDumper] Could not read thread context: ${e.message}`);
+            } catch (error) {
+                console.warn(
+                    `[AdvancedMemoryDumper] Could not read thread context: ${error.message}`
+                );
             }
 
             return context;
@@ -3742,7 +3901,9 @@ const AdvancedMemoryDumper = {
                             frame.module = moduleInfo.name;
                             frame.offset = trace[i].sub(moduleInfo.base).toInt32();
                         }
-                    } catch (error) { console.error('[AdvancedMemoryDumper] Operation failed:', error.message); }
+                    } catch (error) {
+                        console.error('[AdvancedMemoryDumper] Operation failed:', error.message);
+                    }
 
                     stackTrace.frames.push(frame);
                 }
@@ -3757,18 +3918,38 @@ const AdvancedMemoryDumper = {
                         let stackPointer = null;
                         let _framePointer = null;
 
-                        if (Process.arch === 'x64') {
-                            stackPointer = currentThread.context.rsp || currentThread.context.sp;
-                            _framePointer = currentThread.context.rbp || currentThread.context.fp;
-                        } else if (Process.arch === 'x86') {
-                            stackPointer = currentThread.context.esp || currentThread.context.sp;
-                            _framePointer = currentThread.context.ebp || currentThread.context.fp;
-                        } else if (Process.arch === 'arm64') {
-                            stackPointer = currentThread.context.sp;
-                            _framePointer = currentThread.context.fp || currentThread.context.x29;
-                        } else if (Process.arch === 'arm') {
-                            stackPointer = currentThread.context.sp;
-                            _framePointer = currentThread.context.r11 || currentThread.context.fp;
+                        switch (Process.arch) {
+                            case 'x64': {
+                                stackPointer
+                                    = currentThread.context.rsp || currentThread.context.sp;
+                                _framePointer
+                                    = currentThread.context.rbp || currentThread.context.fp;
+
+                                break;
+                            }
+                            case 'x86': {
+                                stackPointer
+                                    = currentThread.context.esp || currentThread.context.sp;
+                                _framePointer
+                                    = currentThread.context.ebp || currentThread.context.fp;
+
+                                break;
+                            }
+                            case 'arm64': {
+                                stackPointer = currentThread.context.sp;
+                                _framePointer
+                                    = currentThread.context.fp || currentThread.context.x29;
+
+                                break;
+                            }
+                            case 'arm': {
+                                stackPointer = currentThread.context.sp;
+                                _framePointer
+                                    = currentThread.context.r11 || currentThread.context.fp;
+
+                                break;
+                            }
+                            // No default
                         }
 
                         if (stackPointer) {
@@ -3809,14 +3990,26 @@ const AdvancedMemoryDumper = {
                             // If we didn't find enough frames, add the instruction pointer at least
                             if (stackTrace.frames.length === 0) {
                                 let instructionPointer = null;
-                                if (Process.arch === 'x64') {
-                                    instructionPointer =
-                                        currentThread.context.rip || currentThread.context.pc;
-                                } else if (Process.arch === 'x86') {
-                                    instructionPointer =
-                                        currentThread.context.eip || currentThread.context.pc;
-                                } else if (Process.arch === 'arm64' || Process.arch === 'arm') {
-                                    instructionPointer = currentThread.context.pc;
+                                switch (Process.arch) {
+                                    case 'x64': {
+                                        instructionPointer
+                                            = currentThread.context.rip || currentThread.context.pc;
+
+                                        break;
+                                    }
+                                    case 'x86': {
+                                        instructionPointer
+                                            = currentThread.context.eip || currentThread.context.pc;
+
+                                        break;
+                                    }
+                                    case 'arm64':
+                                    case 'arm': {
+                                        instructionPointer = currentThread.context.pc;
+
+                                        break;
+                                    }
+                                    // No default
                                 }
 
                                 if (instructionPointer) {
@@ -3829,8 +4022,8 @@ const AdvancedMemoryDumper = {
                                         function: 'current_execution',
                                         offset: module
                                             ? ptr(instructionPointer.toString())
-                                                  .sub(module.base)
-                                                  .toInt32()
+                                                .sub(module.base)
+                                                .toInt32()
                                             : 0,
                                     });
                                 }
@@ -3839,7 +4032,7 @@ const AdvancedMemoryDumper = {
                             stackTrace.depth = stackTrace.frames.length;
                         }
                     }
-                } catch (_fallbackError) {
+                } catch {
                     // Last resort: Use module base addresses as reference points
                     const modules = Process.enumerateModules();
                     if (modules.length > 0) {
@@ -3847,13 +4040,13 @@ const AdvancedMemoryDumper = {
                         for (let i = 0; i < Math.min(8, modules.length); i++) {
                             const mod = modules[i];
                             // Get the module's entry point or base + typical entry offset
-                            const entryPoint = mod.base.add(0x1000); // Common entry point offset
+                            const entryPoint = mod.base.add(0x10_00); // Common entry point offset
 
                             stackTrace.frames.push({
                                 address: entryPoint,
                                 module: mod.name,
                                 function: 'module_entry',
-                                offset: 0x1000,
+                                offset: 0x10_00,
                             });
                         }
                         stackTrace.depth = stackTrace.frames.length;
@@ -3885,16 +4078,19 @@ const AdvancedMemoryDumper = {
 
             for (const range of ranges) {
                 // Look for regions that match typical stack characteristics
-                if (range.size >= 0x1000 && range.size <= 0x100000) {
+                if (range.size >= 0x10_00 && range.size <= 0x10_00_00) {
                     try {
                         // Check if this could be a stack by looking for frame patterns
-                        const data = Memory.readByteArray(range.base, Math.min(range.size, 0x1000));
+                        const data = Memory.readByteArray(
+                            range.base,
+                            Math.min(range.size, 0x10_00)
+                        );
                         const bytes = new Uint8Array(data);
 
                         let frameCount = 0;
                         for (let i = 0; i < bytes.length - 8; i += 4) {
                             const value = this.readUInt32(bytes, i);
-                            if (value > 0x10000000 && value < 0x80000000) {
+                            if (value > 0x10_00_00_00 && value < 0x80_00_00_00) {
                                 frameCount++;
                             }
                         }
@@ -3906,7 +4102,9 @@ const AdvancedMemoryDumper = {
                             stackInfo.committed = range.size;
                             break;
                         }
-                    } catch (error) { console.error('[AdvancedMemoryDumper] Operation failed:', error.message); }
+                    } catch (error) {
+                        console.error('[AdvancedMemoryDumper] Operation failed:', error.message);
+                    }
                 }
             }
 
@@ -3933,27 +4131,34 @@ const AdvancedMemoryDumper = {
                     // Windows TLS extraction would examine TEB structure
                     const ranges = Process.enumerateRanges('rw-');
                     for (const range of ranges) {
-                        if (range.size === 0x1000) {
+                        if (range.size === 0x10_00) {
                             // Typical TEB size
                             try {
-                                const data = Memory.readByteArray(range.base, 0x100);
+                                const data = Memory.readByteArray(range.base, 0x1_00);
                                 const bytes = new Uint8Array(data);
 
                                 // Look for TLS array pointer patterns
                                 for (let i = 0; i < bytes.length - 4; i += 4) {
                                     const value = this.readUInt32(bytes, i);
-                                    if (value > 0x10000000 && value < 0x80000000) {
+                                    if (value > 0x10_00_00_00 && value < 0x80_00_00_00) {
                                         tlsData.slots.set(i / 4, value);
                                     }
                                 }
-                            } catch (error) { console.error('[AdvancedMemoryDumper] Operation failed:', error.message); }
+                            } catch (error) {
+                                console.error(
+                                    '[AdvancedMemoryDumper] Operation failed:',
+                                    error.message
+                                );
+                            }
                         }
                     }
                 } else {
                     // Unix-like TLS extraction would go here
-                    tlsData.slots.set(0, 0x12345678);
+                    tlsData.slots.set(0, 0x12_34_56_78);
                 }
-            } catch (error) { console.error('[AdvancedMemoryDumper] Operation failed:', error.message); }
+            } catch (error) {
+                console.error('[AdvancedMemoryDumper] Operation failed:', error.message);
+            }
 
             return tlsData;
         } catch {
@@ -3980,74 +4185,88 @@ const AdvancedMemoryDumper = {
                     // Get actual register values from thread context
                     const { context } = currentThread;
 
-                    if (Process.arch === 'x64') {
-                        registers.general = {
-                            rax: context.rax ? context.rax.toString() : ptr(0).toString(),
-                            rbx: context.rbx ? context.rbx.toString() : ptr(0).toString(),
-                            rcx: context.rcx ? context.rcx.toString() : ptr(0).toString(),
-                            rdx: context.rdx ? context.rdx.toString() : ptr(0).toString(),
-                            rsi: context.rsi ? context.rsi.toString() : ptr(0).toString(),
-                            rdi: context.rdi ? context.rdi.toString() : ptr(0).toString(),
-                            rbp: context.rbp ? context.rbp.toString() : ptr(0).toString(),
-                            rsp: context.rsp ? context.rsp.toString() : ptr(0).toString(),
-                            rip: context.rip ? context.rip.toString() : ptr(0).toString(),
-                            r8: context.r8 ? context.r8.toString() : ptr(0).toString(),
-                            r9: context.r9 ? context.r9.toString() : ptr(0).toString(),
-                            r10: context.r10 ? context.r10.toString() : ptr(0).toString(),
-                            r11: context.r11 ? context.r11.toString() : ptr(0).toString(),
-                            r12: context.r12 ? context.r12.toString() : ptr(0).toString(),
-                            r13: context.r13 ? context.r13.toString() : ptr(0).toString(),
-                            r14: context.r14 ? context.r14.toString() : ptr(0).toString(),
-                            r15: context.r15 ? context.r15.toString() : ptr(0).toString(),
-                        };
-                    } else if (Process.arch === 'ia32') {
-                        registers.general = {
-                            eax: context.eax ? context.eax.toString() : ptr(0).toString(),
-                            ebx: context.ebx ? context.ebx.toString() : ptr(0).toString(),
-                            ecx: context.ecx ? context.ecx.toString() : ptr(0).toString(),
-                            edx: context.edx ? context.edx.toString() : ptr(0).toString(),
-                            esi: context.esi ? context.esi.toString() : ptr(0).toString(),
-                            edi: context.edi ? context.edi.toString() : ptr(0).toString(),
-                            ebp: context.ebp ? context.ebp.toString() : ptr(0).toString(),
-                            esp: context.esp ? context.esp.toString() : ptr(0).toString(),
-                            eip: context.eip ? context.eip.toString() : ptr(0).toString(),
-                        };
-                    } else if (Process.arch === 'arm64') {
-                        registers.general = {};
-                        // ARM64 registers x0-x30
-                        for (let i = 0; i <= 30; i++) {
-                            const regName = `x${i}`;
-                            registers.general[regName] = context[regName]
-                                ? context[regName].toString()
-                                : ptr(0).toString();
+                    switch (Process.arch) {
+                        case 'x64': {
+                            registers.general = {
+                                rax: context.rax ? context.rax.toString() : ptr(0).toString(),
+                                rbx: context.rbx ? context.rbx.toString() : ptr(0).toString(),
+                                rcx: context.rcx ? context.rcx.toString() : ptr(0).toString(),
+                                rdx: context.rdx ? context.rdx.toString() : ptr(0).toString(),
+                                rsi: context.rsi ? context.rsi.toString() : ptr(0).toString(),
+                                rdi: context.rdi ? context.rdi.toString() : ptr(0).toString(),
+                                rbp: context.rbp ? context.rbp.toString() : ptr(0).toString(),
+                                rsp: context.rsp ? context.rsp.toString() : ptr(0).toString(),
+                                rip: context.rip ? context.rip.toString() : ptr(0).toString(),
+                                r8: context.r8 ? context.r8.toString() : ptr(0).toString(),
+                                r9: context.r9 ? context.r9.toString() : ptr(0).toString(),
+                                r10: context.r10 ? context.r10.toString() : ptr(0).toString(),
+                                r11: context.r11 ? context.r11.toString() : ptr(0).toString(),
+                                r12: context.r12 ? context.r12.toString() : ptr(0).toString(),
+                                r13: context.r13 ? context.r13.toString() : ptr(0).toString(),
+                                r14: context.r14 ? context.r14.toString() : ptr(0).toString(),
+                                r15: context.r15 ? context.r15.toString() : ptr(0).toString(),
+                            };
+
+                            break;
                         }
-                        registers.general.sp = context.sp
-                            ? context.sp.toString()
-                            : ptr(0).toString();
-                        registers.general.pc = context.pc
-                            ? context.pc.toString()
-                            : ptr(0).toString();
-                        registers.general.lr = context.lr
-                            ? context.lr.toString()
-                            : ptr(0).toString();
-                    } else if (Process.arch === 'arm') {
-                        registers.general = {};
-                        // ARM32 registers r0-r15
-                        for (let i = 0; i <= 15; i++) {
-                            const regName = `r${i}`;
-                            registers.general[regName] = context[regName]
-                                ? context[regName].toString()
-                                : ptr(0).toString();
+                        case 'ia32': {
+                            registers.general = {
+                                eax: context.eax ? context.eax.toString() : ptr(0).toString(),
+                                ebx: context.ebx ? context.ebx.toString() : ptr(0).toString(),
+                                ecx: context.ecx ? context.ecx.toString() : ptr(0).toString(),
+                                edx: context.edx ? context.edx.toString() : ptr(0).toString(),
+                                esi: context.esi ? context.esi.toString() : ptr(0).toString(),
+                                edi: context.edi ? context.edi.toString() : ptr(0).toString(),
+                                ebp: context.ebp ? context.ebp.toString() : ptr(0).toString(),
+                                esp: context.esp ? context.esp.toString() : ptr(0).toString(),
+                                eip: context.eip ? context.eip.toString() : ptr(0).toString(),
+                            };
+
+                            break;
                         }
-                        registers.general.sp = context.sp
-                            ? context.sp.toString()
-                            : ptr(0).toString();
-                        registers.general.pc = context.pc
-                            ? context.pc.toString()
-                            : ptr(0).toString();
-                        registers.general.lr = context.lr
-                            ? context.lr.toString()
-                            : ptr(0).toString();
+                        case 'arm64': {
+                            registers.general = {};
+                            // ARM64 registers x0-x30
+                            for (let i = 0; i <= 30; i++) {
+                                const regName = `x${i}`;
+                                registers.general[regName] = context[regName]
+                                    ? context[regName].toString()
+                                    : ptr(0).toString();
+                            }
+                            registers.general.sp = context.sp
+                                ? context.sp.toString()
+                                : ptr(0).toString();
+                            registers.general.pc = context.pc
+                                ? context.pc.toString()
+                                : ptr(0).toString();
+                            registers.general.lr = context.lr
+                                ? context.lr.toString()
+                                : ptr(0).toString();
+
+                            break;
+                        }
+                        case 'arm': {
+                            registers.general = {};
+                            // ARM32 registers r0-r15
+                            for (let i = 0; i <= 15; i++) {
+                                const regName = `r${i}`;
+                                registers.general[regName] = context[regName]
+                                    ? context[regName].toString()
+                                    : ptr(0).toString();
+                            }
+                            registers.general.sp = context.sp
+                                ? context.sp.toString()
+                                : ptr(0).toString();
+                            registers.general.pc = context.pc
+                                ? context.pc.toString()
+                                : ptr(0).toString();
+                            registers.general.lr = context.lr
+                                ? context.lr.toString()
+                                : ptr(0).toString();
+
+                            break;
+                        }
+                        // No default
                     }
 
                     // Try to read floating point and vector registers if available
@@ -4072,7 +4291,9 @@ const AdvancedMemoryDumper = {
                         gs: context.gs ? context.gs.toString() : '0x0',
                     };
                 }
-            } catch (error) { console.error('[AdvancedMemoryDumper] Operation failed:', error.message); }
+            } catch (error) {
+                console.error('[AdvancedMemoryDumper] Operation failed:', error.message);
+            }
 
             return registers;
         } catch {
@@ -4091,7 +4312,7 @@ const AdvancedMemoryDumper = {
             }
 
             // Analyze heap metadata patterns
-            const data = Memory.readByteArray(range.base, Math.min(range.size, 0x1000));
+            const data = Memory.readByteArray(range.base, Math.min(range.size, 0x10_00));
             const bytes = new Uint8Array(data);
 
             // Look for heap allocation patterns
@@ -4101,7 +4322,7 @@ const AdvancedMemoryDumper = {
                 const flags = this.readUInt32(bytes, i + 4);
 
                 // Check for valid heap chunk headers
-                if (size > 0 && size < 0x10000 && (flags & 0x1) === 0) {
+                if (size > 0 && size < 0x1_00_00 && (flags & 0x1) === 0) {
                     allocationCount++;
                 }
             }
@@ -4118,18 +4339,18 @@ const AdvancedMemoryDumper = {
     determineHeapType(range) {
         try {
             // Analyze heap metadata to determine allocator type
-            const data = Memory.readByteArray(range.base, Math.min(range.size, 0x1000));
+            const data = Memory.readByteArray(range.base, Math.min(range.size, 0x10_00));
             const bytes = new Uint8Array(data);
 
             // Check for Windows heap signatures
-            if (bytes[0] === 0xee && bytes[1] === 0xfe && bytes[2] === 0xfe && bytes[3] === 0xee) {
+            if (bytes[0] === 0xEE && bytes[1] === 0xFE && bytes[2] === 0xFE && bytes[3] === 0xEE) {
                 return 'windows_ntdll';
             }
 
             // Check for glibc malloc signatures
             if (bytes[0] === 0x00 && bytes[1] === 0x00 && bytes[2] === 0x00 && bytes[3] === 0x00) {
                 const size = this.readUInt32(bytes, 4);
-                if (size > 0 && size < 0x100000) {
+                if (size > 0 && size < 0x10_00_00) {
                     return 'glibc_malloc';
                 }
             }
@@ -4203,7 +4424,7 @@ const AdvancedMemoryDumper = {
                 totalFreeSpace: 0,
             };
 
-            const data = Memory.readByteArray(range.base, Math.min(range.size, 0x10000));
+            const data = Memory.readByteArray(range.base, Math.min(range.size, 0x1_00_00));
             const bytes = new Uint8Array(data);
 
             const freeBlocks = [];
@@ -4215,7 +4436,7 @@ const AdvancedMemoryDumper = {
                 const flags = this.readUInt32(bytes, i + 4);
 
                 // Check if chunk is free (simplified heuristic)
-                if ((flags & 0x1) === 0 && size > 0 && size < 0x10000) {
+                if ((flags & 0x1) === 0 && size > 0 && size < 0x1_00_00) {
                     freeBlocks.push(size);
                     totalFreeSpace += size;
                 }
@@ -4250,7 +4471,7 @@ const AdvancedMemoryDumper = {
         try {
             const freeBlocks = [];
 
-            const data = Memory.readByteArray(range.base, Math.min(range.size, 0x10000));
+            const data = Memory.readByteArray(range.base, Math.min(range.size, 0x1_00_00));
             const bytes = new Uint8Array(data);
 
             for (let i = 0; i < bytes.length - 8; i += 8) {
@@ -4258,7 +4479,7 @@ const AdvancedMemoryDumper = {
                 const flags = this.readUInt32(bytes, i + 4);
 
                 // Check if chunk is free
-                if ((flags & 0x1) === 0 && size > 0 && size < 0x10000) {
+                if ((flags & 0x1) === 0 && size > 0 && size < 0x1_00_00) {
                     freeBlocks.push({
                         offset: i,
                         size,
@@ -4304,7 +4525,7 @@ const AdvancedMemoryDumper = {
                 statistics: {},
             };
 
-            const data = Memory.readByteArray(range.base, Math.min(range.size, 0x1000));
+            const data = Memory.readByteArray(range.base, Math.min(range.size, 0x10_00));
             const bytes = new Uint8Array(data);
 
             // Extract heap header information
@@ -4315,7 +4536,9 @@ const AdvancedMemoryDumper = {
                     segmentCount: this.readUInt32(bytes, 8),
                     totalSize: this.readUInt32(bytes, 12),
                 };
-            } catch (error) { console.error('[AdvancedMemoryDumper] Operation failed:', error.message); }
+            } catch (error) {
+                console.error('[AdvancedMemoryDumper] Operation failed:', error.message);
+            }
 
             // Extract basic statistics
             let allocatedCount = 0;
@@ -4326,12 +4549,12 @@ const AdvancedMemoryDumper = {
                 const size = this.readUInt32(bytes, i);
                 const flags = this.readUInt32(bytes, i + 4);
 
-                if (size > 0 && size < 0x10000) {
-                    if ((flags & 0x1) !== 0) {
+                if (size > 0 && size < 0x1_00_00) {
+                    if ((flags & 0x1) === 0) {
+                        freeCount++;
+                    } else {
                         allocatedCount++;
                         totalAllocated += size;
-                    } else {
-                        freeCount++;
                     }
                 }
             }
@@ -4360,7 +4583,7 @@ const AdvancedMemoryDumper = {
      */
     identifyEncryptionType(range) {
         try {
-            const data = Memory.readByteArray(range.base, Math.min(range.size, 0x1000));
+            const data = Memory.readByteArray(range.base, Math.min(range.size, 0x10_00));
             const bytes = new Uint8Array(data);
 
             // Check for AES key schedule patterns
@@ -4433,7 +4656,7 @@ const AdvancedMemoryDumper = {
                 let largeNumberCount = 0;
                 for (let j = 0; j < 16; j++) {
                     const value = this.readUInt32(bytes, i + j * 4);
-                    if (value > 0x80000000) {
+                    if (value > 0x80_00_00_00) {
                         largeNumberCount++;
                     }
                 }
@@ -4458,9 +4681,9 @@ const AdvancedMemoryDumper = {
                 const y = this.readUInt32(bytes, i + 4);
 
                 // Basic check for curve point patterns
-                if (x > 0 && y > 0 && x < 0xffffffff && y < 0xffffffff) {
+                if (x > 0 && y > 0 && x < 0xFF_FF_FF_FF && y < 0xFF_FF_FF_FF) {
                     const combined = x ^ y;
-                    if ((combined & 0xff) !== 0 && (combined & 0xff00) !== 0) {
+                    if ((combined & 0xFF) !== 0 && (combined & 0xFF_00) !== 0) {
                         return true;
                     }
                 }
@@ -4516,7 +4739,7 @@ const AdvancedMemoryDumper = {
                 keySchedules: [],
             };
 
-            const data = Memory.readByteArray(range.base, Math.min(range.size, 0x4000));
+            const data = Memory.readByteArray(range.base, Math.min(range.size, 0x40_00));
             const bytes = new Uint8Array(data);
 
             // Search for AES key patterns
@@ -4558,10 +4781,10 @@ const AdvancedMemoryDumper = {
      */
     calculateByteArrayEntropy: bytes => {
         try {
-            const frequency = new Array(256).fill(0);
+            const frequency = Array.from({ length: 256 }).fill(0);
 
-            for (let i = 0; i < bytes.length; i++) {
-                frequency[bytes[i]]++;
+            for (const byte of bytes) {
+                frequency[byte]++;
             }
 
             let entropy = 0;
@@ -4634,7 +4857,7 @@ const AdvancedMemoryDumper = {
      */
     containsNetworkData(range) {
         try {
-            const data = Memory.readByteArray(range.base, Math.min(range.size, 0x1000));
+            const data = Memory.readByteArray(range.base, Math.min(range.size, 0x10_00));
             const bytes = new Uint8Array(data);
 
             // Check for common network protocol signatures
@@ -4649,7 +4872,7 @@ const AdvancedMemoryDumper = {
                 if (i + 20 < bytes.length) {
                     const srcPort = (bytes[i] << 8) | bytes[i + 1];
                     const dstPort = (bytes[i + 2] << 8) | bytes[i + 3];
-                    if (srcPort > 0 && srcPort < 65536 && dstPort > 0 && dstPort < 65536) {
+                    if (srcPort > 0 && srcPort < 65_536 && dstPort > 0 && dstPort < 65_536) {
                         return true;
                     }
                 }
@@ -4676,8 +4899,8 @@ const AdvancedMemoryDumper = {
                 return false;
             }
 
-            for (let i = 0; i < pattern.length; i++) {
-                if (bytes[offset + i] !== pattern[i]) {
+            for (const [i, element] of pattern.entries()) {
+                if (bytes[offset + i] !== element) {
                     return false;
                 }
             }
@@ -4693,7 +4916,7 @@ const AdvancedMemoryDumper = {
      */
     identifyNetworkProtocol(range) {
         try {
-            const data = Memory.readByteArray(range.base, Math.min(range.size, 0x1000));
+            const data = Memory.readByteArray(range.base, Math.min(range.size, 0x10_00));
             const bytes = new Uint8Array(data);
 
             // Check for HTTP protocol
@@ -4728,7 +4951,7 @@ const AdvancedMemoryDumper = {
     containsHTTPData(bytes) {
         const httpMethods = [
             [0x47, 0x45, 0x54, 0x20], // "GET "
-            [0x50, 0x4f, 0x53, 0x54], // "POST"
+            [0x50, 0x4F, 0x53, 0x54], // "POST"
             [0x48, 0x54, 0x54, 0x50], // "HTTP"
         ];
 
@@ -4755,11 +4978,11 @@ const AdvancedMemoryDumper = {
 
             // Check for valid TLS content types and versions
             if (
-                contentType >= 20 &&
-                contentType <= 24 &&
-                versionMajor === 3 &&
-                versionMinor >= 1 &&
-                versionMinor <= 4
+                contentType >= 20
+                && contentType <= 24
+                && versionMajor === 3
+                && versionMinor >= 1
+                && versionMinor <= 4
             ) {
                 return true;
             }
@@ -4779,7 +5002,7 @@ const AdvancedMemoryDumper = {
             const seqNum = this.readUInt32(bytes, i + 4);
 
             // Basic validation of TCP header fields
-            if (srcPort > 0 && srcPort < 65536 && dstPort > 0 && dstPort < 65536 && seqNum > 0) {
+            if (srcPort > 0 && srcPort < 65_536 && dstPort > 0 && dstPort < 65_536 && seqNum > 0) {
                 return true;
             }
         }
@@ -4799,12 +5022,12 @@ const AdvancedMemoryDumper = {
 
             // Basic validation of UDP header fields
             if (
-                srcPort > 0 &&
-                srcPort < 65536 &&
-                dstPort > 0 &&
-                dstPort < 65536 &&
-                length >= 8 &&
-                length < 65536
+                srcPort > 0
+                && srcPort < 65_536
+                && dstPort > 0
+                && dstPort < 65_536
+                && length >= 8
+                && length < 65_536
             ) {
                 return true;
             }
@@ -4819,7 +5042,7 @@ const AdvancedMemoryDumper = {
     extractConnectionInfo(range) {
         try {
             const connections = [];
-            const data = Memory.readByteArray(range.base, Math.min(range.size, 0x1000));
+            const data = Memory.readByteArray(range.base, Math.min(range.size, 0x10_00));
             const bytes = new Uint8Array(data);
 
             // Extract TCP connections
@@ -4870,7 +5093,7 @@ const AdvancedMemoryDumper = {
     parseNetworkPackets(range) {
         try {
             const packets = [];
-            const data = Memory.readByteArray(range.base, Math.min(range.size, 0x2000));
+            const data = Memory.readByteArray(range.base, Math.min(range.size, 0x20_00));
             const bytes = new Uint8Array(data);
 
             // Parse potential packet structures
@@ -4887,7 +5110,7 @@ const AdvancedMemoryDumper = {
                     };
 
                     // Check for IP payload
-                    if (etherType === 0x0800 && i + 14 < bytes.length) {
+                    if (etherType === 0x08_00 && i + 14 < bytes.length) {
                         const ipPacket = this.parseIPPacket(bytes, i + 14);
                         if (ipPacket) {
                             packet.payload = ipPacket;
@@ -4916,7 +5139,7 @@ const AdvancedMemoryDumper = {
 
             // Check for valid EtherType
             const etherType = (bytes[offset + 12] << 8) | bytes[offset + 13];
-            return etherType >= 0x0600; // Minimum valid EtherType
+            return etherType >= 0x06_00; // Minimum valid EtherType
         } catch {
             return false;
         }
@@ -4931,8 +5154,8 @@ const AdvancedMemoryDumper = {
                 return null;
             }
 
-            const version = (bytes[offset] >> 4) & 0xf;
-            const headerLength = (bytes[offset] & 0xf) * 4;
+            const version = (bytes[offset] >> 4) & 0xF;
+            const headerLength = (bytes[offset] & 0xF) * 4;
             const protocol = bytes[offset + 9];
             const srcIP = [
                 bytes[offset + 12],
@@ -5078,9 +5301,9 @@ const AdvancedMemoryDumper = {
                     maxChangesPerSecond: 1000, // Maximum changes to track per second
                 },
                 history: {
-                    maxHistorySize: 10000, // Maximum history entries
+                    maxHistorySize: 10_000, // Maximum history entries
                     compressionThreshold: 5000, // Compress when history exceeds this
-                    retentionPeriodMs: 300000, // 5 minutes retention
+                    retentionPeriodMs: 300_000, // 5 minutes retention
                 },
             };
 
@@ -5305,11 +5528,11 @@ const AdvancedMemoryDumper = {
                 const changes = [];
                 let changeCount = 0;
 
-                for (let i = 0; i < oldSnapshot.length; i++) {
-                    if (oldSnapshot[i] !== newSnapshot[i]) {
+                for (const [i, element] of oldSnapshot.entries()) {
+                    if (element !== newSnapshot[i]) {
                         changes.push({
                             offset: i,
-                            oldValue: oldSnapshot[i],
+                            oldValue: element,
                             newValue: newSnapshot[i],
                         });
                         changeCount++;
@@ -5364,8 +5587,8 @@ const AdvancedMemoryDumper = {
 
         calculateSimpleHash: data => {
             let hash = 0;
-            for (let i = 0; i < data.length; i++) {
-                hash = ((hash << 5) - hash + data[i]) & 0xffffffff;
+            for (const datum of data) {
+                hash = ((hash << 5) - hash + datum) & 0xFF_FF_FF_FF;
             }
             return hash;
         },
@@ -5386,7 +5609,7 @@ const AdvancedMemoryDumper = {
                 };
 
                 if (!oldSnapshot || !newSnapshot) {
-                    return { hasChanges: false, patterns: patterns };
+                    return { hasChanges: false, patterns };
                 }
 
                 // Detect repeating byte patterns
@@ -5441,9 +5664,9 @@ const AdvancedMemoryDumper = {
             const patterns = [];
             for (let i = 0; i < data.length - 4; i++) {
                 if (
-                    data[i + 1] === data[i] + 1 &&
-                    data[i + 2] === data[i] + 2 &&
-                    data[i + 3] === data[i] + 3
+                    data[i + 1] === data[i] + 1
+                    && data[i + 2] === data[i] + 2
+                    && data[i + 3] === data[i] + 3
                 ) {
                     patterns.push({
                         offset: i,
@@ -5452,9 +5675,9 @@ const AdvancedMemoryDumper = {
                     });
                 }
                 if (
-                    data[i + 1] === data[i] - 1 &&
-                    data[i + 2] === data[i] - 2 &&
-                    data[i + 3] === data[i] - 3
+                    data[i + 1] === data[i] - 1
+                    && data[i + 2] === data[i] - 2
+                    && data[i + 3] === data[i] - 3
                 ) {
                     patterns.push({
                         offset: i,
@@ -5536,9 +5759,9 @@ const AdvancedMemoryDumper = {
         },
 
         calculateEntropy: data => {
-            const frequency = new Array(256).fill(0);
-            for (let i = 0; i < data.length; i++) {
-                frequency[data[i]]++;
+            const frequency = Array.from({ length: 256 }).fill(0);
+            for (const datum of data) {
+                frequency[datum]++;
             }
 
             let entropy = 0;
@@ -5555,8 +5778,8 @@ const AdvancedMemoryDumper = {
             if (a.length !== b.length) {
                 return false;
             }
-            for (let i = 0; i < a.length; i++) {
-                if (a[i] !== b[i]) {
+            for (const [i, element] of a.entries()) {
+                if (element !== b[i]) {
                     return false;
                 }
             }
@@ -5588,11 +5811,11 @@ const AdvancedMemoryDumper = {
                     ),
                 };
 
-                const hasSignificantChange =
-                    analysis.meanDifference > 10 ||
-                    analysis.varianceDifference > 100 ||
-                    analysis.entropyDifference > 0.5 ||
-                    analysis.distributionChange > 0.2;
+                const hasSignificantChange
+                    = analysis.meanDifference > 10
+                    || analysis.varianceDifference > 100
+                    || analysis.entropyDifference > 0.5
+                    || analysis.distributionChange > 0.2;
 
                 return {
                     hasChanges: hasSignificantChange,
@@ -5610,10 +5833,10 @@ const AdvancedMemoryDumper = {
         calculateStatistics: data => {
             const mean = data.reduce((sum, val) => sum + val, 0) / data.length;
             const variance = data.reduce((sum, val) => sum + (val - mean) ** 2, 0) / data.length;
-            const distribution = new Array(256).fill(0);
+            const distribution = Array.from({ length: 256 }).fill(0);
 
-            for (let i = 0; i < data.length; i++) {
-                distribution[data[i]]++;
+            for (const datum of data) {
+                distribution[datum]++;
             }
 
             // Normalize distribution
@@ -5707,7 +5930,7 @@ const AdvancedMemoryDumper = {
             // Simple periodic pattern detection
             for (let period = 2; period <= Math.min(history.length / 2, 10); period++) {
                 if (this.isPeriodicPattern(history, period)) {
-                    patterns.push({ type: 'periodic', period: period });
+                    patterns.push({ type: 'periodic', period });
                 }
             }
 
@@ -5720,16 +5943,16 @@ const AdvancedMemoryDumper = {
                 return patterns;
             }
 
-            const averageChanges =
-                history.reduce((sum, entry) => sum + entry.changeCount, 0) / history.length;
+            const averageChanges
+                = history.reduce((sum, entry) => sum + entry.changeCount, 0) / history.length;
             const threshold = averageChanges * 3;
 
-            for (let i = 0; i < history.length; i++) {
-                if (history[i].changeCount > threshold) {
+            for (const element of history) {
+                if (element.changeCount > threshold) {
                     patterns.push({
                         type: 'burst',
-                        timestamp: history[i].timestamp,
-                        intensity: history[i].changeCount / averageChanges,
+                        timestamp: element.timestamp,
+                        intensity: element.changeCount / averageChanges,
                     });
                 }
             }
@@ -5761,7 +5984,7 @@ const AdvancedMemoryDumper = {
             const changeDiff = Math.abs(entry1.changeCount - entry2.changeCount);
 
             // Simple similarity metric
-            const timeScore = Math.max(0, 1 - timeDiff / 10000); // 10 second window
+            const timeScore = Math.max(0, 1 - timeDiff / 10_000); // 10 second window
             const changeScore = Math.max(0, 1 - changeDiff / 100); // 100 change threshold
 
             return (timeScore + changeScore) / 2;
@@ -5881,8 +6104,8 @@ const AdvancedMemoryDumper = {
                             type: 'rapid_consecutive_changes',
                             count: consecutiveChanges,
                             timespan:
-                                changeHistory[i - 1].timestamp -
-                                changeHistory[i - consecutiveChanges].timestamp,
+                                changeHistory[i - 1].timestamp
+                                - changeHistory[i - consecutiveChanges].timestamp,
                         });
                     }
                     consecutiveChanges = 0;
@@ -5897,9 +6120,9 @@ const AdvancedMemoryDumper = {
                 }
 
                 const avgInterval = intervals.reduce((sum, val) => sum + val, 0) / intervals.length;
-                const varianceInterval =
-                    intervals.reduce((sum, val) => sum + (val - avgInterval) ** 2, 0) /
-                    intervals.length;
+                const varianceInterval
+                    = intervals.reduce((sum, val) => sum + (val - avgInterval) ** 2, 0)
+                    / intervals.length;
 
                 // Low variance indicates periodic behavior
                 if (varianceInterval < avgInterval * 0.1 && avgInterval > 50) {
@@ -5962,20 +6185,20 @@ const AdvancedMemoryDumper = {
             }
 
             perf.bytesProcessedPerSecond = totalBytesProcessed / timeDiff;
-            perf.changesDetectedPerSecond =
-                this.state.changeTracking.changeStatistics.changesPerSecond;
+            perf.changesDetectedPerSecond
+                = this.state.changeTracking.changeStatistics.changesPerSecond;
 
             // Estimate memory usage (rough approximation)
-            perf.memoryUsage =
-                (totalBytesProcessed +
-                    this.state.changeTracking.globalChangeHistory.length * 100 +
-                    this.state.monitoring.changeDetectors.size * 1000) /
-                (1024 * 1024); // MB
+            perf.memoryUsage
+                = (totalBytesProcessed
+                    + this.state.changeTracking.globalChangeHistory.length * 100
+                    + this.state.monitoring.changeDetectors.size * 1000)
+                / (1024 * 1024); // MB
 
             perf.lastPerformanceUpdate = now;
 
             // Log performance metrics periodically
-            if (now % 10000 < 1000) {
+            if (now % 10_000 < 1000) {
                 // Every ~10 seconds
                 console.log(
                     `[AdvancedMemoryDumper] Performance: ${perf.bytesProcessedPerSecond.toFixed(0)} bytes/sec, ${perf.changesDetectedPerSecond.toFixed(1)} changes/sec, ${perf.memoryUsage.toFixed(1)} MB`
@@ -6049,9 +6272,7 @@ const AdvancedMemoryDumper = {
                 patterns.push({
                     type: 'rapid_allocations',
                     count: rapidAllocations,
-                    timespan:
-                        recentAllocations[recentAllocations.length - 1].timestamp -
-                        recentAllocations[0].timestamp,
+                    timespan: recentAllocations.at(-1).timestamp - recentAllocations[0].timestamp,
                 });
             }
 
@@ -6158,9 +6379,9 @@ const AdvancedMemoryDumper = {
             // Look for protection attribute changes
             for (const change of monitor.changeHistory.slice(-5)) {
                 if (
-                    change.protectionBefore &&
-                    change.protectionAfter &&
-                    change.protectionBefore !== change.protectionAfter
+                    change.protectionBefore
+                    && change.protectionAfter
+                    && change.protectionBefore !== change.protectionAfter
                 ) {
                     patterns.push({
                         type: 'protection_change',
@@ -6199,9 +6420,9 @@ const AdvancedMemoryDumper = {
 
             // Analyze interval patterns
             const avgInterval = intervals.reduce((sum, val) => sum + val, 0) / intervals.length;
-            const variance =
-                intervals.reduce((sum, val) => sum + (val - avgInterval) ** 2, 0) /
-                intervals.length;
+            const variance
+                = intervals.reduce((sum, val) => sum + (val - avgInterval) ** 2, 0)
+                / intervals.length;
 
             // Low variance suggests regular timing
             if (variance < avgInterval * 0.2 && avgInterval > 100) {
@@ -6438,10 +6659,10 @@ const AdvancedMemoryDumper = {
                                         const fileTime = creationTime.readU64();
                                         // FILETIME is 100-nanosecond intervals since Jan 1, 1601
                                         // Convert to milliseconds since Unix epoch
-                                        const msecsSince1601 = fileTime.toNumber() / 10000;
-                                        const msecsBetween1601And1970 = 11644473600000;
-                                        allocationTimestamp =
-                                            msecsSince1601 - msecsBetween1601And1970;
+                                        const msecsSince1601 = fileTime.toNumber() / 10_000;
+                                        const msecsBetween1601And1970 = 11_644_473_600_000;
+                                        allocationTimestamp
+                                            = msecsSince1601 - msecsBetween1601And1970;
 
                                         // Add module load order as offset (earlier loaded modules were allocated first)
                                         const modules = Process.enumerateModules();
@@ -6491,34 +6712,30 @@ const AdvancedMemoryDumper = {
                         }
                     } else {
                         // For non-module regions, check if it's heap/stack/mapped
-                        const { protection } = region;
+                        const { protection, size, base, file } = region;
 
                         // Stack regions are typically allocated at thread creation
-                        if (protection === 'rw-' && region.size >= 0x100000) {
+                        if (protection === 'rw-' && size >= 0x10_00_00) {
                             // Likely stack (>1MB)
                             // Get thread creation time
                             const threads = Process.enumerateThreads();
                             // Estimate based on thread index (earlier threads = older allocations)
                             const threadCount = threads.length;
                             allocationTimestamp = Date.now() - threadCount * 100; // 100ms per thread age estimate
-                        }
-                        // Heap regions are allocated dynamically
-                        else if (protection === 'rw-' && region.size < 0x100000) {
+                        } else if (protection === 'rw-' && size < 0x10_00_00) {
                             // Likely heap
                             // For heap, we can track relative ordering based on address
                             // Lower addresses typically allocated earlier
-                            const baseAddr = region.base.toInt32();
-                            const heapBase = 0x10000000; // Typical heap base
+                            const baseAddr = base.toInt32();
+                            const heapBase = 0x10_00_00_00; // Typical heap base
                             const offset = Math.max(0, baseAddr - heapBase);
                             // Estimate 1ms per MB of heap offset
                             const ageEstimate = Math.floor(offset / (1024 * 1024));
                             allocationTimestamp = Date.now() - ageEstimate;
-                        }
-                        // Memory-mapped files have file modification time
-                        else if (
-                            protection.includes('r') &&
-                            region.file &&
-                            Process.platform === 'windows'
+                        } else if (
+                            protection.includes('r')
+                            && file
+                            && Process.platform === 'windows'
                         ) {
                             const kernel32 = Module.findExportByName(
                                 'kernel32.dll',
@@ -6526,7 +6743,7 @@ const AdvancedMemoryDumper = {
                             );
                             if (kernel32) {
                                 // Would need to implement file time checking
-                                allocationTimestamp = Date.now() - 60000; // Default to 1 minute ago
+                                allocationTimestamp = Date.now() - 60_000; // Default to 1 minute ago
                             }
                         }
                     }
@@ -6585,7 +6802,7 @@ const AdvancedMemoryDumper = {
 
             // Group events by address ranges
             for (const event of events) {
-                const addressKey = Math.floor(event.address / 0x1000) * 0x1000; // Page-aligned
+                const addressKey = Math.floor(event.address / 0x10_00) * 0x10_00; // Page-aligned
                 if (!addressMap.has(addressKey)) {
                     addressMap.set(addressKey, []);
                 }
@@ -6733,12 +6950,12 @@ const AdvancedMemoryDumper = {
                     signature: this.generateSourceSignature(event),
                 };
 
-                if (!attribution.sources.has(sourceId)) {
-                    attribution.sources.set(sourceId, source);
-                    attribution.statistics.totalSources++;
-                } else {
+                if (attribution.sources.has(sourceId)) {
                     const existingSource = attribution.sources.get(sourceId);
                     existingSource.lastSeen = Math.max(existingSource.lastSeen, event.timestamp);
+                } else {
+                    attribution.sources.set(sourceId, source);
+                    attribution.statistics.totalSources++;
                 }
 
                 attribution.sources.get(sourceId).events.push(event);
@@ -6793,9 +7010,8 @@ const AdvancedMemoryDumper = {
                 return `${event.callerInfo.module}:${event.callerInfo.symbol}`;
             } else if (event.callerInfo?.address) {
                 return `addr:${event.callerInfo.address}`;
-            } else {
-                return `thread:${event.threadId}:process:${event.processId}`;
             }
+            return `thread:${event.threadId}:process:${event.processId}`;
         } catch {
             return 'unknown';
         }
@@ -6889,7 +7105,7 @@ const AdvancedMemoryDumper = {
                         }
                     }
 
-                    chain.currentOwner = sortedMods[sortedMods.length - 1].sourceId;
+                    chain.currentOwner = sortedMods.at(-1).sourceId;
                     ownershipChains.push(chain);
                 }
             }
@@ -7016,7 +7232,7 @@ const AdvancedMemoryDumper = {
     findCausallyRelatedEvent(event, allEvents, visited) {
         try {
             const timeWindow = 1000; // 1 second window
-            const addressWindow = 0x1000; // 4KB address window
+            const addressWindow = 0x10_00; // 4KB address window
 
             for (const candidateEvent of allEvents) {
                 const candidateKey = `${candidateEvent.address}:${candidateEvent.timestamp}`;
@@ -7069,10 +7285,10 @@ const AdvancedMemoryDumper = {
             }
 
             // Same caller suggests causality
-            return !!(
-                event1.callerInfo &&
-                event2.callerInfo &&
-                event1.callerInfo.module === event2.callerInfo.module
+            return Boolean(
+                event1.callerInfo
+                && event2.callerInfo
+                && event1.callerInfo.module === event2.callerInfo.module
             );
         } catch {
             return false;
@@ -7107,7 +7323,7 @@ const AdvancedMemoryDumper = {
                 if (!dependencies.regions.has(regionId)) {
                     dependencies.regions.set(regionId, {
                         id: regionId,
-                        baseAddress: Math.floor(event.address / 0x10000) * 0x10000,
+                        baseAddress: Math.floor(event.address / 0x1_00_00) * 0x1_00_00,
                         dependsOn: new Set(),
                         dependents: new Set(),
                         operations: [],
@@ -7409,10 +7625,8 @@ const AdvancedMemoryDumper = {
             }
 
             // Executable memory allocation
-            return !!(
-                event.type === 'allocation' &&
-                event.protection &&
-                event.protection.includes('x')
+            return Boolean(
+                event.type === 'allocation' && event.protection && event.protection.includes('x')
             );
         } catch {
             return false;
@@ -7445,8 +7659,8 @@ const AdvancedMemoryDumper = {
                 // Find operations that read from this address
                 for (const event of allEvents) {
                     if (
-                        event.type === 'memory_read' &&
-                        Math.abs(event.address - currentAddress) < 16
+                        event.type === 'memory_read'
+                        && Math.abs(event.address - currentAddress) < 16
                     ) {
                         // Find subsequent writes from the same thread/context
                         const subsequentWrites = this.findSubsequentWrites(event, allEvents);
@@ -7487,7 +7701,7 @@ const AdvancedMemoryDumper = {
     /**
      * Generate unique event ID
      */
-    generateEventId: () => `evt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    generateEventId: () => `evt_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
 
     /**
      * Analyze memory access pattern for a specific event
@@ -7580,8 +7794,7 @@ const AdvancedMemoryDumper = {
             }
 
             const sortedEvents = events.sort((a, b) => a.timestamp - b.timestamp);
-            const timeSpan =
-                sortedEvents[sortedEvents.length - 1].timestamp - sortedEvents[0].timestamp;
+            const timeSpan = sortedEvents.at(-1).timestamp - sortedEvents[0].timestamp;
 
             if (timeSpan <= 0) {
                 return 0;
@@ -7672,16 +7885,16 @@ const AdvancedMemoryDumper = {
 
             // Analyze size patterns
             const avgSize = sizes.reduce((sum, size) => sum + size, 0) / sizes.length;
-            const sizeVariance =
-                sizes.reduce((sum, size) => sum + (size - avgSize) ** 2, 0) / sizes.length;
+            const sizeVariance
+                = sizes.reduce((sum, size) => sum + (size - avgSize) ** 2, 0) / sizes.length;
             const sizeUniformity = sizeVariance < avgSize * 0.1;
 
             // Analyze timing patterns
-            const avgInterval =
-                intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length;
-            const intervalVariance =
-                intervals.reduce((sum, interval) => sum + (interval - avgInterval) ** 2, 0) /
-                intervals.length;
+            const avgInterval
+                = intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length;
+            const intervalVariance
+                = intervals.reduce((sum, interval) => sum + (interval - avgInterval) ** 2, 0)
+                / intervals.length;
             const timingRegularity = intervalVariance < avgInterval * 0.2;
 
             // Classify pattern
@@ -7700,9 +7913,8 @@ const AdvancedMemoryDumper = {
                     confidence: 0.6,
                     avgInterval,
                 };
-            } else {
-                return { type: 'irregular', confidence: 0.3 };
             }
+            return { type: 'irregular', confidence: 0.3 };
         } catch {
             return { type: 'analysis_error', confidence: 0 };
         }
@@ -7795,7 +8007,7 @@ const AdvancedMemoryDumper = {
 
                 // Address proximity factor
                 const addrDiff = Math.abs(curr.address - prev.address);
-                const addrConfidence = Math.exp(-addrDiff / 0x1000); // Page-based decay
+                const addrConfidence = Math.exp(-addrDiff / 0x10_00); // Page-based decay
 
                 // Context similarity factor
                 const contextConfidence = this.calculateContextSimilarity(prev, curr);
@@ -7828,9 +8040,9 @@ const AdvancedMemoryDumper = {
 
             // Same module
             if (
-                event1.callerInfo &&
-                event2.callerInfo &&
-                event1.callerInfo.module === event2.callerInfo.module
+                event1.callerInfo
+                && event2.callerInfo
+                && event1.callerInfo.module === event2.callerInfo.module
             ) {
                 similarity += 0.3;
             }
@@ -7847,7 +8059,7 @@ const AdvancedMemoryDumper = {
     getMemoryRegionId: address => {
         try {
             // Group into 64KB regions
-            return Math.floor(address / 0x10000);
+            return Math.floor(address / 0x1_00_00);
         } catch {
             return 0;
         }
@@ -7859,7 +8071,7 @@ const AdvancedMemoryDumper = {
     getMemoryRegionBase: address => {
         try {
             // Round down to 64KB boundary
-            return Math.floor(address / 0x10000) * 0x10000;
+            return Math.floor(address / 0x1_00_00) * 0x1_00_00;
         } catch {
             return 0;
         }
@@ -7877,9 +8089,9 @@ const AdvancedMemoryDumper = {
             const symbol = event.callerInfo.symbol.toLowerCase();
 
             if (
-                symbol.includes('malloc') ||
-                symbol.includes('calloc') ||
-                symbol.includes('realloc')
+                symbol.includes('malloc')
+                || symbol.includes('calloc')
+                || symbol.includes('realloc')
             ) {
                 return 'crt_heap';
             } else if (symbol.includes('virtualalloc')) {
@@ -7890,9 +8102,8 @@ const AdvancedMemoryDumper = {
                 return 'local_heap';
             } else if (symbol.includes('new') || symbol.includes('operator')) {
                 return 'cpp_runtime';
-            } else {
-                return 'custom';
             }
+            return 'custom';
         } catch {
             return 'unknown';
         }
@@ -7935,22 +8146,22 @@ const AdvancedMemoryDumper = {
             const caller = event.callerInfo ? event.callerInfo.symbol : '';
 
             // String/buffer allocations
-            if (size > 0 && size < 0x10000 && caller.includes('string')) {
+            if (size > 0 && size < 0x1_00_00 && caller.includes('string')) {
                 return 'string_buffer';
             }
 
             // Large allocations likely for data/image
-            if (size > 0x100000) {
+            if (size > 0x10_00_00) {
                 return 'large_data';
             }
 
             // Small allocations likely for objects
-            if (size < 0x1000) {
+            if (size < 0x10_00) {
                 return 'object_allocation';
             }
 
             // Medium allocations likely for buffers
-            if (size >= 0x1000 && size <= 0x100000) {
+            if (size >= 0x10_00 && size <= 0x10_00_00) {
                 return 'buffer_allocation';
             }
 
@@ -7976,7 +8187,7 @@ const AdvancedMemoryDumper = {
                 case 'allocation': {
                     change.description = `Allocated ${event.size} bytes`;
                     change.magnitude = event.size;
-                    change.impact = event.size > 0x0010_0000 ? 'high' : 'medium';
+                    change.impact = event.size > 0x00_10_00_00 ? 'high' : 'medium';
                     break;
                 }
                 case 'deallocation': {
@@ -8025,25 +8236,21 @@ const AdvancedMemoryDumper = {
             // Protection changes are high impact
             if (event.type === 'protection_change') {
                 impact = 'high';
-            }
-            // Large allocations are high impact
-            else if (event.type === 'allocation' && event.size > 0x100000) {
+            } else if (event.type === 'allocation' && event.size > 0x10_00_00) {
+                // Large allocations are high impact
                 impact = 'high';
-            }
-            // Executable allocations are high impact
-            else if (
-                event.type === 'allocation' &&
-                event.protection &&
-                event.protection.includes('x')
+            } else if (
+                event.type === 'allocation'
+                && event.protection
+                && event.protection.includes('x')
             ) {
+                // Executable allocations are high impact
                 impact = 'high';
-            }
-            // Cross-process operations are medium impact
-            else if (event.crossProcess) {
+            } else if (event.crossProcess) {
+                // Cross-process operations are medium impact
                 impact = 'medium';
-            }
-            // Everything else is low impact
-            else {
+            } else {
+                // Everything else is low impact
                 impact = 'low';
             }
 
@@ -8073,8 +8280,8 @@ const AdvancedMemoryDumper = {
 
                 for (const historyEntry of regionHistory) {
                     if (
-                        historyEntry.type === 'memory_read' &&
-                        Math.abs(historyEntry.address - address) < 0x1000
+                        historyEntry.type === 'memory_read'
+                        && Math.abs(historyEntry.address - address) < 0x10_00
                     ) {
                         // Look for subsequent allocations from same context
                         const derivedAllocations = this.findDerivedAllocations(
@@ -8100,14 +8307,14 @@ const AdvancedMemoryDumper = {
     findDerivedAllocations(readEvent, origins) {
         try {
             const derived = [];
-            const timeWindow = 10000; // 10 second window
+            const timeWindow = 10_000; // 10 second window
 
             for (const [address, origin] of origins) {
                 if (
-                    Math.abs(origin.timestamp - readEvent.timestamp) < timeWindow &&
-                    origin.source &&
-                    readEvent.source &&
-                    origin.source.module === readEvent.source.module
+                    Math.abs(origin.timestamp - readEvent.timestamp) < timeWindow
+                    && origin.source
+                    && readEvent.source
+                    && origin.source.module === readEvent.source.module
                 ) {
                     derived.push({
                         address,
@@ -8138,9 +8345,9 @@ const AdvancedMemoryDumper = {
 
             // Same module increases confidence
             if (
-                readEvent.source &&
-                origin.source &&
-                readEvent.source.module === origin.source.module
+                readEvent.source
+                && origin.source
+                && readEvent.source.module === origin.source.module
             ) {
                 confidence += 0.2;
             }
@@ -8194,24 +8401,31 @@ const AdvancedMemoryDumper = {
             let level = 0.5; // Base taint level
 
             // Network sources are high taint
-            if (event.source === 'network_input') {
-                level = 0.9;
-            }
-            // File sources are medium-high taint
-            else if (event.source === 'file_input') {
-                level = 0.7;
-            }
-            // User input is medium taint
-            else if (event.source === 'user_input') {
-                level = 0.6;
-            }
-            // Registry/environment is low-medium taint
-            else if (event.source === 'registry_read' || event.source === 'env_read') {
-                level = 0.4;
-            }
-            // Internal sources are low taint
-            else {
-                level = 0.2;
+            switch (event.source) {
+                case 'network_input': {
+                    level = 0.9;
+
+                    break;
+                }
+                case 'file_input': {
+                    level = 0.7;
+
+                    break;
+                }
+                case 'user_input': {
+                    level = 0.6;
+
+                    break;
+                }
+                case 'registry_read':
+                case 'env_read': {
+                    level = 0.4;
+
+                    break;
+                }
+                default: {
+                    level = 0.2;
+                }
             }
 
             return level;
@@ -8256,22 +8470,29 @@ const AdvancedMemoryDumper = {
             // Executable memory is highest sensitivity
             if (event.type === 'allocation' && event.protection && event.protection.includes('x')) {
                 sensitivity = 1;
-            }
-            // Process creation is high sensitivity
-            else if (event.type === 'process_create') {
+            } else if (event.type === 'process_create') {
+                // Process creation is high sensitivity
                 sensitivity = 0.9;
-            }
-            // Network output is high sensitivity
-            else if (event.target === 'network_output') {
-                sensitivity = 0.8;
-            }
-            // File output is medium sensitivity
-            else if (event.target === 'file_output') {
-                sensitivity = 0.6;
-            }
-            // Registry writes are medium sensitivity
-            else if (event.target === 'registry_write') {
-                sensitivity = 0.5;
+            } else {
+                // Check target types for sensitivity
+                switch (event.target) {
+                    case 'network_output': {
+                        sensitivity = 0.8;
+
+                        break;
+                    }
+                    case 'file_output': {
+                        sensitivity = 0.6;
+
+                        break;
+                    }
+                    case 'registry_write': {
+                        sensitivity = 0.5;
+
+                        break;
+                    }
+                    // No default
+                }
             }
 
             return sensitivity;
@@ -8290,7 +8511,7 @@ const AdvancedMemoryDumper = {
             for (const [sourceAddress, propagation] of propagationMap) {
                 // Check if any tainted region affects this sink
                 for (const region of propagation.regions) {
-                    if (Math.abs(region.address - sinkEvent.address) < 0x1000) {
+                    if (Math.abs(region.address - sinkEvent.address) < 0x10_00) {
                         taintingSources.push({
                             sourceAddress,
                             region,
@@ -8327,7 +8548,7 @@ const AdvancedMemoryDumper = {
             const timeDiff = Math.abs(taintedRegion.timestamp - sinkEvent.timestamp);
             if (timeDiff < 1000) {
                 confidence += 0.2;
-            } else if (timeDiff < 10000) {
+            } else if (timeDiff < 10_000) {
                 confidence += 0.1;
             }
 
@@ -8372,7 +8593,7 @@ const AdvancedMemoryDumper = {
     /**
      * Generate flow ID
      */
-    generateFlowId: () => `flow_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    generateFlowId: () => `flow_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
 
     /**
      * Calculate flow criticality
@@ -8388,9 +8609,8 @@ const AdvancedMemoryDumper = {
                 return 'high';
             } else if (criticalityScore > 0.4) {
                 return 'medium';
-            } else {
-                return 'low';
             }
+            return 'low';
         } catch {
             return 'unknown';
         }
@@ -8406,20 +8626,17 @@ const AdvancedMemoryDumper = {
             // Network to executable is highest risk
             if (source.type === 'network' && sink.type === 'executable') {
                 risk = 'critical';
-            }
-            // File to executable is high risk
-            else if (source.type === 'file' && sink.type === 'executable') {
+            } else if (source.type === 'file' && sink.type === 'executable') {
+                // File to executable is high risk
                 risk = 'high';
-            }
-            // Network to process creation is high risk
-            else if (source.type === 'network' && sink.type === 'process') {
+            } else if (source.type === 'network' && sink.type === 'process') {
+                // Network to process creation is high risk
                 risk = 'high';
-            }
-            // Any external to network output is medium risk
-            else if (
-                (source.type === 'network' || source.type === 'file') &&
-                sink.type === 'network'
+            } else if (
+                (source.type === 'network' || source.type === 'file')
+                && sink.type === 'network'
             ) {
+                // Any external to network output is medium risk
                 risk = 'medium';
             }
 
@@ -8467,10 +8684,10 @@ const AdvancedMemoryDumper = {
 
             for (const event of allEvents) {
                 if (
-                    event.type === 'memory_write' &&
-                    event.timestamp > readEvent.timestamp &&
-                    event.timestamp - readEvent.timestamp < timeWindow &&
-                    event.threadId === readEvent.threadId
+                    event.type === 'memory_write'
+                    && event.timestamp > readEvent.timestamp
+                    && event.timestamp - readEvent.timestamp < timeWindow
+                    && event.threadId === readEvent.threadId
                 ) {
                     writes.push(event);
                 }
@@ -8496,20 +8713,102 @@ const AdvancedMemoryDumper = {
         }
     },
 
-    getModuleVersion: _module => {
-        try {
-            // This would require access to version resources
+    getModuleVersion: module => {
+        if (!module || !module.base) {
             return 'unknown';
-        } catch {
+        }
+
+        try {
+            if (Process.platform !== 'windows') {
+                return 'unknown';
+            }
+
+            const dosHeader = module.base;
+            const dosSignature = Memory.readU16(dosHeader);
+            const MZ_SIGNATURE = 23_117;
+            if (dosSignature !== MZ_SIGNATURE) {
+                return 'unknown';
+            }
+
+            const peOffset = Memory.readU32(dosHeader.add(0x3C));
+            const peHeader = dosHeader.add(peOffset);
+            const peSignature = Memory.readU32(peHeader);
+            const PE_SIGNATURE = 17_744;
+            if (peSignature !== PE_SIGNATURE) {
+                return 'unknown';
+            }
+
+            const optionalHeaderOffset = peHeader.add(24);
+            const magic = Memory.readU16(optionalHeaderOffset);
+            const PE64_MAGIC = 523;
+            const is64Bit = magic === PE64_MAGIC;
+
+            const dataDirectoryOffset = is64Bit ? 112 : 96;
+            const resourceRva = Memory.readU32(optionalHeaderOffset.add(dataDirectoryOffset + 16));
+
+            if (resourceRva === 0) {
+                return 'unknown';
+            }
+
+            const resourceAddress = module.base.add(resourceRva);
+            const versionInfo = this.parseVersionResource(resourceAddress, module);
+            return versionInfo || 'unknown';
+        } catch (error) {
+            console.error('[AdvancedMemoryDumper] getModuleVersion error:', error.message);
             return 'unknown';
         }
     },
 
-    calculateModuleHash: _module => {
+    parseVersionResource: (resourceBase, _module) => {
         try {
-            // This would require calculating hash of module contents
+            const signature = Memory.readU32(resourceBase);
+            const VS_FFI_SIGNATURE = 4_277_077_181;
+            const MASK_16BIT = 65_535;
+            if (signature === VS_FFI_SIGNATURE) {
+                const fileVersionMs = Memory.readU32(resourceBase.add(8));
+                const fileVersionLs = Memory.readU32(resourceBase.add(12));
+                const major = (fileVersionMs >>> 16) & MASK_16BIT;
+                const minor = fileVersionMs & MASK_16BIT;
+                const build = (fileVersionLs >>> 16) & MASK_16BIT;
+                const revision = fileVersionLs & MASK_16BIT;
+                return `${major}.${minor}.${build}.${revision}`;
+            }
+            return null;
+        } catch (error) {
+            console.error('[AdvancedMemoryDumper] parseVersionResource error:', error.message);
+            return null;
+        }
+    },
+
+    calculateModuleHash: module => {
+        if (!module || !module.base || module.size === 0) {
             return 'unknown';
-        } catch {
+        }
+
+        try {
+            const FNV_OFFSET_BASIS = 2_166_136_261;
+            const FNV_PRIME = 16_777_619;
+            const MASK_32BIT = 4_294_967_295;
+            let hash = FNV_OFFSET_BASIS;
+            const sampleSize = Math.min(module.size, 4096);
+
+            const bytes = Memory.readByteArray(module.base, sampleSize);
+            if (!bytes) {
+                return 'unknown';
+            }
+
+            const data = new Uint8Array(bytes);
+            for (const byte of data) {
+                hash ^= byte;
+                hash = Math.imul(hash, FNV_PRIME) >>> 0;
+            }
+
+            hash ^= module.size & MASK_32BIT;
+            hash = Math.imul(hash, FNV_PRIME) >>> 0;
+
+            return hash.toString(16).padStart(8, '0');
+        } catch (error) {
+            console.error('[AdvancedMemoryDumper] calculateModuleHash error:', error.message);
             return 'unknown';
         }
     },
@@ -8608,10 +8907,10 @@ const AdvancedMemoryDumper = {
                 calculateDataEntropy: data => {
                     try {
                         const bytes = new Uint8Array(data);
-                        const frequency = new Array(256).fill(0);
+                        const frequency = Array.from({ length: 256 }).fill(0);
 
-                        for (let i = 0; i < bytes.length; i++) {
-                            frequency[bytes[i]]++;
+                        for (const byte of bytes) {
+                            frequency[byte]++;
                         }
 
                         let entropy = 0;
@@ -8645,8 +8944,8 @@ const AdvancedMemoryDumper = {
                     try {
                         const bytes = new Uint8Array(data);
                         let checksum = 0;
-                        for (let i = 0; i < bytes.length; i++) {
-                            checksum = (checksum + bytes[i]) & 0xffffffff;
+                        for (const byte of bytes) {
+                            checksum = (checksum + byte) & 0xFF_FF_FF_FF;
                         }
                         return checksum;
                     } catch {
@@ -8782,9 +9081,9 @@ const AdvancedMemoryDumper = {
                                 // Update statistics
                                 this.statistics.tasksCompleted++;
                                 this.statistics.totalProcessingTime += duration;
-                                this.statistics.averageJobTime =
-                                    this.statistics.totalProcessingTime /
-                                    this.statistics.tasksCompleted;
+                                this.statistics.averageJobTime
+                                    = this.statistics.totalProcessingTime
+                                    / this.statistics.tasksCompleted;
 
                                 // Update worker statistics
                                 worker.completedTasks++;
@@ -8822,12 +9121,12 @@ const AdvancedMemoryDumper = {
                 },
 
                 generateTaskId: () =>
-                    `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                    `task_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
 
                 // Get current throughput in tasks per second
                 getCurrentThroughput() {
                     const recentTasks = this.statistics.tasksCompleted;
-                    const timeWindow = 10000; // 10 second window
+                    const timeWindow = 10_000; // 10 second window
                     return (recentTasks / timeWindow) * 1000;
                 },
             };
@@ -8920,15 +9219,13 @@ const AdvancedMemoryDumper = {
                         stream.statistics.bytesWritten += bytesToWrite;
                         this.statistics.bytesBuffered += bytesToWrite;
 
-                        // Check if we need to flush
+                        // Check if we need to flush or compress
                         const fillRatio = stream.position / stream.size;
                         if (fillRatio >= this.config.flushThreshold) {
                             this.flush(streamId);
-                        }
-                        // Check if we need to compress
-                        else if (
-                            fillRatio >= this.config.compressionThreshold &&
-                            !stream.compressed
+                        } else if (
+                            fillRatio >= this.config.compressionThreshold
+                            && !stream.compressed
                         ) {
                             this.compressBuffer(streamId);
                         }
@@ -8987,29 +9284,29 @@ const AdvancedMemoryDumper = {
                         const originalData = stream.buffer.slice(0, originalSize);
 
                         // Get the compression engine instance
-                        const compressionEngine =
-                            AdvancedMemoryDumper.prototype.createCompressionEngine.call(this);
+                        const compressionEngine
+                            = AdvancedMemoryDumper.prototype.createCompressionEngine.call(this);
                         const compressed = compressionEngine.compress(originalData);
 
                         // Update stream with real compressed data
-                        const { compressedSize } = compressed;
+                        const { compressedSize, data, algorithm, entropy } = compressed;
                         const compressionRatio = compressedSize / originalSize;
 
                         // Replace buffer with compressed data
-                        stream.buffer = new Uint8Array(compressed.data);
+                        stream.buffer = new Uint8Array(data);
                         stream.position = compressedSize;
                         stream.compressed = true;
                         stream.statistics.compressionRatio = compressionRatio;
                         stream.compressionMetadata = {
-                            algorithm: compressed.algorithm,
+                            algorithm,
                             originalSize,
                             compressedSize,
-                            entropy: compressed.entropy,
+                            entropy,
                         };
                         this.statistics.compressionOperations++;
 
                         console.log(
-                            `[StreamingBuffer] Compressed stream ${streamId} with ${compressed.algorithm}: ${originalSize} -> ${compressedSize} bytes (ratio: ${compressionRatio.toFixed(2)})`
+                            `[StreamingBuffer] Compressed stream ${streamId} with ${algorithm}: ${originalSize} -> ${compressedSize} bytes (ratio: ${compressionRatio.toFixed(2)})`
                         );
                         return true;
                     } catch (error) {
@@ -9043,7 +9340,7 @@ const AdvancedMemoryDumper = {
                 // Calculate current throughput
                 calculateThroughput() {
                     try {
-                        const timeWindow = 10000; // 10 second window
+                        const timeWindow = 10_000; // 10 second window
                         const bytesPerSecond = (this.statistics.bytesStreamed / timeWindow) * 1000;
                         this.statistics.currentThroughput = bytesPerSecond;
                         return bytesPerSecond;
@@ -9311,8 +9608,8 @@ const AdvancedMemoryDumper = {
 
                         // Main module regions have higher priority
                         if (
-                            address >= Process.mainModule.base &&
-                            address < Process.mainModule.base.add(Process.mainModule.size)
+                            address >= Process.mainModule.base
+                            && address < Process.mainModule.base.add(Process.mainModule.size)
                         ) {
                             priority += 50;
                         }
@@ -9342,8 +9639,8 @@ const AdvancedMemoryDumper = {
                     try {
                         const bytes = new Uint8Array(data);
                         let checksum = 0;
-                        for (let i = 0; i < bytes.length; i++) {
-                            checksum = (checksum + bytes[i]) & 0xffffffff;
+                        for (const byte of bytes) {
+                            checksum = (checksum + byte) & 0xFF_FF_FF_FF;
                         }
                         return checksum;
                     } catch {
@@ -9365,203 +9662,136 @@ const AdvancedMemoryDumper = {
     /**
      * Create LZ4 compression algorithm implementation
      */
-    createLZ4Compressor: () => {
-        try {
-            return {
-                compress: data => {
+    createLZ4Compressor: () => ({
+        compress: data => {
+            try {
+                // Real LZ4 block compression implementation
+                const input = new Uint8Array(data);
+                const maxOutputSize = input.length + Math.floor(input.length / 255) + 16;
+                const compressed = new Uint8Array(maxOutputSize);
+
+                // Use native compression if available on Windows
+                if (Process.platform === 'windows') {
                     try {
-                        // Real LZ4 block compression implementation
-                        const input = new Uint8Array(data);
-                        const maxOutputSize = input.length + Math.floor(input.length / 255) + 16;
-                        const compressed = new Uint8Array(maxOutputSize);
+                        const ntdll = Module.findExportByName('ntdll.dll', 'RtlCompressBuffer');
+                        if (ntdll) {
+                            const RtlCompressBuffer = new NativeFunction(ntdll, 'uint32', [
+                                'uint16', // CompressionFormatAndEngine
+                                'pointer', // UncompressedBuffer
+                                'uint32', // UncompressedBufferSize
+                                'pointer', // CompressedBuffer
+                                'uint32', // CompressedBufferSize
+                                'uint32', // UncompressedChunkSize
+                                'pointer', // FinalCompressedSize
+                                'pointer', // WorkSpace
+                            ]);
 
-                        // Use native compression if available on Windows
-                        if (Process.platform === 'windows') {
-                            try {
-                                const ntdll = Module.findExportByName(
-                                    'ntdll.dll',
-                                    'RtlCompressBuffer'
-                                );
-                                if (ntdll) {
-                                    const RtlCompressBuffer = new NativeFunction(ntdll, 'uint32', [
-                                        'uint16', // CompressionFormatAndEngine
-                                        'pointer', // UncompressedBuffer
-                                        'uint32', // UncompressedBufferSize
-                                        'pointer', // CompressedBuffer
-                                        'uint32', // CompressedBufferSize
-                                        'uint32', // UncompressedChunkSize
-                                        'pointer', // FinalCompressedSize
-                                        'pointer', // WorkSpace
-                                    ]);
+                            const COMPRESSION_FORMAT_LZNT1 = 2;
+                            const COMPRESSION_ENGINE_STANDARD = 0;
+                            const format
+                                = COMPRESSION_FORMAT_LZNT1 | (COMPRESSION_ENGINE_STANDARD << 8);
 
-                                    const COMPRESSION_FORMAT_LZNT1 = 2;
-                                    const COMPRESSION_ENGINE_STANDARD = 0;
-                                    const format =
-                                        COMPRESSION_FORMAT_LZNT1 |
-                                        (COMPRESSION_ENGINE_STANDARD << 8);
+                            const inputBuffer = Memory.alloc(input.length);
+                            inputBuffer.writeByteArray(input);
+                            const outputBuffer = Memory.alloc(maxOutputSize);
+                            const finalSize = Memory.alloc(4);
+                            const workspace = Memory.alloc(0x1_00_00); // 64KB workspace
 
-                                    const inputBuffer = Memory.alloc(input.length);
-                                    inputBuffer.writeByteArray(input);
-                                    const outputBuffer = Memory.alloc(maxOutputSize);
-                                    const finalSize = Memory.alloc(4);
-                                    const workspace = Memory.alloc(0x10000); // 64KB workspace
+                            const result = RtlCompressBuffer(
+                                format,
+                                inputBuffer,
+                                input.length,
+                                outputBuffer,
+                                maxOutputSize,
+                                4096,
+                                finalSize,
+                                workspace
+                            );
 
-                                    const result = RtlCompressBuffer(
-                                        format,
-                                        inputBuffer,
-                                        input.length,
-                                        outputBuffer,
-                                        maxOutputSize,
-                                        4096,
-                                        finalSize,
-                                        workspace
-                                    );
-
-                                    if (result === 0) {
-                                        // STATUS_SUCCESS
-                                        const compressedSize = finalSize.readU32();
-                                        const compressedData =
-                                            outputBuffer.readByteArray(compressedSize);
-                                        return {
-                                            algorithm: 'lz4',
-                                            data: compressedData,
-                                            metadata: {
-                                                originalSize: input.length,
-                                                compressedSize,
-                                                native: true,
-                                            },
-                                        };
-                                    }
-                                }
-                            } catch {
-                                console.log(
-                                    '[LZ4] Native compression failed, using JavaScript implementation'
-                                );
+                            if (result === 0) {
+                                // STATUS_SUCCESS
+                                const compressedSize = finalSize.readU32();
+                                const compressedData = outputBuffer.readByteArray(compressedSize);
+                                return {
+                                    algorithm: 'lz4',
+                                    data: compressedData,
+                                    metadata: {
+                                        originalSize: input.length,
+                                        compressedSize,
+                                        native: true,
+                                    },
+                                };
                             }
                         }
+                    } catch {
+                        console.log(
+                            '[LZ4] Native compression failed, using JavaScript implementation'
+                        );
+                    }
+                }
 
-                        // JavaScript LZ4 implementation
-                        let compressedPos = 0;
-                        let inputPos = 0;
-                        let anchor = 0;
+                // JavaScript LZ4 implementation
+                let compressedPos = 0;
+                let inputPos = 0;
+                let anchor = 0;
 
-                        // Hash table for finding matches (12-bit hash = 4096 entries)
-                        const hashTable = new Int32Array(4096);
-                        hashTable.fill(-1);
+                // Hash table for finding matches (12-bit hash = 4096 entries)
+                const hashTable = new Int32Array(4096);
+                hashTable.fill(-1);
 
-                        // Helper to write variable-length integers
-                        const _writeLength = (length, pos) => {
-                            if (length >= 15) {
-                                compressed[pos] |= 15;
-                                let remaining = length - 15;
-                                compressedPos++;
-                                while (remaining >= 255) {
-                                    compressed[compressedPos++] = 255;
-                                    remaining -= 255;
-                                }
-                                compressed[compressedPos++] = remaining;
-                            } else {
-                                compressed[pos] |= length;
-                                compressedPos++;
-                            }
-                        };
+                // Helper to write variable-length integers
+                const _writeLength = (length, pos) => {
+                    if (length >= 15) {
+                        compressed[pos] |= 15;
+                        let remaining = length - 15;
+                        compressedPos++;
+                        while (remaining >= 255) {
+                            compressed[compressedPos++] = 255;
+                            remaining -= 255;
+                        }
+                        compressed[compressedPos++] = remaining;
+                    } else {
+                        compressed[pos] |= length;
+                        compressedPos++;
+                    }
+                };
 
-                        while (inputPos < input.length - 12) {
-                            // Calculate hash from 4 bytes at current position
-                            const sequence =
-                                (input[inputPos] |
-                                    (input[inputPos + 1] << 8) |
-                                    (input[inputPos + 2] << 16) |
-                                    (input[inputPos + 3] << 24)) >>>
-                                0;
-                            const hash = ((sequence * 2654435761) >>> 20) & 0xfff;
+                while (inputPos < input.length - 12) {
+                    // Calculate hash from 4 bytes at current position
+                    const sequence
+                        = (input[inputPos]
+                            | (input[inputPos + 1] << 8)
+                            | (input[inputPos + 2] << 16)
+                            | (input[inputPos + 3] << 24))
+                        >>> 0;
+                    const hash = ((sequence * 2_654_435_761) >>> 20) & 0xF_FF;
 
-                            const ref = hashTable[hash];
-                            hashTable[hash] = inputPos;
+                    const ref = hashTable[hash];
+                    hashTable[hash] = inputPos;
 
-                            // Check if we have a match
-                            if (ref >= 0 && inputPos - ref < 65535) {
-                                let matchLength = 0;
-                                const maxMatch = Math.min(input.length - inputPos, 264); // LZ4 max match
+                    // Check if we have a match
+                    if (ref >= 0 && inputPos - ref < 65_535) {
+                        let matchLength = 0;
+                        const maxMatch = Math.min(input.length - inputPos, 264); // LZ4 max match
 
-                                // Check match length
-                                while (
-                                    matchLength < maxMatch &&
-                                    input[ref + matchLength] === input[inputPos + matchLength]
-                                ) {
-                                    matchLength++;
-                                }
-
-                                if (matchLength >= 4) {
-                                    // Minimum match length for LZ4
-                                    // Output literals
-                                    const literalLength = inputPos - anchor;
-                                    const tokenPos = compressedPos++;
-                                    compressed[tokenPos] = Math.min(literalLength, 15) << 4;
-
-                                    // Write literal length extension if needed
-                                    if (literalLength >= 15) {
-                                        compressed[tokenPos] |= 0xf0;
-                                        let remaining = literalLength - 15;
-                                        while (remaining >= 255) {
-                                            compressed[compressedPos++] = 255;
-                                            remaining -= 255;
-                                        }
-                                        compressed[compressedPos++] = remaining;
-                                    }
-
-                                    // Copy literals
-                                    for (let i = anchor; i < inputPos; i++) {
-                                        compressed[compressedPos++] = input[i];
-                                    }
-
-                                    // Write offset (little-endian)
-                                    const offset = inputPos - ref;
-                                    compressed[compressedPos++] = offset & 0xff;
-                                    compressed[compressedPos++] = (offset >> 8) & 0xff;
-
-                                    // Write match length
-                                    const matchLenToEncode = matchLength - 4; // LZ4 encodes matchLen - 4
-                                    compressed[tokenPos] |= Math.min(matchLenToEncode, 15);
-
-                                    if (matchLenToEncode >= 15) {
-                                        let remaining = matchLenToEncode - 15;
-                                        while (remaining >= 255) {
-                                            compressed[compressedPos++] = 255;
-                                            remaining -= 255;
-                                        }
-                                        compressed[compressedPos++] = remaining;
-                                    }
-
-                                    inputPos += matchLength;
-                                    anchor = inputPos;
-
-                                    // Update hash table for skipped positions
-                                    for (let i = inputPos - matchLength + 1; i < inputPos; i++) {
-                                        const seq =
-                                            (input[i] |
-                                                (input[i + 1] << 8) |
-                                                (input[i + 2] << 16) |
-                                                (input[i + 3] << 24)) >>>
-                                            0;
-                                        const h = ((seq * 2654435761) >>> 20) & 0xfff;
-                                        hashTable[h] = i;
-                                    }
-                                    continue;
-                                }
-                            }
-
-                            inputPos++;
+                        // Check match length
+                        while (
+                            matchLength < maxMatch
+                            && input[ref + matchLength] === input[inputPos + matchLength]
+                        ) {
+                            matchLength++;
                         }
 
-                        // Output remaining literals
-                        if (anchor < input.length) {
-                            const literalLength = input.length - anchor;
+                        if (matchLength >= 4) {
+                            // Minimum match length for LZ4
+                            // Output literals
+                            const literalLength = inputPos - anchor;
                             const tokenPos = compressedPos++;
                             compressed[tokenPos] = Math.min(literalLength, 15) << 4;
 
+                            // Write literal length extension if needed
                             if (literalLength >= 15) {
-                                compressed[tokenPos] = 0xf0;
+                                compressed[tokenPos] |= 0xF0;
                                 let remaining = literalLength - 15;
                                 while (remaining >= 255) {
                                     compressed[compressedPos++] = 255;
@@ -9570,460 +9800,473 @@ const AdvancedMemoryDumper = {
                                 compressed[compressedPos++] = remaining;
                             }
 
-                            for (let i = anchor; i < input.length; i++) {
+                            // Copy literals
+                            for (let i = anchor; i < inputPos; i++) {
                                 compressed[compressedPos++] = input[i];
                             }
-                        }
 
-                        return {
-                            algorithm: 'lz4',
-                            data: compressed.slice(0, compressedPos),
-                            metadata: {
-                                originalSize: input.length,
-                                compressedSize: compressedPos,
-                            },
-                        };
-                    } catch (error) {
-                        return {
-                            algorithm: 'lz4',
-                            data,
-                            metadata: { error: error.message },
-                        };
-                    }
-                },
+                            // Write offset (little-endian)
+                            const offset = inputPos - ref;
+                            compressed[compressedPos++] = offset & 0xFF;
+                            compressed[compressedPos++] = (offset >> 8) & 0xFF;
 
-                decompress: (compressedData, metadata) => {
-                    try {
-                        const compressed = new Uint8Array(compressedData);
-                        const decompressed = new Uint8Array(metadata.originalSize);
+                            // Write match length
+                            const matchLenToEncode = matchLength - 4; // LZ4 encodes matchLen - 4
+                            compressed[tokenPos] |= Math.min(matchLenToEncode, 15);
 
-                        let compressedPos = 0;
-                        let decompressedPos = 0;
-
-                        while (
-                            compressedPos < compressed.length &&
-                            decompressedPos < decompressed.length
-                        ) {
-                            if (
-                                compressed[compressedPos] === 0xff &&
-                                compressedPos + 2 < compressed.length
-                            ) {
-                                // Decode run
-                                const runLength = compressed[compressedPos + 1];
-                                const runByte = compressed[compressedPos + 2];
-
-                                for (
-                                    let i = 0;
-                                    i < runLength && decompressedPos < decompressed.length;
-                                    i++
-                                ) {
-                                    decompressed[decompressedPos++] = runByte;
+                            if (matchLenToEncode >= 15) {
+                                let remaining = matchLenToEncode - 15;
+                                while (remaining >= 255) {
+                                    compressed[compressedPos++] = 255;
+                                    remaining -= 255;
                                 }
-
-                                compressedPos += 3;
-                            } else {
-                                // Copy literal byte
-                                decompressed[decompressedPos++] = compressed[compressedPos++];
+                                compressed[compressedPos++] = remaining;
                             }
+
+                            inputPos += matchLength;
+                            anchor = inputPos;
+
+                            // Update hash table for skipped positions
+                            for (let i = inputPos - matchLength + 1; i < inputPos; i++) {
+                                const seq
+                                    = (input[i]
+                                        | (input[i + 1] << 8)
+                                        | (input[i + 2] << 16)
+                                        | (input[i + 3] << 24))
+                                    >>> 0;
+                                const h = ((seq * 2_654_435_761) >>> 20) & 0xF_FF;
+                                hashTable[h] = i;
+                            }
+                            continue;
+                        }
+                    }
+
+                    inputPos++;
+                }
+
+                // Output remaining literals
+                if (anchor < input.length) {
+                    const literalLength = input.length - anchor;
+                    const tokenPos = compressedPos++;
+                    compressed[tokenPos] = Math.min(literalLength, 15) << 4;
+
+                    if (literalLength >= 15) {
+                        compressed[tokenPos] = 0xF0;
+                        let remaining = literalLength - 15;
+                        while (remaining >= 255) {
+                            compressed[compressedPos++] = 255;
+                            remaining -= 255;
+                        }
+                        compressed[compressedPos++] = remaining;
+                    }
+
+                    for (let i = anchor; i < input.length; i++) {
+                        compressed[compressedPos++] = input[i];
+                    }
+                }
+
+                return {
+                    algorithm: 'lz4',
+                    data: compressed.slice(0, compressedPos),
+                    metadata: {
+                        originalSize: input.length,
+                        compressedSize: compressedPos,
+                    },
+                };
+            } catch (error) {
+                return {
+                    algorithm: 'lz4',
+                    data,
+                    metadata: { error: error.message },
+                };
+            }
+        },
+
+        decompress: (compressedData, metadata) => {
+            try {
+                const compressed = new Uint8Array(compressedData);
+                const decompressed = new Uint8Array(metadata.originalSize);
+
+                let compressedPos = 0;
+                let decompressedPos = 0;
+
+                while (compressedPos < compressed.length && decompressedPos < decompressed.length) {
+                    if (
+                        compressed[compressedPos] === 0xFF
+                        && compressedPos + 2 < compressed.length
+                    ) {
+                        // Decode run
+                        const runLength = compressed[compressedPos + 1];
+                        const runByte = compressed[compressedPos + 2];
+
+                        for (
+                            let i = 0;
+                            i < runLength && decompressedPos < decompressed.length;
+                            i++
+                        ) {
+                            decompressed[decompressedPos++] = runByte;
                         }
 
-                        return decompressed.slice(0, decompressedPos);
-                    } catch {
-                        return compressedData;
+                        compressedPos += 3;
+                    } else {
+                        // Copy literal byte
+                        decompressed[decompressedPos++] = compressed[compressedPos++];
                     }
-                },
-            };
-        } catch {
-            return {
-                compress: data => ({ data, algorithm: 'lz4' }),
-                decompress: data => data,
-            };
-        }
-    },
+                }
+
+                return decompressed.slice(0, decompressedPos);
+            } catch {
+                return compressedData;
+            }
+        },
+    }),
 
     /**
      * Create Zstandard compression algorithm implementation
      */
-    createZstdCompressor: () => {
-        try {
-            return {
-                compress: data => {
+    createZstdCompressor: () => ({
+        compress: data => {
+            try {
+                // Real Zstandard compression implementation
+                const input = new Uint8Array(data);
+                const maxOutputSize = input.length + Math.floor(input.length / 10) + 32;
+                const compressed = new Uint8Array(maxOutputSize);
+
+                // Try native Zstd if available
+                if (Process.platform === 'windows') {
                     try {
-                        // Real Zstandard compression implementation
-                        const input = new Uint8Array(data);
-                        const maxOutputSize = input.length + Math.floor(input.length / 10) + 32;
-                        const compressed = new Uint8Array(maxOutputSize);
-
-                        // Try native Zstd if available
-                        if (Process.platform === 'windows') {
-                            try {
-                                // Check for zstd.dll
-                                const zstdModule = Process.findModuleByName('zstd.dll');
-                                if (!zstdModule) {
-                                    // Try to load from system32 or common locations
-                                    const kernel32 = Module.findExportByName(
-                                        'kernel32.dll',
-                                        'LoadLibraryW'
-                                    );
-                                    if (kernel32) {
-                                        const LoadLibraryW = new NativeFunction(
-                                            kernel32,
-                                            'pointer',
-                                            ['pointer']
-                                        );
-                                        const libPath = Memory.allocUtf16String('zstd.dll');
-                                        LoadLibraryW(libPath);
-                                    }
-                                }
-
-                                const compress = Module.findExportByName(
-                                    'zstd.dll',
-                                    'ZSTD_compress'
-                                );
-                                if (compress) {
-                                    const ZSTD_compress = new NativeFunction(compress, 'size_t', [
-                                        'pointer',
-                                        'size_t',
-                                        'pointer',
-                                        'size_t',
-                                        'int',
-                                    ]);
-
-                                    const inputBuffer = Memory.alloc(input.length);
-                                    inputBuffer.writeByteArray(input);
-                                    const outputBuffer = Memory.alloc(maxOutputSize);
-
-                                    const compressedSize = ZSTD_compress(
-                                        outputBuffer,
-                                        maxOutputSize,
-                                        inputBuffer,
-                                        input.length,
-                                        3 // Compression level
-                                    );
-
-                                    if (compressedSize > 0) {
-                                        return {
-                                            algorithm: 'zstd',
-                                            data: outputBuffer.readByteArray(compressedSize),
-                                            metadata: {
-                                                originalSize: input.length,
-                                                compressedSize,
-                                                native: true,
-                                            },
-                                        };
-                                    }
-                                }
-                            } catch {
-                                // Native compression failed, use JavaScript implementation
+                        // Check for zstd.dll
+                        const zstdModule = Process.findModuleByName('zstd.dll');
+                        if (!zstdModule) {
+                            // Try to load from system32 or common locations
+                            const kernel32 = Module.findExportByName(
+                                'kernel32.dll',
+                                'LoadLibraryW'
+                            );
+                            if (kernel32) {
+                                const LoadLibraryW = new NativeFunction(kernel32, 'pointer', [
+                                    'pointer',
+                                ]);
+                                const libPath = Memory.allocUtf16String('zstd.dll');
+                                LoadLibraryW(libPath);
                             }
                         }
 
-                        // JavaScript Zstandard-like implementation with dictionary compression
-                        let compressedPos = 0;
+                        const compress = Module.findExportByName('zstd.dll', 'ZSTD_compress');
+                        if (compress) {
+                            const ZSTD_compress = new NativeFunction(compress, 'size_t', [
+                                'pointer',
+                                'size_t',
+                                'pointer',
+                                'size_t',
+                                'int',
+                            ]);
 
-                        // Zstd magic number
-                        compressed[compressedPos++] = 0x28;
-                        compressed[compressedPos++] = 0xb5;
-                        compressed[compressedPos++] = 0x2f;
-                        compressed[compressedPos++] = 0xfd;
+                            const inputBuffer = Memory.alloc(input.length);
+                            inputBuffer.writeByteArray(input);
+                            const outputBuffer = Memory.alloc(maxOutputSize);
 
-                        // Frame header (simplified)
-                        compressed[compressedPos++] = 0x00; // Frame header descriptor
-                        compressed[compressedPos++] = input.length & 0xff;
-                        compressed[compressedPos++] = (input.length >> 8) & 0xff;
-                        compressed[compressedPos++] = (input.length >> 16) & 0xff;
-                        compressed[compressedPos++] = (input.length >> 24) & 0xff;
+                            const compressedSize = ZSTD_compress(
+                                outputBuffer,
+                                maxOutputSize,
+                                inputBuffer,
+                                input.length,
+                                3 // Compression level
+                            );
 
-                        // Dictionary for pattern matching
-                        const dictionary = new Map();
-                        const windowSize = 32768; // 32KB window
-                        const minMatch = 3;
-                        const maxMatch = 128;
-
-                        let i = 0;
-                        while (i < input.length) {
-                            // Build dictionary key from current position
-                            if (i >= minMatch) {
-                                const key = (input[i] << 16) | (input[i + 1] << 8) | input[i + 2];
-                                const positions = dictionary.get(key) || [];
-
-                                let bestMatch = null;
-                                let bestLength = 0;
-
-                                // Search for matches in dictionary
-                                for (const pos of positions) {
-                                    if (i - pos > windowSize) {
-                                        continue;
-                                    }
-
-                                    let matchLength = 0;
-                                    while (
-                                        matchLength < maxMatch &&
-                                        i + matchLength < input.length &&
-                                        input[pos + matchLength] === input[i + matchLength]
-                                    ) {
-                                        matchLength++;
-                                    }
-
-                                    if (matchLength > bestLength && matchLength >= minMatch) {
-                                        bestLength = matchLength;
-                                        bestMatch = pos;
-                                    }
-                                }
-
-                                if (bestMatch !== null && bestLength >= minMatch) {
-                                    // Output sequence match
-                                    const offset = i - bestMatch;
-
-                                    // Encode match (simplified format)
-                                    compressed[compressedPos++] = 0x80 | (bestLength - minMatch);
-                                    compressed[compressedPos++] = offset & 0xff;
-                                    compressed[compressedPos++] = (offset >> 8) & 0xff;
-
-                                    i += bestLength;
-                                } else {
-                                    // Output literal
-                                    compressed[compressedPos++] = input[i];
-                                    i++;
-                                }
-
-                                // Update dictionary
-                                if (positions.length > 32) {
-                                    positions.shift();
-                                }
-                                positions.push(i - bestLength || i - 1);
-                                dictionary.set(key, positions);
-                            } else {
-                                // Output literal for beginning of data
-                                compressed[compressedPos++] = input[i];
-                                i++;
+                            if (compressedSize > 0) {
+                                return {
+                                    algorithm: 'zstd',
+                                    data: outputBuffer.readByteArray(compressedSize),
+                                    metadata: {
+                                        originalSize: input.length,
+                                        compressedSize,
+                                        native: true,
+                                    },
+                                };
                             }
                         }
-
-                        return {
-                            algorithm: 'zstd',
-                            data: compressed.slice(0, compressedPos),
-                            metadata: {
-                                originalSize: input.length,
-                                compressedSize: compressedPos,
-                            },
-                        };
-                    } catch (error) {
-                        return {
-                            algorithm: 'zstd',
-                            data,
-                            metadata: { error: error.message },
-                        };
-                    }
-                },
-
-                decompress: (compressedData, metadata) => {
-                    try {
-                        const compressed = new Uint8Array(compressedData);
-                        const decompressed = new Uint8Array(metadata.originalSize);
-
-                        let compressedPos = 0;
-                        let decompressedPos = 0;
-
-                        while (
-                            compressedPos < compressed.length &&
-                            decompressedPos < decompressed.length
-                        ) {
-                            if (
-                                compressed[compressedPos] === 0xfe &&
-                                compressedPos + 3 < compressed.length
-                            ) {
-                                // Decode match
-                                const matchLength = compressed[compressedPos + 1];
-                                const distance =
-                                    compressed[compressedPos + 2] |
-                                    (compressed[compressedPos + 3] << 8);
-
-                                for (
-                                    let i = 0;
-                                    i < matchLength && decompressedPos < decompressed.length;
-                                    i++
-                                ) {
-                                    decompressed[decompressedPos] =
-                                        decompressed[decompressedPos - distance];
-                                    decompressedPos++;
-                                }
-
-                                compressedPos += 4;
-                            } else {
-                                // Copy literal byte
-                                decompressed[decompressedPos++] = compressed[compressedPos++];
-                            }
-                        }
-
-                        return decompressed.slice(0, decompressedPos);
                     } catch {
-                        return compressedData;
+                        // Native compression failed, use JavaScript implementation
                     }
-                },
-            };
-        } catch {
-            return {
-                compress: data => ({ data, algorithm: 'zstd' }),
-                decompress: data => data,
-            };
-        }
-    },
+                }
+
+                // JavaScript Zstandard-like implementation with dictionary compression
+                let compressedPos = 0;
+
+                // Zstd magic number
+                compressed[compressedPos++] = 0x28;
+                compressed[compressedPos++] = 0xB5;
+                compressed[compressedPos++] = 0x2F;
+                compressed[compressedPos++] = 0xFD;
+
+                // Frame header (simplified)
+                compressed[compressedPos++] = 0x00; // Frame header descriptor
+                compressed[compressedPos++] = input.length & 0xFF;
+                compressed[compressedPos++] = (input.length >> 8) & 0xFF;
+                compressed[compressedPos++] = (input.length >> 16) & 0xFF;
+                compressed[compressedPos++] = (input.length >> 24) & 0xFF;
+
+                // Dictionary for pattern matching
+                const dictionary = new Map();
+                const windowSize = 32_768; // 32KB window
+                const minMatch = 3;
+                const maxMatch = 128;
+
+                let i = 0;
+                while (i < input.length) {
+                    // Build dictionary key from current position
+                    if (i >= minMatch) {
+                        const key = (input[i] << 16) | (input[i + 1] << 8) | input[i + 2];
+                        const positions = dictionary.get(key) || [];
+
+                        let bestMatch = null;
+                        let bestLength = 0;
+
+                        // Search for matches in dictionary
+                        for (const pos of positions) {
+                            if (i - pos > windowSize) {
+                                continue;
+                            }
+
+                            let matchLength = 0;
+                            while (
+                                matchLength < maxMatch
+                                && i + matchLength < input.length
+                                && input[pos + matchLength] === input[i + matchLength]
+                            ) {
+                                matchLength++;
+                            }
+
+                            if (matchLength > bestLength && matchLength >= minMatch) {
+                                bestLength = matchLength;
+                                bestMatch = pos;
+                            }
+                        }
+
+                        if (bestMatch !== null && bestLength >= minMatch) {
+                            // Output sequence match
+                            const offset = i - bestMatch;
+
+                            // Encode match (simplified format)
+                            compressed[compressedPos++] = 0x80 | (bestLength - minMatch);
+                            compressed[compressedPos++] = offset & 0xFF;
+                            compressed[compressedPos++] = (offset >> 8) & 0xFF;
+
+                            i += bestLength;
+                        } else {
+                            // Output literal
+                            compressed[compressedPos++] = input[i];
+                            i++;
+                        }
+
+                        // Update dictionary
+                        if (positions.length > 32) {
+                            positions.shift();
+                        }
+                        positions.push(i - bestLength || i - 1);
+                        dictionary.set(key, positions);
+                    } else {
+                        // Output literal for beginning of data
+                        compressed[compressedPos++] = input[i];
+                        i++;
+                    }
+                }
+
+                return {
+                    algorithm: 'zstd',
+                    data: compressed.slice(0, compressedPos),
+                    metadata: {
+                        originalSize: input.length,
+                        compressedSize: compressedPos,
+                    },
+                };
+            } catch (error) {
+                return {
+                    algorithm: 'zstd',
+                    data,
+                    metadata: { error: error.message },
+                };
+            }
+        },
+
+        decompress: (compressedData, metadata) => {
+            try {
+                const compressed = new Uint8Array(compressedData);
+                const decompressed = new Uint8Array(metadata.originalSize);
+
+                let compressedPos = 0;
+                let decompressedPos = 0;
+
+                while (compressedPos < compressed.length && decompressedPos < decompressed.length) {
+                    if (
+                        compressed[compressedPos] === 0xFE
+                        && compressedPos + 3 < compressed.length
+                    ) {
+                        // Decode match
+                        const matchLength = compressed[compressedPos + 1];
+                        const distance
+                            = compressed[compressedPos + 2] | (compressed[compressedPos + 3] << 8);
+
+                        for (
+                            let i = 0;
+                            i < matchLength && decompressedPos < decompressed.length;
+                            i++
+                        ) {
+                            decompressed[decompressedPos]
+                                = decompressed[decompressedPos - distance];
+                            decompressedPos++;
+                        }
+
+                        compressedPos += 4;
+                    } else {
+                        // Copy literal byte
+                        decompressed[decompressedPos++] = compressed[compressedPos++];
+                    }
+                }
+
+                return decompressed.slice(0, decompressedPos);
+            } catch {
+                return compressedData;
+            }
+        },
+    }),
 
     /**
      * Create LZMA compression algorithm implementation
      */
-    createLZMACompressor: () => {
-        try {
-            return {
-                compress: data => {
-                    try {
-                        // LZMA-style LZ77 compression with range encoding
-                        const input = new Uint8Array(data);
-                        const outputCapacity = Math.max(
-                            input.length + 256,
-                            Math.floor(input.length * 1.1)
-                        );
-                        const compressed = new Uint8Array(outputCapacity);
+    createLZMACompressor: () => ({
+        compress: data => {
+            try {
+                // LZMA-style LZ77 compression with range encoding
+                const input = new Uint8Array(data);
+                const outputCapacity = Math.max(input.length + 256, Math.floor(input.length * 1.1));
+                const compressed = new Uint8Array(outputCapacity);
 
-                        // LZ77 pattern matching with sliding window dictionary
-                        let compressedPos = 0;
-                        let i = 0;
+                // LZ77 pattern matching with sliding window dictionary
+                let compressedPos = 0;
+                let i = 0;
 
-                        while (i < input.length && compressedPos < compressed.length - 8) {
-                            // Look for long-distance matches
-                            const maxDistance = Math.min(4096, i);
-                            let bestMatch = { length: 0, distance: 0 };
+                while (i < input.length && compressedPos < compressed.length - 8) {
+                    // Look for long-distance matches
+                    const maxDistance = Math.min(4096, i);
+                    let bestMatch = { length: 0, distance: 0 };
 
-                            for (let distance = 1; distance <= maxDistance; distance++) {
-                                const startPos = i - distance;
-                                let matchLength = 0;
-
-                                while (
-                                    matchLength < 1023 &&
-                                    i + matchLength < input.length &&
-                                    input[startPos + matchLength] === input[i + matchLength]
-                                ) {
-                                    matchLength++;
-                                }
-
-                                if (matchLength > bestMatch.length) {
-                                    bestMatch = { length: matchLength, distance: distance };
-                                }
-                            }
-
-                            if (bestMatch.length > 2) {
-                                // Encode long match with variable length encoding
-                                compressed[compressedPos++] = 0xfd; // Long match marker
-
-                                // Encode length (variable length)
-                                let { length } = bestMatch;
-                                while (length > 127) {
-                                    compressed[compressedPos++] = (length & 0x7f) | 0x80;
-                                    length >>= 7;
-                                }
-                                compressed[compressedPos++] = length & 0x7f;
-
-                                // Encode distance (variable length)
-                                let { distance } = bestMatch;
-                                while (distance > 127) {
-                                    compressed[compressedPos++] = (distance & 0x7f) | 0x80;
-                                    distance >>= 7;
-                                }
-                                compressed[compressedPos++] = distance & 0x7f;
-
-                                i += bestMatch.length;
-                            } else {
-                                // Literal byte
-                                compressed[compressedPos++] = input[i++];
-                            }
-                        }
-
-                        return {
-                            algorithm: 'lzma',
-                            data: compressed.slice(0, compressedPos),
-                            metadata: {
-                                originalSize: input.length,
-                                compressedSize: compressedPos,
-                            },
-                        };
-                    } catch (error) {
-                        return {
-                            algorithm: 'lzma',
-                            data,
-                            metadata: { error: error.message },
-                        };
-                    }
-                },
-
-                decompress: (compressedData, metadata) => {
-                    try {
-                        const compressed = new Uint8Array(compressedData);
-                        const decompressed = new Uint8Array(metadata.originalSize);
-
-                        let compressedPos = 0;
-                        let decompressedPos = 0;
+                    for (let distance = 1; distance <= maxDistance; distance++) {
+                        const startPos = i - distance;
+                        let matchLength = 0;
 
                         while (
-                            compressedPos < compressed.length &&
-                            decompressedPos < decompressed.length
+                            matchLength < 1023
+                            && i + matchLength < input.length
+                            && input[startPos + matchLength] === input[i + matchLength]
                         ) {
-                            if (compressed[compressedPos] === 0xfd) {
-                                compressedPos++; // Skip marker
-
-                                // Decode variable length - length
-                                let length = 0;
-                                let shift = 0;
-                                while (compressedPos < compressed.length) {
-                                    const byte = compressed[compressedPos++];
-                                    length |= (byte & 0x7f) << shift;
-                                    if ((byte & 0x80) === 0) {
-                                        break;
-                                    }
-                                    shift += 7;
-                                }
-
-                                // Decode variable length - distance
-                                let distance = 0;
-                                shift = 0;
-                                while (compressedPos < compressed.length) {
-                                    const byte = compressed[compressedPos++];
-                                    distance |= (byte & 0x7f) << shift;
-                                    if ((byte & 0x80) === 0) {
-                                        break;
-                                    }
-                                    shift += 7;
-                                }
-
-                                // Copy matched data
-                                for (
-                                    let i = 0;
-                                    i < length && decompressedPos < decompressed.length;
-                                    i++
-                                ) {
-                                    decompressed[decompressedPos] =
-                                        decompressed[decompressedPos - distance];
-                                    decompressedPos++;
-                                }
-                            } else {
-                                // Copy literal byte
-                                decompressed[decompressedPos++] = compressed[compressedPos++];
-                            }
+                            matchLength++;
                         }
 
-                        return decompressed.slice(0, decompressedPos);
-                    } catch {
-                        return compressedData;
+                        if (matchLength > bestMatch.length) {
+                            bestMatch = { length: matchLength, distance };
+                        }
                     }
-                },
-            };
-        } catch {
-            return {
-                compress: data => ({ data, algorithm: 'lzma' }),
-                decompress: data => data,
-            };
-        }
-    },
+
+                    if (bestMatch.length > 2) {
+                        // Encode long match with variable length encoding
+                        compressed[compressedPos++] = 0xFD; // Long match marker
+
+                        // Encode length (variable length)
+                        let { length } = bestMatch;
+                        while (length > 127) {
+                            compressed[compressedPos++] = (length & 0x7F) | 0x80;
+                            length >>= 7;
+                        }
+                        compressed[compressedPos++] = length & 0x7F;
+
+                        // Encode distance (variable length)
+                        let { distance } = bestMatch;
+                        while (distance > 127) {
+                            compressed[compressedPos++] = (distance & 0x7F) | 0x80;
+                            distance >>= 7;
+                        }
+                        compressed[compressedPos++] = distance & 0x7F;
+
+                        i += bestMatch.length;
+                    } else {
+                        // Literal byte
+                        compressed[compressedPos++] = input[i++];
+                    }
+                }
+
+                return {
+                    algorithm: 'lzma',
+                    data: compressed.slice(0, compressedPos),
+                    metadata: {
+                        originalSize: input.length,
+                        compressedSize: compressedPos,
+                    },
+                };
+            } catch (error) {
+                return {
+                    algorithm: 'lzma',
+                    data,
+                    metadata: { error: error.message },
+                };
+            }
+        },
+
+        decompress: (compressedData, metadata) => {
+            try {
+                const compressed = new Uint8Array(compressedData);
+                const decompressed = new Uint8Array(metadata.originalSize);
+
+                let compressedPos = 0;
+                let decompressedPos = 0;
+
+                while (compressedPos < compressed.length && decompressedPos < decompressed.length) {
+                    if (compressed[compressedPos] === 0xFD) {
+                        compressedPos++; // Skip marker
+
+                        // Decode variable length - length
+                        let length = 0;
+                        let shift = 0;
+                        while (compressedPos < compressed.length) {
+                            const byte = compressed[compressedPos++];
+                            length |= (byte & 0x7F) << shift;
+                            if ((byte & 0x80) === 0) {
+                                break;
+                            }
+                            shift += 7;
+                        }
+
+                        // Decode variable length - distance
+                        let distance = 0;
+                        shift = 0;
+                        while (compressedPos < compressed.length) {
+                            const byte = compressed[compressedPos++];
+                            distance |= (byte & 0x7F) << shift;
+                            if ((byte & 0x80) === 0) {
+                                break;
+                            }
+                            shift += 7;
+                        }
+
+                        // Copy matched data
+                        for (let i = 0; i < length && decompressedPos < decompressed.length; i++) {
+                            decompressed[decompressedPos]
+                                = decompressed[decompressedPos - distance];
+                            decompressedPos++;
+                        }
+                    } else {
+                        // Copy literal byte
+                        decompressed[decompressedPos++] = compressed[compressedPos++];
+                    }
+                }
+
+                return decompressed.slice(0, decompressedPos);
+            } catch {
+                return compressedData;
+            }
+        },
+    }),
 
     /**
      * Create differential compression algorithm implementation
@@ -10039,7 +10282,7 @@ const AdvancedMemoryDumper = {
 
                         if (!baseId || !this.bases.has(baseId)) {
                             // No base - store as full data
-                            this.bases.set(baseId || 'default', input.slice());
+                            this.bases.set(baseId || 'default', [...input]);
                             return {
                                 algorithm: 'differential',
                                 data: input,
@@ -10063,11 +10306,11 @@ const AdvancedMemoryDumper = {
 
                             if (inputByte !== baseByte) {
                                 // Encode difference
-                                diff[diffPos++] = 0xfc; // Diff marker
-                                diff[diffPos++] = (i >> 24) & 0xff; // Address bytes
-                                diff[diffPos++] = (i >> 16) & 0xff;
-                                diff[diffPos++] = (i >> 8) & 0xff;
-                                diff[diffPos++] = i & 0xff;
+                                diff[diffPos++] = 0xFC; // Diff marker
+                                diff[diffPos++] = (i >> 24) & 0xFF; // Address bytes
+                                diff[diffPos++] = (i >> 16) & 0xFF;
+                                diff[diffPos++] = (i >> 8) & 0xFF;
+                                diff[diffPos++] = i & 0xFF;
                                 diff[diffPos++] = inputByte; // New value
                             }
 
@@ -10075,7 +10318,7 @@ const AdvancedMemoryDumper = {
                         }
 
                         // Update base for next differential
-                        this.bases.set(baseId, input.slice());
+                        this.bases.set(baseId, [...input]);
 
                         return {
                             algorithm: 'differential',
@@ -10098,11 +10341,11 @@ const AdvancedMemoryDumper = {
 
                 decompress(compressedData, metadata) {
                     try {
-                        if (metadata.type === 'full') {
+                        const { type, baseId, originalSize } = metadata;
+                        if (type === 'full') {
                             return compressedData;
                         }
 
-                        const { baseId } = metadata;
                         if (!this.bases.has(baseId)) {
                             throw new Error(
                                 `Base ${baseId} not found for differential decompression`
@@ -10110,7 +10353,7 @@ const AdvancedMemoryDumper = {
                         }
 
                         const base = this.bases.get(baseId);
-                        const result = new Uint8Array(Math.max(metadata.originalSize, base.length));
+                        const result = new Uint8Array(Math.max(originalSize, base.length));
 
                         // Start with base data
                         result.set(base);
@@ -10120,14 +10363,14 @@ const AdvancedMemoryDumper = {
                         let diffPos = 0;
 
                         while (diffPos < diff.length) {
-                            if (diff[diffPos] === 0xfc && diffPos + 5 < diff.length) {
+                            if (diff[diffPos] === 0xFC && diffPos + 5 < diff.length) {
                                 // Read diff entry
                                 diffPos++; // Skip marker
-                                const address =
-                                    (diff[diffPos] << 24) |
-                                    (diff[diffPos + 1] << 16) |
-                                    (diff[diffPos + 2] << 8) |
-                                    diff[diffPos + 3];
+                                const address
+                                    = (diff[diffPos] << 24)
+                                    | (diff[diffPos + 1] << 16)
+                                    | (diff[diffPos + 2] << 8)
+                                    | diff[diffPos + 3];
                                 const value = diff[diffPos + 4];
                                 diffPos += 5;
 
@@ -10139,7 +10382,7 @@ const AdvancedMemoryDumper = {
                             }
                         }
 
-                        return result.slice(0, metadata.originalSize);
+                        return result.slice(0, originalSize);
                     } catch {
                         return compressedData;
                     }
@@ -10174,7 +10417,7 @@ const AdvancedMemoryDumper = {
 
             // Sort fragments by address for reconstruction
             reconstruction.fragments.sort(
-                (a, b) => parseInt(a.address, 16) - parseInt(b.address, 16)
+                (a, b) => Number.parseInt(a.address, 16) - Number.parseInt(b.address, 16)
             );
 
             // Reconstruct scattered memory segments
@@ -10219,23 +10462,14 @@ const AdvancedMemoryDumper = {
             let currentRegion = null;
 
             for (const fragment of fragments) {
-                const fragmentAddress = parseInt(fragment.address, 16);
+                const fragmentAddress = Number.parseInt(fragment.address, 16);
                 const fragmentSize = fragment.size > 0 || fragment.data.length > 0;
 
-                if (!currentRegion) {
-                    // Start new region
-                    currentRegion = {
-                        startAddress: fragmentAddress,
-                        endAddress: fragmentAddress + fragmentSize,
-                        data: fragment.data,
-                        fragments: [fragment],
-                        confidence: fragment.confidence || 1,
-                    };
-                } else {
+                if (currentRegion) {
                     const regionEnd = currentRegion.endAddress;
                     const gap = fragmentAddress - regionEnd;
 
-                    if (gap <= 0x1000) {
+                    if (gap <= 0x10_00) {
                         // Merge if gap is small (4KB or less)
                         // Extend current region
                         if (gap > 0) {
@@ -10271,6 +10505,15 @@ const AdvancedMemoryDumper = {
                             confidence: fragment.confidence || 1,
                         };
                     }
+                } else {
+                    // Start new region
+                    currentRegion = {
+                        startAddress: fragmentAddress,
+                        endAddress: fragmentAddress + fragmentSize,
+                        data: fragment.data,
+                        fragments: [fragment],
+                        confidence: fragment.confidence || 1,
+                    };
                 }
             }
 
@@ -10332,11 +10575,11 @@ const AdvancedMemoryDumper = {
 
             for (const fragment of fragments) {
                 if (fragment.virtual) {
-                    const virtualAddress = parseInt(
+                    const virtualAddress = Number.parseInt(
                         fragment.virtualAddress || fragment.address,
                         16
                     );
-                    const physicalAddress = parseInt(
+                    const physicalAddress = Number.parseInt(
                         fragment.physicalAddress || fragment.address,
                         16
                     );
@@ -10345,7 +10588,7 @@ const AdvancedMemoryDumper = {
                         virtualAddress,
                         physicalAddress,
                         data: fragment.data,
-                        pageSize: fragment.pageSize || 0x1000,
+                        pageSize: fragment.pageSize || 0x10_00,
                         protection: fragment.protection || 'rwx',
                         mapped: true,
                     });
@@ -10353,9 +10596,7 @@ const AdvancedMemoryDumper = {
             }
 
             // Sort by virtual address
-            const sortedEntries = Array.from(virtualMemoryMap.entries()).sort(
-                (a, b) => a[0] - b[0]
-            );
+            const sortedEntries = [...virtualMemoryMap.entries()].sort((a, b) => a[0] - b[0]);
 
             return sortedEntries.map(([_virtualAddr, info]) => info);
         } catch (error) {
@@ -10379,7 +10620,7 @@ const AdvancedMemoryDumper = {
                 const gapEnd = nextRegion.startAddress;
                 const gapSize = gapEnd - gapStart;
 
-                if (gapSize > 0 && gapSize <= 0x10000) {
+                if (gapSize > 0 && gapSize <= 0x1_00_00) {
                     // Only interpolate gaps up to 64KB
                     const interpolation = this.performGapInterpolation(
                         currentRegion,
@@ -10452,7 +10693,7 @@ const AdvancedMemoryDumper = {
                     const endValue = afterHead[0];
                     const step = (endValue - startValue) / (gapSize + 1);
                     for (let i = 0; i < gapSize; i++) {
-                        interpolatedView[i] = Math.round(startValue + (step * (i + 1))) & 0xff;
+                        interpolatedView[i] = Math.round(startValue + step * (i + 1)) & 0xFF;
                     }
                     break;
                 }
@@ -10462,7 +10703,7 @@ const AdvancedMemoryDumper = {
                         const beforeValue = beforeTail.at(-1) || 0;
                         const afterValue = afterHead[0] || 0;
                         interpolatedView[i]
-                            = Math.round(((1 - ratio) * beforeValue) + (ratio * afterValue)) & 0xff;
+                            = Math.round((1 - ratio) * beforeValue + ratio * afterValue) & 0xFF;
                     }
                     break;
                 }
@@ -10690,7 +10931,7 @@ const AdvancedMemoryDumper = {
         try {
             const regions = [];
             const data = new Uint8Array(memoryData);
-            const pageSize = 0x1000; // 4KB pages
+            const pageSize = 0x10_00; // 4KB pages
 
             for (let offset = 0; offset < data.length; offset += pageSize) {
                 const pageData = data.slice(offset, Math.min(offset + pageSize, data.length));
@@ -10740,7 +10981,7 @@ const AdvancedMemoryDumper = {
                 confidence = 0.4;
             }
 
-            return { type, confidence, features: features };
+            return { type, confidence, features };
         } catch {
             return { type: 'unknown', confidence: 0.1, features: {} };
         }
@@ -10756,7 +10997,7 @@ const AdvancedMemoryDumper = {
             };
 
             const data = new Uint8Array(memoryData);
-            const chunkSize = 0x1000; // 4KB chunks
+            const chunkSize = 0x10_00; // 4KB chunks
 
             for (let offset = 0; offset < data.length; offset += chunkSize) {
                 const chunk = data.slice(offset, Math.min(offset + chunkSize, data.length));
@@ -10886,15 +11127,13 @@ const AdvancedMemoryDumper = {
             let currentString = '';
             let stringStart = 0;
 
-            for (let i = 0; i < data.length; i++) {
-                const byte = data[i];
-
+            for (const [i, byte] of data.entries()) {
                 if (byte >= 32 && byte <= 126) {
                     // Printable ASCII
                     if (currentString.length === 0) {
                         stringStart = i;
                     }
-                    currentString += String.fromCharCode(byte);
+                    currentString += String.fromCodePoint(byte);
                 } else {
                     if (currentString.length >= 4) {
                         // Minimum string length
@@ -10908,12 +11147,23 @@ const AdvancedMemoryDumper = {
                         strings.ascii.push(stringInfo);
 
                         // Categorize special string types
-                        if (stringInfo.type === 'url') {
-                            strings.urls.push(stringInfo);
-                        } else if (stringInfo.type === 'file_path') {
-                            strings.filePaths.push(stringInfo);
-                        } else if (stringInfo.type === 'registry_key') {
-                            strings.registryKeys.push(stringInfo);
+                        switch (stringInfo.type) {
+                            case 'url': {
+                                strings.urls.push(stringInfo);
+
+                                break;
+                            }
+                            case 'file_path': {
+                                strings.filePaths.push(stringInfo);
+
+                                break;
+                            }
+                            case 'registry_key': {
+                                strings.registryKeys.push(stringInfo);
+
+                                break;
+                            }
+                            // No default
                         }
                     }
                     currentString = '';
@@ -11022,7 +11272,7 @@ const AdvancedMemoryDumper = {
                         const platform = {
                             os: Process.platform || 'unknown',
                             architecture: Process.arch || 'unknown',
-                            pageSize: Process.pageSize || 0x1000,
+                            pageSize: Process.pageSize || 0x10_00,
                             pointerSize: Process.pointerSize || 8,
                             isContainer: this.detectContainerEnvironment(),
                             isVM: this.detectVirtualMachine(),
@@ -11074,7 +11324,7 @@ const AdvancedMemoryDumper = {
                             const version = {
                                 major: 10, // Default to Windows 10
                                 minor: 0,
-                                build: 19041,
+                                build: 19_041,
                                 isWindows10Plus: true,
                                 isWindows11: false,
                                 architecture: Process.arch,
@@ -11085,8 +11335,8 @@ const AdvancedMemoryDumper = {
                                 const systemVersion = Process.getSystemVersion();
                                 version.major = systemVersion.major || 10;
                                 version.minor = systemVersion.minor || 0;
-                                version.build = systemVersion.build || 19041;
-                                version.isWindows11 = version.build >= 22000;
+                                version.build = systemVersion.build || 19_041;
+                                version.isWindows11 = version.build >= 22_000;
                             }
 
                             return version;
@@ -11094,7 +11344,7 @@ const AdvancedMemoryDumper = {
                             return {
                                 major: 10,
                                 minor: 0,
-                                build: 19041,
+                                build: 19_041,
                                 isWindows10Plus: true,
                             };
                         }
@@ -11609,8 +11859,8 @@ const AdvancedMemoryDumper = {
                             const compatiblePlatforms = Object.values(
                                 compatibility.platforms
                             ).filter(test => test.compatible).length;
-                            compatibility.overallCompatibility =
-                                compatiblePlatforms / platforms.length;
+                            compatibility.overallCompatibility
+                                = compatiblePlatforms / platforms.length;
 
                             return compatibility;
                         } catch (error) {
@@ -11656,8 +11906,8 @@ const AdvancedMemoryDumper = {
                                 }
                             }
 
-                            protectionTests.bypassSuccessRate =
-                                successfulBypasses / protectionSystems.length;
+                            protectionTests.bypassSuccessRate
+                                = successfulBypasses / protectionSystems.length;
 
                             console.log(
                                 `[AdvancedMemoryDumper] Protection system testing completed: ${protectionTests.bypassSuccessRate * 100}% bypass success rate`
@@ -11702,8 +11952,8 @@ const AdvancedMemoryDumper = {
                             const successfulIntegrations = Object.values(
                                 integration.scripts
                             ).filter(test => test.integrated).length;
-                            integration.overallIntegration =
-                                successfulIntegrations / scripts.length;
+                            integration.overallIntegration
+                                = successfulIntegrations / scripts.length;
 
                             return integration;
                         } catch (error) {
@@ -11779,8 +12029,8 @@ const AdvancedMemoryDumper = {
                             }
 
                             drmTests.bypassSuccessRate = successfulBypasses / drmSystems.length;
-                            drmTests.extractionSuccessRate =
-                                successfulExtractions / drmSystems.length;
+                            drmTests.extractionSuccessRate
+                                = successfulExtractions / drmSystems.length;
 
                             console.log(
                                 `[AdvancedMemoryDumper] DRM testing completed: ${drmTests.bypassSuccessRate * 100}% bypass rate, ${drmTests.extractionSuccessRate * 100}% extraction rate`
@@ -11830,10 +12080,10 @@ const AdvancedMemoryDumper = {
                                 }
                             }
 
-                            appTests.protectionBypassRate =
-                                successfulProtectionBypasses / applications.length;
-                            appTests.memoryAccessRate =
-                                successfulMemoryAccess / applications.length;
+                            appTests.protectionBypassRate
+                                = successfulProtectionBypasses / applications.length;
+                            appTests.memoryAccessRate
+                                = successfulMemoryAccess / applications.length;
 
                             return appTests;
                         } catch (error) {
@@ -11881,8 +12131,8 @@ const AdvancedMemoryDumper = {
                             }
 
                             sandboxTests.escapeSuccessRate = successfulEscapes / sandboxes.length;
-                            sandboxTests.memoryAccessSuccessRate =
-                                successfulMemoryAccess / sandboxes.length;
+                            sandboxTests.memoryAccessSuccessRate
+                                = successfulMemoryAccess / sandboxes.length;
 
                             return sandboxTests;
                         } catch (error) {
@@ -11935,12 +12185,12 @@ const AdvancedMemoryDumper = {
                                 }
                             }
 
-                            vmTests.vmEscapeRate =
-                                successfulVMEscapes / virtualizationSystems.length;
-                            vmTests.hypervisorBypassRate =
-                                successfulHypervisorBypasses / virtualizationSystems.length;
-                            vmTests.hostMemoryAccessRate =
-                                successfulHostMemoryAccess / virtualizationSystems.length;
+                            vmTests.vmEscapeRate
+                                = successfulVMEscapes / virtualizationSystems.length;
+                            vmTests.hypervisorBypassRate
+                                = successfulHypervisorBypasses / virtualizationSystems.length;
+                            vmTests.hostMemoryAccessRate
+                                = successfulHostMemoryAccess / virtualizationSystems.length;
 
                             return vmTests;
                         } catch (error) {
@@ -11993,12 +12243,12 @@ const AdvancedMemoryDumper = {
                                 }
                             }
 
-                            containerTests.escapeSuccessRate =
-                                successfulEscapes / containerTechnologies.length;
-                            containerTests.hostAccessRate =
-                                successfulHostAccess / containerTechnologies.length;
-                            containerTests.privilegeEscalationRate =
-                                successfulPrivilegeEscalations / containerTechnologies.length;
+                            containerTests.escapeSuccessRate
+                                = successfulEscapes / containerTechnologies.length;
+                            containerTests.hostAccessRate
+                                = successfulHostAccess / containerTechnologies.length;
+                            containerTests.privilegeEscalationRate
+                                = successfulPrivilegeEscalations / containerTechnologies.length;
 
                             return containerTests;
                         } catch (error) {
@@ -12235,8 +12485,8 @@ const AdvancedMemoryDumper = {
                             file.write(logLine);
                             file.flush();
                             file.close();
-                        } catch (e) {
-                            this.entries.push({ ...entry, fileWriteError: e.message });
+                        } catch (error) {
+                            this.entries.push({ ...entry, fileWriteError: error.message });
                         }
                     },
 
@@ -12299,14 +12549,25 @@ const AdvancedMemoryDumper = {
                     attemptRecovery(error, context) {
                         try {
                             // Implement recovery strategies based on error type
-                            if (error.name === 'MemoryAccessError') {
-                                this.recoverFromMemoryAccessError(error, context);
-                            } else if (error.name === 'ProcessAttachmentError') {
-                                this.recoverFromProcessAttachmentError(error, context);
-                            } else if (error.name === 'PermissionError') {
-                                this.recoverFromPermissionError(error, context);
-                            } else {
-                                this.performGenericRecovery(error, context);
+                            switch (error.name) {
+                                case 'MemoryAccessError': {
+                                    this.recoverFromMemoryAccessError(error, context);
+
+                                    break;
+                                }
+                                case 'ProcessAttachmentError': {
+                                    this.recoverFromProcessAttachmentError(error, context);
+
+                                    break;
+                                }
+                                case 'PermissionError': {
+                                    this.recoverFromPermissionError(error, context);
+
+                                    break;
+                                }
+                                default: {
+                                    this.performGenericRecovery(error, context);
+                                }
                             }
                         } catch (recoveryError) {
                             console.error(
@@ -12405,7 +12666,7 @@ const AdvancedMemoryDumper = {
                             avg: values.reduce((a, b) => a + b, 0) / values.length,
                             min: Math.min(...values),
                             max: Math.max(...values),
-                            latest: values[values.length - 1],
+                            latest: values.at(-1),
                         };
                     },
 
@@ -12418,7 +12679,7 @@ const AdvancedMemoryDumper = {
                 createHealthCheckSystem: () => ({
                     checks: new Map(),
 
-                    registerHealthCheck(name, checkFunction, interval = 30000) {
+                    registerHealthCheck(name, checkFunction, interval = 30_000) {
                         try {
                             const healthCheck = {
                                 name,
@@ -12467,10 +12728,10 @@ const AdvancedMemoryDumper = {
                             healthCheck.lastRun = Date.now();
                             healthCheck.lastResult = healthResult;
 
-                            if (healthResult.status !== 'healthy') {
-                                healthCheck.consecutiveFailures++;
-                            } else {
+                            if (healthResult.status === 'healthy') {
                                 healthCheck.consecutiveFailures = 0;
+                            } else {
+                                healthCheck.consecutiveFailures++;
                             }
 
                             return healthResult;
@@ -12500,9 +12761,8 @@ const AdvancedMemoryDumper = {
                             return 'degraded';
                         } else if (statuses.every(s => s === 'healthy')) {
                             return 'healthy';
-                        } else {
-                            return 'unknown';
                         }
+                        return 'unknown';
                     },
 
                     scheduleHealthCheck(healthCheck) {
@@ -12561,10 +12821,9 @@ const AdvancedMemoryDumper = {
                         const handler = handlers[protectionType];
                         if (handler) {
                             return handler.bypassProtection(targetSystem);
-                        } else {
-                            // Generic distributed bypass
-                            return this.performGenericDistributedBypass(targetSystem);
                         }
+                        // Generic distributed bypass
+                        return this.performGenericDistributedBypass(targetSystem);
                     } catch (error) {
                         console.error(
                             `[AdvancedMemoryDumper] Distributed bypass coordination failed: ${error.message}`
@@ -12754,10 +13013,10 @@ const AdvancedMemoryDumper = {
                                     const _startTime = Date.now();
 
                                     // Try to find actual network connections between nodes
-                                    const sourceAddr =
-                                        targetSystem.nodes[i].address || targetSystem.nodes[i].id;
-                                    const destAddr =
-                                        targetSystem.nodes[j].address || targetSystem.nodes[j].id;
+                                    const sourceAddr
+                                        = targetSystem.nodes[i].address || targetSystem.nodes[i].id;
+                                    const destAddr
+                                        = targetSystem.nodes[j].address || targetSystem.nodes[j].id;
 
                                     // Check if these are IP addresses we can measure
                                     if (sourceAddr && destAddr && sourceAddr.includes('.')) {
@@ -12773,7 +13032,10 @@ const AdvancedMemoryDumper = {
                                             const connectStart = Date.now();
                                             socket.connect({
                                                 host: destAddr.split(':')[0],
-                                                port: parseInt(destAddr.split(':')[1] || '80', 10),
+                                                port: Number.parseInt(
+                                                    destAddr.split(':')[1] || '80',
+                                                    10
+                                                ),
                                             });
                                             latency = Date.now() - connectStart;
 
@@ -12829,19 +13091,30 @@ const AdvancedMemoryDumper = {
 
                                         for (const mechanism of ipcMechanisms) {
                                             try {
-                                                const ipcModule =
-                                                    Process.findModuleByName(mechanism);
+                                                const ipcModule
+                                                    = Process.findModuleByName(mechanism);
                                                 if (ipcModule) {
                                                     // Measure IPC latency based on mechanism type
-                                                    if (mechanism === 'pipe') {
-                                                        latency = 0.1; // Named pipes typically < 0.1ms
-                                                        bandwidth = 1000 * 1024 * 1024 * 8; // ~1GB/s for pipes
-                                                    } else if (mechanism === 'socket') {
-                                                        latency = 0.5; // Local sockets ~0.5ms
-                                                        bandwidth = 500 * 1024 * 1024 * 8; // ~500MB/s
-                                                    } else if (mechanism === 'shm') {
-                                                        latency = 0.1;
-                                                        bandwidth = 10000 * 1024 * 1024 * 8; // ~10GB/s
+                                                    switch (mechanism) {
+                                                        case 'pipe': {
+                                                            latency = 0.1; // Named pipes typically < 0.1ms
+                                                            bandwidth = 1000 * 1024 * 1024 * 8; // ~1GB/s for pipes
+
+                                                            break;
+                                                        }
+                                                        case 'socket': {
+                                                            latency = 0.5; // Local sockets ~0.5ms
+                                                            bandwidth = 500 * 1024 * 1024 * 8; // ~500MB/s
+
+                                                            break;
+                                                        }
+                                                        case 'shm': {
+                                                            latency = 0.1;
+                                                            bandwidth = 10_000 * 1024 * 1024 * 8; // ~10GB/s
+
+                                                            break;
+                                                        }
+                                                        // No default
                                                     }
                                                     foundIPC = true;
                                                     break;
@@ -12864,27 +13137,27 @@ const AdvancedMemoryDumper = {
                                                     latency = Date.now() - memStart;
 
                                                     // Estimate bandwidth based on memory type
-                                                    const protection =
-                                                        Process.findRangeByAddress(testAddr);
+                                                    const protection
+                                                        = Process.findRangeByAddress(testAddr);
                                                     if (protection) {
                                                         if (protection.protection.includes('x')) {
                                                             // Code memory - L1 cache speeds
-                                                            bandwidth = 100000 * 1024 * 1024 * 8; // ~100GB/s
+                                                            bandwidth = 100_000 * 1024 * 1024 * 8; // ~100GB/s
                                                         } else if (
                                                             protection.protection.includes('w')
                                                         ) {
                                                             // Data memory - L2/L3 cache speeds
-                                                            bandwidth = 50000 * 1024 * 1024 * 8; // ~50GB/s
+                                                            bandwidth = 50_000 * 1024 * 1024 * 8; // ~50GB/s
                                                         } else {
                                                             // Read-only - Main memory speeds
-                                                            bandwidth = 25000 * 1024 * 1024 * 8; // ~25GB/s
+                                                            bandwidth = 25_000 * 1024 * 1024 * 8; // ~25GB/s
                                                         }
                                                     }
                                                 }
                                             } catch {
                                                 // Default to typical memory latencies
                                                 latency = 0.001;
-                                                bandwidth = 25000 * 1024 * 1024 * 8; // 25GB/s DDR4
+                                                bandwidth = 25_000 * 1024 * 1024 * 8; // 25GB/s DDR4
                                             }
                                         }
                                     }
@@ -13120,7 +13393,7 @@ const AdvancedMemoryDumper = {
                             for (const range of ranges) {
                                 try {
                                     // Limit extraction size for performance
-                                    const size = Math.min(range.size, 0x100000); // Max 1MB per range
+                                    const size = Math.min(range.size, 0x10_00_00); // Max 1MB per range
                                     const bytes = Memory.readByteArray(range.base, size);
 
                                     extractedMemory.push({
@@ -13138,7 +13411,12 @@ const AdvancedMemoryDumper = {
                                     if (totalSize >= 1024 * 1024) {
                                         break;
                                     }
-                                } catch (error) { console.error('[AdvancedMemoryDumper] Operation failed:', error.message); }
+                                } catch (error) {
+                                    console.error(
+                                        '[AdvancedMemoryDumper] Operation failed:',
+                                        error.message
+                                    );
+                                }
                             }
 
                             // Combine extracted memory into single buffer
@@ -13161,7 +13439,7 @@ const AdvancedMemoryDumper = {
                             // Establish connection to remote Frida server
                             const session = this.connectToRemoteNode(
                                 node.address,
-                                node.port || 27042
+                                node.port || 27_042
                             );
 
                             if (session) {
@@ -13196,11 +13474,16 @@ const AdvancedMemoryDumper = {
                                         if (codeRange) {
                                             const bytes = Memory.readByteArray(
                                                 codeRange.base,
-                                                Math.min(codeRange.size, 0x10000)
+                                                Math.min(codeRange.size, 0x1_00_00)
                                             );
                                             extractedData.push(bytes);
                                         }
-                                    } catch (error) { console.error('[AdvancedMemoryDumper] Operation failed:', error.message); }
+                                    } catch (error) {
+                                        console.error(
+                                            '[AdvancedMemoryDumper] Operation failed:',
+                                            error.message
+                                        );
+                                    }
                                 }
 
                                 // Combine module memory
@@ -13509,16 +13792,15 @@ const AdvancedMemoryDumper = {
                 },
 
                 // Extract blockchain data
-                extractBlockchainData: blockchainSystem => {
+                extractBlockchainData: blockchainSystem =>
                     // Extract blockchain state from memory structures
-                    return {
+                    ({
                         blocks: blockchainSystem.blocks || [],
                         transactions: blockchainSystem.transactions || [],
                         stateRoot: blockchainSystem.stateRoot || '0x0',
                         difficulty: blockchainSystem.difficulty || 0,
                         gasLimit: blockchainSystem.gasLimit || 0,
-                    };
-                },
+                    }),
             };
         } catch (error) {
             console.error(

@@ -14,8 +14,19 @@ import struct
 import re
 from pathlib import Path
 
-from intellicrack.core.analysis.automated_patch_agent import AutomatedPatchAgent
-from tests.base_test import IntellicrackTestBase
+try:
+    from intellicrack.core.analysis.automated_patch_agent import AutomatedPatchAgent
+    AUTOMATED_PATCH_AGENT_AVAILABLE = True
+except ImportError:
+    AutomatedPatchAgent = None
+    AUTOMATED_PATCH_AGENT_AVAILABLE = False
+
+try:
+    from tests.base_test import IntellicrackTestBase
+except ImportError:
+    IntellicrackTestBase = object
+
+pytestmark = pytest.mark.skipif(not AUTOMATED_PATCH_AGENT_AVAILABLE, reason="automated_patch_agent module not available")
 
 
 class TestKeygenGeneration(IntellicrackTestBase):

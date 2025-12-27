@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import Any, TypeVar, cast
 
 from intellicrack.utils.type_safety import get_typed_item, validate_type
+
 from ..utils.logger import get_logger
 from .model_sharding import get_sharding_manager
 
@@ -253,7 +254,7 @@ class QuantizationManager:
                         max_memory=kwargs.get("max_memory"),
                         no_split_module_classes=kwargs.get("no_split_module_classes"),
                     ),
-                    dict
+                    dict,
                 )
 
             # Load model
@@ -300,7 +301,7 @@ class QuantizationManager:
                         max_memory=kwargs.get("max_memory"),
                         no_split_module_classes=kwargs.get("no_split_module_classes"),
                     ),
-                    dict
+                    dict,
                 )
 
             # Load model
@@ -375,14 +376,14 @@ class QuantizationManager:
             elif self.sharding_manager and kwargs.get("enable_sharding", True):
                 # Use sharding manager for multi-GPU
                 trust_remote = kwargs.get("trust_remote_code", True)
-                sharded_result = cast(Any, self.sharding_manager).load_sharded_model(
+                sharded_result = cast("Any", self.sharding_manager).load_sharded_model(
                     model_path,
                     model_class=AutoModelForCausalLM,
                     torch_dtype=torch_dtype,
                     trust_remote_code=trust_remote if isinstance(trust_remote, bool) else True,
                     **kwargs,
                 )
-                return cast(Any, sharded_result)
+                return cast("Any", sharded_result)
             else:
                 device_map = "auto"
 
@@ -399,7 +400,7 @@ class QuantizationManager:
                 model = model.to(device)  # type: ignore[arg-type]
             elif GPU_AUTOLOADER_AVAILABLE:
                 # Move model to appropriate device using unified GPU system
-                device_result = to_device(cast(Any, model))
+                device_result = to_device(cast("Any", model))
                 if device_result is not None:
                     model = device_result
 
@@ -410,7 +411,7 @@ class QuantizationManager:
                     logger.info("Applied GPU optimizations to standard model")
 
             logger.info("Successfully loaded standard model")
-            return cast(Any, model)
+            return cast("Any", model)
 
         except Exception as e:
             logger.exception("Failed to load standard model: %s", e)
@@ -456,7 +457,7 @@ class QuantizationManager:
                 model = model.merge_and_unload()
 
             logger.info("Successfully loaded LoRA adapter from %s", adapter_path_obj)
-            return cast(Any, model)
+            return cast("Any", model)
 
         except Exception as e:
             logger.exception("Failed to load LoRA adapter: %s", e)
@@ -497,7 +498,7 @@ class QuantizationManager:
                     logger.warning("torch.ao.quantization not available, skipping quantization")
             elif quant_type == "fp16":
                 # Convert to FP16
-                model = cast(Any, model).half()
+                model = cast("Any", model).half()
 
             logger.info("Applied %s dynamic quantization", quant_type)
             return model
@@ -620,7 +621,7 @@ class QuantizationManager:
 
         """
         if self.sharding_manager:
-            result = cast(Any, self.sharding_manager).get_device_info()
+            result = cast("Any", self.sharding_manager).get_device_info()
             return validate_type(result, dict)
 
         if GPU_AUTOLOADER_AVAILABLE:
@@ -688,7 +689,7 @@ class QuantizationManager:
 
         try:
             # Prepare model for quantization
-            for name, module in cast(Any, model).named_modules():
+            for name, module in cast("Any", model).named_modules():
                 # Prepare model for quantization
                 if quantization_bits == 8:
                     if isinstance(module, torch.nn.Linear):
@@ -888,7 +889,7 @@ class QuantizationManager:
                 )
             else:
                 # Convert BaseQuantizeConfig to GPTQConfig parameters
-                config_any = cast(Any, config)
+                config_any = cast("Any", config)
                 gptq_config = GPTQConfig(
                     bits=config_any.bits,
                     group_size=config_any.group_size,
@@ -1013,7 +1014,7 @@ class QuantizationManager:
             torch.cuda.empty_cache()
 
         if self.sharding_manager:
-            cast(Any, self.sharding_manager).cleanup_memory()
+            cast("Any", self.sharding_manager).cleanup_memory()
 
 
 # Global instance

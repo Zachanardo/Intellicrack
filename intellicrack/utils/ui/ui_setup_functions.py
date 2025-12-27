@@ -19,12 +19,13 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 from collections.abc import Callable
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 # Optional imports with graceful fallbacks
 from intellicrack.handlers.pyqt6_handler import HAS_PYQT
 
 from ..logger import setup_logger
+
 
 if TYPE_CHECKING:
     from typing import Any
@@ -157,7 +158,6 @@ else:
         LeftButton = 0x1
         RightButton = 0x2
 
-    # Assign production fallback classes using type aliases
     QWidget = HeadlessWidget  # type: ignore[misc,assignment]
     QVBoxLayout = HeadlessLayout  # type: ignore[misc,assignment]
     QHBoxLayout = HeadlessLayout  # type: ignore[misc,assignment]
@@ -176,7 +176,6 @@ else:
 
 logger = setup_logger(__name__)
 
-from typing import Any
 
 HAS_MATPLOTLIB = False
 Figure: type[Any] | None = None
@@ -210,7 +209,7 @@ def setup_dataset_tab(parent: object) -> object | None:
         return None
 
     parent_widget = parent if hasattr(parent, "setLayout") else None
-    tab = QWidget(parent_widget)  # type: ignore[arg-type]
+    tab = QWidget(cast("QWidget | None", parent_widget))
     layout = QVBoxLayout()
 
     # Dataset controls
@@ -309,7 +308,7 @@ def setup_dataset_tab(parent: object) -> object | None:
     layout.addStretch()
     tab.setLayout(layout)
 
-    return tab
+    return cast("object", tab)
 
 
 def setup_memory_monitor(parent: object) -> object | None:
@@ -330,7 +329,7 @@ def setup_memory_monitor(parent: object) -> object | None:
         return None
 
     parent_widget = parent if hasattr(parent, "setLayout") else None
-    widget = QWidget(parent_widget)  # type: ignore[arg-type]
+    widget = QWidget(cast("QWidget | None", parent_widget))
     layout = QVBoxLayout()
 
     # Memory stats
@@ -415,12 +414,11 @@ def setup_memory_monitor(parent: object) -> object | None:
 
     widget.setLayout(layout)
 
-    # Set up auto-refresh timer
     timer = QTimer(widget)
     timer.setObjectName("memory_refresh_timer")
-    timer.setInterval(1000)  # Update every second
+    timer.setInterval(1000)
 
-    return widget
+    return cast("object", widget)
 
 
 def setup_training_tab(parent: object) -> object | None:
@@ -441,7 +439,7 @@ def setup_training_tab(parent: object) -> object | None:
         return None
 
     parent_widget = parent if hasattr(parent, "setLayout") else None
-    tab = QWidget(parent_widget)  # type: ignore[arg-type]
+    tab = QWidget(cast("QWidget | None", parent_widget))
     layout = QVBoxLayout()
 
     # Model selection
@@ -617,10 +615,9 @@ def setup_training_tab(parent: object) -> object | None:
 
     tab.setLayout(layout)
 
-    return tab
+    return cast("object", tab)
 
 
-# Export all functions
 __all__ = [
     "setup_dataset_tab",
     "setup_memory_monitor",

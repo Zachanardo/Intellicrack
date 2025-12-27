@@ -8,7 +8,6 @@ Licensed under GNU General Public License v3.0
 """
 
 import os
-
 from typing import TYPE_CHECKING, Any
 
 from intellicrack.handlers.pyqt6_handler import (
@@ -63,9 +62,9 @@ except ImportError:
     Figure = None  # type: ignore[assignment,misc]
 
 if TYPE_CHECKING:
+    from matplotlib import pyplot
     from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
     from matplotlib.figure import Figure as MatplotlibFigure
-    from matplotlib import pyplot
 
 
 logger = get_logger(__name__)
@@ -113,6 +112,7 @@ class AdvancedAnalysisThread(QThread):
 
 
 if HAS_MATPLOTLIB and FigureCanvas is not None:
+
     class EntropyGraphWidget(FigureCanvas):  # type: ignore[misc,valid-type]
         """Widget for displaying entropy graph."""
 
@@ -179,7 +179,9 @@ if HAS_MATPLOTLIB and FigureCanvas is not None:
 
             self.figure.tight_layout()
             self.draw()
+
 else:
+
     class EntropyGraphWidget(QWidget):  # type: ignore[no-redef]
         """Fallback widget when matplotlib is not available."""
 

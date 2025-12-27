@@ -409,9 +409,7 @@ class GhidraBinaryIntegration:
         stages: dict[str, Any] = workflow_results["stages"]
         stages["protection_detection"] = self.detect_protections(binary_path)
 
-        if any(
-            prot in stages["protection_detection"].get("protections", []) for prot in ["VMProtect", "Themida", "Enigma"]
-        ):
+        if any(prot in stages["protection_detection"].get("protections", []) for prot in ["VMProtect", "Themida", "Enigma"]):
             self.logger.info("Packer detected, attempting to unpack...")
             stages["unpacking"] = self.unpack_binary(binary_path)
 

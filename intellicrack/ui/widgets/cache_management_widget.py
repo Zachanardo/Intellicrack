@@ -390,29 +390,23 @@ class CacheManagementWidget(QWidget):
         # Add AI coordination layer performance statistics if available
         try:
             main_window = next(
-                (
-                    widget
-                    for widget in QApplication.allWidgets()
-                    if hasattr(widget, "ai_coordinator") and widget.ai_coordinator
-                ),
+                (widget for widget in QApplication.allWidgets() if hasattr(widget, "ai_coordinator") and widget.ai_coordinator),
                 None,
             )
             if main_window and hasattr(main_window.ai_coordinator, "get_performance_stats"):
                 ai_stats = main_window.ai_coordinator.get_performance_stats()
-                details.extend(
-                    (
-                        "",
-                        "=== AI Coordination Layer Performance ===",
-                        f"ML Analysis Calls: {ai_stats.get('ml_calls', 0)}",
-                        f"LLM Analysis Calls: {ai_stats.get('llm_calls', 0)}",
-                        f"Escalations: {ai_stats.get('escalations', 0)}",
-                        f"AI Cache Hits: {ai_stats.get('cache_hits', 0)}",
-                        f"AI Cache Size: {ai_stats.get('cache_size', 0)} entries",
-                        f"Average ML Time: {ai_stats.get('avg_ml_time', 0):.2f}s",
-                        f"Average LLM Time: {ai_stats.get('avg_llm_time', 0):.2f}s",
-                        "Components Available:",
-                    )
-                )
+                details.extend((
+                    "",
+                    "=== AI Coordination Layer Performance ===",
+                    f"ML Analysis Calls: {ai_stats.get('ml_calls', 0)}",
+                    f"LLM Analysis Calls: {ai_stats.get('llm_calls', 0)}",
+                    f"Escalations: {ai_stats.get('escalations', 0)}",
+                    f"AI Cache Hits: {ai_stats.get('cache_hits', 0)}",
+                    f"AI Cache Size: {ai_stats.get('cache_size', 0)} entries",
+                    f"Average ML Time: {ai_stats.get('avg_ml_time', 0):.2f}s",
+                    f"Average LLM Time: {ai_stats.get('avg_llm_time', 0):.2f}s",
+                    "Components Available:",
+                ))
                 components = ai_stats.get("components_available", {})
                 details.extend((
                     f"  - ML Predictor: {'Yes' if components.get('ml_predictor', False) else 'No'}",

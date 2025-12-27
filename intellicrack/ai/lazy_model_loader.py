@@ -434,7 +434,7 @@ class LazyModelManager:
             access_time: float
             model_id: str
             wrapper: LazyModelWrapper
-            access_time, model_id, wrapper = loaded_models[i]
+            _access_time, model_id, wrapper = loaded_models[i]
             wrapper.unload()
             logger.info("Auto-unloaded least used model: %s", model_id)
 
@@ -453,7 +453,11 @@ class LazyModelManager:
 
         with self._access_lock:
             for model_id, wrapper in list(self.models.items()):
-                if wrapper.is_loaded and wrapper.last_access_time is not None and current_time - wrapper.last_access_time > self.idle_unload_time:
+                if (
+                    wrapper.is_loaded
+                    and wrapper.last_access_time is not None
+                    and current_time - wrapper.last_access_time > self.idle_unload_time
+                ):
                     wrapper.unload()
                     logger.info("Auto-unloaded idle model: %s", model_id)
 

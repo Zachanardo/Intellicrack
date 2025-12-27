@@ -57,7 +57,7 @@ def deprecated_config_method(replacement: str, version: str = "4.0") -> Callable
     return decorator
 
 
-def deprecated_qsettings(func: F) -> F:
+def deprecated_qsettings[F: Callable[..., Any]](func: F) -> F:
     """Mark QSettings-based methods as deprecated.
 
     Args:
@@ -82,7 +82,7 @@ def deprecated_qsettings(func: F) -> F:
     return wrapper  # type: ignore[return-value]
 
 
-def deprecated_llm_file_storage(func: F) -> F:
+def deprecated_llm_file_storage[F: Callable[..., Any]](func: F) -> F:
     """Decorate LLM configuration file storage methods.
 
     Args:
@@ -107,7 +107,7 @@ def deprecated_llm_file_storage(func: F) -> F:
     return wrapper  # type: ignore[return-value]
 
 
-def deprecated_cli_config_file(func: F) -> F:
+def deprecated_cli_config_file[F: Callable[..., Any]](func: F) -> F:
     """Decorate CLI configuration file methods.
 
     Args:

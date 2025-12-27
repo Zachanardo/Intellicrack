@@ -16,7 +16,7 @@
 
     <module name="LineLength">
         <property name="max" value="150"/>
-        <property name="ignorePattern" value="^package.*|^import.*|a]href|href|http://|https://|ftp://"/>
+        <property name="ignorePattern" value="^package.*|^import.*|a]href|href|https://|https://|ftp://"/>
     </module>
 
     <module name="FileTabCharacter">

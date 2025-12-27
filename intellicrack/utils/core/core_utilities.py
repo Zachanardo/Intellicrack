@@ -24,7 +24,7 @@ import sys
 import traceback
 from argparse import Namespace
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
 
 logger = logging.getLogger(__name__)

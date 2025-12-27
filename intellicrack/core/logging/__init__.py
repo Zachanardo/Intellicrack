@@ -24,6 +24,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import logging
 from typing import TYPE_CHECKING
 
+
 if TYPE_CHECKING:
     from intellicrack.core.logging.audit_logger import (
         AuditEvent,

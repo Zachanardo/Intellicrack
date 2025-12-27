@@ -285,7 +285,9 @@ class ConfigMigrationHandler:
                 # Return original data as last resort
                 return False, config_data
 
-    def handle_partial_migration(self, config_data: dict[str, Any], migrations: dict[str, Callable[[dict[str, Any]], dict[str, Any]]]) -> dict[str, Any]:
+    def handle_partial_migration(
+        self, config_data: dict[str, Any], migrations: dict[str, Callable[[dict[str, Any]], dict[str, Any]]]
+    ) -> dict[str, Any]:
         """Handle multiple migrations with partial success support.
 
         Args:
@@ -374,7 +376,9 @@ class SafeMigrationWrapper:
     """Wrap to safely execute migration functions with timeout and resource limits."""
 
     @staticmethod
-    def migrate_with_timeout(migration_func: Callable[[dict[str, Any]], dict[str, Any]], config_data: dict[str, Any], timeout: int = 30) -> dict[str, Any]:
+    def migrate_with_timeout(
+        migration_func: Callable[[dict[str, Any]], dict[str, Any]], config_data: dict[str, Any], timeout: int = 30
+    ) -> dict[str, Any]:
         """Execute migration with timeout protection.
 
         Args:

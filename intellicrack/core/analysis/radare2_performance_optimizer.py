@@ -439,7 +439,12 @@ class R2PerformanceOptimizer:
         # Adjust timeout based on system performance
         memory_percent = system_info["memory_percent"]
         timeout = config["timeout"]
-        if isinstance(memory_percent, (int, float)) and isinstance(cpu_load, (int, float)) and isinstance(timeout, int) and (memory_percent > 80 or cpu_load > 80):
+        if (
+            isinstance(memory_percent, (int, float))
+            and isinstance(cpu_load, (int, float))
+            and isinstance(timeout, int)
+            and (memory_percent > 80 or cpu_load > 80)
+        ):
             config["timeout"] = int(timeout * 1.5)
 
         return config

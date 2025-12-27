@@ -6,12 +6,7 @@ from typing import Any
 
 from intellicrack.utils.logger import logger
 
-from ...utils.tools.radare2_utils import (
-    R2Exception,
-    R2Session,
-    R2SessionPoolAdapter,
-    r2_session,
-)
+from ...utils.tools.radare2_utils import R2Exception, R2Session, R2SessionPoolAdapter, r2_session
 
 
 """
@@ -137,13 +132,11 @@ class ESILAnalysisEngine:
                 initial_registers = r2.get_esil_registers()
                 register_states = result["register_states"]
                 if isinstance(register_states, list):
-                    register_states.append(
-                        {
-                            "step": 0,
-                            "address": hex(address),
-                            "registers": initial_registers,
-                        }
-                    )
+                    register_states.append({
+                        "step": 0,
+                        "address": hex(address),
+                        "registers": initial_registers,
+                    })
 
                 # Perform step-by-step emulation
                 step = 0
@@ -180,13 +173,11 @@ class ESILAnalysisEngine:
                                 registers = r2.get_esil_registers()
                                 register_states_list = result["register_states"]
                                 if isinstance(register_states_list, list):
-                                    register_states_list.append(
-                                        {
-                                            "step": step + 1,
-                                            "address": current_pc,
-                                            "registers": registers,
-                                        }
-                                    )
+                                    register_states_list.append({
+                                        "step": step + 1,
+                                        "address": current_pc,
+                                        "registers": registers,
+                                    })
 
                             # Check for function exit conditions
                             if self._is_function_exit(instruction):
@@ -537,14 +528,12 @@ class ESILAnalysisEngine:
 
             # Identify suspicious functions
             if license_checks > 0 or len(result.get("anti_analysis_techniques", [])) > 0:
-                suspicious_functions.append(
-                    {
-                        "address": addr,
-                        "license_checks": license_checks,
-                        "anti_analysis_techniques": len(result.get("anti_analysis_techniques", [])),
-                        "suspicion_score": license_checks * 2 + len(result.get("anti_analysis_techniques", [])),
-                    }
-                )
+                suspicious_functions.append({
+                    "address": addr,
+                    "license_checks": license_checks,
+                    "anti_analysis_techniques": len(result.get("anti_analysis_techniques", [])),
+                    "suspicion_score": license_checks * 2 + len(result.get("anti_analysis_techniques", [])),
+                })
 
         return {
             "most_complex_function": most_complex_function,

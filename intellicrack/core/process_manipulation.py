@@ -12,9 +12,10 @@ import struct
 import time
 from datetime import datetime
 from enum import IntEnum
-from typing import Any, TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from intellicrack.utils.type_safety import get_typed_item, validate_type
+
 
 try:
     import psutil
@@ -565,7 +566,11 @@ class LicenseAnalyzer:
                 context["has_string_op"] = True
                 break
 
-        score = sum([get_typed_item(context, "has_loop", bool), get_typed_item(context, "has_comparison", bool), get_typed_item(context, "has_string_op", bool)])
+        score = sum([
+            get_typed_item(context, "has_loop", bool),
+            get_typed_item(context, "has_comparison", bool),
+            get_typed_item(context, "has_string_op", bool),
+        ])
         if score >= 2:
             context["confidence"] = "high"
         elif score == 1:

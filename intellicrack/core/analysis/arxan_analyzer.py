@@ -24,10 +24,13 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, cast
-from types import ModuleType
+from typing import TYPE_CHECKING, Any, cast
 
 from intellicrack.utils.type_safety import get_typed_item, validate_type
+
+
+if TYPE_CHECKING:
+    from types import ModuleType
 
 
 try:
@@ -36,7 +39,7 @@ try:
     CAPSTONE_AVAILABLE = True
 except ImportError:
     CAPSTONE_AVAILABLE = False
-    capstone = cast(ModuleType, None)
+    capstone = cast("ModuleType", None)
 
 try:
     import lief
@@ -44,7 +47,7 @@ try:
     LIEF_AVAILABLE = True
 except ImportError:
     LIEF_AVAILABLE = False
-    lief = cast(ModuleType, None)
+    lief = cast("ModuleType", None)
 
 try:
     import pefile
@@ -52,7 +55,7 @@ try:
     PEFILE_AVAILABLE = True
 except ImportError:
     PEFILE_AVAILABLE = False
-    pefile = cast(ModuleType, None)
+    pefile = cast("ModuleType", None)
 
 from intellicrack.core.protection_detection.arxan_detector import ArxanDetector
 

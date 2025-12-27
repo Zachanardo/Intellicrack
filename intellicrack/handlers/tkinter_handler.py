@@ -115,10 +115,12 @@ scrolledtext: Any
 
 try:
     import tkinter as tk_real
-    from tkinter import colorchooser as colorchooser_real
-    from tkinter import filedialog as filedialog_real
-    from tkinter import messagebox as messagebox_real
-    from tkinter import ttk as ttk_real
+    from tkinter import (
+        colorchooser as colorchooser_real,
+        filedialog as filedialog_real,
+        messagebox as messagebox_real,
+        ttk as ttk_real,
+    )
     from tkinter.font import Font as Font_real
     from tkinter.scrolledtext import ScrolledText as ScrolledText_real
 
@@ -172,7 +174,7 @@ except ImportError as e:
             self.master = master
             self.parent = master
             self.children: dict[str, object] = {}
-            self.winfo_children_list: list["FallbackWidget"] = []
+            self.winfo_children_list: list[FallbackWidget] = []
 
             # Widget properties
             self.width = kwargs.get("width", 100)

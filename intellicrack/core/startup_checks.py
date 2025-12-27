@@ -58,13 +58,10 @@ def _get_tensorflow() -> tuple[Any, bool]:
         _tf_import_attempted = True
         logger.debug("TensorFlow: First attempt to import TensorFlow.")
         try:
-            from intellicrack.handlers.tensorflow_handler import (
-                ensure_tensorflow_loaded,
-                tf,
-            )
+            from intellicrack.handlers.tensorflow_handler import ensure_tensorflow_loaded, tf
 
             ensure_tensorflow_loaded()
-            _tf_module = cast(Any, tf)
+            _tf_module = cast("Any", tf)
             _tf_available = True
             _tf_module.config.set_visible_devices([], "GPU")
             logger.info("TensorFlow: Imported successfully (version: %s). GPU devices set to invisible.", _tf_module.__version__)

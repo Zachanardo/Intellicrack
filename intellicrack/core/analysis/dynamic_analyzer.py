@@ -1195,10 +1195,7 @@ print(matches)
                 searchable_data.extend(("open_file", file.path) for file in process.open_files())
             # Connections
             with contextlib.suppress(AttributeError, OSError):
-                searchable_data.extend(
-                    ("connection", f"{conn.laddr}:{conn.raddr}")
-                    for conn in process.connections()
-                )
+                searchable_data.extend(("connection", f"{conn.laddr}:{conn.raddr}") for conn in process.connections())
             # Search for keywords in available data
             for source, data in searchable_data:
                 for keyword in keywords:

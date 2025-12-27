@@ -22,7 +22,7 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
-from intellicrack.utils.type_safety import get_typed_item, validate_type
+from intellicrack.core.analysis.symbolic_executor import SymbolicExecutionEngine
 from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
     QDialog,
@@ -39,9 +39,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QVBoxLayout,
 )
 from intellicrack.utils.log_message import log_error, log_info, log_warning
-
-if TYPE_CHECKING:
-    from intellicrack.core.analysis.symbolic_executor import SymbolicExecutionEngine
+from intellicrack.utils.type_safety import get_typed_item, validate_type
 
 
 class SymbolicExecution:

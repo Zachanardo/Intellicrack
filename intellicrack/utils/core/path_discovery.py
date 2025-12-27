@@ -28,9 +28,12 @@ import os
 import shutil
 import subprocess
 import sys
-from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol, cast
+
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 logger = logging.getLogger(__name__)
@@ -41,11 +44,11 @@ class ConfigManager(Protocol):
 
     def get(self, key: str) -> Any:
         """Get config value."""
-        ...
+        return None
 
     def set(self, key: str, value: Any) -> None:
         """Set config value."""
-        ...
+        return
 
 
 class PathDiscovery:
@@ -733,9 +736,10 @@ class PathDiscovery:
 
                         if path:
                             self.cache[tool_name] = path
+                            path_str = path
                             if self.config_manager:
-                                self.config_manager.set(f"{tool_name}_path", path)
-                            return path
+                                self.config_manager.set(f"{tool_name}_path", path_str)
+                            return path_str
                 except ImportError:
                     logger.warning("PyQt6 not available for GUI prompts")
             else:

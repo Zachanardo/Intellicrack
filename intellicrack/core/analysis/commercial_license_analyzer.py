@@ -30,6 +30,7 @@ from pathlib import Path
 from typing import Any, cast
 
 from intellicrack.utils.type_safety import get_typed_item, validate_type
+
 from ...utils.logger import get_logger
 
 
@@ -147,8 +148,6 @@ class CommercialLicenseAnalyzer:
         """
         if binary_path:
             self.binary_path = binary_path
-
-        from typing import cast
 
         results: dict[str, Any] = {
             "detected_systems": [],
@@ -365,7 +364,7 @@ class CommercialLicenseAnalyzer:
         if self.binary_path:
             from typing import cast
 
-            pf = cast(Any, self.protocol_fingerprinter)
+            pf = cast("Any", self.protocol_fingerprinter)
             fingerprint = pf.fingerprint_packet(b"", {"binary_path": self.binary_path})
 
             if fingerprint and fingerprint.get("protocol_type") in [
@@ -398,8 +397,6 @@ class CommercialLicenseAnalyzer:
 
         """
         import re
-
-        from typing import cast
 
         bypass: dict[str, Any] = {
             "method": "flexlm_emulation",
@@ -693,8 +690,6 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
         """
         import re
 
-        from typing import cast
-
         bypass: dict[str, Any] = {
             "method": "hasp_emulation",
             "dongle_type": "HASP HL",
@@ -736,7 +731,7 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
             bypass["product_id"] = product_id
 
         # Get dynamic dongle configuration
-        dongle_emu = cast(Any, self.dongle_emulator)
+        dongle_emu = cast("Any", self.dongle_emulator)
         dongle_config = dongle_emu.get_dongle_config("hasp")
         dongle_config["vendor_id"] = bypass["vendor_id"]
         dongle_config["product_id"] = bypass["product_id"]
@@ -837,7 +832,7 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
         ]
 
         bypass["patches"] = []
-        patches_hasp = cast(list[Any], bypass["patches"])
+        patches_hasp = cast("list[Any]", bypass["patches"])
         for pattern, replacement in validation_patterns:
             pos = 0
             while True:
@@ -1144,7 +1139,7 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
         """Generate Frida script for dynamic HASP hooking."""
         script = (
             "// Dynamic HASP bypass script\n// Generated based on binary analysis\n\n"
-            + """
+            """
 var hasp_module = Process.getModuleByName(Process.platform === 'windows' ? 'hasp_windows.dll' : 'libhasp.so');
 var base = hasp_module.base;
 
@@ -1189,8 +1184,6 @@ console.log('[HASP] Patched at {patch["offset"]}');
         """
         import re
 
-        from typing import cast
-
         bypass: dict[str, Any] = {
             "method": "codemeter_emulation",
             "container_type": "CmStick",
@@ -1234,7 +1227,7 @@ console.log('[HASP] Patched at {patch["offset"]}');
             bypass["product_code"] = product_code
 
         # Get dynamic dongle configuration
-        dongle_emu_cm = cast(Any, self.dongle_emulator)
+        dongle_emu_cm = cast("Any", self.dongle_emulator)
         dongle_config = dongle_emu_cm.get_dongle_config("codemeter")
         dongle_config["firm_code"] = bypass["firm_code"]
         dongle_config["product_code"] = bypass["product_code"]

@@ -155,7 +155,7 @@ const virtualizationBypass = {
     hooksInstalled: {},
     spoofedValues: {},
 
-    onAttach: function (pid) {
+    onAttach(pid) {
         send({
             type: 'status',
             target: 'vm_bypass',
@@ -165,7 +165,7 @@ const virtualizationBypass = {
         this.processId = pid;
     },
 
-    run: function () {
+    run() {
         send({
             type: 'status',
             target: 'vm_bypass',
@@ -223,7 +223,7 @@ const virtualizationBypass = {
     },
 
     // === VIRTUALBOX DETECTION BYPASS ===
-    hookVirtualBoxDetection: function () {
+    hookVirtualBoxDetection() {
         send({
             type: 'info',
             target: 'vm_bypass',
@@ -250,7 +250,7 @@ const virtualizationBypass = {
         this.hookVBoxServices();
     },
 
-    hookVBoxGuestAdditions: function () {
+    hookVBoxGuestAdditions() {
         send({
             type: 'info',
             target: 'vm_bypass',
@@ -261,7 +261,7 @@ const virtualizationBypass = {
         const loadLibrary = Module.findExportByName('kernel32.dll', 'LoadLibraryW');
         if (loadLibrary) {
             Interceptor.attach(loadLibrary, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     if (args[0] && !args[0].isNull()) {
                         const libraryName = args[0].readUtf16String().toLowerCase();
 
@@ -288,7 +288,7 @@ const virtualizationBypass = {
                     }
                 },
 
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (this.blockLoad) {
                         retval.replace(ptr(0)); // NULL - load failed
                     }
@@ -302,7 +302,7 @@ const virtualizationBypass = {
         const getModuleHandle = Module.findExportByName('kernel32.dll', 'GetModuleHandleW');
         if (getModuleHandle) {
             Interceptor.attach(getModuleHandle, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     if (args[0] && !args[0].isNull()) {
                         const moduleName = args[0].readUtf16String().toLowerCase();
 
@@ -318,7 +318,7 @@ const virtualizationBypass = {
                     }
                 },
 
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (this.blockQuery) {
                         retval.replace(ptr(0)); // NULL - module not found
                     }
@@ -329,12 +329,12 @@ const virtualizationBypass = {
         }
     },
 
-    hookVBoxPciDevices: function () {
+    hookVBoxPciDevices() {
         // Hook PCI device enumeration to hide VirtualBox devices
         const setupDiGetClassDevs = Module.findExportByName('setupapi.dll', 'SetupDiGetClassDevsW');
         if (setupDiGetClassDevs) {
             Interceptor.attach(setupDiGetClassDevs, {
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (retval.toInt32() !== -1) {
                         send({
                             type: 'bypass',
@@ -357,7 +357,7 @@ const virtualizationBypass = {
         );
         if (setupDiGetDeviceProperty) {
             Interceptor.attach(setupDiGetDeviceProperty, {
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (retval.toInt32() !== 0) {
                         const propertyBuffer = this.context.r9; // PropertyBuffer
                         if (propertyBuffer && !propertyBuffer.isNull()) {
@@ -378,13 +378,13 @@ const virtualizationBypass = {
                                 action: 'virtualbox_device_property_hidden',
                             });
                         }
-                    } catch (_e) {
+                    } catch (error) {
                         // Buffer read failed
                         send({
                             type: 'debug',
                             target: 'vm_bypass',
                             action: 'virtualbox_device_property_read_failed',
-                            error: e.toString(),
+                            error: error.toString(),
                         });
                     }
                 },
@@ -394,7 +394,7 @@ const virtualizationBypass = {
         }
     },
 
-    hookVBoxBios: function () {
+    hookVBoxBios() {
         // Hook SMBIOS table access
         const getSystemFirmwareTable = Module.findExportByName(
             'kernel32.dll',
@@ -402,46 +402,46 @@ const virtualizationBypass = {
         );
         if (getSystemFirmwareTable) {
             Interceptor.attach(getSystemFirmwareTable, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     this.firmwareTableProvider = args[0].toInt32();
                     this.firmwareTableID = args[1].toInt32();
                     this.firmwareTableBuffer = args[2];
                     this.bufferSize = args[3].toInt32();
                 },
 
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     const bytesReturned = retval.toInt32();
                     if (
-                        bytesReturned > 0 &&
-                        this.firmwareTableBuffer &&
-                        !this.firmwareTableBuffer.isNull()
+                        bytesReturned > 0
+                        && this.firmwareTableBuffer
+                        && !this.firmwareTableBuffer.isNull()
                     ) {
                         this.spoofBiosInfo();
                     }
                 },
 
-                spoofBiosInfo: function () {
+                spoofBiosInfo() {
                     try {
                         const { config } = this.parent.parent;
                         if (config.vmDetection.virtualBox.spoofBios) {
                             const biosData = this.firmwareTableBuffer.readByteArray(
                                 Math.min(this.bufferSize, 1024)
                             );
-                            const biosString = Array.from(new Uint8Array(biosData))
+                            const biosString = [...new Uint8Array(biosData)]
                                 .map(b => String.fromCharCode(b))
                                 .join('');
 
                             // Check for VirtualBox BIOS signatures
                             if (
-                                biosString.includes('VBOX') ||
-                                biosString.includes('VirtualBox') ||
-                                biosString.includes('Oracle')
+                                biosString.includes('VBOX')
+                                || biosString.includes('VirtualBox')
+                                || biosString.includes('Oracle')
                             ) {
                                 // Replace with legitimate BIOS vendor
                                 const spoofedBios = biosString
-                                    .replace(/VBOX/g, 'DELL')
-                                    .replace(/VirtualBox/g, 'Dell Inc.')
-                                    .replace(/Oracle/g, 'Dell Inc.');
+                                    .replaceAll('VBOX', 'DELL')
+                                    .replaceAll('VirtualBox', 'Dell Inc.')
+                                    .replaceAll('Oracle', 'Dell Inc.');
 
                                 for (
                                     let i = 0;
@@ -460,12 +460,12 @@ const virtualizationBypass = {
                                 });
                             }
                         }
-                    } catch (_e) {
+                    } catch (error) {
                         send({
                             type: 'error',
                             target: 'vm_bypass',
                             action: 'bios_spoofing_error',
-                            error: e.message || e.toString(),
+                            error: error.message || error.toString(),
                         });
                     }
                 },
@@ -475,12 +475,12 @@ const virtualizationBypass = {
         }
     },
 
-    hookVBoxRegistry: function () {
+    hookVBoxRegistry() {
         // Hook registry queries for VirtualBox detection
         const regQueryValueEx = Module.findExportByName('advapi32.dll', 'RegQueryValueExW');
         if (regQueryValueEx) {
             Interceptor.attach(regQueryValueEx, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     if (args[1] && !args[1].isNull()) {
                         const valueName = args[1].readUtf16String().toLowerCase();
 
@@ -506,7 +506,7 @@ const virtualizationBypass = {
                     }
                 },
 
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (this.blockVBoxRegistry) {
                         retval.replace(2); // ERROR_FILE_NOT_FOUND
                     }
@@ -520,14 +520,14 @@ const virtualizationBypass = {
         const regOpenKeyEx = Module.findExportByName('advapi32.dll', 'RegOpenKeyExW');
         if (regOpenKeyEx) {
             Interceptor.attach(regOpenKeyEx, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     if (args[1] && !args[1].isNull()) {
                         const keyName = args[1].readUtf16String().toLowerCase();
 
                         if (
-                            keyName.includes('vbox') ||
-                            keyName.includes('virtualbox') ||
-                            keyName.includes('oracle')
+                            keyName.includes('vbox')
+                            || keyName.includes('virtualbox')
+                            || keyName.includes('oracle')
                         ) {
                             send({
                                 type: 'bypass',
@@ -540,7 +540,7 @@ const virtualizationBypass = {
                     }
                 },
 
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (this.blockVBoxKey) {
                         retval.replace(2); // ERROR_FILE_NOT_FOUND
                     }
@@ -551,12 +551,12 @@ const virtualizationBypass = {
         }
     },
 
-    hookVBoxServices: function () {
+    hookVBoxServices() {
         // Hook service enumeration to hide VirtualBox services
         const enumServicesStatus = Module.findExportByName('advapi32.dll', 'EnumServicesStatusW');
         if (enumServicesStatus) {
             Interceptor.attach(enumServicesStatus, {
-                onLeave: _retval => {
+                onLeave: retval => {
                     if (retval.toInt32() !== 0) {
                         send({
                             type: 'bypass',
@@ -573,7 +573,7 @@ const virtualizationBypass = {
     },
 
     // === VMWARE DETECTION BYPASS ===
-    hookVmwareDetection: function () {
+    hookVmwareDetection() {
         send({
             type: 'info',
             target: 'vm_bypass',
@@ -600,7 +600,7 @@ const virtualizationBypass = {
         this.hookVmwareBackdoor();
     },
 
-    hookVmwareTools: function () {
+    hookVmwareTools() {
         // Hook VMware Tools process detection
         const createToolhelp32Snapshot = Module.findExportByName(
             'kernel32.dll',
@@ -608,9 +608,9 @@ const virtualizationBypass = {
         );
         if (createToolhelp32Snapshot) {
             Interceptor.attach(createToolhelp32Snapshot, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     const flags = args[0].toInt32();
-                    if (flags && 0x00000002) {
+                    if (flags && 0x00_00_00_02) {
                         // TH32CS_SNAPPROCESS
                         this.isProcessSnapshot = true;
                     }
@@ -623,7 +623,7 @@ const virtualizationBypass = {
         const process32First = Module.findExportByName('kernel32.dll', 'Process32FirstW');
         if (process32First) {
             Interceptor.attach(process32First, {
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (retval.toInt32() !== 0 && this.isProcessSnapshot) {
                         const processEntry = this.context.rdx;
                         if (processEntry && !processEntry.isNull()) {
@@ -656,7 +656,7 @@ const virtualizationBypass = {
                                 exe_name: exeName,
                             });
                         }
-                    } catch (_e) {
+                    } catch {
                         // Process entry read failed
                     }
                 },
@@ -666,12 +666,12 @@ const virtualizationBypass = {
         }
     },
 
-    hookVmwareDmi: function () {
+    hookVmwareDmi() {
         // Hook DMI/SMBIOS queries that reveal VMware
         const getSystemInfo = Module.findExportByName('kernel32.dll', 'GetSystemInfo');
         if (getSystemInfo) {
             Interceptor.attach(getSystemInfo, {
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     const systemInfo = this.context.rcx;
                     if (systemInfo && !systemInfo.isNull()) {
                         send({
@@ -687,7 +687,7 @@ const virtualizationBypass = {
         }
     },
 
-    hookVmwarePciDevices: function () {
+    hookVmwarePciDevices() {
         // Hook PCI device queries to hide VMware devices
         const setupDiEnumDeviceInfo = Module.findExportByName(
             'setupapi.dll',
@@ -695,7 +695,7 @@ const virtualizationBypass = {
         );
         if (setupDiEnumDeviceInfo) {
             Interceptor.attach(setupDiEnumDeviceInfo, {
-                onLeave: _retval => {
+                onLeave: retval => {
                     if (retval.toInt32() !== 0) {
                         send({
                             type: 'bypass',
@@ -710,12 +710,12 @@ const virtualizationBypass = {
         }
     },
 
-    hookVmwareMacAddresses: function () {
+    hookVmwareMacAddresses() {
         // Hook MAC address queries to hide VMware prefixes
         const getAdaptersInfo = Module.findExportByName('iphlpapi.dll', 'GetAdaptersInfo');
         if (getAdaptersInfo) {
             Interceptor.attach(getAdaptersInfo, {
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (retval.toInt32() === 0) {
                         // NO_ERROR
                         const adapterInfo = this.context.rdx;
@@ -725,12 +725,13 @@ const virtualizationBypass = {
                     }
                 },
 
-                spoofVmwareMacs: function (adapterInfo) {
+                spoofVmwareMacs(adapterInfo) {
                     try {
                         const { config } = this.parent.parent;
                         if (config.vmDetection.vmware.spoofMacAddresses) {
                             // IP_ADAPTER_INFO structure parsing
                             let currentAdapter = adapterInfo;
+                            let safetyCounter = 100; // Max adapters to prevent infinite loop
 
                             while (currentAdapter && !currentAdapter.isNull()) {
                                 const addressLength = currentAdapter.add(396).readU32(); // AddressLength
@@ -744,22 +745,22 @@ const virtualizationBypass = {
 
                                     // Check for VMware MAC prefixes
                                     const vmwarePrefixes = [
-                                        [0x00, 0x0c, 0x29], // VMware
+                                        [0x00, 0x0C, 0x29], // VMware
                                         [0x00, 0x50, 0x56], // VMware
-                                        [0x00, 0x1c, 0x14], // VMware
+                                        [0x00, 0x1C, 0x14], // VMware
                                     ];
 
                                     const isVmwareMac = vmwarePrefixes.some(
                                         prefix =>
-                                            mac[0] === prefix[0] &&
-                                            mac[1] === prefix[1] &&
-                                            mac[2] === prefix[2]
+                                            mac[0] === prefix[0]
+                                            && mac[1] === prefix[1]
+                                            && mac[2] === prefix[2]
                                     );
 
                                     if (isVmwareMac) {
                                         // Replace with Intel MAC prefix
                                         address.writeU8(0x00); // Intel OUI
-                                        address.add(1).writeU8(0x1b);
+                                        address.add(1).writeU8(0x1B);
                                         address.add(2).writeU8(0x21);
 
                                         send({
@@ -780,12 +781,12 @@ const virtualizationBypass = {
                                 }
                             }
                         }
-                    } catch (_e) {
+                    } catch (error) {
                         send({
                             type: 'error',
                             target: 'vm_bypass',
                             action: 'mac_spoofing_error',
-                            error: e.message || e.toString(),
+                            error: error.message || error.toString(),
                         });
                     }
                 },
@@ -815,7 +816,7 @@ const virtualizationBypass = {
     },
 
     // === HYPER-V DETECTION BYPASS ===
-    hookHyperVDetection: function () {
+    hookHyperVDetection() {
         send({
             type: 'info',
             target: 'vm_bypass',
@@ -839,7 +840,7 @@ const virtualizationBypass = {
         this.hookHyperVEnlightenments();
     },
 
-    hookHyperVFeatures: function () {
+    hookHyperVFeatures() {
         // Hook processor feature detection
         const isProcessorFeaturePresent = Module.findExportByName(
             'kernel32.dll',
@@ -847,15 +848,15 @@ const virtualizationBypass = {
         );
         if (isProcessorFeaturePresent) {
             Interceptor.attach(isProcessorFeaturePresent, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     this.feature = args[0].toInt32();
                 },
 
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     const { config } = this.parent.parent;
                     if (
-                        config.vmDetection.hyperV.hideHyperVFeatures &&
-                        (this.feature === 20 || this.feature === 21)
+                        config.vmDetection.hyperV.hideHyperVFeatures
+                        && (this.feature === 20 || this.feature === 21)
                     ) {
                         retval.replace(0); // FALSE - feature not present
                         send({
@@ -881,12 +882,12 @@ const virtualizationBypass = {
         });
     },
 
-    hookHyperVIntegrationServices: function () {
+    hookHyperVIntegrationServices() {
         // Hook Hyper-V integration services detection
         const openService = Module.findExportByName('advapi32.dll', 'OpenServiceW');
         if (openService) {
             Interceptor.attach(openService, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     if (args[1] && !args[1].isNull()) {
                         const serviceName = args[1].readUtf16String().toLowerCase();
 
@@ -911,7 +912,7 @@ const virtualizationBypass = {
                     }
                 },
 
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (this.blockHyperVService) {
                         retval.replace(ptr(0)); // NULL - service not found
                     }
@@ -922,7 +923,7 @@ const virtualizationBypass = {
         }
     },
 
-    hookHyperVEnlightenments: function () {
+    hookHyperVEnlightenments() {
         // Hook MSR (Model Specific Register) access used by Hyper-V
         const ntQuerySystemInformation = Module.findExportByName(
             'ntdll.dll',
@@ -930,7 +931,7 @@ const virtualizationBypass = {
         );
         if (ntQuerySystemInformation) {
             Interceptor.attach(ntQuerySystemInformation, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     const infoClass = args[0].toInt32();
 
                     // SystemProcessorInformation = 1
@@ -939,7 +940,7 @@ const virtualizationBypass = {
                     }
                 },
 
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (this.isProcessorQuery && retval.toInt32() === 0) {
                         send({
                             type: 'bypass',
@@ -955,7 +956,7 @@ const virtualizationBypass = {
     },
 
     // === QEMU DETECTION BYPASS ===
-    hookQemuDetection: function () {
+    hookQemuDetection() {
         send({
             type: 'info',
             target: 'vm_bypass',
@@ -976,12 +977,12 @@ const virtualizationBypass = {
         this.hookQemuDevices();
     },
 
-    hookQemuSignatures: function () {
+    hookQemuSignatures() {
         // Hook string searches for QEMU signatures
         const findFirstFile = Module.findExportByName('kernel32.dll', 'FindFirstFileW');
         if (findFirstFile) {
             Interceptor.attach(findFirstFile, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     if (args[0] && !args[0].isNull()) {
                         const fileName = args[0].readUtf16String().toLowerCase();
 
@@ -997,9 +998,9 @@ const virtualizationBypass = {
                     }
                 },
 
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (this.blockQemuSearch) {
-                        retval.replace(ptr(0xffffffff)); // INVALID_HANDLE_VALUE
+                        retval.replace(ptr(0xFF_FF_FF_FF)); // INVALID_HANDLE_VALUE
                     }
                 },
             });
@@ -1008,7 +1009,7 @@ const virtualizationBypass = {
         }
     },
 
-    hookQemuHardwareIds: function () {
+    hookQemuHardwareIds() {
         // Hook hardware ID queries to hide QEMU devices
         const setupDiGetDeviceRegistryProperty = Module.findExportByName(
             'setupapi.dll',
@@ -1016,7 +1017,7 @@ const virtualizationBypass = {
         );
         if (setupDiGetDeviceRegistryProperty) {
             Interceptor.attach(setupDiGetDeviceRegistryProperty, {
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (retval.toInt32() !== 0) {
                         const propertyBuffer = this.context.r8; // PropertyBuffer
                         if (propertyBuffer && !propertyBuffer.isNull()) {
@@ -1029,8 +1030,8 @@ const virtualizationBypass = {
                     try {
                         const hardwareId = buffer.readUtf16String();
                         if (
-                            hardwareId &&
-                            (hardwareId.includes('QEMU') || hardwareId.includes('VEN_1AF4'))
+                            hardwareId
+                            && (hardwareId.includes('QEMU') || hardwareId.includes('VEN_1AF4'))
                         ) {
                             // Replace with generic hardware ID
                             buffer.writeUtf16String('PCI\\VEN_8086&DEV_1234'); // Intel device
@@ -1040,7 +1041,7 @@ const virtualizationBypass = {
                                 action: 'qemu_hardware_id_spoofed',
                             });
                         }
-                    } catch (_e) {
+                    } catch {
                         // Buffer read failed
                     }
                 },
@@ -1050,16 +1051,16 @@ const virtualizationBypass = {
         }
     },
 
-    hookQemuDevices: function () {
+    hookQemuDevices() {
         // Hook QEMU virtio device detection
         const deviceIoControl = Module.findExportByName('kernel32.dll', 'DeviceIoControl');
         if (deviceIoControl) {
             Interceptor.attach(deviceIoControl, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     const ioControlCode = args[1].toInt32();
 
                     // Check for virtio-related IOCTL codes
-                    if ((ioControlCode & 0xffff0000) === 0x00220000) {
+                    if ((ioControlCode & 0xFF_FF_00_00) === 0x00_22_00_00) {
                         // Virtio device type
                         send({
                             type: 'bypass',
@@ -1071,7 +1072,7 @@ const virtualizationBypass = {
                     }
                 },
 
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (this.blockQemuIoctl) {
                         retval.replace(0); // FALSE - operation failed
                     }
@@ -1083,7 +1084,7 @@ const virtualizationBypass = {
     },
 
     // === SANDBOX DETECTION BYPASS ===
-    hookSandboxDetection: function () {
+    hookSandboxDetection() {
         send({
             type: 'info',
             target: 'vm_bypass',
@@ -1110,7 +1111,7 @@ const virtualizationBypass = {
         this.hookSandboxEnvironment();
     },
 
-    hookSandboxFileSystem: function () {
+    hookSandboxFileSystem() {
         send({
             type: 'info',
             target: 'vm_bypass',
@@ -1121,7 +1122,7 @@ const virtualizationBypass = {
         const getFileAttributes = Module.findExportByName('kernel32.dll', 'GetFileAttributesW');
         if (getFileAttributes) {
             Interceptor.attach(getFileAttributes, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     if (args[0] && !args[0].isNull()) {
                         const fileName = args[0].readUtf16String().toLowerCase();
 
@@ -1149,9 +1150,9 @@ const virtualizationBypass = {
                     }
                 },
 
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (this.blockSandboxFile) {
-                        retval.replace(0xffffffff); // INVALID_FILE_ATTRIBUTES
+                        retval.replace(0xFF_FF_FF_FF); // INVALID_FILE_ATTRIBUTES
                     }
                 },
             });
@@ -1163,7 +1164,7 @@ const virtualizationBypass = {
         const createFile = Module.findExportByName('kernel32.dll', 'CreateFileW');
         if (createFile) {
             Interceptor.attach(createFile, {
-                onEnter: _args => {
+                onEnter: args => {
                     if (args[0] && !args[0].isNull()) {
                         const fileName = args[0].readUtf16String().toLowerCase();
 
@@ -1191,7 +1192,7 @@ const virtualizationBypass = {
         }
     },
 
-    hookSandboxProcesses: function () {
+    hookSandboxProcesses() {
         send({
             type: 'info',
             target: 'vm_bypass',
@@ -1202,7 +1203,7 @@ const virtualizationBypass = {
         const process32Next = Module.findExportByName('kernel32.dll', 'Process32NextW');
         if (process32Next) {
             Interceptor.attach(process32Next, {
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (retval.toInt32() !== 0) {
                         const processEntry = this.context.rdx;
                         if (processEntry && !processEntry.isNull()) {
@@ -1211,7 +1212,7 @@ const virtualizationBypass = {
                     }
                 },
 
-                filterSandboxProcesses: function (processEntry) {
+                filterSandboxProcesses(processEntry) {
                     try {
                         const szExeFile = processEntry.add(44); // PROCESSENTRY32W.szExeFile
                         const exeName = szExeFile.readUtf16String().toLowerCase();
@@ -1247,7 +1248,7 @@ const virtualizationBypass = {
                             });
                             this.parent.parent.skipNextProcess = true;
                         }
-                    } catch (_e) {
+                    } catch {
                         // Process entry read failed
                     }
                 },
@@ -1257,7 +1258,7 @@ const virtualizationBypass = {
         }
     },
 
-    hookSandboxRegistry: function () {
+    hookSandboxRegistry() {
         send({
             type: 'info',
             target: 'vm_bypass',
@@ -1268,7 +1269,7 @@ const virtualizationBypass = {
         const regQueryValue = Module.findExportByName('advapi32.dll', 'RegQueryValueW');
         if (regQueryValue) {
             Interceptor.attach(regQueryValue, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     if (args[1] && !args[1].isNull()) {
                         const valueName = args[1].readUtf16String().toLowerCase();
 
@@ -1296,7 +1297,7 @@ const virtualizationBypass = {
                     }
                 },
 
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (this.blockSandboxRegistry) {
                         retval.replace(2); // ERROR_FILE_NOT_FOUND
                     }
@@ -1307,7 +1308,7 @@ const virtualizationBypass = {
         }
     },
 
-    hookSandboxNetwork: function () {
+    hookSandboxNetwork() {
         send({
             type: 'info',
             target: 'vm_bypass',
@@ -1321,7 +1322,7 @@ const virtualizationBypass = {
         );
         if (getAdaptersAddresses) {
             Interceptor.attach(getAdaptersAddresses, {
-                onLeave: _retval => {
+                onLeave: retval => {
                     if (retval.toInt32() === 0) {
                         // NO_ERROR
                         send({
@@ -1337,7 +1338,7 @@ const virtualizationBypass = {
         }
     },
 
-    hookSandboxEnvironment: function () {
+    hookSandboxEnvironment() {
         // Hook environment variable queries
         const getEnvironmentVariable = Module.findExportByName(
             'kernel32.dll',
@@ -1345,14 +1346,14 @@ const virtualizationBypass = {
         );
         if (getEnvironmentVariable) {
             Interceptor.attach(getEnvironmentVariable, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     if (args[0] && !args[0].isNull()) {
                         const varName = args[0].readUtf16String().toLowerCase();
 
                         if (
-                            varName.includes('sandbox') ||
-                            varName.includes('cuckoo') ||
-                            varName.includes('crack')
+                            varName.includes('sandbox')
+                            || varName.includes('cuckoo')
+                            || varName.includes('crack')
                         ) {
                             send({
                                 type: 'bypass',
@@ -1365,7 +1366,7 @@ const virtualizationBypass = {
                     }
                 },
 
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (this.blockSandboxEnv) {
                         retval.replace(0); // Variable not found
                     }
@@ -1377,7 +1378,7 @@ const virtualizationBypass = {
     },
 
     // === HARDWARE FINGERPRINTING BYPASS ===
-    hookHardwareFingerprinting: function () {
+    hookHardwareFingerprinting() {
         send({
             type: 'info',
             target: 'vm_bypass',
@@ -1403,12 +1404,12 @@ const virtualizationBypass = {
         });
     },
 
-    hookRegistryHardwareQueries: function () {
+    hookRegistryHardwareQueries() {
         // Hook registry queries for hardware information
         const regEnumKeyEx = Module.findExportByName('advapi32.dll', 'RegEnumKeyExW');
         if (regEnumKeyEx) {
             Interceptor.attach(regEnumKeyEx, {
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (retval.toInt32() === 0) {
                         // ERROR_SUCCESS
                         const keyName = this.context.rdx;
@@ -1424,10 +1425,10 @@ const virtualizationBypass = {
 
                         // Check for VM hardware keys
                         if (
-                            keyName.includes('vbox') ||
-                            keyName.includes('vmware') ||
-                            keyName.includes('qemu') ||
-                            keyName.includes('virtual')
+                            keyName.includes('vbox')
+                            || keyName.includes('vmware')
+                            || keyName.includes('qemu')
+                            || keyName.includes('virtual')
                         ) {
                             // Replace with legitimate hardware vendor
                             keyBuffer.writeUtf16String('Intel Corporation');
@@ -1438,7 +1439,7 @@ const virtualizationBypass = {
                                 key_name: keyName,
                             });
                         }
-                    } catch (_e) {
+                    } catch {
                         // Key name read failed
                     }
                 },
@@ -1448,12 +1449,12 @@ const virtualizationBypass = {
         }
     },
 
-    hookSystemInformationAPIs: function () {
+    hookSystemInformationAPIs() {
         // Hook computer name queries
         const getComputerName = Module.findExportByName('kernel32.dll', 'GetComputerNameW');
         if (getComputerName) {
             Interceptor.attach(getComputerName, {
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (retval.toInt32() !== 0) {
                         const computerName = this.context.rcx;
                         if (computerName && !computerName.isNull()) {
@@ -1488,7 +1489,7 @@ const virtualizationBypass = {
                                 original_name: name,
                             });
                         }
-                    } catch (_e) {
+                    } catch {
                         // Name read failed
                     }
                 },
@@ -1501,7 +1502,7 @@ const virtualizationBypass = {
         const getUserName = Module.findExportByName('advapi32.dll', 'GetUserNameW');
         if (getUserName) {
             Interceptor.attach(getUserName, {
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (retval.toInt32() !== 0) {
                         const userName = this.context.rcx;
                         if (userName && !userName.isNull()) {
@@ -1536,7 +1537,7 @@ const virtualizationBypass = {
                                 original_name: name,
                             });
                         }
-                    } catch (_e) {
+                    } catch {
                         // Name read failed
                     }
                 },
@@ -1547,7 +1548,7 @@ const virtualizationBypass = {
     },
 
     // === TIMING DETECTION BYPASS ===
-    hookTimingDetection: function () {
+    hookTimingDetection() {
         send({
             type: 'info',
             target: 'vm_bypass',
@@ -1574,7 +1575,7 @@ const virtualizationBypass = {
         });
     },
 
-    hookRdtscTiming: function () {
+    hookRdtscTiming() {
         if (!this.config.timingDetection.hookRdtscInstructions) {
             return;
         }
@@ -1586,10 +1587,10 @@ const virtualizationBypass = {
             const _lastValue = 0;
 
             Interceptor.attach(qpc, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     this.lpPerformanceCount = args[0];
                 },
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (this.lpPerformanceCount && !this.lpPerformanceCount.isNull()) {
                         // Normalize timing to prevent VM detection by adjusting to native CPU frequency
                         const normalizedTime = baseTime + (Date.now() - baseTime) * 2.4;
@@ -1607,7 +1608,7 @@ const virtualizationBypass = {
             const startTick = Date.now();
 
             Interceptor.attach(gtc64, {
-                onLeave: _retval => {
+                onLeave: retval => {
                     // Provide consistent tick count to avoid timing analysis detection
                     const elapsed = Date.now() - startTick;
                     retval.replace(ptr(elapsed));
@@ -1618,7 +1619,7 @@ const virtualizationBypass = {
         }
     },
 
-    hookPerformanceCounters: function () {
+    hookPerformanceCounters() {
         if (!this.config.timingDetection.spoofPerformanceCounters) {
             return;
         }
@@ -1629,7 +1630,7 @@ const virtualizationBypass = {
             const baseMultimediaTime = Date.now();
 
             Interceptor.attach(tgt, {
-                onLeave: _retval => {
+                onLeave: retval => {
                     const elapsed = Date.now() - baseMultimediaTime;
                     // Normalize multimedia timer to avoid detection by adding hardware offset
                     retval.replace(ptr(elapsed + 1000));
@@ -1640,7 +1641,7 @@ const virtualizationBypass = {
         }
     },
 
-    hookHighPrecisionTiming: function () {
+    hookHighPrecisionTiming() {
         if (!this.config.timingDetection.preventHighPrecisionTiming) {
             return;
         }
@@ -1649,11 +1650,11 @@ const virtualizationBypass = {
         const ntqpc = Module.findExportByName('ntdll.dll', 'NtQueryPerformanceCounter');
         if (ntqpc) {
             Interceptor.attach(ntqpc, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     this.performanceCounter = args[0];
                     this.performanceFrequency = args[1];
                 },
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (this.performanceCounter && !this.performanceCounter.isNull()) {
                         // Provide consistent performance counter values scaled to high-frequency range
                         const normalizedCounter = Date.now() * 3000;
@@ -1662,7 +1663,7 @@ const virtualizationBypass = {
 
                     if (this.performanceFrequency && !this.performanceFrequency.isNull()) {
                         // Spoof frequency to look like real hardware
-                        this.performanceFrequency.writeU64(3000000); // 3 MHz frequency
+                        this.performanceFrequency.writeU64(3_000_000); // 3 MHz frequency
                     }
                 },
             });
@@ -1672,7 +1673,7 @@ const virtualizationBypass = {
     },
 
     // === CONTAINER DETECTION BYPASS ===
-    hookContainerDetection: function () {
+    hookContainerDetection() {
         send({
             type: 'info',
             target: 'vm_bypass',
@@ -1696,7 +1697,7 @@ const virtualizationBypass = {
         this.hookLxcDetection();
     },
 
-    hookDockerDetection: function () {
+    hookDockerDetection() {
         if (!this.config.containerDetection.docker.enabled) {
             return;
         }
@@ -1705,7 +1706,7 @@ const virtualizationBypass = {
         const createFileW = Module.findExportByName('kernel32.dll', 'CreateFileW');
         if (createFileW) {
             Interceptor.attach(createFileW, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     if (args[0] && !args[0].isNull()) {
                         try {
                             const filename = args[0].readUtf16String();
@@ -1727,24 +1728,24 @@ const virtualizationBypass = {
                                         type: 'bypass',
                                         target: 'vm_bypass',
                                         action: 'docker_file_access_blocked',
-                                        filename: filename,
+                                        filename,
                                     });
                                     this.blockDockerAccess = true;
                                 }
                             }
-                        } catch (_e) {
+                        } catch (error) {
                             send({
                                 type: 'debug',
                                 target: 'vm_bypass',
                                 action: 'docker_file_read_failed',
                                 function: 'hookDockerDetection',
-                                error: e.toString(),
-                                stack: e.stack || 'No stack trace available',
+                                error: error.toString(),
+                                stack: error.stack || 'No stack trace available',
                             });
                         }
                     }
                 },
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (this.blockDockerAccess) {
                         retval.replace(ptr(-1)); // INVALID_HANDLE_VALUE
                     }
@@ -1758,7 +1759,7 @@ const virtualizationBypass = {
         this.hookContainerEnvironmentVars();
     },
 
-    hookWslDetection: function () {
+    hookWslDetection() {
         if (!this.config.containerDetection.wsl.enabled) {
             return;
         }
@@ -1767,7 +1768,7 @@ const virtualizationBypass = {
         const regOpenKeyW = Module.findExportByName('advapi32.dll', 'RegOpenKeyExW');
         if (regOpenKeyW) {
             Interceptor.attach(regOpenKeyW, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     if (args[1] && !args[1].isNull()) {
                         try {
                             const keyName = args[1].readUtf16String();
@@ -1780,19 +1781,19 @@ const virtualizationBypass = {
                                 });
                                 this.blockWslRegistry = true;
                             }
-                        } catch (_e) {
+                        } catch (error) {
                             send({
                                 type: 'debug',
                                 target: 'vm_bypass',
                                 action: 'wsl_registry_read_failed',
                                 function: 'hookWslDetection',
-                                error: e.toString(),
-                                stack: e.stack || 'No stack trace available',
+                                error: error.toString(),
+                                stack: error.stack || 'No stack trace available',
                             });
                         }
                     }
                 },
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (this.blockWslRegistry) {
                         retval.replace(2); // ERROR_FILE_NOT_FOUND
                     }
@@ -1806,7 +1807,7 @@ const virtualizationBypass = {
         this.hookWslSubsystemFiles();
     },
 
-    hookKubernetesDetection: function () {
+    hookKubernetesDetection() {
         if (!this.config.containerDetection.kubernetes.enabled) {
             return;
         }
@@ -1814,7 +1815,7 @@ const virtualizationBypass = {
         const createFileW = Module.findExportByName('kernel32.dll', 'CreateFileW');
         if (createFileW) {
             Interceptor.attach(createFileW, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     if (args[0] && !args[0].isNull()) {
                         try {
                             const filename = args[0].readUtf16String();
@@ -1833,24 +1834,24 @@ const virtualizationBypass = {
                                         type: 'bypass',
                                         target: 'vm_bypass',
                                         action: 'kubernetes_file_access_blocked',
-                                        filename: filename,
+                                        filename,
                                     });
                                     this.blockK8sAccess = true;
                                 }
                             }
-                        } catch (_e) {
+                        } catch (error) {
                             send({
                                 type: 'debug',
                                 target: 'vm_bypass',
                                 action: 'kubernetes_file_read_failed',
                                 function: 'hookKubernetesDetection',
-                                error: e.toString(),
-                                stack: e.stack || 'No stack trace available',
+                                error: error.toString(),
+                                stack: error.stack || 'No stack trace available',
                             });
                         }
                     }
                 },
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (this.blockK8sAccess) {
                         retval.replace(ptr(-1)); // INVALID_HANDLE_VALUE
                     }
@@ -1861,7 +1862,7 @@ const virtualizationBypass = {
         }
     },
 
-    hookLxcDetection: function () {
+    hookLxcDetection() {
         if (!this.config.containerDetection.lxc.enabled) {
             return;
         }
@@ -1870,11 +1871,11 @@ const virtualizationBypass = {
         this.hookLxcProcDetection();
     },
 
-    hookContainerEnvironmentVars: function () {
+    hookContainerEnvironmentVars() {
         const getEnvVar = Module.findExportByName('kernel32.dll', 'GetEnvironmentVariableW');
         if (getEnvVar) {
             Interceptor.attach(getEnvVar, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     if (args[0] && !args[0].isNull()) {
                         try {
                             const varName = args[0].readUtf16String();
@@ -1901,19 +1902,19 @@ const virtualizationBypass = {
                                     this.spoofContainerVar = true;
                                 }
                             }
-                        } catch (_e) {
+                        } catch (error) {
                             send({
                                 type: 'debug',
                                 target: 'vm_bypass',
                                 action: 'container_env_var_read_failed',
                                 function: 'hookContainerEnvironmentVars',
-                                error: e.toString(),
-                                stack: e.stack || 'No stack trace available',
+                                error: error.toString(),
+                                stack: error.stack || 'No stack trace available',
                             });
                         }
                     }
                 },
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (this.spoofContainerVar) {
                         retval.replace(0); // Variable not found
                     }
@@ -1924,12 +1925,12 @@ const virtualizationBypass = {
         }
     },
 
-    hookWslSubsystemFiles: function () {
+    hookWslSubsystemFiles() {
         // Hook access to WSL-specific files
         const createFileA = Module.findExportByName('kernel32.dll', 'CreateFileA');
         if (createFileA) {
             Interceptor.attach(createFileA, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     if (args[0] && !args[0].isNull()) {
                         try {
                             const filename = args[0].readAnsiString();
@@ -1947,24 +1948,24 @@ const virtualizationBypass = {
                                         type: 'bypass',
                                         target: 'vm_bypass',
                                         action: 'wsl_file_access_blocked',
-                                        filename: filename,
+                                        filename,
                                     });
                                     this.blockWslFile = true;
                                 }
                             }
-                        } catch (_e) {
+                        } catch (error) {
                             send({
                                 type: 'debug',
                                 target: 'vm_bypass',
                                 action: 'wsl_file_read_failed',
                                 function: 'hookWslSubsystemFiles',
-                                error: e.toString(),
-                                stack: e.stack || 'No stack trace available',
+                                error: error.toString(),
+                                stack: error.stack || 'No stack trace available',
                             });
                         }
                     }
                 },
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (this.blockWslFile) {
                         retval.replace(ptr(-1)); // INVALID_HANDLE_VALUE
                     }
@@ -1975,26 +1976,26 @@ const virtualizationBypass = {
         }
     },
 
-    hookLxcProcDetection: function () {
+    hookLxcProcDetection() {
         // Hook LXC /proc detection methods
         const readFile = Module.findExportByName('kernel32.dll', 'ReadFile');
         if (readFile) {
             Interceptor.attach(readFile, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     this.hFile = args[0];
                     this.lpBuffer = args[1];
                     this.nNumberOfBytesToRead = args[2];
                     this.lpNumberOfBytesRead = args[3];
                 },
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (retval.toInt32() && this.lpBuffer && !this.lpBuffer.isNull()) {
                         try {
                             const data = this.lpBuffer.readAnsiString();
                             if (
-                                data &&
-                                (data.includes('lxc') ||
-                                    data.includes('/lxc/') ||
-                                    data.includes('container'))
+                                data
+                                && (data.includes('lxc')
+                                    || data.includes('/lxc/')
+                                    || data.includes('container'))
                             ) {
                                 send({
                                     type: 'bypass',
@@ -2003,18 +2004,18 @@ const virtualizationBypass = {
                                 });
                                 // Replace LXC indicators with normal system data
                                 const spoofedData = data
-                                    .replace(/lxc/g, 'sys')
-                                    .replace(/container/g, 'process');
+                                    .replaceAll('lxc', 'sys')
+                                    .replaceAll('container', 'process');
                                 this.lpBuffer.writeAnsiString(spoofedData);
                             }
-                        } catch (_e) {
+                        } catch (error) {
                             send({
                                 type: 'debug',
                                 target: 'vm_bypass',
                                 action: 'lxc_proc_data_read_failed',
                                 function: 'hookLxcProcDetection',
-                                error: e.toString(),
-                                stack: e.stack || 'No stack trace available',
+                                error: error.toString(),
+                                stack: error.stack || 'No stack trace available',
                             });
                         }
                     }
@@ -2026,7 +2027,7 @@ const virtualizationBypass = {
     },
 
     // === CPU FEATURE DETECTION BYPASS ===
-    hookCpuFeatureDetection: function () {
+    hookCpuFeatureDetection() {
         send({
             type: 'info',
             target: 'vm_bypass',
@@ -2047,7 +2048,7 @@ const virtualizationBypass = {
         this.hookMsrAccess();
     },
 
-    hookSmbiosDetection: function () {
+    hookSmbiosDetection() {
         if (!this.config.cpuFeatureDetection.smbiosDetection) {
             return;
         }
@@ -2059,9 +2060,9 @@ const virtualizationBypass = {
         );
         if (enumSystemFirmwareTables) {
             Interceptor.attach(enumSystemFirmwareTables, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     const firmwareTableProvider = args[0].toInt32();
-                    if (firmwareTableProvider === 1380533837) {
+                    if (firmwareTableProvider === 1_380_533_837) {
                         // 'RSMB' - Raw SMBIOS data
                         send({
                             type: 'bypass',
@@ -2071,7 +2072,7 @@ const virtualizationBypass = {
                         this.blockSmbios = true;
                     }
                 },
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (this.blockSmbios) {
                         retval.replace(0); // No tables available
                     }
@@ -2082,16 +2083,16 @@ const virtualizationBypass = {
         }
     },
 
-    hookMsrAccess: function () {
+    hookMsrAccess() {
         // Hook Model Specific Register access for hypervisor detection
         const deviceIoControl = Module.findExportByName('kernel32.dll', 'DeviceIoControl');
         if (deviceIoControl) {
             Interceptor.attach(deviceIoControl, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     const ioControlCode = args[1].toInt32();
 
                     // MSR access IOCTL codes that might indicate VM detection
-                    if ((ioControlCode & 0xffff0000) === 0x9c400000) {
+                    if ((ioControlCode & 0xFF_FF_00_00) === 0x9C_40_00_00) {
                         // MSR access codes
                         send({
                             type: 'bypass',
@@ -2102,7 +2103,7 @@ const virtualizationBypass = {
                         this.blockMsrAccess = true;
                     }
                 },
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (this.blockMsrAccess) {
                         retval.replace(0); // Access denied
                     }
@@ -2114,7 +2115,7 @@ const virtualizationBypass = {
     },
 
     // === GENERIC VM DETECTION BYPASS ===
-    hookGenericVmDetection: function () {
+    hookGenericVmDetection() {
         send({
             type: 'info',
             target: 'vm_bypass',
@@ -2131,21 +2132,21 @@ const virtualizationBypass = {
         this.hookVmFileDetection();
     },
 
-    hookVmDetectionAPIs: function () {
+    hookVmDetectionAPIs() {
         // Hook DeviceIoControl for VM detection
         const deviceIoControl = Module.findExportByName('kernel32.dll', 'DeviceIoControl');
         if (deviceIoControl) {
             Interceptor.attach(deviceIoControl, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     const _hDevice = args[0];
                     const ioControlCode = args[1].toInt32();
 
                     // Common VM detection IOCTL codes
                     const vmIoctls = [
-                        0x00564d58, // 'VMX' - VMware
-                        0x564d5868, // VMware backdoor
-                        0xaa000000, // VirtualBox
-                        0xbb000000, // Generic VM
+                        0x00_56_4D_58, // 'VMX' - VMware
+                        0x56_4D_58_68, // VMware backdoor
+                        0xAA_00_00_00, // VirtualBox
+                        0xBB_00_00_00, // Generic VM
                     ];
 
                     if (vmIoctls.includes(ioControlCode)) {
@@ -2159,7 +2160,7 @@ const virtualizationBypass = {
                     }
                 },
 
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (this.blockVmIoctl) {
                         retval.replace(0); // FALSE - operation failed
                     }
@@ -2170,12 +2171,12 @@ const virtualizationBypass = {
         }
     },
 
-    hookVmStringDetection: function () {
+    hookVmStringDetection() {
         // Hook string comparison functions for VM detection
         const strcmp = Module.findExportByName('msvcrt.dll', 'strcmp');
         if (strcmp) {
             Interceptor.attach(strcmp, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     try {
                         const str1 = args[0].readAnsiString();
                         const str2 = args[1].readAnsiString();
@@ -2206,12 +2207,12 @@ const virtualizationBypass = {
                             });
                             this.spoofVmComparison = true;
                         }
-                    } catch (_e) {
+                    } catch {
                         // String read failed
                     }
                 },
 
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (this.spoofVmComparison) {
                         retval.replace(1); // Strings don't match
                         send({
@@ -2227,12 +2228,12 @@ const virtualizationBypass = {
         }
     },
 
-    hookVmFileDetection: function () {
+    hookVmFileDetection() {
         // Hook directory enumeration for VM files
         const findFirstFile = Module.findExportByName('kernel32.dll', 'FindFirstFileW');
         if (findFirstFile) {
             Interceptor.attach(findFirstFile, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     if (args[0] && !args[0].isNull()) {
                         const searchPattern = args[0].readUtf16String().toLowerCase();
 
@@ -2248,7 +2249,7 @@ const virtualizationBypass = {
 
                         if (
                             vmPatterns.some(pattern =>
-                                searchPattern.includes(pattern.replace(/\*/g, ''))
+                                searchPattern.includes(pattern.replaceAll('*', ''))
                             )
                         ) {
                             send({
@@ -2262,9 +2263,9 @@ const virtualizationBypass = {
                     }
                 },
 
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (this.blockVmFileSearch) {
-                        retval.replace(ptr(0xffffffff)); // INVALID_HANDLE_VALUE
+                        retval.replace(ptr(0xFF_FF_FF_FF)); // INVALID_HANDLE_VALUE
                     }
                 },
             });
@@ -2274,7 +2275,7 @@ const virtualizationBypass = {
     },
 
     // === REGISTRY DETECTION BYPASS ===
-    hookRegistryDetection: function () {
+    hookRegistryDetection() {
         send({
             type: 'info',
             target: 'vm_bypass',
@@ -2285,7 +2286,7 @@ const virtualizationBypass = {
         const regOpenKey = Module.findExportByName('advapi32.dll', 'RegOpenKeyW');
         if (regOpenKey) {
             Interceptor.attach(regOpenKey, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     if (args[1] && !args[1].isNull()) {
                         const keyName = args[1].readUtf16String().toLowerCase();
 
@@ -2310,7 +2311,7 @@ const virtualizationBypass = {
                     }
                 },
 
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (this.blockVmRegistry) {
                         retval.replace(2); // ERROR_FILE_NOT_FOUND
                     }
@@ -2322,7 +2323,7 @@ const virtualizationBypass = {
     },
 
     // === FILE SYSTEM DETECTION BYPASS ===
-    hookFileSystemDetection: function () {
+    hookFileSystemDetection() {
         send({
             type: 'info',
             target: 'vm_bypass',
@@ -2333,7 +2334,7 @@ const virtualizationBypass = {
         const createDirectory = Module.findExportByName('kernel32.dll', 'CreateDirectoryW');
         if (createDirectory) {
             Interceptor.attach(createDirectory, {
-                onEnter: _args => {
+                onEnter: args => {
                     if (args[0] && !args[0].isNull()) {
                         const dirPath = args[0].readUtf16String().toLowerCase();
 
@@ -2361,7 +2362,7 @@ const virtualizationBypass = {
     },
 
     // === PROCESS DETECTION BYPASS ===
-    hookProcessDetection: function () {
+    hookProcessDetection() {
         send({
             type: 'info',
             target: 'vm_bypass',
@@ -2372,7 +2373,7 @@ const virtualizationBypass = {
         const getCurrentProcessId = Module.findExportByName('kernel32.dll', 'GetCurrentProcessId');
         if (getCurrentProcessId) {
             Interceptor.attach(getCurrentProcessId, {
-                onLeave: _retval => {
+                onLeave: retval => {
                     const pid = retval.toInt32();
 
                     // Don't spoof our own PID, just log for awareness
@@ -2390,7 +2391,7 @@ const virtualizationBypass = {
     },
 
     // === NETWORK DETECTION BYPASS ===
-    hookNetworkDetection: function () {
+    hookNetworkDetection() {
         send({
             type: 'info',
             target: 'vm_bypass',
@@ -2401,7 +2402,7 @@ const virtualizationBypass = {
         const getComputerNameEx = Module.findExportByName('kernel32.dll', 'GetComputerNameExW');
         if (getComputerNameEx) {
             Interceptor.attach(getComputerNameEx, {
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (retval.toInt32() !== 0) {
                         const nameBuffer = this.context.rdx;
                         if (nameBuffer && !nameBuffer.isNull()) {
@@ -2415,10 +2416,10 @@ const virtualizationBypass = {
                         const hostname = nameBuffer.readUtf16String().toLowerCase();
 
                         if (
-                            hostname.includes('sandbox') ||
-                            hostname.includes('crack') ||
-                            hostname.includes('analysis') ||
-                            hostname.includes('vm')
+                            hostname.includes('sandbox')
+                            || hostname.includes('crack')
+                            || hostname.includes('analysis')
+                            || hostname.includes('vm')
                         ) {
                             nameBuffer.writeUtf16String('DESKTOP-PC01');
                             send({
@@ -2428,7 +2429,7 @@ const virtualizationBypass = {
                                 original_hostname: hostname,
                             });
                         }
-                    } catch (_e) {
+                    } catch {
                         // Hostname read failed
                     }
                 },
@@ -2439,7 +2440,7 @@ const virtualizationBypass = {
     },
 
     // === ADVANCED CPUID INSTRUCTION HOOKING ===
-    hookCpuidInstructions: function () {
+    hookCpuidInstructions() {
         send({
             type: 'info',
             target: 'vm_bypass',
@@ -2450,20 +2451,20 @@ const virtualizationBypass = {
         const modules = Process.enumerateModules();
         modules.forEach(module => {
             if (
-                module.name.toLowerCase().includes('.exe') ||
-                module.name.toLowerCase().includes('.dll')
+                module.name.toLowerCase().includes('.exe')
+                || module.name.toLowerCase().includes('.dll')
             ) {
                 Memory.scan(module.base, module.size, '0F A2', {
                     onMatch: (address, _size) => {
                         try {
                             // Hook CPUID instruction (0F A2)
                             Interceptor.attach(address, {
-                                onEnter: function (_args) {
+                                onEnter(args) {
                                     const { eax } = this.context;
                                     const _ecx = this.context.ecx;
 
                                     // Hypervisor detection leaf
-                                    if (eax === 0x40000000) {
+                                    if (eax === 0x40_00_00_00) {
                                         send({
                                             type: 'bypass',
                                             target: 'vm_bypass',
@@ -2477,7 +2478,7 @@ const virtualizationBypass = {
                                         this.spoofFeatures = true;
                                     }
                                 },
-                                onLeave: function (_retval) {
+                                onLeave(retval) {
                                     if (this.spoofHypervisor) {
                                         // Clear hypervisor signature
                                         this.context.eax = 0;
@@ -2499,7 +2500,7 @@ const virtualizationBypass = {
                                 action: 'cpuid_instruction_hooked',
                                 address: address.toString(),
                             });
-                        } catch (_e) {
+                        } catch {
                             // Failed to hook this CPUID instance
                         }
                     },
@@ -2512,7 +2513,7 @@ const virtualizationBypass = {
     },
 
     // === RED PILL DETECTION BYPASS ===
-    hookRedPillDetection: function () {
+    hookRedPillDetection() {
         send({
             type: 'info',
             target: 'vm_bypass',
@@ -2530,7 +2531,7 @@ const virtualizationBypass = {
                             // Check if it's SIDT (ModR/M byte indicates /1)
                             if ((nextByte & 0x38) === 0x08) {
                                 Interceptor.attach(address, {
-                                    onEnter: function (_args) {
+                                    onEnter(args) {
                                         send({
                                             type: 'bypass',
                                             target: 'vm_bypass',
@@ -2538,12 +2539,12 @@ const virtualizationBypass = {
                                         });
                                         this.idtAddress = args[0];
                                     },
-                                    onLeave: function (_retval) {
+                                    onLeave(retval) {
                                         if (this.idtAddress && !this.idtAddress.isNull()) {
                                             // Spoof IDT base to look like bare metal
                                             // Typical bare metal IDT base: 0x80xxxxxx
                                             // VM IDT base often: 0xFFxxxxxx
-                                            const idtBase = ptr(0x80000000);
+                                            const idtBase = ptr(0x80_00_00_00);
                                             this.idtAddress.writePointer(idtBase);
 
                                             send({
@@ -2556,14 +2557,14 @@ const virtualizationBypass = {
                                     },
                                 });
                             }
-                        } catch (_e) {
+                        } catch (error) {
                             send({
                                 type: 'debug',
                                 target: 'vm_bypass',
                                 action: 'red_pill_detection_failed',
                                 function: 'hookRedPillDetection',
-                                error: e.toString(),
-                                stack: e.stack || 'No stack trace available',
+                                error: error.toString(),
+                                stack: error.stack || 'No stack trace available',
                             });
                         }
                     },
@@ -2576,7 +2577,7 @@ const virtualizationBypass = {
     },
 
     // === NO PILL DETECTION BYPASS ===
-    hookNoPillDetection: function () {
+    hookNoPillDetection() {
         send({
             type: 'info',
             target: 'vm_bypass',
@@ -2594,7 +2595,7 @@ const virtualizationBypass = {
                             // Check if it's SLDT (ModR/M byte indicates /0)
                             if ((nextByte & 0x38) === 0x00) {
                                 Interceptor.attach(address, {
-                                    onEnter: function (_args) {
+                                    onEnter(args) {
                                         send({
                                             type: 'bypass',
                                             target: 'vm_bypass',
@@ -2602,7 +2603,7 @@ const virtualizationBypass = {
                                         });
                                         this.ldtAddress = args[0];
                                     },
-                                    onLeave: function (_retval) {
+                                    onLeave(retval) {
                                         if (this.ldtAddress && !this.ldtAddress.isNull()) {
                                             // Spoof LDT selector to 0 (typical for bare metal)
                                             this.ldtAddress.writeU16(0);
@@ -2616,14 +2617,14 @@ const virtualizationBypass = {
                                     },
                                 });
                             }
-                        } catch (_e) {
+                        } catch (error) {
                             send({
                                 type: 'debug',
                                 target: 'vm_bypass',
                                 action: 'no_pill_detection_failed',
                                 function: 'hookNoPillDetection',
-                                error: e.toString(),
-                                stack: e.stack || 'No stack trace available',
+                                error: error.toString(),
+                                stack: error.stack || 'No stack trace available',
                             });
                         }
                     },
@@ -2636,7 +2637,7 @@ const virtualizationBypass = {
     },
 
     // === VMEXIT TIMING DETECTION BYPASS ===
-    hookVmexitTiming: function () {
+    hookVmexitTiming() {
         send({
             type: 'info',
             target: 'vm_bypass',
@@ -2646,16 +2647,16 @@ const virtualizationBypass = {
         // Hook NtQuerySystemTime for consistent timing
         const ntQuerySystemTime = Module.findExportByName('ntdll.dll', 'NtQuerySystemTime');
         if (ntQuerySystemTime) {
-            const baseSystemTime = Date.now() * 10000; // Convert to Windows FILETIME
+            const baseSystemTime = Date.now() * 10_000; // Convert to Windows FILETIME
 
             Interceptor.attach(ntQuerySystemTime, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     this.systemTimePtr = args[0];
                 },
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (this.systemTimePtr && !this.systemTimePtr.isNull()) {
                         // Normalize timing to prevent VMEXIT detection
-                        const elapsed = Date.now() * 10000 - baseSystemTime;
+                        const elapsed = Date.now() * 10_000 - baseSystemTime;
                         const normalizedTime = baseSystemTime + elapsed * 0.95; // Reduce timing variance
                         this.systemTimePtr.writeU64(normalizedTime);
                     }
@@ -2672,7 +2673,7 @@ const virtualizationBypass = {
         );
         if (keQueryPerformanceCounter) {
             Interceptor.attach(keQueryPerformanceCounter, {
-                onLeave: _retval => {
+                onLeave: retval => {
                     // Add consistent delay to mask VMEXIT timing
                     const counter = retval.toInt32();
                     retval.replace(ptr(counter + 1000));
@@ -2684,7 +2685,7 @@ const virtualizationBypass = {
     },
 
     // === CLOUD PROVIDER VM DETECTION BYPASS ===
-    hookCloudProviderDetection: function () {
+    hookCloudProviderDetection() {
         send({
             type: 'info',
             target: 'vm_bypass',
@@ -2704,12 +2705,12 @@ const virtualizationBypass = {
         this.hookAlibabaDetection();
     },
 
-    hookAwsDetection: function () {
+    hookAwsDetection() {
         // Hook file access to AWS metadata service
         const createFileW = Module.findExportByName('kernel32.dll', 'CreateFileW');
         if (createFileW) {
             Interceptor.attach(createFileW, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     if (args[0] && !args[0].isNull()) {
                         const filename = args[0].readUtf16String();
                         if (filename?.includes('169.254.169.254')) {
@@ -2717,13 +2718,13 @@ const virtualizationBypass = {
                                 type: 'bypass',
                                 target: 'vm_bypass',
                                 action: 'aws_metadata_service_blocked',
-                                filename: filename,
+                                filename,
                             });
                             this.blockAwsMetadata = true;
                         }
                     }
                 },
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (this.blockAwsMetadata) {
                         retval.replace(ptr(-1)); // INVALID_HANDLE_VALUE
                     }
@@ -2737,11 +2738,11 @@ const virtualizationBypass = {
         const httpSendRequest = Module.findExportByName('winhttp.dll', 'WinHttpSendRequest');
         if (httpSendRequest) {
             Interceptor.attach(httpSendRequest, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     // Block requests to AWS metadata endpoints
                     this.blockAwsRequest = true;
                 },
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (this.blockAwsRequest) {
                         retval.replace(0); // FALSE - request failed
                     }
@@ -2752,18 +2753,18 @@ const virtualizationBypass = {
         }
     },
 
-    hookAzureDetection: function () {
+    hookAzureDetection() {
         // Hook Azure VM agent detection
         const openServiceW = Module.findExportByName('advapi32.dll', 'OpenServiceW');
         if (openServiceW) {
             Interceptor.attach(openServiceW, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     if (args[1] && !args[1].isNull()) {
                         const serviceName = args[1].readUtf16String();
                         if (
-                            serviceName &&
-                            (serviceName.includes('WindowsAzureGuestAgent') ||
-                                serviceName.includes('WindowsAzureTelemetryService'))
+                            serviceName
+                            && (serviceName.includes('WindowsAzureGuestAgent')
+                                || serviceName.includes('WindowsAzureTelemetryService'))
                         ) {
                             send({
                                 type: 'bypass',
@@ -2775,7 +2776,7 @@ const virtualizationBypass = {
                         }
                     }
                 },
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (this.blockAzureService) {
                         retval.replace(ptr(0)); // NULL - service not found
                     }
@@ -2786,12 +2787,12 @@ const virtualizationBypass = {
         }
     },
 
-    hookGcpDetection: function () {
+    hookGcpDetection() {
         // Hook GCP metadata server detection
         const getAddrInfo = Module.findExportByName('ws2_32.dll', 'getaddrinfo');
         if (getAddrInfo) {
             Interceptor.attach(getAddrInfo, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     if (args[0] && !args[0].isNull()) {
                         const hostname = args[0].readAnsiString();
                         if (hostname?.includes('metadata.google.internal')) {
@@ -2799,15 +2800,15 @@ const virtualizationBypass = {
                                 type: 'bypass',
                                 target: 'vm_bypass',
                                 action: 'gcp_metadata_dns_blocked',
-                                hostname: hostname,
+                                hostname,
                             });
                             this.blockGcpDns = true;
                         }
                     }
                 },
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (this.blockGcpDns) {
-                        retval.replace(11001); // WSAHOST_NOT_FOUND
+                        retval.replace(11_001); // WSAHOST_NOT_FOUND
                     }
                 },
             });
@@ -2816,12 +2817,12 @@ const virtualizationBypass = {
         }
     },
 
-    hookAlibabaDetection: function () {
+    hookAlibabaDetection() {
         // Hook Alibaba Cloud ECS detection
         const regQueryValueExW = Module.findExportByName('advapi32.dll', 'RegQueryValueExW');
         if (regQueryValueExW) {
             Interceptor.attach(regQueryValueExW, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     if (args[1] && !args[1].isNull()) {
                         const valueName = args[1].readUtf16String();
                         if (valueName?.includes('AlibabaCloud')) {
@@ -2835,7 +2836,7 @@ const virtualizationBypass = {
                         }
                     }
                 },
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (this.blockAlibabaReg) {
                         retval.replace(2); // ERROR_FILE_NOT_FOUND
                     }
@@ -2847,7 +2848,7 @@ const virtualizationBypass = {
     },
 
     // === ANTI-DEBUGGING INTEGRATION ===
-    hookAntiDebuggingIntegration: function () {
+    hookAntiDebuggingIntegration() {
         send({
             type: 'info',
             target: 'vm_bypass',
@@ -2883,7 +2884,7 @@ const virtualizationBypass = {
         const ntGetContextThread = Module.findExportByName('ntdll.dll', 'NtGetContextThread');
         if (ntGetContextThread) {
             Interceptor.attach(ntGetContextThread, {
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (retval.toInt32() === 0) {
                         const context = this.context.rdx;
                         if (context && !context.isNull()) {
@@ -2910,7 +2911,7 @@ const virtualizationBypass = {
     },
 
     // === RDTSC INSTRUCTION HOOKING ===
-    hookRdtscInstructions: function () {
+    hookRdtscInstructions() {
         send({
             type: 'info',
             target: 'vm_bypass',
@@ -2919,7 +2920,7 @@ const virtualizationBypass = {
 
         // Scan for RDTSC instructions (0F 31)
         const modules = Process.enumerateModules();
-        const rdtscBase = Date.now() * 1000000;
+        const rdtscBase = Date.now() * 1_000_000;
 
         modules.forEach(module => {
             if (module.name.toLowerCase().includes('.exe')) {
@@ -2927,7 +2928,7 @@ const virtualizationBypass = {
                     onMatch: (address, _size) => {
                         try {
                             Interceptor.attach(address, {
-                                onEnter: _args => {
+                                onEnter: args => {
                                     send({
                                         type: 'bypass',
                                         target: 'vm_bypass',
@@ -2935,23 +2936,23 @@ const virtualizationBypass = {
                                         address: address.toString(),
                                     });
                                 },
-                                onLeave: function (_retval) {
+                                onLeave(retval) {
                                     // Normalize TSC values to prevent timing analysis
-                                    const elapsed = Date.now() * 1000000 - rdtscBase;
+                                    const elapsed = Date.now() * 1_000_000 - rdtscBase;
                                     const normalizedTsc = rdtscBase + elapsed * 2.4; // Scale to 2.4GHz CPU frequency
 
-                                    this.context.eax = normalizedTsc & 0xffffffff;
-                                    this.context.edx = (normalizedTsc >> 0) & 0xffffffff;
+                                    this.context.eax = normalizedTsc & 0xFF_FF_FF_FF;
+                                    this.context.edx = Math.trunc(normalizedTsc) & 0xFF_FF_FF_FF;
                                 },
                             });
-                        } catch (_e) {
+                        } catch (error) {
                             send({
                                 type: 'debug',
                                 target: 'vm_bypass',
                                 action: 'rdtsc_hook_failed',
                                 function: 'hookRdtscInstructions',
-                                error: e.toString(),
-                                stack: e.stack || 'No stack trace available',
+                                error: error.toString(),
+                                stack: error.stack || 'No stack trace available',
                             });
                         }
                     },
@@ -2967,24 +2968,24 @@ const virtualizationBypass = {
                     onMatch: (address, _size) => {
                         try {
                             Interceptor.attach(address, {
-                                onLeave: function (_retval) {
+                                onLeave(retval) {
                                     // Normalize RDTSCP values
-                                    const elapsed = Date.now() * 1000000 - rdtscBase;
+                                    const elapsed = Date.now() * 1_000_000 - rdtscBase;
                                     const normalizedTsc = rdtscBase + elapsed * 2.4;
 
-                                    this.context.eax = normalizedTsc & 0xffffffff;
-                                    this.context.edx = (normalizedTsc >> 0) & 0xffffffff;
+                                    this.context.eax = normalizedTsc & 0xFF_FF_FF_FF;
+                                    this.context.edx = Math.trunc(normalizedTsc) & 0xFF_FF_FF_FF;
                                     this.context.ecx = 0; // Clear processor ID
                                 },
                             });
-                        } catch (_e) {
+                        } catch (error) {
                             send({
                                 type: 'debug',
                                 target: 'vm_bypass',
                                 action: 'rdtscp_hook_failed',
                                 function: 'hookRdtscInstructions',
-                                error: e.toString(),
-                                stack: e.stack || 'No stack trace available',
+                                error: error.toString(),
+                                stack: error.stack || 'No stack trace available',
                             });
                         }
                     },
@@ -2997,7 +2998,7 @@ const virtualizationBypass = {
     },
 
     // === VMX/SVM INSTRUCTION DETECTION BYPASS ===
-    hookVmxSvmInstructions: function () {
+    hookVmxSvmInstructions() {
         send({
             type: 'info',
             target: 'vm_bypass',
@@ -3012,7 +3013,7 @@ const virtualizationBypass = {
                     onMatch: (address, _size) => {
                         try {
                             Interceptor.attach(address, {
-                                onEnter: function (_args) {
+                                onEnter(args) {
                                     send({
                                         type: 'bypass',
                                         target: 'vm_bypass',
@@ -3020,21 +3021,21 @@ const virtualizationBypass = {
                                     });
                                     this.blockVmxon = true;
                                 },
-                                onLeave: function (_retval) {
+                                onLeave(retval) {
                                     if (this.blockVmxon) {
                                         // Set carry flag to indicate failure
                                         this.context.eflags |= 1;
                                     }
                                 },
                             });
-                        } catch (_e) {
+                        } catch (error) {
                             send({
                                 type: 'debug',
                                 target: 'vm_bypass',
                                 action: 'vmx_svm_hook_failed',
                                 function: 'hookVmxSvmInstructions',
-                                error: e.toString(),
-                                stack: e.stack || 'No stack trace available',
+                                error: error.toString(),
+                                stack: error.stack || 'No stack trace available',
                             });
                         }
                     },
@@ -3047,7 +3048,7 @@ const virtualizationBypass = {
     },
 
     // === EPT/NPT DETECTION BYPASS ===
-    hookEptNptDetection: function () {
+    hookEptNptDetection() {
         send({
             type: 'info',
             target: 'vm_bypass',
@@ -3058,11 +3059,11 @@ const virtualizationBypass = {
         const ntReadMsr = Module.findExportByName('ntdll.dll', 'NtReadMsr');
         if (ntReadMsr) {
             Interceptor.attach(ntReadMsr, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     const msrIndex = args[0].toInt32();
 
                     // EPT capabilities MSR (0x48C) and NPT MSR
-                    if (msrIndex === 0x48c || msrIndex === 0xc0010114) {
+                    if (msrIndex === 0x4_8C || msrIndex === 0xC0_01_01_14) {
                         send({
                             type: 'bypass',
                             target: 'vm_bypass',
@@ -3072,9 +3073,9 @@ const virtualizationBypass = {
                         this.blockEptMsr = true;
                     }
                 },
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (this.blockEptMsr) {
-                        retval.replace(0xc0000001); // STATUS_UNSUCCESSFUL
+                        retval.replace(0xC0_00_00_01); // STATUS_UNSUCCESSFUL
                     }
                 },
             });
@@ -3084,7 +3085,7 @@ const virtualizationBypass = {
     },
 
     // === ADVANCED CONTAINER DETECTION BYPASS ===
-    hookAdvancedContainerDetection: function () {
+    hookAdvancedContainerDetection() {
         send({
             type: 'info',
             target: 'vm_bypass',
@@ -3101,30 +3102,30 @@ const virtualizationBypass = {
         this.hookSystemdNspawnDetection();
     },
 
-    hookPodmanDetection: function () {
+    hookPodmanDetection() {
         const createFileW = Module.findExportByName('kernel32.dll', 'CreateFileW');
         if (createFileW) {
             Interceptor.attach(createFileW, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     if (args[0] && !args[0].isNull()) {
                         const filename = args[0].readUtf16String();
                         if (
-                            filename &&
-                            (filename.includes('podman') ||
-                                filename.includes('/run/podman') ||
-                                filename.includes('/var/lib/containers'))
+                            filename
+                            && (filename.includes('podman')
+                                || filename.includes('/run/podman')
+                                || filename.includes('/var/lib/containers'))
                         ) {
                             send({
                                 type: 'bypass',
                                 target: 'vm_bypass',
                                 action: 'podman_file_access_blocked',
-                                filename: filename,
+                                filename,
                             });
                             this.blockPodmanAccess = true;
                         }
                     }
                 },
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (this.blockPodmanAccess) {
                         retval.replace(ptr(-1)); // INVALID_HANDLE_VALUE
                     }
@@ -3135,21 +3136,21 @@ const virtualizationBypass = {
         }
     },
 
-    hookContainerdDetection: function () {
+    hookContainerdDetection() {
         const getEnvironmentVariableW = Module.findExportByName(
             'kernel32.dll',
             'GetEnvironmentVariableW'
         );
         if (getEnvironmentVariableW) {
             Interceptor.attach(getEnvironmentVariableW, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     if (args[0] && !args[0].isNull()) {
                         const varName = args[0].readUtf16String();
                         if (
-                            varName &&
-                            (varName.includes('CONTAINERD') ||
-                                varName === 'container' ||
-                                varName === 'CONTAINER_HOST')
+                            varName
+                            && (varName.includes('CONTAINERD')
+                                || varName === 'container'
+                                || varName === 'CONTAINER_HOST')
                         ) {
                             send({
                                 type: 'bypass',
@@ -3161,7 +3162,7 @@ const virtualizationBypass = {
                         }
                     }
                 },
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (this.blockContainerdVar) {
                         retval.replace(0); // Variable not found
                     }
@@ -3172,16 +3173,16 @@ const virtualizationBypass = {
         }
     },
 
-    hookSystemdNspawnDetection: function () {
+    hookSystemdNspawnDetection() {
         // Hook systemd-nspawn detection through machine ID
         const readFile = Module.findExportByName('kernel32.dll', 'ReadFile');
         if (readFile) {
             Interceptor.attach(readFile, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     this.hFile = args[0];
                     this.lpBuffer = args[1];
                 },
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (retval.toInt32() && this.lpBuffer && !this.lpBuffer.isNull()) {
                         try {
                             const data = this.lpBuffer.readAnsiString();
@@ -3192,17 +3193,17 @@ const virtualizationBypass = {
                                     action: 'systemd_nspawn_data_spoofed',
                                 });
                                 // Replace systemd-nspawn indicators
-                                const spoofedData = data.replace(/systemd-nspawn/g, 'systemd');
+                                const spoofedData = data.replaceAll('systemd-nspawn', 'systemd');
                                 this.lpBuffer.writeAnsiString(spoofedData);
                             }
-                        } catch (_e) {
+                        } catch (error) {
                             send({
                                 type: 'debug',
                                 target: 'vm_bypass',
                                 action: 'systemd_nspawn_data_read_failed',
                                 function: 'hookSystemdNspawnDetection',
-                                error: e.toString(),
-                                stack: e.stack || 'No stack trace available',
+                                error: error.toString(),
+                                stack: error.stack || 'No stack trace available',
                             });
                         }
                     }
@@ -3214,7 +3215,7 @@ const virtualizationBypass = {
     },
 
     // === WMI MANIPULATION ===
-    hookWmiManipulation: function () {
+    hookWmiManipulation() {
         send({
             type: 'info',
             target: 'vm_bypass',
@@ -3225,14 +3226,14 @@ const virtualizationBypass = {
         const coCreateInstance = Module.findExportByName('ole32.dll', 'CoCreateInstance');
         if (coCreateInstance) {
             Interceptor.attach(coCreateInstance, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     // WbemLocator CLSID: {4590F811-1D3A-11D0-891F-00AA004B2E24}
                     const clsid = args[0];
                     if (clsid && !clsid.isNull()) {
                         const clsidBytes = clsid.readByteArray(16);
                         const wbemLocatorClsid = [
-                            0x11, 0xf8, 0x90, 0x45, 0x3a, 0x1d, 0xd0, 0x11, 0x89, 0x1f, 0x00, 0xaa,
-                            0x00, 0x4b, 0x2e, 0x24,
+                            0x11, 0xF8, 0x90, 0x45, 0x3A, 0x1D, 0xD0, 0x11, 0x89, 0x1F, 0x00, 0xAA,
+                            0x00, 0x4B, 0x2E, 0x24,
                         ];
 
                         let isWbemLocator = true;
@@ -3260,7 +3261,7 @@ const virtualizationBypass = {
     },
 
     // === NETWORK-BASED VM DETECTION BYPASS ===
-    hookNetworkVmDetection: function () {
+    hookNetworkVmDetection() {
         send({
             type: 'info',
             target: 'vm_bypass',
@@ -3271,14 +3272,14 @@ const virtualizationBypass = {
         const dhcpRequestParams = Module.findExportByName('dhcpcsvc.dll', 'DhcpRequestParams');
         if (dhcpRequestParams) {
             Interceptor.attach(dhcpRequestParams, {
-                onEnter: _args => {
+                onEnter: args => {
                     send({
                         type: 'bypass',
                         target: 'vm_bypass',
                         action: 'dhcp_request_intercepted',
                     });
                 },
-                onLeave: _retval => {
+                onLeave: retval => {
                     // Spoof DHCP responses to hide VM indicators
                     if (retval.toInt32() === 0) {
                         send({
@@ -3297,7 +3298,7 @@ const virtualizationBypass = {
         const dnsQuery = Module.findExportByName('dnsapi.dll', 'DnsQuery_W');
         if (dnsQuery) {
             Interceptor.attach(dnsQuery, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     if (args[0] && !args[0].isNull()) {
                         const domain = args[0].readUtf16String();
                         const vmDomains = [
@@ -3314,13 +3315,13 @@ const virtualizationBypass = {
                                 type: 'bypass',
                                 target: 'vm_bypass',
                                 action: 'vm_dns_query_blocked',
-                                domain: domain,
+                                domain,
                             });
                             this.blockVmDns = true;
                         }
                     }
                 },
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (this.blockVmDns) {
                         retval.replace(9003); // DNS_ERROR_RCODE_NAME_ERROR
                     }
@@ -3332,7 +3333,7 @@ const virtualizationBypass = {
     },
 
     // === GPU VM DETECTION BYPASS ===
-    hookGpuVmDetection: function () {
+    hookGpuVmDetection() {
         send({
             type: 'info',
             target: 'vm_bypass',
@@ -3343,7 +3344,7 @@ const virtualizationBypass = {
         const d3d9Create = Module.findExportByName('d3d9.dll', 'Direct3DCreate9');
         if (d3d9Create) {
             Interceptor.attach(d3d9Create, {
-                onLeave: _retval => {
+                onLeave: retval => {
                     if (!retval.isNull()) {
                         send({
                             type: 'bypass',
@@ -3362,21 +3363,21 @@ const virtualizationBypass = {
         const glGetString = Module.findExportByName('opengl32.dll', 'glGetString');
         if (glGetString) {
             Interceptor.attach(glGetString, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     this.stringType = args[0].toInt32();
                 },
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (!retval.isNull()) {
                         const str = retval.readAnsiString();
 
                         // GL_VENDOR = 0x1F00
                         if (
-                            this.stringType === 0x1f00 &&
-                            str &&
-                            (str.includes('VMware') ||
-                                str.includes('VirtualBox') ||
-                                str.includes('Microsoft') ||
-                                str.includes('llvmpipe'))
+                            this.stringType === 0x1F_00
+                            && str
+                            && (str.includes('VMware')
+                                || str.includes('VirtualBox')
+                                || str.includes('Microsoft')
+                                || str.includes('llvmpipe'))
                         ) {
                             const spoofedVendor = Memory.allocAnsiString('NVIDIA Corporation');
                             retval.replace(spoofedVendor);
@@ -3397,7 +3398,7 @@ const virtualizationBypass = {
     },
 
     // === UEFI DETECTION BYPASS ===
-    hookUefiDetection: function () {
+    hookUefiDetection() {
         send({
             type: 'info',
             target: 'vm_bypass',
@@ -3411,14 +3412,14 @@ const virtualizationBypass = {
         );
         if (getFirmwareVar) {
             Interceptor.attach(getFirmwareVar, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     if (args[0] && !args[0].isNull()) {
                         const varName = args[0].readUtf16String();
                         if (
-                            varName &&
-                            (varName.includes('VBox') ||
-                                varName.includes('VMware') ||
-                                varName.includes('QEMU'))
+                            varName
+                            && (varName.includes('VBox')
+                                || varName.includes('VMware')
+                                || varName.includes('QEMU'))
                         ) {
                             send({
                                 type: 'bypass',
@@ -3430,7 +3431,7 @@ const virtualizationBypass = {
                         }
                     }
                 },
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (this.blockUefiVar) {
                         retval.replace(0); // Return 0 bytes read
                     }
@@ -3447,10 +3448,10 @@ const virtualizationBypass = {
         );
         if (enumSystemFirmwareTables) {
             Interceptor.attach(enumSystemFirmwareTables, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     const signature = args[0].toInt32();
                     // ACPI signature
-                    if (signature === 0x41435049) {
+                    if (signature === 0x41_43_50_49) {
                         send({
                             type: 'bypass',
                             target: 'vm_bypass',
@@ -3466,7 +3467,7 @@ const virtualizationBypass = {
     },
 
     // === MEMORY AND I/O DETECTION BYPASS ===
-    hookMemoryIoDetection: function () {
+    hookMemoryIoDetection() {
         send({
             type: 'info',
             target: 'vm_bypass',
@@ -3477,11 +3478,11 @@ const virtualizationBypass = {
         const deviceIoControl = Module.findExportByName('kernel32.dll', 'DeviceIoControl');
         if (deviceIoControl) {
             Interceptor.attach(deviceIoControl, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     const ioControlCode = args[1].toInt32();
 
                     // I/O port access control codes
-                    if ((ioControlCode & 0xffff0000) === 0x22e000) {
+                    if ((ioControlCode & 0xFF_FF_00_00) === 0x22_E0_00) {
                         send({
                             type: 'bypass',
                             target: 'vm_bypass',
@@ -3496,7 +3497,7 @@ const virtualizationBypass = {
 
                             // VMware backdoor port (0x5658 = 'VX')
                             // VirtualBox port (0x5659)
-                            if (port === 0x5658 || port === 0x5659) {
+                            if (port === 0x56_58 || port === 0x56_59) {
                                 send({
                                     type: 'bypass',
                                     target: 'vm_bypass',
@@ -3508,7 +3509,7 @@ const virtualizationBypass = {
                         }
                     }
                 },
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     if (this.blockVmIoPort) {
                         retval.replace(0); // FALSE - operation failed
                     }
@@ -3522,18 +3523,18 @@ const virtualizationBypass = {
         const virtualAlloc = Module.findExportByName('kernel32.dll', 'VirtualAlloc');
         if (virtualAlloc) {
             Interceptor.attach(virtualAlloc, {
-                onEnter: _args => {
+                onEnter: args => {
                     const size = args[1].toInt32();
                     const allocType = args[2].toInt32();
 
                     // Check for VM-specific allocation patterns
-                    if (size === 0x1000 && allocType && 0x1000) {
+                    if (size === 0x10_00 && allocType && 0x10_00) {
                         // MEM_COMMIT
                         send({
                             type: 'info',
                             target: 'vm_bypass',
                             action: 'memory_allocation_pattern_monitored',
-                            size: size,
+                            size,
                         });
                     }
                 },
@@ -3544,7 +3545,7 @@ const virtualizationBypass = {
     },
 
     // === TSX DETECTION BYPASS ===
-    hookTsxDetection: function () {
+    hookTsxDetection() {
         send({
             type: 'info',
             target: 'vm_bypass',
@@ -3559,26 +3560,26 @@ const virtualizationBypass = {
                     onMatch: (address, _size) => {
                         try {
                             Interceptor.attach(address, {
-                                onEnter: _args => {
+                                onEnter: args => {
                                     send({
                                         type: 'bypass',
                                         target: 'vm_bypass',
                                         action: 'tsx_xbegin_intercepted',
                                     });
                                 },
-                                onLeave: function (_retval) {
+                                onLeave(retval) {
                                     // Force transaction abort to hide TSX support
-                                    this.context.eax = 0xffffffff; // Transaction abort
+                                    this.context.eax = 0xFF_FF_FF_FF; // Transaction abort
                                 },
                             });
-                        } catch (_e) {
+                        } catch (error) {
                             send({
                                 type: 'debug',
                                 target: 'vm_bypass',
                                 action: 'tsx_detection_hook_failed',
                                 function: 'hookTsxDetection',
-                                error: e.toString(),
-                                stack: e.stack || 'No stack trace available',
+                                error: error.toString(),
+                                stack: error.stack || 'No stack trace available',
                             });
                         }
                     },
@@ -3591,7 +3592,7 @@ const virtualizationBypass = {
     },
 
     // === INSTALLATION SUMMARY ===
-    installSummary: function () {
+    installSummary() {
         setTimeout(() => {
             send({
                 type: 'summary',
@@ -3613,7 +3614,7 @@ const virtualizationBypass = {
                 'Generic VM Detection': 0,
             };
 
-            for (let hook in this.hooksInstalled) {
+            for (const hook in this.hooksInstalled) {
                 if (hook.includes('VBox')) {
                     categories['VirtualBox Detection']++;
                 } else if (hook.includes('VMware')) {
@@ -3639,13 +3640,13 @@ const virtualizationBypass = {
                 }
             }
 
-            for (let category in categories) {
+            for (const category in categories) {
                 if (categories[category] > 0) {
                     send({
                         type: 'summary',
                         target: 'vm_bypass',
                         action: 'category_summary',
-                        category: category,
+                        category,
                         hook_count: categories[category],
                     });
                 }
@@ -3775,7 +3776,7 @@ const virtualizationBypass = {
     },
 
     // === ENHANCEMENT FUNCTIONS ===
-    initializeAdvancedVmBehaviorAnalysis: function () {
+    initializeAdvancedVmBehaviorAnalysis() {
         send({
             type: 'enhancement',
             target: 'vm_bypass',
@@ -3800,10 +3801,10 @@ const virtualizationBypass = {
         );
         if (ntQueryPerformanceCounter) {
             Interceptor.attach(ntQueryPerformanceCounter, {
-                onEnter: function (_args) {
+                onEnter(args) {
                     this.counterType = args[0];
                 },
-                onLeave: function (_retval) {
+                onLeave(retval) {
                     // Normalize counter values to hide VM characteristics
                     if (retval.toInt32() === 0 && this.counterType) {
                         const counter = this.counterType.readU64();
@@ -3822,7 +3823,7 @@ const virtualizationBypass = {
             writer.putPushfx();
             writer.putPushax();
             // RDTSC
-            writer.putBytes([0x0f, 0x31]);
+            writer.putBytes([0x0F, 0x31]);
             // Add random jitter to EDX:EAX
             writer.putMovRegU32('ecx', Math.floor(Math.random() * 100));
             writer.putAddRegReg('eax', 'ecx');
@@ -3855,7 +3856,7 @@ const virtualizationBypass = {
                     },
                 ];
 
-                for (let region of vmRegions) {
+                for (const region of vmRegions) {
                     if (address.compare(region.start) >= 0 && address.compare(region.end) <= 0) {
                         // Redirect to legitimate memory
                         const realMemory = Memory.alloc(Process.pageSize);
@@ -3870,7 +3871,7 @@ const virtualizationBypass = {
         this.hooksInstalled.behavior_analysis = true;
     },
 
-    setupDynamicInstructionEmulation: function () {
+    setupDynamicInstructionEmulation() {
         send({
             type: 'enhancement',
             target: 'vm_bypass',
@@ -3882,8 +3883,8 @@ const virtualizationBypass = {
         this.instructionEmulator = {
             cpuidCache: new Map(),
             msrCache: new Map(),
-            smsw: 0x8001, // Real mode flag set
-            sldt: 0x0000, // Null LDT selector
+            smsw: 0x80_01, // Real mode flag set
+            sldt: 0x00_00, // Null LDT selector
             sgdt: null,
             sidt: null,
         };
@@ -3891,7 +3892,7 @@ const virtualizationBypass = {
         // Hook CPUID instruction execution
         const _cpuidHook = function (context) {
             const { eax } = context;
-            const _ecx = context.ecx;
+            const { ecx } = context;
             const key = `${eax}:${ecx}`;
 
             if (this.instructionEmulator.cpuidCache.has(key)) {
@@ -3903,21 +3904,25 @@ const virtualizationBypass = {
             } else {
                 // Emulate real hardware response
                 switch (eax) {
-                    case 0x1: // Processor Info
+                    case 0x1: {
+                        // Processor Info
                         context.ecx &= ~(1 << 31); // Clear hypervisor bit
                         break;
-                    case 0x40000000: // Hypervisor vendor
+                    }
+                    case 0x40_00_00_00: {
+                        // Hypervisor vendor
                         context.eax = 0; // No hypervisor
                         context.ebx = 0;
                         context.ecx = 0;
                         context.edx = 0;
                         break;
-                    case 0x80000002: // Processor brand string
-                    case 0x80000003:
-                    case 0x80000004: {
+                    }
+                    case 0x80_00_00_02: // Processor brand string
+                    case 0x80_00_00_03:
+                    case 0x80_00_00_04: {
                         // Return genuine Intel/AMD string
                         const brand = 'Intel(R) Core(TM) i9-12900K';
-                        const offset = (eax - 0x80000002) * 16;
+                        const offset = (eax - 0x80_00_00_02) * 16;
                         const chunk = brand.substr(offset, 16);
                         // Write to registers
                         for (let i = 0; i < 4; i++) {
@@ -3927,18 +3932,22 @@ const virtualizationBypass = {
                                 value |= (char4.charCodeAt(j) || 0) << (j * 8);
                             }
                             switch (i) {
-                                case 0:
+                                case 0: {
                                     context.eax = value;
                                     break;
-                                case 1:
+                                }
+                                case 1: {
                                     context.ebx = value;
                                     break;
-                                case 2:
+                                }
+                                case 2: {
                                     context.ecx = value;
                                     break;
-                                case 3:
+                                }
+                                case 3: {
                                     context.edx = value;
                                     break;
+                                }
                             }
                         }
                         break;
@@ -3959,7 +3968,7 @@ const virtualizationBypass = {
         const wrmsr = Module.findExportByName('ntdll.dll', 'NtSetSystemInformation');
         if (wrmsr) {
             Interceptor.attach(wrmsr, {
-                onEnter: function (_args) {
+                onEnter: function (args) {
                     const infoClass = args[0].toInt32();
                     if (infoClass === 155) {
                         // SystemWriteMsr
@@ -3970,7 +3979,7 @@ const virtualizationBypass = {
                             // Cache MSR values to emulate real hardware
                             this.instructionEmulator.msrCache.set(msrNumber, msrValue);
                             // Block VM-specific MSRs
-                            if (msrNumber >= 0x40000000 && msrNumber <= 0x400000ff) {
+                            if (msrNumber >= 0x40_00_00_00 && msrNumber <= 0x40_00_00_FF) {
                                 args[0] = ptr(0); // Change info class to invalid
                             }
                         }
@@ -3982,33 +3991,38 @@ const virtualizationBypass = {
         // Emulate privileged instruction results
         const _emulateInstruction = function (instruction, _context) {
             switch (instruction) {
-                case 'smsw':
+                case 'smsw': {
                     return this.instructionEmulator.smsw;
-                case 'sldt':
+                }
+                case 'sldt': {
                     return this.instructionEmulator.sldt;
-                case 'sgdt':
+                }
+                case 'sgdt': {
                     if (!this.instructionEmulator.sgdt) {
                         this.instructionEmulator.sgdt = Memory.alloc(10);
-                        this.instructionEmulator.sgdt.writeU16(0x3ff); // Limit
+                        this.instructionEmulator.sgdt.writeU16(0x3_FF); // Limit
                         this.instructionEmulator.sgdt.add(2).writeU64(ptr('0xFFFFF80000000000')); // Base
                     }
                     return this.instructionEmulator.sgdt;
-                case 'sidt':
+                }
+                case 'sidt': {
                     if (!this.instructionEmulator.sidt) {
                         this.instructionEmulator.sidt = Memory.alloc(10);
-                        this.instructionEmulator.sidt.writeU16(0xfff); // Limit
+                        this.instructionEmulator.sidt.writeU16(0xF_FF); // Limit
                         this.instructionEmulator.sidt.add(2).writeU64(ptr('0xFFFFF80000001000')); // Base
                     }
                     return this.instructionEmulator.sidt;
-                default:
+                }
+                default: {
                     return null;
+                }
             }
         }.bind(this);
 
         this.hooksInstalled.instruction_emulation = true;
     },
 
-    initializeNestedVirtualizationDetection: function () {
+    initializeNestedVirtualizationDetection() {
         send({
             type: 'enhancement',
             target: 'vm_bypass',
@@ -4029,10 +4043,10 @@ const virtualizationBypass = {
         const checkNestedHypervisor = function () {
             try {
                 // Check VMX capabilities
-                const vmxBasic = this.readMsr(0x480); // IA32_VMX_BASIC
+                const vmxBasic = this.readMsr(0x4_80); // IA32_VMX_BASIC
                 if (vmxBasic) {
-                    const vmcsRevision = vmxBasic.and(0x7fffffff).toNumber();
-                    const vmxAbort = vmxBasic.shiftRight(32).and(0xff).toNumber();
+                    const vmcsRevision = vmxBasic.and(0x7F_FF_FF_FF).toNumber();
+                    const vmxAbort = vmxBasic.shiftRight(32).and(0xFF).toNumber();
 
                     if (vmcsRevision !== 0 && vmxAbort === 0) {
                         this.nestedVirtualization.levels++;
@@ -4041,7 +4055,7 @@ const virtualizationBypass = {
                 }
 
                 // Check SVM capabilities
-                const svmFeatures = this.readMsr(0xc0010114); // VM_CR MSR
+                const svmFeatures = this.readMsr(0xC0_01_01_14); // VM_CR MSR
                 if (svmFeatures) {
                     const svmDisable = svmFeatures.and(0x10).toNumber();
                     if (svmDisable === 0) {
@@ -4051,12 +4065,12 @@ const virtualizationBypass = {
                 }
 
                 // Check for Hyper-V nested virtualization
-                const hyperVCapabilities = this.readMsr(0x40000003); // HV_X64_MSR_NESTED_CONTROL
+                const hyperVCapabilities = this.readMsr(0x40_00_00_03); // HV_X64_MSR_NESTED_CONTROL
                 if (hyperVCapabilities && !hyperVCapabilities.isNull()) {
                     this.nestedVirtualization.levels++;
                     this.nestedVirtualization.hypervisors.push('Hyper-V');
                 }
-            } catch (_e) {
+            } catch {
                 // MSR access denied - likely in VM
                 this.nestedVirtualization.levels = 1;
             }
@@ -4066,37 +4080,35 @@ const virtualizationBypass = {
         const vmreadPattern = '0F 78'; // VMREAD
         const _vmwritePattern = '0F 79'; // VMWRITE
 
-        Process.enumerateModules().forEach(
-            function (module) {
-                Memory.scan(module.base, module.size, vmreadPattern, {
-                    onMatch: function (_size) {
-                        send({
-                            type: 'debug',
-                            target: 'vm_bypass',
-                            action: 'vmread_instruction_found',
-                            address: address.toString(),
-                            instructionSize: size,
-                        });
-                        Interceptor.attach(address, {
-                            onEnter: function (_args) {
-                                // Emulate VMREAD to hide nested virtualization
-                                const field = this.context.rax;
-                                const value = this.nestedVirtualization.vmcsRegions.get(field) || 0;
-                                this.context.rcx = value;
-                                this.context.rflags |= 0x41; // Set ZF and CF to indicate success
-                            }.bind(this),
-                        });
-                    }.bind(this),
-                    onComplete: () => {},
-                });
-            }.bind(this)
-        );
+        Process.enumerateModules().forEach(module => {
+            Memory.scan(module.base, module.size, vmreadPattern, {
+                onMatch: function (address, size) {
+                    send({
+                        type: 'debug',
+                        target: 'vm_bypass',
+                        action: 'vmread_instruction_found',
+                        address: address.toString(),
+                        instructionSize: size,
+                    });
+                    Interceptor.attach(address, {
+                        onEnter: function (args) {
+                            // Emulate VMREAD to hide nested virtualization
+                            const field = this.context.rax;
+                            const value = this.nestedVirtualization.vmcsRegions.get(field) || 0;
+                            this.context.rcx = value;
+                            this.context.rflags |= 0x41; // Set ZF and CF to indicate success
+                        }.bind(this),
+                    });
+                }.bind(this),
+                onComplete: () => {},
+            });
+        });
 
         // Monitor EPT violations
         const ntSystemDebugControl = Module.findExportByName('ntdll.dll', 'NtSystemDebugControl');
         if (ntSystemDebugControl) {
             Interceptor.attach(ntSystemDebugControl, {
-                onEnter: function (_args) {
+                onEnter: function (args) {
                     const command = args[0].toInt32();
                     if (command === 29) {
                         // SysDbgReadVirtual
@@ -4112,44 +4124,41 @@ const virtualizationBypass = {
         const detectVmExit = function () {
             const exitReasonPattern = '44 0F B7 ?? ?? ?? 00 00'; // movzx r*, word ptr [r* + offset]
 
-            Process.enumerateModules().forEach(
-                function (module) {
-                    if (module.name.indexOf('hv') !== -1 || module.name.indexOf('vm') !== -1) {
-                        Memory.scan(module.base, module.size, exitReasonPattern, {
-                            onMatch: function (_size) {
-                                send({
-                                    type: 'debug',
-                                    target: 'vm_bypass',
-                                    action: 'vmexit_pattern_found',
-                                    address: address.toString(),
-                                    patternSize: size,
-                                    module: module.name,
-                                });
-                                Interceptor.attach(address, {
-                                    onEnter: function (_args) {
-                                        const exitReason = this.context.rax & 0xffff;
-                                        const count =
-                                            this.nestedVirtualization.vmexitReasons.get(
-                                                exitReason
-                                            ) || 0;
-                                        this.nestedVirtualization.vmexitReasons.set(
-                                            exitReason,
-                                            count + 1
-                                        );
+            Process.enumerateModules().forEach(module => {
+                if (module.name.includes('hv') || module.name.includes('vm')) {
+                    Memory.scan(module.base, module.size, exitReasonPattern, {
+                        onMatch: function (address, size) {
+                            send({
+                                type: 'debug',
+                                target: 'vm_bypass',
+                                action: 'vmexit_pattern_found',
+                                address: address.toString(),
+                                patternSize: size,
+                                module: module.name,
+                            });
+                            Interceptor.attach(address, {
+                                onEnter: function (args) {
+                                    const exitReason = this.context.rax & 0xFF_FF;
+                                    const count
+                                        = this.nestedVirtualization.vmexitReasons.get(exitReason)
+                                        || 0;
+                                    this.nestedVirtualization.vmexitReasons.set(
+                                        exitReason,
+                                        count + 1
+                                    );
 
-                                        // Hide nested VM exits
-                                        if (exitReason === 0x1c) {
-                                            // VMX preemption timer
-                                            this.context.rax = 0; // Change to external interrupt
-                                        }
-                                    }.bind(this),
-                                });
-                            }.bind(this),
-                            onComplete: () => {},
-                        });
-                    }
-                }.bind(this)
-            );
+                                    // Hide nested VM exits
+                                    if (exitReason === 0x1C) {
+                                        // VMX preemption timer
+                                        this.context.rax = 0; // Change to external interrupt
+                                    }
+                                }.bind(this),
+                            });
+                        }.bind(this),
+                        onComplete: () => {},
+                    });
+                }
+            });
         }.bind(this);
 
         checkNestedHypervisor();
@@ -4158,7 +4167,7 @@ const virtualizationBypass = {
         this.hooksInstalled.nested_virtualization = true;
     },
 
-    setupHypervisorRootkitProtection: function () {
+    setupHypervisorRootkitProtection() {
         send({
             type: 'enhancement',
             target: 'vm_bypass',
@@ -4180,7 +4189,7 @@ const virtualizationBypass = {
             const cr3 = this.readControlRegister(3);
             if (cr3) {
                 // Create shadow copy of page tables
-                const pageTableSize = 0x1000;
+                const pageTableSize = 0x10_00;
                 const shadowTable = Memory.alloc(pageTableSize);
                 Memory.copy(shadowTable, cr3, pageTableSize);
                 this.rootkitProtection.shadowPageTables.set(cr3, shadowTable);
@@ -4197,7 +4206,7 @@ const virtualizationBypass = {
         );
         if (ntSetSystemInformation) {
             Interceptor.attach(ntSetSystemInformation, {
-                onEnter: _args => {
+                onEnter: args => {
                     const infoClass = args[0].toInt32();
                     if (infoClass === 38) {
                         // SystemLoadGdiDriverInformation
@@ -4206,10 +4215,10 @@ const virtualizationBypass = {
                         if (driverInfo) {
                             const driverName = driverInfo.readPointer().readUtf16String();
                             if (
-                                driverName &&
-                                (driverName.indexOf('vbox') !== -1 ||
-                                    driverName.indexOf('vmware') !== -1 ||
-                                    driverName.indexOf('hyperv') !== -1)
+                                driverName
+                                && (driverName.includes('vbox')
+                                    || driverName.includes('vmware')
+                                    || driverName.includes('hyperv'))
                             ) {
                                 args[0] = ptr(-1); // Invalid info class
                                 send({
@@ -4233,12 +4242,12 @@ const virtualizationBypass = {
             );
             if (ntQuerySystemInformation) {
                 Interceptor.attach(ntQuerySystemInformation, {
-                    onEnter: function (_args) {
+                    onEnter(args) {
                         this.infoClass = args[0].toInt32();
                         this.buffer = args[1];
                         this.bufferSize = args[2].toInt32();
                     },
-                    onLeave: function (_retval) {
+                    onLeave: function (retval) {
                         if (retval.toInt32() === 0 && this.infoClass === 5) {
                             // SystemProcessInformation
                             const currentPid = Process.id;
@@ -4274,44 +4283,42 @@ const virtualizationBypass = {
 
         // Protect critical memory regions
         const protectMemoryRegions = function () {
-            Process.enumerateModules().forEach(
-                function (module) {
-                    if (module.name === Process.getCurrentModule().name) {
-                        // Protect our module's memory
-                        const sections = Process.findRangeByAddress(module.base);
-                        if (sections) {
-                            this.rootkitProtection.protectedMemory.set(module.base, {
-                                size: sections.size,
-                                protection: sections.protection,
-                            });
+            Process.enumerateModules().forEach(module => {
+                if (module.name === Process.getCurrentModule().name) {
+                    // Protect our module's memory
+                    const sections = Process.findRangeByAddress(module.base);
+                    if (sections) {
+                        this.rootkitProtection.protectedMemory.set(module.base, {
+                            size: sections.size,
+                            protection: sections.protection,
+                        });
 
-                            // Monitor for unauthorized access
-                            MemoryAccessMonitor.enable(
-                                {
-                                    base: module.base,
-                                    size: sections.size,
+                        // Monitor for unauthorized access
+                        MemoryAccessMonitor.enable(
+                            {
+                                base: module.base,
+                                size: sections.size,
+                            },
+                            {
+                                onAccess: details => {
+                                    if (details.operation === 'write') {
+                                        // Block unauthorized writes
+                                        send({
+                                            type: 'protection',
+                                            target: 'rootkit',
+                                            action: 'blocked_memory_write',
+                                            address: details.address,
+                                            from: details.from,
+                                        });
+                                        return 'skip';
+                                    }
+                                    return null;
                                 },
-                                {
-                                    onAccess: details => {
-                                        if (details.operation === 'write') {
-                                            // Block unauthorized writes
-                                            send({
-                                                type: 'protection',
-                                                target: 'rootkit',
-                                                action: 'blocked_memory_write',
-                                                address: details.address,
-                                                from: details.from,
-                                            });
-                                            return 'skip';
-                                        }
-                                        return null;
-                                    },
-                                }
-                            );
-                        }
+                            }
+                        );
                     }
-                }.bind(this)
-            );
+                }
+            });
         }.bind(this);
 
         protectPageTables();
@@ -4321,7 +4328,7 @@ const virtualizationBypass = {
         this.hooksInstalled.rootkit_protection = true;
     },
 
-    initializeCloudInstanceFingerprinting: function () {
+    initializeCloudInstanceFingerprinting() {
         send({
             type: 'enhancement',
             target: 'vm_bypass',
@@ -4356,7 +4363,7 @@ const virtualizationBypass = {
             const connect = Module.findExportByName('ws2_32.dll', 'connect');
             if (connect) {
                 Interceptor.attach(connect, {
-                    onEnter: function (_args) {
+                    onEnter: function (args) {
                         const sockaddr = args[1];
                         if (sockaddr) {
                             const family = sockaddr.readU16();
@@ -4366,7 +4373,7 @@ const virtualizationBypass = {
                                 const ip = sockaddr.add(4).readU32();
 
                                 // AWS metadata service: 169.254.169.254
-                                if (ip === 0xfea9fea9 && port === 0x5000) {
+                                if (ip === 0xFE_A9_FE_A9 && port === 0x50_00) {
                                     // Port 80 in network byte order
                                     this.context.r0 = -1;
                                     this.cloudFingerprints.aws.detected = true;
@@ -4392,23 +4399,23 @@ const virtualizationBypass = {
             const regQueryValueEx = Module.findExportByName('advapi32.dll', 'RegQueryValueExW');
             if (regQueryValueEx) {
                 Interceptor.attach(regQueryValueEx, {
-                    onEnter: function (_args) {
+                    onEnter(args) {
                         const valueName = args[1].readUtf16String();
                         this.valueName = valueName;
                         this.dataBuffer = args[3];
                     },
-                    onLeave: function (_retval) {
+                    onLeave: function (retval) {
                         if (retval.toInt32() === 0 && this.valueName && this.dataBuffer) {
                             // AWS instance ID in registry
-                            if (this.valueName.indexOf('aws-instance-id') !== -1) {
+                            if (this.valueName.includes('aws-instance-id')) {
                                 this.dataBuffer.writeUtf16String(
-                                    `i-${Math.random().toString(36).substr(2, 17)}`
+                                    `i-${Math.random().toString(36).slice(2, 19)}`
                                 );
                                 this.cloudFingerprints.aws.instanceId = 'spoofed';
                             }
                             // Azure VM ID
-                            else if (this.valueName.indexOf('vmId') !== -1) {
-                                const spoofedId = Array(32)
+                            else if (this.valueName.includes('vmId')) {
+                                const spoofedId = Array.from({ length: 32 })
                                     .fill(0)
                                     .map(() => Math.floor(Math.random() * 16).toString(16))
                                     .join('');
@@ -4416,7 +4423,7 @@ const virtualizationBypass = {
                                 this.cloudFingerprints.azure.vmId = 'spoofed';
                             }
                             // GCP instance ID
-                            else if (this.valueName.indexOf('instance-id') !== -1) {
+                            else if (this.valueName.includes('instance-id')) {
                                 this.dataBuffer.writeUtf16String(
                                     Math.floor(Math.random() * 1e15).toString()
                                 );
@@ -4429,11 +4436,11 @@ const virtualizationBypass = {
         }.bind(this);
 
         // Hide cloud provider services
-        const hideCloudServices = (() => {
+        const hideCloudServices = () => {
             const getServiceKeyName = Module.findExportByName('advapi32.dll', 'GetServiceKeyNameW');
             if (getServiceKeyName) {
                 Interceptor.attach(getServiceKeyName, {
-                    onEnter: _args => {
+                    onEnter: args => {
                         const displayName = args[1].readUtf16String();
                         if (displayName) {
                             const cloudServices = [
@@ -4448,8 +4455,8 @@ const virtualizationBypass = {
                                 'Stackdriver',
                             ];
 
-                            for (let service of cloudServices) {
-                                if (displayName.indexOf(service) !== -1) {
+                            for (const service of cloudServices) {
+                                if (displayName.includes(service)) {
                                     // Return generic service name
                                     args[1].writeUtf16String('GenericService');
                                     send({
@@ -4465,10 +4472,10 @@ const virtualizationBypass = {
                     },
                 });
             }
-        }).bind(this);
+        };
 
         // Mask cloud-specific hardware characteristics
-        const maskCloudHardware = (() => {
+        const maskCloudHardware = () => {
             // Cloud providers use specific CPU models
             const _cloudCpuModels = [
                 'Intel(R) Xeon(R) Platinum',
@@ -4481,7 +4488,7 @@ const virtualizationBypass = {
             const sysInfo = Module.findExportByName('kernel32.dll', 'GetSystemInfo');
             if (sysInfo) {
                 Interceptor.attach(sysInfo, {
-                    onLeave: function (_retval) {
+                    onLeave(retval) {
                         // Modify processor architecture to appear as desktop
                         const sysInfoStruct = this.context.rcx;
                         if (sysInfoStruct) {
@@ -4494,7 +4501,7 @@ const virtualizationBypass = {
                     },
                 });
             }
-        }).bind(this);
+        };
 
         blockMetadataService();
         spoofInstanceIds();
@@ -4504,7 +4511,7 @@ const virtualizationBypass = {
         this.hooksInstalled.cloud_fingerprinting = true;
     },
 
-    setupAdvancedTimingCalibration: function () {
+    setupAdvancedTimingCalibration() {
         send({
             type: 'enhancement',
             target: 'vm_bypass',
@@ -4539,7 +4546,7 @@ const virtualizationBypass = {
             const start = rdtscFunc();
 
             // Perform calibration loop
-            for (let i = 0; i < 1000000; i++) {
+            for (let i = 0; i < 1_000_000; i++) {
                 // Busy wait
             }
 
@@ -4557,7 +4564,7 @@ const virtualizationBypass = {
             );
             if (queryPerfCounter) {
                 Interceptor.attach(queryPerfCounter, {
-                    onLeave: function (_retval) {
+                    onLeave: function (retval) {
                         if (retval && this.context.rcx) {
                             const counter = this.context.rcx.readU64();
                             // Add calibrated skew to hide VM timing artifacts
@@ -4576,12 +4583,12 @@ const virtualizationBypass = {
             const getTickCount64 = Module.findExportByName('kernel32.dll', 'GetTickCount64');
             if (getTickCount64) {
                 Interceptor.attach(getTickCount64, {
-                    onLeave: function (_retval) {
+                    onLeave: function (retval) {
                         // Apply consistent timing offset
                         const ticks = retval.toNumber();
                         let skew = this.timingCalibration.timingSkew.get('tick') || 0;
                         if (skew === 0) {
-                            skew = Math.floor(Math.random() * 10000) + 5000;
+                            skew = Math.floor(Math.random() * 10_000) + 5000;
                             this.timingCalibration.timingSkew.set('tick', skew);
                         }
                         retval.replace(ptr(ticks + skew));
@@ -4599,44 +4606,35 @@ const virtualizationBypass = {
                 { pattern: '0F A2', name: 'CPUID' },
             ];
 
-            timingSensitiveInstructions.forEach(
-                function (inst) {
-                    Process.enumerateModules().forEach(
-                        function (module) {
-                            Memory.scan(module.base, module.size, inst.pattern, {
-                                onMatch: function (_size) {
-                                    // Track timing of these instructions
-                                    const timing =
-                                        this.timingCalibration.instructionTimings.get(inst.name) ||
-                                        [];
-                                    timing.push(Date.now());
-                                    this.timingCalibration.instructionTimings.set(
-                                        inst.name,
-                                        timing
-                                    );
+            timingSensitiveInstructions.forEach(inst => {
+                Process.enumerateModules().forEach(module => {
+                    Memory.scan(module.base, module.size, inst.pattern, {
+                        onMatch: function (address, size) {
+                            // Track timing of these instructions
+                            const timing
+                                = this.timingCalibration.instructionTimings.get(inst.name) || [];
+                            timing.push(Date.now());
+                            this.timingCalibration.instructionTimings.set(inst.name, timing);
 
-                                    // Inject timing normalization
-                                    Interceptor.attach(address, {
-                                        onLeave: function (_retval) {
-                                            // Normalize timing to hide VM characteristics
-                                            if (inst.name === 'RDTSC' || inst.name === 'RDTSCP') {
-                                                const adjustment =
-                                                    this.timingCalibration.cpuFrequency * 10;
-                                                this.context.rax =
-                                                    (this.context.rax + adjustment) & 0xffffffff;
-                                                this.context.rdx =
-                                                    (this.context.rdx + (adjustment >> 0)) &
-                                                    0xffffffff;
-                                            }
-                                        }.bind(this),
-                                    });
+                            // Inject timing normalization
+                            Interceptor.attach(address, {
+                                onLeave: function (retval) {
+                                    // Normalize timing to hide VM characteristics
+                                    if (inst.name === 'RDTSC' || inst.name === 'RDTSCP') {
+                                        const adjustment = this.timingCalibration.cpuFrequency * 10;
+                                        this.context.rax
+                                            = (this.context.rax + adjustment) & 0xFF_FF_FF_FF;
+                                        this.context.rdx
+                                            = (this.context.rdx + Math.trunc(adjustment))
+                                            & 0xFF_FF_FF_FF;
+                                    }
                                 }.bind(this),
-                                onComplete: () => {},
                             });
-                        }.bind(this)
-                    );
-                }.bind(this)
-            );
+                        }.bind(this),
+                        onComplete: () => {},
+                    });
+                });
+            });
         }.bind(this);
 
         calibrateTiming();
@@ -4647,7 +4645,7 @@ const virtualizationBypass = {
         this.hooksInstalled.timing_calibration = true;
     },
 
-    initializeHardwareVirtualizationMasking: function () {
+    initializeHardwareVirtualizationMasking() {
         send({
             type: 'enhancement',
             target: 'vm_bypass',
@@ -4671,27 +4669,30 @@ const virtualizationBypass = {
                 const result = { eax: 0, ebx: 0, ecx: 0, edx: 0 };
 
                 switch (eax) {
-                    case 0x1:
+                    case 0x1: {
                         // Feature information
                         result.ecx &= ~(1 << 5); // Clear VMX bit
                         result.ecx &= ~(1 << 31); // Clear hypervisor bit
                         this.hardwareMasking.maskedFeatures.add('VMX');
                         this.hardwareMasking.maskedFeatures.add('HYPERVISOR');
                         break;
+                    }
 
-                    case 0x80000001:
+                    case 0x80_00_00_01: {
                         // Extended features
                         result.ecx &= ~(1 << 2); // Clear SVM bit
                         this.hardwareMasking.maskedFeatures.add('SVM');
                         break;
+                    }
 
-                    case 0x40000000:
+                    case 0x40_00_00_00: {
                         // Hypervisor CPUID leaf
                         result.eax = 0; // No hypervisor present
                         result.ebx = 0;
                         result.ecx = 0;
                         result.edx = 0;
                         break;
+                    }
                 }
 
                 return result;
@@ -4709,7 +4710,7 @@ const virtualizationBypass = {
             );
             if (ntQuerySystemInformation) {
                 Interceptor.attach(ntQuerySystemInformation, {
-                    onEnter: function (_args) {
+                    onEnter: function (args) {
                         const infoClass = args[0].toInt32();
                         if (infoClass === 154) {
                             // SystemReadMsr
@@ -4718,21 +4719,21 @@ const virtualizationBypass = {
                                 const msrNumber = msrData.readU32();
 
                                 // VMX MSRs (0x480 - 0x48F)
-                                if (msrNumber >= 0x480 && msrNumber <= 0x48f) {
+                                if (msrNumber >= 0x4_80 && msrNumber <= 0x4_8F) {
                                     // Return disabled VMX
                                     args[0] = ptr(-1);
                                     this.hardwareMasking.vmxEnabled = false;
                                 }
 
                                 // SVM MSRs (0xC0010114 - 0xC0010118)
-                                if (msrNumber >= 0xc0010114 && msrNumber <= 0xc0010118) {
+                                if (msrNumber >= 0xC0_01_01_14 && msrNumber <= 0xC0_01_01_18) {
                                     // Return disabled SVM
                                     args[0] = ptr(-1);
                                     this.hardwareMasking.svmEnabled = false;
                                 }
 
                                 // Hyper-V MSRs (0x40000000 - 0x400000FF)
-                                if (msrNumber >= 0x40000000 && msrNumber <= 0x400000ff) {
+                                if (msrNumber >= 0x40_00_00_00 && msrNumber <= 0x40_00_00_FF) {
                                     // Return disabled Hyper-V
                                     args[0] = ptr(-1);
                                     this.hardwareMasking.hyperVEnabled = false;
@@ -4745,14 +4746,14 @@ const virtualizationBypass = {
         }.bind(this);
 
         // Hide virtualization-related hardware devices
-        const hideVirtualizationDevices = (() => {
+        const hideVirtualizationDevices = () => {
             const setupDiGetClassDevs = Module.findExportByName(
                 'setupapi.dll',
                 'SetupDiGetClassDevsW'
             );
             if (setupDiGetClassDevs) {
                 Interceptor.attach(setupDiGetClassDevs, {
-                    onEnter: _args => {
+                    onEnter: args => {
                         // Check for virtualization device classes
                         const classGuid = args[0];
                         if (classGuid) {
@@ -4763,8 +4764,8 @@ const virtualizationBypass = {
                                 '{6FDE7547-1B65-48AE-B628-80BE62016020}', // VMware devices
                             ];
 
-                            for (let vmGuid of vmDeviceGuids) {
-                                if (guidString && guidString.indexOf(vmGuid) !== -1) {
+                            for (const vmGuid of vmDeviceGuids) {
+                                if (guidString && guidString.includes(vmGuid)) {
                                     // Return empty device list
                                     args[0] = ptr(0);
                                     send({
@@ -4780,7 +4781,7 @@ const virtualizationBypass = {
                     },
                 });
             }
-        }).bind(this);
+        };
 
         maskVirtualizationExtensions();
         hookVirtualizationMsrs();
@@ -4789,7 +4790,7 @@ const virtualizationBypass = {
         this.hooksInstalled.hardware_masking = true;
     },
 
-    setupKernelPatchGuardBypass: function () {
+    setupKernelPatchGuardBypass() {
         send({
             type: 'enhancement',
             target: 'vm_bypass',
@@ -4825,32 +4826,30 @@ const virtualizationBypass = {
 
             const ntoskrnl = Process.findModuleByName('ntoskrnl.exe');
             if (ntoskrnl) {
-                kppPatterns.forEach(
-                    function (kpp) {
-                        Memory.scan(ntoskrnl.base, ntoskrnl.size, kpp.pattern, {
-                            onMatch: function (_size) {
-                                this.patchGuardBypass.kppRoutines.set(kpp.name, address);
+                kppPatterns.forEach(kpp => {
+                    Memory.scan(ntoskrnl.base, ntoskrnl.size, kpp.pattern, {
+                        onMatch: function (address, size) {
+                            this.patchGuardBypass.kppRoutines.set(kpp.name, address);
 
-                                // Hook the routine to bypass checks
-                                Interceptor.attach(address, {
-                                    onEnter: _args => {
-                                        // Log PatchGuard activity
-                                        send({
-                                            type: 'patchguard',
-                                            target: kpp.name,
-                                            action: 'routine_called',
-                                        });
-                                    },
-                                    onLeave: _retval => {
-                                        // Always return success/valid
-                                        retval.replace(ptr(0));
-                                    },
-                                });
-                            }.bind(this),
-                            onComplete: () => {},
-                        });
-                    }.bind(this)
-                );
+                            // Hook the routine to bypass checks
+                            Interceptor.attach(address, {
+                                onEnter: args => {
+                                    // Log PatchGuard activity
+                                    send({
+                                        type: 'patchguard',
+                                        target: kpp.name,
+                                        action: 'routine_called',
+                                    });
+                                },
+                                onLeave: retval => {
+                                    // Always return success/valid
+                                    retval.replace(ptr(0));
+                                },
+                            });
+                        }.bind(this),
+                        onComplete: () => {},
+                    });
+                });
             }
         }.bind(this);
 
@@ -4859,7 +4858,7 @@ const virtualizationBypass = {
             const keSetTimer = Module.findExportByName('ntoskrnl.exe', 'KeSetTimer');
             if (keSetTimer) {
                 Interceptor.attach(keSetTimer, {
-                    onEnter: function (_args) {
+                    onEnter: function (args) {
                         const _timer = args[0];
                         const _dueTime = args[1];
                         const dpc = args[2];
@@ -4869,21 +4868,19 @@ const virtualizationBypass = {
                             const dpcRoutine = dpc.add(0x18).readPointer();
 
                             // Check against known KPP routines
-                            this.patchGuardBypass.kppRoutines.forEach(
-                                function (address, name) {
-                                    if (dpcRoutine.equals(address)) {
-                                        // Disable this timer
-                                        args[1] = ptr(-1); // Set invalid due time
-                                        this.patchGuardBypass.timerCallbacks.add(dpcRoutine);
-                                        send({
-                                            type: 'patchguard',
-                                            target: 'timer',
-                                            action: 'disabled_kpp_timer',
-                                            routine: name,
-                                        });
-                                    }
-                                }.bind(this)
-                            );
+                            this.patchGuardBypass.kppRoutines.forEach((address, name) => {
+                                if (dpcRoutine.equals(address)) {
+                                    // Disable this timer
+                                    args[1] = ptr(-1); // Set invalid due time
+                                    this.patchGuardBypass.timerCallbacks.add(dpcRoutine);
+                                    send({
+                                        type: 'patchguard',
+                                        target: 'timer',
+                                        action: 'disabled_kpp_timer',
+                                        routine: name,
+                                    });
+                                }
+                            });
                         }
                     }.bind(this),
                 });
@@ -4896,13 +4893,13 @@ const virtualizationBypass = {
             const rtlComputeCrc32 = Module.findExportByName('ntoskrnl.exe', 'RtlComputeCrc32');
             if (rtlComputeCrc32) {
                 Interceptor.attach(rtlComputeCrc32, {
-                    onEnter: function (_args) {
+                    onEnter(args) {
                         this.buffer = args[1];
                         this.length = args[2].toInt32();
                     },
-                    onLeave: function (_retval) {
+                    onLeave: function (retval) {
                         // Check if this is a kernel structure checksum
-                        if (this.buffer && this.length > 0x1000) {
+                        if (this.buffer && this.length > 0x10_00) {
                             const crc = retval.toInt32();
 
                             // Store or verify checksum
@@ -4922,20 +4919,20 @@ const virtualizationBypass = {
         }.bind(this);
 
         // Protect against context validation
-        const protectContext = (() => {
+        const protectContext = () => {
             // Hook context validation routines
             const keBugCheckEx = Module.findExportByName('ntoskrnl.exe', 'KeBugCheckEx');
             if (keBugCheckEx) {
                 Interceptor.attach(keBugCheckEx, {
-                    onEnter: _args => {
+                    onEnter: args => {
                         const bugCheckCode = args[0].toInt32();
 
                         // PatchGuard bug check codes
                         const kppBugChecks = [
-                            0x109, // CRITICAL_STRUCTURE_CORRUPTION
-                            0x139, // KERNEL_SECURITY_CHECK_FAILURE
-                            0x156, // KERNEL_PATCH_PROTECTION_FAILURE
-                            0x157, // KERNEL_SECURITY_CHECK_FAILURE_EX
+                            0x1_09, // CRITICAL_STRUCTURE_CORRUPTION
+                            0x1_39, // KERNEL_SECURITY_CHECK_FAILURE
+                            0x1_56, // KERNEL_PATCH_PROTECTION_FAILURE
+                            0x1_57, // KERNEL_SECURITY_CHECK_FAILURE_EX
                         ];
 
                         if (kppBugChecks.includes(bugCheckCode)) {
@@ -4951,7 +4948,7 @@ const virtualizationBypass = {
                     },
                 });
             }
-        }).bind(this);
+        };
 
         identifyKppRoutines();
         disableKppTimers();
@@ -4961,7 +4958,7 @@ const virtualizationBypass = {
         this.hooksInstalled.patchguard_bypass = true;
     },
 
-    initializeVmExitHandlerInterception: function () {
+    initializeVmExitHandlerInterception() {
         send({
             type: 'enhancement',
             target: 'vm_bypass',
@@ -5004,58 +5001,64 @@ const virtualizationBypass = {
             // Search for VM exit handler patterns
             const vmExitPattern = '41 0F B7 ?? ?? ?? 00 00'; // movzx r*, word ptr [r* + EXIT_REASON_OFFSET]
 
-            Process.enumerateModules().forEach(
-                function (module) {
-                    if (
-                        module.name.toLowerCase().indexOf('hv') !== -1 ||
-                        module.name.toLowerCase().indexOf('vmm') !== -1
-                    ) {
-                        Memory.scan(module.base, module.size, vmExitPattern, {
-                            onMatch: function (_size) {
-                                Interceptor.attach(address, {
-                                    onEnter: function (_args) {
-                                        // Read VM exit reason
-                                        const exitReason = this.context.rax & 0xffff;
-                                        const exitQualification = this.context.rbx;
+            Process.enumerateModules().forEach(module => {
+                if (
+                    module.name.toLowerCase().includes('hv')
+                    || module.name.toLowerCase().includes('vmm')
+                ) {
+                    Memory.scan(module.base, module.size, vmExitPattern, {
+                        onMatch: function (address, size) {
+                            Interceptor.attach(address, {
+                                onEnter: function (args) {
+                                    // Read VM exit reason
+                                    const exitReason = this.context.rax & 0xFF_FF;
+                                    const exitQualification = this.context.rbx;
 
-                                        // Track exit reasons
-                                        const count =
-                                            this.vmExitHandlers.exitReasons.get(exitReason) || 0;
-                                        this.vmExitHandlers.exitReasons.set(exitReason, count + 1);
+                                    // Track exit reasons
+                                    const count
+                                        = this.vmExitHandlers.exitReasons.get(exitReason) || 0;
+                                    this.vmExitHandlers.exitReasons.set(exitReason, count + 1);
 
-                                        // Manipulate specific exits
-                                        switch (exitReason) {
-                                            case 0x0a: // CPUID
-                                                // Modify CPUID results to hide VM
-                                                this.modifyCpuidExit();
-                                                break;
-
-                                            case 0x10: // RDTSC
-                                                // Adjust TSC values
-                                                this.modifyRdtscExit();
-                                                break;
-
-                                            case 0x21: // RDMSR
-                                            case 0x22: // WRMSR
-                                                // Handle MSR access
-                                                this.modifyMsrExit(exitReason === 0x22);
-                                                break;
-
-                                            case 0x30: // EPT_VIOLATION
-                                                // Handle EPT violations
-                                                this.handleEptViolation(exitQualification);
-                                                break;
+                                    // Manipulate specific exits
+                                    switch (exitReason) {
+                                        case 0x0A: {
+                                            // CPUID
+                                            // Modify CPUID results to hide VM
+                                            this.modifyCpuidExit();
+                                            break;
                                         }
 
-                                        this.vmExitHandlers.interceptedExits++;
-                                    }.bind(this),
-                                });
-                            }.bind(this),
-                            onComplete: () => {},
-                        });
-                    }
-                }.bind(this)
-            );
+                                        case 0x10: {
+                                            // RDTSC
+                                            // Adjust TSC values
+                                            this.modifyRdtscExit();
+                                            break;
+                                        }
+
+                                        case 0x21: // RDMSR
+                                        case 0x22: {
+                                            // WRMSR
+                                            // Handle MSR access
+                                            this.modifyMsrExit(exitReason === 0x22);
+                                            break;
+                                        }
+
+                                        case 0x30: {
+                                            // EPT_VIOLATION
+                                            // Handle EPT violations
+                                            this.handleEptViolation(exitQualification);
+                                            break;
+                                        }
+                                    }
+
+                                    this.vmExitHandlers.interceptedExits++;
+                                }.bind(this),
+                            });
+                        }.bind(this),
+                        onComplete: () => {},
+                    });
+                }
+            });
         }.bind(this);
 
         // Modify CPUID VM exit handling
@@ -5072,7 +5075,7 @@ const virtualizationBypass = {
                     let ecxValue = vmcsGuestRcx.readU32();
                     ecxValue &= ~(1 << 31);
                     vmcsGuestRcx.writeU32(ecxValue);
-                } else if (leaf === 0x40000000) {
+                } else if (leaf === 0x40_00_00_00) {
                     // Hide hypervisor vendor
                     vmcsGuestRax.writeU32(0);
                 }
@@ -5090,7 +5093,7 @@ const virtualizationBypass = {
                 const tscHigh = vmcsGuestRdx.readU32();
 
                 // Add random jitter
-                const jitter = Math.floor(Math.random() * 10000);
+                const jitter = Math.floor(Math.random() * 10_000);
                 tscLow += jitter;
 
                 vmcsGuestRax.writeU32(tscLow);
@@ -5100,21 +5103,21 @@ const virtualizationBypass = {
 
         // Modify MSR VM exit handling
         this.modifyMsrExit = function (_isWrite) {
-            const vmcsGuestRcx =
-                this.vmExitHandlers.vmcsFields.get('GUEST_RCX') || this.context.r10;
+            const vmcsGuestRcx
+                = this.vmExitHandlers.vmcsFields.get('GUEST_RCX') || this.context.r10;
 
             if (vmcsGuestRcx) {
                 const msrNumber = vmcsGuestRcx.readU32();
 
                 // Block virtualization-related MSRs
                 if (
-                    (msrNumber >= 0x480 && msrNumber <= 0x48f) || // VMX MSRs
-                    (msrNumber >= 0x40000000 && msrNumber <= 0x400000ff)
+                    (msrNumber >= 0x4_80 && msrNumber <= 0x4_8F) // VMX MSRs
+                    || (msrNumber >= 0x40_00_00_00 && msrNumber <= 0x40_00_00_FF)
                 ) {
                     // Hyper-V MSRs
 
                     // Inject #GP fault
-                    this.injectGuestException(0x0d); // General Protection Fault
+                    this.injectGuestException(0x0D); // General Protection Fault
                 }
             }
         };
@@ -5142,7 +5145,7 @@ const virtualizationBypass = {
         this.injectGuestException = function (vector) {
             const vmEntryInterruptInfo = this.vmExitHandlers.vmcsFields.get('VM_ENTRY_INTR_INFO');
             if (vmEntryInterruptInfo) {
-                const info = (vector & 0xff) | (3 << 8) | (1 << 31); // Valid exception
+                const info = (vector & 0xFF) | (3 << 8) | (1 << 31); // Valid exception
                 vmEntryInterruptInfo.writeU32(info);
             }
         };
@@ -5164,7 +5167,7 @@ const virtualizationBypass = {
         this.hooksInstalled.vmexit_interception = true;
     },
 
-    setupHypervisorMemoryProtection: function () {
+    setupHypervisorMemoryProtection() {
         send({
             type: 'enhancement',
             target: 'vm_bypass',
@@ -5182,26 +5185,24 @@ const virtualizationBypass = {
 
         // Implement shadow memory for sensitive regions
         const createShadowMemory = function () {
-            Process.enumerateModules().forEach(
-                function (module) {
-                    // Protect our module
-                    if (module.name === Process.getCurrentModule().name) {
-                        const shadowBase = Memory.alloc(module.size);
+            Process.enumerateModules().forEach(module => {
+                // Protect our module
+                if (module.name === Process.getCurrentModule().name) {
+                    const shadowBase = Memory.alloc(module.size);
 
-                        // Copy module to shadow memory
-                        Memory.copy(shadowBase, module.base, module.size);
+                    // Copy module to shadow memory
+                    Memory.copy(shadowBase, module.base, module.size);
 
-                        this.memoryProtection.shadowPages.set(module.base, {
-                            shadow: shadowBase,
-                            size: module.size,
-                            original: module.base,
-                        });
+                    this.memoryProtection.shadowPages.set(module.base, {
+                        shadow: shadowBase,
+                        size: module.size,
+                        original: module.base,
+                    });
 
-                        // Set up memory trap handlers
-                        this.setupMemoryTraps(module.base, module.size);
-                    }
-                }.bind(this)
-            );
+                    // Set up memory trap handlers
+                    this.setupMemoryTraps(module.base, module.size);
+                }
+            });
         }.bind(this);
 
         // Set up memory access traps
@@ -5217,25 +5218,23 @@ const virtualizationBypass = {
                         const _numberOfBytesToRead = args[3].toInt32();
 
                         // Check if reading from protected region
-                        this.memoryProtection.protectedRegions.forEach(
-                            function (protection, region) {
-                                if (
-                                    baseAddress >= region &&
-                                    baseAddress < region.add(protection.size)
-                                ) {
-                                    // Redirect to shadow memory
-                                    const offset = baseAddress.sub(region).toInt32();
-                                    const shadowAddress = protection.shadow.add(offset);
-                                    args[1] = shadowAddress;
+                        this.memoryProtection.protectedRegions.forEach((protection, region) => {
+                            if (
+                                baseAddress >= region
+                                && baseAddress < region.add(protection.size)
+                            ) {
+                                // Redirect to shadow memory
+                                const offset = baseAddress.sub(region).toInt32();
+                                const shadowAddress = protection.shadow.add(offset);
+                                args[1] = shadowAddress;
 
-                                    this.memoryProtection.memoryTraps.set(baseAddress, {
-                                        type: 'read',
-                                        redirected: true,
-                                        timestamp: Date.now(),
-                                    });
-                                }
-                            }.bind(this)
-                        );
+                                this.memoryProtection.memoryTraps.set(baseAddress, {
+                                    type: 'read',
+                                    redirected: true,
+                                    timestamp: Date.now(),
+                                });
+                            }
+                        });
                     }.bind(this),
                 });
             }
@@ -5247,7 +5246,7 @@ const virtualizationBypass = {
             const handleEptViolation = Module.findExportByName(null, 'HandleEptViolation');
             if (handleEptViolation) {
                 Interceptor.attach(handleEptViolation, {
-                    onEnter: function (_args) {
+                    onEnter: function (args) {
                         const violationInfo = args[0];
                         if (violationInfo) {
                             const guestPhysicalAddress = violationInfo.readU64();
@@ -5255,12 +5254,12 @@ const virtualizationBypass = {
                             // Check if this is our protected memory
                             let isProtected = false;
                             this.memoryProtection.protectedRegions.forEach(
-                                function (_protection, region) {
+                                (_protection, region) => {
                                     const physicalAddress = this.virtualToPhysical(region);
                                     if (guestPhysicalAddress.equals(physicalAddress)) {
                                         isProtected = true;
                                     }
-                                }.bind(this)
+                                }
                             );
 
                             if (isProtected) {
@@ -5275,21 +5274,20 @@ const virtualizationBypass = {
         }.bind(this);
 
         // Convert virtual to physical address using simplified bit masking
-        this.virtualToPhysical = virtualAddress => {
+        this.virtualToPhysical = virtualAddress =>
             // Strip high bits to convert to physical address space
-            return virtualAddress.and(0x7fffffffffff);
-        };
+            virtualAddress.and(0x7F_FF_FF_FF_FF_FF);
 
         // Spoof memory content for hypervisor
-        this.spoofMemoryContent = _args => {
+        this.spoofMemoryContent = args => {
             const buffer = args[1];
             if (buffer) {
                 // Fill with benign content
-                const spoofedContent = Memory.alloc(0x1000);
-                for (let i = 0; i < 0x1000; i += 8) {
+                const spoofedContent = Memory.alloc(0x10_00);
+                for (let i = 0; i < 0x10_00; i += 8) {
                     spoofedContent.add(i).writeU64(ptr('0x9090909090909090')); // NOPs
                 }
-                Memory.copy(buffer, spoofedContent, 0x1000);
+                Memory.copy(buffer, spoofedContent, 0x10_00);
             }
         };
 
@@ -5299,11 +5297,11 @@ const virtualizationBypass = {
             const miniDumpWriteDump = Module.findExportByName('dbghelp.dll', 'MiniDumpWriteDump');
             if (miniDumpWriteDump) {
                 Interceptor.attach(miniDumpWriteDump, {
-                    onEnter: function (_args) {
+                    onEnter: function (args) {
                         // Scramble sensitive memory regions before dump
                         this.memoryProtection.protectedRegions.forEach((protection, region) => {
                             // XOR scramble the memory
-                            const key = Math.floor(Math.random() * 0xffffffff);
+                            const key = Math.floor(Math.random() * 0xFF_FF_FF_FF);
                             for (let i = 0; i < protection.size; i += 4) {
                                 const value = region.add(i).readU32();
                                 region.add(i).writeU32(value ^ key);
@@ -5318,7 +5316,7 @@ const virtualizationBypass = {
                             });
                         });
                     }.bind(this),
-                    onLeave: function (_retval) {
+                    onLeave: function (retval) {
                         // Restore scrambled memory
                         this.memoryProtection.protectedRegions.forEach((protection, region) => {
                             // Restore from shadow

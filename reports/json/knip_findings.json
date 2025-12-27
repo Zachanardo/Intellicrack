@@ -1,6 +1,6 @@
 {
   "tool": "knip",
-  "generated": "2025-12-20T22:11:47.846976",
+  "generated": "2025-12-26T20:34:40.897484",
   "total_findings": 28,
   "total_files": 22,
   "files": [
@@ -63,20 +63,20 @@
       "count": 2,
       "findings": [
         {
-          "line": 14564,
-          "column": 39,
+          "line": 14758,
+          "column": 35,
           "category": "unlisted",
           "rule": "unlisted",
           "message": "[unlisted] ws",
-          "raw": "intellicrack/scripts/frida/universal_unpacker.js:14564:39: [unlisted] ws"
+          "raw": "intellicrack/scripts/frida/universal_unpacker.js:14758:35: [unlisted] ws"
         },
         {
-          "line": 14816,
+          "line": 15010,
           "column": 41,
           "category": "unlisted",
           "rule": "unlisted",
           "message": "[unlisted] msgpack",
-          "raw": "intellicrack/scripts/frida/universal_unpacker.js:14816:41: [unlisted] msgpack"
+          "raw": "intellicrack/scripts/frida/universal_unpacker.js:15010:41: [unlisted] msgpack"
         }
       ]
     },
@@ -85,12 +85,12 @@
       "count": 1,
       "findings": [
         {
-          "line": 3729,
+          "line": 3864,
           "column": 22,
           "category": "exports",
           "rule": "exports",
           "message": "[exports] default",
-          "raw": "intellicrack/scripts/frida/behavioral_pattern_analyzer.js:3729:22: [exports] default"
+          "raw": "intellicrack/scripts/frida/behavioral_pattern_analyzer.js:3864:22: [exports] default"
         }
       ]
     },
@@ -99,12 +99,12 @@
       "count": 1,
       "findings": [
         {
-          "line": 2509,
+          "line": 2516,
           "column": 22,
           "category": "exports",
           "rule": "exports",
           "message": "[exports] default",
-          "raw": "intellicrack/scripts/frida/blockchain_license_bypass.js:2509:22: [exports] default"
+          "raw": "intellicrack/scripts/frida/blockchain_license_bypass.js:2516:22: [exports] default"
         }
       ]
     },
@@ -113,12 +113,12 @@
       "count": 1,
       "findings": [
         {
-          "line": 2681,
+          "line": 2686,
           "column": 22,
           "category": "exports",
           "rule": "exports",
           "message": "[exports] default",
-          "raw": "intellicrack/scripts/frida/bypass_success_tracker.js:2681:22: [exports] default"
+          "raw": "intellicrack/scripts/frida/bypass_success_tracker.js:2686:22: [exports] default"
         }
       ]
     },
@@ -127,12 +127,12 @@
       "count": 1,
       "findings": [
         {
-          "line": 4834,
+          "line": 5038,
           "column": 22,
           "category": "exports",
           "rule": "exports",
           "message": "[exports] default",
-          "raw": "intellicrack/scripts/frida/central_orchestrator.js:4834:22: [exports] default"
+          "raw": "intellicrack/scripts/frida/central_orchestrator.js:5038:22: [exports] default"
         }
       ]
     },
@@ -155,12 +155,12 @@
       "count": 1,
       "findings": [
         {
-          "line": 8841,
+          "line": 8925,
           "column": 22,
           "category": "exports",
           "rule": "exports",
           "message": "[exports] default",
-          "raw": "intellicrack/scripts/frida/certificate_pinning_bypass.js:8841:22: [exports] default"
+          "raw": "intellicrack/scripts/frida/certificate_pinning_bypass.js:8925:22: [exports] default"
         }
       ]
     },
@@ -169,12 +169,12 @@
       "count": 1,
       "findings": [
         {
-          "line": 2808,
+          "line": 2789,
           "column": 22,
           "category": "exports",
           "rule": "exports",
           "message": "[exports] default",
-          "raw": "intellicrack/scripts/frida/cloud_licensing_bypass.js:2808:22: [exports] default"
+          "raw": "intellicrack/scripts/frida/cloud_licensing_bypass.js:2789:22: [exports] default"
         }
       ]
     },
@@ -183,12 +183,12 @@
       "count": 1,
       "findings": [
         {
-          "line": 2525,
+          "line": 2523,
           "column": 22,
           "category": "exports",
           "rule": "exports",
           "message": "[exports] default",
-          "raw": "intellicrack/scripts/frida/dotnet_bypass_suite.js:2525:22: [exports] default"
+          "raw": "intellicrack/scripts/frida/dotnet_bypass_suite.js:2523:22: [exports] default"
         }
       ]
     },
@@ -197,12 +197,12 @@
       "count": 1,
       "findings": [
         {
-          "line": 4214,
+          "line": 4171,
           "column": 22,
           "category": "exports",
           "rule": "exports",
           "message": "[exports] default",
-          "raw": "intellicrack/scripts/frida/drm_bypass.js:4214:22: [exports] default"
+          "raw": "intellicrack/scripts/frida/drm_bypass.js:4171:22: [exports] default"
         }
       ]
     },
@@ -211,12 +211,12 @@
       "count": 1,
       "findings": [
         {
-          "line": 5609,
+          "line": 5608,
           "column": 22,
           "category": "exports",
           "rule": "exports",
           "message": "[exports] default",
-          "raw": "intellicrack/scripts/frida/dynamic_script_generator.js:5609:22: [exports] default"
+          "raw": "intellicrack/scripts/frida/dynamic_script_generator.js:5608:22: [exports] default"
         }
       ]
     },
@@ -225,12 +225,12 @@
       "count": 1,
       "findings": [
         {
-          "line": 5123,
+          "line": 5220,
           "column": 22,
           "category": "exports",
           "rule": "exports",
           "message": "[exports] default",
-          "raw": "intellicrack/scripts/frida/hook_effectiveness_monitor.js:5123:22: [exports] default"
+          "raw": "intellicrack/scripts/frida/hook_effectiveness_monitor.js:5220:22: [exports] default"
         }
       ]
     },
@@ -239,12 +239,12 @@
       "count": 1,
       "findings": [
         {
-          "line": 3457,
+          "line": 3465,
           "column": 22,
           "category": "exports",
           "rule": "exports",
           "message": "[exports] default",
-          "raw": "intellicrack/scripts/frida/http3_quic_interceptor.js:3457:22: [exports] default"
+          "raw": "intellicrack/scripts/frida/http3_quic_interceptor.js:3465:22: [exports] default"
         }
       ]
     },
@@ -253,12 +253,12 @@
       "count": 1,
       "findings": [
         {
-          "line": 3359,
+          "line": 3371,
           "column": 22,
           "category": "exports",
           "rule": "exports",
           "message": "[exports] default",
-          "raw": "intellicrack/scripts/frida/kernel_bridge.js:3359:22: [exports] default"
+          "raw": "intellicrack/scripts/frida/kernel_bridge.js:3371:22: [exports] default"
         }
       ]
     },
@@ -267,12 +267,12 @@
       "count": 1,
       "findings": [
         {
-          "line": 2491,
+          "line": 2519,
           "column": 22,
           "category": "exports",
           "rule": "exports",
           "message": "[exports] default",
-          "raw": "intellicrack/scripts/frida/kernel_mode_bypass.js:2491:22: [exports] default"
+          "raw": "intellicrack/scripts/frida/kernel_mode_bypass.js:2519:22: [exports] default"
         }
       ]
     },
@@ -281,12 +281,12 @@
       "count": 1,
       "findings": [
         {
-          "line": 5897,
+          "line": 5909,
           "column": 22,
           "category": "exports",
           "rule": "exports",
           "message": "[exports] default",
-          "raw": "intellicrack/scripts/frida/keygen_generator.js:5897:22: [exports] default"
+          "raw": "intellicrack/scripts/frida/keygen_generator.js:5909:22: [exports] default"
         }
       ]
     },
@@ -295,12 +295,12 @@
       "count": 1,
       "findings": [
         {
-          "line": 1541,
+          "line": 1535,
           "column": 22,
           "category": "exports",
           "rule": "exports",
           "message": "[exports] default",
-          "raw": "intellicrack/scripts/frida/ml_license_detector.js:1541:22: [exports] default"
+          "raw": "intellicrack/scripts/frida/ml_license_detector.js:1535:22: [exports] default"
         }
       ]
     },
@@ -309,12 +309,12 @@
       "count": 1,
       "findings": [
         {
-          "line": 4451,
+          "line": 4485,
           "column": 22,
           "category": "exports",
           "rule": "exports",
           "message": "[exports] default",
-          "raw": "intellicrack/scripts/frida/ntp_blocker.js:4451:22: [exports] default"
+          "raw": "intellicrack/scripts/frida/ntp_blocker.js:4485:22: [exports] default"
         }
       ]
     },
@@ -323,12 +323,12 @@
       "count": 1,
       "findings": [
         {
-          "line": 3318,
+          "line": 3306,
           "column": 22,
           "category": "exports",
           "rule": "exports",
           "message": "[exports] default",
-          "raw": "intellicrack/scripts/frida/obfuscation_detector.js:3318:22: [exports] default"
+          "raw": "intellicrack/scripts/frida/obfuscation_detector.js:3306:22: [exports] default"
         }
       ]
     },
@@ -337,12 +337,12 @@
       "count": 1,
       "findings": [
         {
-          "line": 10977,
+          "line": 10978,
           "column": 22,
           "category": "exports",
           "rule": "exports",
           "message": "[exports] default",
-          "raw": "intellicrack/scripts/frida/realtime_protection_detector.js:10977:22: [exports] default"
+          "raw": "intellicrack/scripts/frida/realtime_protection_detector.js:10978:22: [exports] default"
         }
       ]
     },

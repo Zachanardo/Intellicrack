@@ -10,14 +10,15 @@ Licensed under GNU GPL v3.0
 import ctypes
 import struct
 import threading
+import time
 from collections.abc import Callable
 from ctypes import wintypes
 from dataclasses import dataclass
 from enum import IntEnum
-import time
 from typing import Any, ClassVar, cast
 
 from intellicrack.utils.type_safety import get_typed_item, validate_type
+
 
 try:
     import psutil

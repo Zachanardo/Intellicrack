@@ -8,7 +8,7 @@ Licensed under GNU General Public License v3.0
 """
 
 from collections.abc import Sequence
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from intellicrack.handlers.pyqt6_handler import QHBoxLayout, QLabel, Qt, QVBoxLayout, QWidget, pyqtSignal
 
@@ -25,10 +25,10 @@ except ImportError:
     HAS_NUMPY = False
 
 if TYPE_CHECKING:
+    import matplotlib.pyplot as pyplot
     from matplotlib.axes import Axes
     from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
     from matplotlib.figure import Figure as FigureType
-    import matplotlib.pyplot as pyplot
 
 logger = get_logger(__name__)
 

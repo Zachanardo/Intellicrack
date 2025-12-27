@@ -13,9 +13,25 @@ print("Testing CFI Bypass Module")
 print("=" * 80)
 
 try:
-    # Try to import the module
     from intellicrack.core.mitigation_bypass.cfi_bypass import CFIBypass
+    MODULE_AVAILABLE = True
+except ImportError:
+    CFIBypass = None
+    MODULE_AVAILABLE = False
+
+try:
+    import pytest
+    pytestmark = pytest.mark.skipif(not MODULE_AVAILABLE, reason="Module not available")
+except ImportError:
+    pass
+
+if MODULE_AVAILABLE:
     print("OK Successfully imported CFIBypass from mitigation_bypass")
+else:
+    print("ERROR Could not import CFIBypass")
+    sys.exit(1)
+
+try:
 
     # Create instance
     cfi = CFIBypass()

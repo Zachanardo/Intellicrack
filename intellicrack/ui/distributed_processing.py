@@ -27,12 +27,12 @@ from datetime import datetime
 from enum import Enum
 from typing import TYPE_CHECKING, Any, cast
 
-from intellicrack.utils.type_safety import validate_type
 import capstone
 import pefile
 import yara
 
 from intellicrack.utils.logger import logger
+from intellicrack.utils.type_safety import validate_type
 
 
 if TYPE_CHECKING:
@@ -603,13 +603,10 @@ except ImportError:
             if obj is None:
                 return self
 
-            # Create bound signal for specific instance
             bound_signal = BoundSignal(self, obj)
-            # Cache it on the instance to maintain connections
-            obj_any = validate_type(obj, Any)
-            if not hasattr(obj_any, "_bound_signals"):
-                setattr(obj_any, "_bound_signals", {})
-            bound_signals = getattr(obj_any, "_bound_signals")
+            if not hasattr(obj, "_bound_signals"):
+                setattr(obj, "_bound_signals", {})
+            bound_signals = getattr(obj, "_bound_signals", None)
             if isinstance(bound_signals, dict):
                 bound_signals[id(self)] = bound_signal
             return bound_signal

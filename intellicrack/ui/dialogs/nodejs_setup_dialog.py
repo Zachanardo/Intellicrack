@@ -22,9 +22,6 @@ import logging
 import os
 from pathlib import Path
 
-
-logger = logging.getLogger(__name__)
-
 from PyQt6.QtCore import QThread, pyqtSignal
 from PyQt6.QtWidgets import (
     QFileDialog,
@@ -43,6 +40,8 @@ from PyQt6.QtWidgets import (
 )
 
 from .base_dialog import BaseDialog
+
+logger = logging.getLogger(__name__)
 
 
 class NodeJSInstallWorker(QThread):

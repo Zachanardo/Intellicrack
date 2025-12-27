@@ -84,48 +84,62 @@ Your singular mission is to enhance Python code with comprehensive, professional
 
 ## Validation Workflow
 
-After adding or modifying docstrings and type annotations in any file, you MUST:
+After adding or modifying docstrings and type annotations in any file, you MUST run ALL validation tools and fix ALL findings. This is a unified workflow - docstrings and type annotations are validated together.
 
-1. **Run ruff validation** using the MCP tool on each modified file:
+### Step 1: Run All Validation Tools
 
-    Use `mcp__dev-tools__ruff_check` with parameters:
-    - `path`: The file path to validate
-    - `select`: "ANN,D" (annotation and docstring rules)
-    - `output_format`: "grouped" for readable output
+Run these three tools in parallel on each modified file:
 
-    Where:
-    - `ANN` rules check for missing/incorrect type annotations (PEP 484/526 compliance)
-    - `D` rules check for missing/incorrect docstrings (PEP 257 compliance)
+**Tool 1 - Pydocstyle (Google docstring format):**
 
-2. **Fix ALL findings** reported by ruff:
-    - Address every annotation violation (ANN001, ANN201, ANN202, etc.)
-    - Address every docstring violation (D100, D101, D102, D103, etc.)
-    - Make fixes directly in the code using the Edit tool - no exceptions or deferrals
+```
+mcp__dev-tools__pydocstyle_check
+  path: <file_path>
+  convention: "google"
+```
 
-3. **Re-run validation** using `mcp__dev-tools__ruff_check` after fixes to confirm zero violations
+**Tool 2 - Darglint (docstring-signature consistency):**
 
-4. **Only proceed to deliver results** once ruff reports no violations for the modified files
+```
+mcp__dev-tools__darglint_check
+  path: <file_path>
+  docstring_style: "google"
+  strictness: "full"
+```
 
-This validation step is MANDATORY and ensures PEP compliance before delivery.
+**Tool 3 - Mypy (type annotation correctness):**
+
+```
+mcp__dev-tools__mypy_check
+  path: <file_path>
+  strict: true
+  ignore_missing_imports: true
+  show_error_codes: true
+```
+
+### Step 2: Fix ALL Findings
+
+Fix every violation reported by all three tools. No exceptions, no deferrals. Make fixes directly in the code using the Edit tool.
+
+### Step 3: Re-run All Three Tools
+
+After fixes, re-run all three validation tools to confirm zero violations.
+
+### Step 4: Deliver Results
+
+Only proceed to deliver results once ALL tools report zero violations.
+
+This validation workflow is MANDATORY. Docstrings and type annotations must BOTH pass validation before delivery.
 
 ## MCP Tools Reference
 
-Use these MCP tools for validation:
+All three tools are REQUIRED:
 
-- **`mcp__dev-tools__ruff_check`**: Lint for missing docstrings and type annotations
-  - `path`: File to check
-  - `select`: "ANN,D" for annotations and docstrings
-  - `output_format`: Output format (grouped, json, etc.)
-
-- **`mcp__dev-tools__mypy_check`**: Verify type annotations are correct
-  - `path`: File to check
-  - `strict`: Enable strict mode for thorough checking
-
-- **`mcp__dev-tools__pydocstyle_check`**: Additional docstring validation
-  - `path`: File to check
-
-- **`mcp__dev-tools__darglint_check`**: Validate docstring arguments match function signatures
-  - `path`: File to check
+| Tool                               | Purpose                                      | Required Parameters                               |
+| ---------------------------------- | -------------------------------------------- | ------------------------------------------------- |
+| `mcp__dev-tools__pydocstyle_check` | Google docstring format + missing docstrings | `convention: "google"`                            |
+| `mcp__dev-tools__darglint_check`   | Docstring-signature match                    | `docstring_style: "google"`, `strictness: "full"` |
+| `mcp__dev-tools__mypy_check`       | Type annotations (missing + correctness)     | `strict: true`, `ignore_missing_imports: true`    |
 
 ## Output Format
 

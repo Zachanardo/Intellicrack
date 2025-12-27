@@ -1299,7 +1299,6 @@ def run_multi_format_analysis(app: object, binary_path: str | Path | None = None
     if hasattr(app, "update_output") and hasattr(app.update_output, "emit"):
         app.update_output.emit(f"[Multi-Format] Analysis completed for {binary_format} binary")
 
-    # Add to analyze results
     if not hasattr(app, "analyze_results"):
         setattr(app, "analyze_results", [])
 
@@ -1423,33 +1422,25 @@ def run_multi_format_analysis(app: object, binary_path: str | Path | None = None
             "- Consider using dynamic analysis with Android emulators",
         ))
     elif binary_format == "APK":
-        analyze_results.extend(
-            (
-                "- Extract and analyze DEX files for code analysis",
-                "- Check native libraries for potential security issues",
-                "- Verify certificate signatures and permissions",
-            )
-        )
+        analyze_results.extend((
+            "- Extract and analyze DEX files for code analysis",
+            "- Check native libraries for potential security issues",
+            "- Verify certificate signatures and permissions",
+        ))
     elif binary_format == "JAR":
-        analyze_results.extend(
-            (
-                "- Decompile class files for source code analysis",
-                "- Check for dependency vulnerabilities",
-                "- Verify manifest security attributes",
-            )
-        )
+        analyze_results.extend((
+            "- Decompile class files for source code analysis",
+            "- Check for dependency vulnerabilities",
+            "- Verify manifest security attributes",
+        ))
     elif binary_format == "MSI":
-        analyze_results.extend(
-            (
-                "- Use specialized MSI analysis tools for full inspection",
-                "- Check for custom actions and embedded scripts",
-            )
-        )
+        analyze_results.extend((
+            "- Use specialized MSI analysis tools for full inspection",
+            "- Check for custom actions and embedded scripts",
+        ))
     elif binary_format == "COM":
-        analyze_results.extend(
-            (
-                "- Use 16-bit disassemblers for code analysis",
-                "- Consider DOS-era analysis techniques and tools",
-            )
-        )
+        analyze_results.extend((
+            "- Use 16-bit disassemblers for code analysis",
+            "- Consider DOS-era analysis techniques and tools",
+        ))
     return results

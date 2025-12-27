@@ -20,7 +20,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 import time
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
 from ..handlers.pyqt6_handler import (
     PYQT6_AVAILABLE,
@@ -329,10 +329,10 @@ class PerformanceWidget(_BaseClass):  # type: ignore[misc, valid-type]
                 return
 
             stats_result = self.file_handler.get_performance_stats()  # type: ignore[attr-defined]
-            if not stats_result:
+            if not stats_result or not isinstance(stats_result, dict):
                 return
 
-            stats = cast("dict[str, Any]", stats_result)
+            stats: dict[str, Any] = stats_result
             stats["timestamp"] = time.time()
             self.stats_history.append(stats)
             if len(self.stats_history) > self.max_history:
@@ -374,7 +374,8 @@ class PerformanceWidget(_BaseClass):  # type: ignore[misc, valid-type]
 
     def update_memory_tab(self, stats: dict[str, Any]) -> None:
         """Update the memory tab."""
-        cache_stats = cast("dict[str, Any]", stats.get("cache_stats", {}))
+        cache_stats_raw = stats.get("cache_stats", {})
+        cache_stats: dict[str, Any] = cache_stats_raw if isinstance(cache_stats_raw, dict) else {}
 
         memory_used = float(cache_stats.get("total_memory_mb", 0))
         memory_limit = float(cache_stats.get("max_memory_mb", 0))
@@ -399,7 +400,8 @@ class PerformanceWidget(_BaseClass):  # type: ignore[misc, valid-type]
 
     def update_cache_tab(self, stats: dict[str, Any]) -> None:
         """Update the cache tab."""
-        cache_stats = cast("dict[str, Any]", stats.get("cache_stats", {}))
+        cache_stats_raw = stats.get("cache_stats", {})
+        cache_stats: dict[str, Any] = cache_stats_raw if isinstance(cache_stats_raw, dict) else {}
 
         regions = int(cache_stats.get("regions", 0))
         memory_mb = float(cache_stats.get("total_memory_mb", 0))
@@ -432,10 +434,10 @@ class PerformanceWidget(_BaseClass):  # type: ignore[misc, valid-type]
                 return
 
             stats_result = self.file_handler.get_performance_stats()  # type: ignore[attr-defined]
-            if not stats_result:
+            if not stats_result or not isinstance(stats_result, dict):
                 return
 
-            stats = cast("dict[str, Any]", stats_result)
+            stats: dict[str, Any] = stats_result
             sequential_ratio = float(stats.get("sequential_ratio", 0))
 
             if sequential_ratio > 0.7:
@@ -475,7 +477,7 @@ class PerformanceMonitor:
         if self.file_handler:
             self.widget.set_file_handler(self.file_handler)
 
-        return cast("QWidget", self.widget)
+        return self.widget
 
     def set_file_handler(self, file_handler: object) -> None:
         """Set the file handler to monitor."""
@@ -492,11 +494,12 @@ class PerformanceMonitor:
             return {}
 
         stats_result = self.file_handler.get_performance_stats()  # type: ignore[attr-defined]
-        if not stats_result:
+        if not stats_result or not isinstance(stats_result, dict):
             return {}
 
-        stats = cast("dict[str, Any]", stats_result)
-        cache_stats = cast("dict[str, Any]", stats.get("cache_stats", {}))
+        stats: dict[str, Any] = stats_result
+        cache_stats_raw = stats.get("cache_stats", {})
+        cache_stats: dict[str, Any] = cache_stats_raw if isinstance(cache_stats_raw, dict) else {}
 
         return {
             "file_size_mb": stats.get("file_size_mb", 0),

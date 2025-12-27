@@ -406,13 +406,11 @@ def generate_bypass_strategy(protections: dict[str, Any]) -> list[str]:
             "Use consistent spoofed hardware identifiers",
         ))
     if protections.get("time_checks"):
-        strategies.extend(
-            (
-                "Implement time manipulation hooks",
-                "Hook GetTickCount and time-related APIs",
-                "Consider time acceleration techniques",
-            )
-        )
+        strategies.extend((
+            "Implement time manipulation hooks",
+            "Hook GetTickCount and time-related APIs",
+            "Consider time acceleration techniques",
+        ))
     if protections.get("network_validation"):
         strategies.append("Set up local license server emulation")
         strategies.append("Hook network APIs to redirect requests")

@@ -30,6 +30,7 @@ from pathlib import Path
 from queue import Empty, Queue
 from typing import TYPE_CHECKING, Any, Literal, Self
 
+
 if TYPE_CHECKING:
     from .llm_backends import LLMProvider
 

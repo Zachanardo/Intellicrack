@@ -157,19 +157,26 @@ try:
 
         _canvas_tk_class = _TkCanvasClass
     except ImportError:
+
         class _FallbackTkCanvas:
             """Functional Tk figure canvas fallback."""
+
             def __init__(self, figure: Any, master: Any = None) -> None:
                 self.figure = figure
                 self.master = master
+
             def draw(self) -> None:
                 pass
+
             def get_tk_widget(self) -> Any:
                 return self
+
             def pack(self, **kwargs: Any) -> None:
                 pass
+
             def grid(self, **kwargs: Any) -> None:
                 pass
+
         _canvas_tk_class = _FallbackTkCanvas
 
     HAS_MATPLOTLIB = True

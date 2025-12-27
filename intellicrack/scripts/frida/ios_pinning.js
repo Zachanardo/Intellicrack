@@ -12,8 +12,8 @@ const MAX_LOG = 1000;
 function log(message, level = 'info') {
     const entry = {
         timestamp: new Date().toISOString(),
-        level: level,
-        message: message,
+        level,
+        message,
     };
     send({ type: 'log', data: entry });
     activity.push(entry);
@@ -33,7 +33,7 @@ if (ObjC.available) {
         const SSLSetSessionOption = Module.findExportByName('CFNetwork', 'SSLSetSessionOption');
         if (SSLSetSessionOption) {
             Interceptor.attach(SSLSetSessionOption, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const _context = args[0];
                     const option = args[1].toInt32();
                     const _value = args[2].toInt32();
@@ -46,7 +46,7 @@ if (ObjC.available) {
                         this.modified = true;
                     }
                 },
-                onLeave: function (_retval) {
+                onLeave(_retval) {
                     if (this.modified) {
                         send({ type: 'ssl_option_bypass' });
                     }
@@ -54,30 +54,30 @@ if (ObjC.available) {
             });
             log('Successfully hooked SSLSetSessionOption');
         }
-    } catch (e) {
-        logError(`Failed to hook SSLSetSessionOption: ${e.message}`);
+    } catch (error) {
+        logError(`Failed to hook SSLSetSessionOption: ${error.message}`);
     }
 
     try {
         const SecTrustEvaluate = Module.findExportByName('Security', 'SecTrustEvaluate');
         if (SecTrustEvaluate) {
             Interceptor.attach(SecTrustEvaluate, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const trust = args[0];
                     const result = args[1];
 
                     this.trust = trust;
                     this.result = result;
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     const status = retval.toInt32();
 
                     if (!this.result.isNull()) {
                         const originalResult = this.result.readU32();
 
                         if (
-                            originalResult !== kSecTrustResultProceed &&
-                            originalResult !== kSecTrustResultUnspecified
+                            originalResult !== kSecTrustResultProceed
+                            && originalResult !== kSecTrustResultUnspecified
                         ) {
                             log(
                                 `SecTrustEvaluate: Original result=${originalResult}, forcing kSecTrustResultUnspecified`
@@ -87,7 +87,7 @@ if (ObjC.available) {
                             const certInfo = {
                                 timestamp: new Date().toISOString(),
                                 trust: this.trust.toString(),
-                                originalResult: originalResult,
+                                originalResult,
                                 forcedResult: kSecTrustResultUnspecified,
                                 bypassed: true,
                             };
@@ -107,8 +107,8 @@ if (ObjC.available) {
             });
             log('Successfully hooked SecTrustEvaluate');
         }
-    } catch (e) {
-        logError(`Failed to hook SecTrustEvaluate: ${e.message}`);
+    } catch (error) {
+        logError(`Failed to hook SecTrustEvaluate: ${error.message}`);
     }
 
     try {
@@ -117,7 +117,7 @@ if (ObjC.available) {
             const handshakeCallCount = {};
 
             Interceptor.attach(SSLHandshake, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const context = args[0];
                     this.context = context.toString();
 
@@ -128,7 +128,7 @@ if (ObjC.available) {
 
                     this.callNumber = handshakeCallCount[this.context];
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     const status = retval.toInt32();
 
                     if (this.callNumber === 1 && status !== errSSLServerAuthCompleted) {
@@ -157,8 +157,8 @@ if (ObjC.available) {
             });
             log('Successfully hooked SSLHandshake');
         }
-    } catch (e) {
-        logError(`Failed to hook SSLHandshake: ${e.message}`);
+    } catch (error) {
+        logError(`Failed to hook SSLHandshake: ${error.message}`);
     }
 
     try {
@@ -188,8 +188,8 @@ if (ObjC.available) {
                 log('Successfully hooked tls_helper_create_peer_trust');
             }
         }
-    } catch (e) {
-        log(`BoringSSL not found or failed to hook: ${e.message}`);
+    } catch (error) {
+        log(`BoringSSL not found or failed to hook: ${error.message}`);
     }
 
     try {
@@ -201,7 +201,7 @@ if (ObjC.available) {
             Interceptor.attach(
                 AFSecurityPolicy['- evaluateServerTrust:forDomain:'].implementation,
                 {
-                    onEnter: function (args) {
+                    onEnter(args) {
                         const _serverTrust = new ObjC.Object(args[2]);
                         const domain = new ObjC.Object(args[3]);
 
@@ -211,7 +211,7 @@ if (ObjC.available) {
 
                         this.domain = domain.toString();
                     },
-                    onLeave: function (retval) {
+                    onLeave(retval) {
                         const originalResult = retval.toInt32();
 
                         if (originalResult === 0) {
@@ -227,8 +227,8 @@ if (ObjC.available) {
             );
             log('Successfully hooked AFSecurityPolicy.evaluateServerTrust');
         }
-    } catch (e) {
-        log(`AFNetworking not found or failed to hook: ${e.message}`);
+    } catch (error) {
+        log(`AFNetworking not found or failed to hook: ${error.message}`);
     }
 
     try {
@@ -237,8 +237,8 @@ if (ObjC.available) {
 
             const { NSURLSessionDelegate } = ObjC.protocols;
             if (NSURLSessionDelegate) {
-                const originalDidReceiveChallenge =
-                    NSURLSessionDelegate.methods[
+                const originalDidReceiveChallenge
+                    = NSURLSessionDelegate.methods[
                         'URLSession:didReceiveChallenge:completionHandler:'
                     ];
 
@@ -288,8 +288,8 @@ if (ObjC.available) {
                 }
             }
         }
-    } catch (e) {
-        logError(`Failed to hook NSURLSession: ${e.message}`);
+    } catch (error) {
+        logError(`Failed to hook NSURLSession: ${error.message}`);
     }
 
     try {
@@ -309,8 +309,8 @@ if (ObjC.available) {
 
             log('Successfully hooked NSURLConnection');
         }
-    } catch (e) {
-        log(`NSURLConnection not found or failed to hook: ${e.message}`);
+    } catch (error) {
+        log(`NSURLConnection not found or failed to hook: ${error.message}`);
     }
 
     try {
@@ -328,12 +328,12 @@ if (ObjC.available) {
         );
 
         if (
-            SecTrustGetCertificateCount &&
-            SecTrustGetCertificateAtIndex &&
-            SecCertificateCopyData
+            SecTrustGetCertificateCount
+            && SecTrustGetCertificateAtIndex
+            && SecCertificateCopyData
         ) {
             Interceptor.attach(SecTrustGetCertificateCount, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.trust = args[0];
                 },
                 onLeave: retval => {
@@ -345,8 +345,8 @@ if (ObjC.available) {
             });
             log('Successfully hooked SecTrustGetCertificateCount');
         }
-    } catch (e) {
-        logError(`Failed to hook certificate extraction functions: ${e.message}`);
+    } catch (error) {
+        logError(`Failed to hook certificate extraction functions: ${error.message}`);
     }
 
     log('iOS certificate pinning bypass initialization complete');

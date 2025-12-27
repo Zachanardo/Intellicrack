@@ -2576,7 +2576,7 @@ def _convert_to_gguf(model_path: str, output_path: str) -> bool:
             tensor_count = 0
 
             # Parse model to get tensors
-            tensors = {}
+            tensors: dict[str, Any] = {}
 
             # Try to detect and parse model format
             if model_path.endswith(".bin") or model_path.endswith(".pt") or model_path.endswith(".pth"):
@@ -2605,7 +2605,7 @@ def _convert_to_gguf(model_path: str, output_path: str) -> bool:
                 try:
                     from safetensors import safe_open
 
-                    with safe_open(model_path, framework="np") as sf:  # type: ignore
+                    with safe_open(model_path, framework="np") as sf:  # type: ignore[no-untyped-call]
                         for key in sf:
                             tensors[key] = sf.get_tensor(key)
                             tensor_count += 1
@@ -2707,16 +2707,15 @@ def _convert_to_gguf(model_path: str, output_path: str) -> bool:
             for tensor_data_item in tensors.values():
                 tensor_offsets.append(f.tell())
 
-                # Convert to float32 if needed
+                converted_tensor: np.ndarray[Any, Any]
                 if not isinstance(tensor_data_item, np.ndarray):
-                    converted_tensor: object = np.array(tensor_data_item, dtype=np.float32)  # type: ignore[unreachable]
+                    converted_tensor = np.array(tensor_data_item, dtype=np.float32)
                 else:
-                    if hasattr(tensor_data_item, "dtype") and getattr(tensor_data_item, "dtype") != np.float32:
+                    if hasattr(tensor_data_item, "dtype") and tensor_data_item.dtype != np.float32:
                         converted_tensor = tensor_data_item.astype(np.float32)
                     else:
                         converted_tensor = tensor_data_item
 
-                # Write tensor data
                 f.write(converted_tensor.tobytes())
 
                 # Align for next tensor
@@ -3052,11 +3051,11 @@ def _generate_bias_data(dims: list[int], data_type: str, total_elements: int) ->
 
         # Check if this is likely an LSTM/GRU layer (multiple of 4 or 3 hidden units)
         if total_elements % 4 == 0:
-            bias_array[total_elements // 4:total_elements // 2] = 1.0
+            bias_array[total_elements // 4 : total_elements // 2] = 1.0
         elif total_elements % 3 == 0:
             # GRU layer - reset gate biases sometimes initialized to -1.0
             reset_start = total_elements // 3
-            bias_array[reset_start:2 * total_elements // 3] = -1.0
+            bias_array[reset_start : 2 * total_elements // 3] = -1.0
 
         # Add small random initialization for specific layer types
         # Batch normalization biases are often initialized to small values

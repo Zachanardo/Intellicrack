@@ -174,8 +174,7 @@ def run_gpu_accelerated_analysis(app: object, binary_data: bytes) -> dict[str, A
                     data_mb = perf_info["data_processed_mb"]
                     if isinstance(data_mb, (int, float)) and total_gpu_time > 0:
                         app.update_output.emit(
-                            f"[GPU] Processed {data_mb:.1f} MB "
-                            f"at {data_mb / total_gpu_time:.1f} MB/s",
+                            f"[GPU] Processed {data_mb:.1f} MB at {data_mb / total_gpu_time:.1f} MB/s",
                         )
 
     except ImportError as e:

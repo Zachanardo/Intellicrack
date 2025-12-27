@@ -29,14 +29,15 @@ import tempfile
 import webbrowser
 from datetime import datetime
 from pathlib import Path
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from intellicrack.utils.logger import logger
 from intellicrack.utils.subprocess_security import secure_run
 
+
 if TYPE_CHECKING:
-    from PyQt6.QtWidgets import QWidget
     from jinja2 import Environment, Template
+    from PyQt6.QtWidgets import QWidget
 else:
     QWidget = object
     Environment = object
@@ -161,10 +162,7 @@ class ReportGenerator:
                 "<h2>Binary Information</h2>",
                 "<table>",
             ))
-            html_parts.extend(
-                f"<tr><td><strong>{key}:</strong></td><td>{value}</td></tr>"
-                for key, value in data["binary_info"].items()
-            )
+            html_parts.extend(f"<tr><td><strong>{key}:</strong></td><td>{value}</td></tr>" for key, value in data["binary_info"].items())
             html_parts.extend(("</table>", "</section>"))
         # Add protection analysis
         if "protections" in data:
@@ -209,13 +207,11 @@ class ReportGenerator:
 
         # Add recommendations
         if "recommendations" in data:
-            html_parts.extend(
-                (
-                    "<section class='recommendations'>",
-                    "<h2>Security Recommendations</h2>",
-                    "<ol>",
-                )
-            )
+            html_parts.extend((
+                "<section class='recommendations'>",
+                "<h2>Security Recommendations</h2>",
+                "<ol>",
+            ))
             html_parts.extend(f"<li>{rec}</li>" for rec in data["recommendations"])
             html_parts.extend(("</ol>", "</section>"))
         html_parts.extend(["</div>", "</body>", "</html>"])
@@ -386,9 +382,7 @@ class ReportGenerator:
 
         if "recommendations" in data:
             lines.extend(("SECURITY RECOMMENDATIONS", "-" * 40))
-            lines.extend(
-                f"  {i}. {rec}" for i, rec in enumerate(data["recommendations"], 1)
-            )
+            lines.extend(f"  {i}. {rec}" for i, rec in enumerate(data["recommendations"], 1))
             lines.append("")
 
         lines.extend(("=" * 80, "END OF REPORT", "=" * 80))

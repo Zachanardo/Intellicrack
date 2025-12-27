@@ -28,7 +28,7 @@ import threading
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from ..core.exceptions import ConfigurationError
 from .background_loader import LoadingTask, QueuedProgressCallback, get_background_loader
@@ -2731,7 +2731,7 @@ Please analyze this script and return validation results in JSON format."""
 
             for llm_id in self.lazy_wrappers:
                 if llm_id.startswith(provider_value) and self.lazy_manager:
-                    return self.lazy_manager.get_model(llm_id)
+                    return cast("LLMBackend | None", self.lazy_manager.get_model(llm_id))
 
             logger.debug("No backend found for provider: %s", provider_value)
             return None

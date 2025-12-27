@@ -33,6 +33,7 @@ from typing import TYPE_CHECKING, Any
 import websockets
 from websockets.server import WebSocketServerProtocol
 
+
 if TYPE_CHECKING:
     from websockets.server import WebSocketServer
 

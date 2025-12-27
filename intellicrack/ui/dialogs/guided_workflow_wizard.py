@@ -47,6 +47,7 @@ from intellicrack.handlers.pyqt6_handler import (
 from intellicrack.utils.logger import logger
 from intellicrack.utils.resource_helper import get_resource_path
 
+
 if TYPE_CHECKING:
     from typing import Protocol
 
@@ -173,9 +174,7 @@ class GuidedWorkflowWizard(QWizard):
             layout.addWidget(image_label)
 
         # Add spacer
-        layout.addItem(
-            QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
-        )
+        layout.addItem(QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding))
 
         page.setLayout(layout)
         return page
@@ -224,9 +223,7 @@ class GuidedWorkflowWizard(QWizard):
         layout.addWidget(hint_label)
 
         # Add spacer
-        layout.addItem(
-            QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
-        )
+        layout.addItem(QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding))
 
         # Register fields
         page.registerField("binary_path*", self.file_path_edit)
@@ -290,9 +287,7 @@ class GuidedWorkflowWizard(QWizard):
         layout.addWidget(hint_label)
 
         # Add spacer
-        layout.addItem(
-            QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
-        )
+        layout.addItem(QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding))
 
         # Register fields
         page.registerField("detect_commercial", self.detect_commercial_cb)
@@ -363,9 +358,7 @@ class GuidedWorkflowWizard(QWizard):
         layout.addWidget(advanced_group)
 
         # Add spacer
-        layout.addItem(
-            QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
-        )
+        layout.addItem(QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding))
 
         # Register fields
         page.registerField("static_analysis", self.static_analysis_cb)
@@ -437,9 +430,7 @@ class GuidedWorkflowWizard(QWizard):
         layout.addWidget(targets_group)
 
         # Add spacer
-        layout.addItem(
-            QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
-        )
+        layout.addItem(QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding))
 
         # Register fields
         page.registerField("auto_patch", self.auto_patch_cb)
@@ -517,9 +508,7 @@ class GuidedWorkflowWizard(QWizard):
         layout.addWidget(tools_group)
 
         # Add spacer
-        layout.addItem(
-            QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
-        )
+        layout.addItem(QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding))
 
         # Register fields
         page.registerField("cfg_analysis", self.cfg_analysis_cb)
@@ -585,9 +574,7 @@ class GuidedWorkflowWizard(QWizard):
         layout.addWidget(exploit_group)
 
         # Add spacer
-        layout.addItem(
-            QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
-        )
+        layout.addItem(QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding))
 
         # Register fields
         page.registerField("static_vuln_scan", self.static_vuln_scan_cb)
@@ -649,9 +636,7 @@ class GuidedWorkflowWizard(QWizard):
         layout.addWidget(hint_label)
 
         # Add spacer
-        layout.addItem(
-            QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
-        )
+        layout.addItem(QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding))
 
         # Register fields
         page.registerField("traffic_capture", self.traffic_capture_cb)
@@ -718,9 +703,7 @@ class GuidedWorkflowWizard(QWizard):
         layout.addWidget(processing_group)
 
         # Add spacer
-        layout.addItem(
-            QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
-        )
+        layout.addItem(QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding))
 
         # Register fields
         page.registerField("ai_comprehensive", self.ai_comprehensive_cb)
@@ -1018,53 +1001,53 @@ class GuidedWorkflowWizard(QWizard):
             return
 
         if hasattr(self._parent_widget, "binary_path"):
-            setattr(self._parent_widget, "binary_path", binary_path_value)
+            self._parent_widget.binary_path = binary_path_value
 
         if hasattr(self._parent_widget, "update_output"):
-            update_output_attr = getattr(self._parent_widget, "update_output")
+            update_output_attr = self._parent_widget.update_output
             if hasattr(update_output_attr, "emit"):
                 update_output_attr.emit(f"[Wizard] Set binary path: {binary_path_value}")
 
         if hasattr(self._parent_widget, "load_binary"):
-            load_binary_method = getattr(self._parent_widget, "load_binary")
+            load_binary_method = self._parent_widget.load_binary
             if callable(load_binary_method):
                 load_binary_method(binary_path_value)
 
         if hasattr(self._parent_widget, "update_output"):
-            update_output_attr = getattr(self._parent_widget, "update_output")
+            update_output_attr = self._parent_widget.update_output
             if hasattr(update_output_attr, "emit"):
                 update_output_attr.emit("[Wizard] Configured analysis options")
 
         analysis_settings = settings.get("analysis")
-        if isinstance(analysis_settings, dict) and analysis_settings.get("static") and hasattr(
-            self._parent_widget, "run_static_analysis"
-        ):
+        if isinstance(analysis_settings, dict) and analysis_settings.get("static") and hasattr(self._parent_widget, "run_static_analysis"):
             if hasattr(self._parent_widget, "update_output"):
-                update_output_attr = getattr(self._parent_widget, "update_output")
+                update_output_attr = self._parent_widget.update_output
                 if hasattr(update_output_attr, "emit"):
                     update_output_attr.emit("[Wizard] Starting static analysis...")
-            run_static = getattr(self._parent_widget, "run_static_analysis")
+            run_static = self._parent_widget.run_static_analysis
             if callable(run_static):
                 run_static()
 
-        if isinstance(analysis_settings, dict) and analysis_settings.get("dynamic") and hasattr(
-            self._parent_widget, "run_dynamic_analysis"
+        if (
+            isinstance(analysis_settings, dict)
+            and analysis_settings.get("dynamic")
+            and hasattr(self._parent_widget, "run_dynamic_analysis")
         ):
             if hasattr(self._parent_widget, "update_output"):
-                update_output_attr = getattr(self._parent_widget, "update_output")
+                update_output_attr = self._parent_widget.update_output
                 if hasattr(update_output_attr, "emit"):
                     update_output_attr.emit("[Wizard] Starting dynamic analysis...")
-            run_dynamic = getattr(self._parent_widget, "run_dynamic_analysis")
+            run_dynamic = self._parent_widget.run_dynamic_analysis
             if callable(run_dynamic):
                 run_dynamic()
 
         if hasattr(self._parent_widget, "switch_tab"):
-            switch_tab_attr = getattr(self._parent_widget, "switch_tab")
+            switch_tab_attr = self._parent_widget.switch_tab
             if hasattr(switch_tab_attr, "emit"):
                 switch_tab_attr.emit(1)
 
         if hasattr(self._parent_widget, "update_output"):
-            update_output_attr = getattr(self._parent_widget, "update_output")
+            update_output_attr = self._parent_widget.update_output
             if hasattr(update_output_attr, "emit"):
                 update_output_attr.emit("[Wizard] Guided workflow completed")
 

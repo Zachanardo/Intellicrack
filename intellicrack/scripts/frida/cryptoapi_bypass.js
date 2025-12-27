@@ -10,8 +10,8 @@ const MAX_LOG = 1000;
 function log(message, level = 'info') {
     const entry = {
         timestamp: new Date().toISOString(),
-        level: level,
-        message: message,
+        level,
+        message,
     };
     send({ type: 'log', data: entry });
     activity.push(entry);
@@ -25,9 +25,7 @@ function logError(message) {
 }
 
 const crypt32 = Process.findModuleByName('crypt32.dll');
-if (!crypt32) {
-    logError('crypt32.dll module not found');
-} else {
+if (crypt32) {
     log(`crypt32.dll found at: ${crypt32.base}`);
 
     try {
@@ -37,7 +35,7 @@ if (!crypt32) {
         );
         if (CertVerifyCertificateChainPolicy) {
             Interceptor.attach(CertVerifyCertificateChainPolicy, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const pszPolicyOID = args[0];
                     const pChainContext = args[1];
                     const _pPolicyPara = args[2];
@@ -50,7 +48,7 @@ if (!crypt32) {
                         try {
                             const oidStr = pszPolicyOID.readAnsiString();
                             log(`CertVerifyCertificateChainPolicy: Policy OID="${oidStr}"`);
-                        } catch (_e) {
+                        } catch {
                             log('CertVerifyCertificateChainPolicy: Unable to read policy OID');
                         }
                     }
@@ -59,14 +57,14 @@ if (!crypt32) {
                     this.pChainContext = pChainContext;
                     this.policyOID = policyOID;
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     const success = retval.toInt32();
 
                     if (!this.pPolicyStatus.isNull()) {
                         try {
                             const dwErrorOffset = Process.pointerSize === 8 ? 0x08 : 0x04;
                             const lChainIndexOffset = Process.pointerSize === 8 ? 0x10 : 0x08;
-                            const lElementIndexOffset = Process.pointerSize === 8 ? 0x18 : 0x0c;
+                            const lElementIndexOffset = Process.pointerSize === 8 ? 0x18 : 0x0C;
 
                             const originalError = this.pPolicyStatus.add(dwErrorOffset).readU32();
                             const originalChainIndex = this.pPolicyStatus
@@ -88,7 +86,7 @@ if (!crypt32) {
                                 const chainInfo = {
                                     timestamp: new Date().toISOString(),
                                     policyOID: this.policyOID,
-                                    originalError: originalError,
+                                    originalError,
                                     chainIndex: originalChainIndex,
                                     elementIndex: originalElementIndex,
                                     bypassed: true,
@@ -99,8 +97,8 @@ if (!crypt32) {
                                 }
                                 send({ type: 'certificate_chain', data: chainInfo });
                             }
-                        } catch (e) {
-                            logError(`Failed to modify pPolicyStatus: ${e.message}`);
+                        } catch (error) {
+                            logError(`Failed to modify pPolicyStatus: ${error.message}`);
                         }
                     }
 
@@ -114,8 +112,8 @@ if (!crypt32) {
             });
             log('Successfully hooked CertVerifyCertificateChainPolicy');
         }
-    } catch (e) {
-        logError(`Failed to hook CertVerifyCertificateChainPolicy: ${e.message}`);
+    } catch (error) {
+        logError(`Failed to hook CertVerifyCertificateChainPolicy: ${error.message}`);
     }
 
     try {
@@ -125,7 +123,7 @@ if (!crypt32) {
         );
         if (CertGetCertificateChain) {
             Interceptor.attach(CertGetCertificateChain, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const _hChainEngine = args[0];
                     const _pCertContext = args[1];
                     const _pTime = args[2];
@@ -140,7 +138,7 @@ if (!crypt32) {
                     this.ppChainContext = ppChainContext;
                     this.dwFlags = dwFlags;
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     const success = retval.toInt32();
 
                     if (success === 0) {
@@ -153,9 +151,11 @@ if (!crypt32) {
                             try {
                                 const existingPtr = this.ppChainContext.readPointer();
                                 if (existingPtr.isNull()) {
-                                    const chainSize = 0x100;
+                                    const chainSize = 0x1_00;
                                     const chainMemory = Memory.alloc(chainSize);
-                                    chainMemory.writeByteArray(new Array(chainSize).fill(0));
+                                    chainMemory.writeByteArray(
+                                        Array.from({ length: chainSize }).fill(0)
+                                    );
 
                                     const cbSizeOffset = 0;
                                     chainMemory.add(cbSizeOffset).writeU32(chainSize);
@@ -165,8 +165,8 @@ if (!crypt32) {
                                         'CertGetCertificateChain: Allocated synthetic chain context'
                                     );
                                 }
-                            } catch (e) {
-                                logError(`Failed to create chain context: ${e.message}`);
+                            } catch (error) {
+                                logError(`Failed to create chain context: ${error.message}`);
                             }
                         }
                     } else {
@@ -184,8 +184,8 @@ if (!crypt32) {
                                     };
                                     send({ type: 'certificate_chain_built', data: chainInfo });
                                 }
-                            } catch (e) {
-                                logError(`Failed to read chain context: ${e.message}`);
+                            } catch (error) {
+                                logError(`Failed to read chain context: ${error.message}`);
                             }
                         }
                     }
@@ -193,8 +193,8 @@ if (!crypt32) {
             });
             log('Successfully hooked CertGetCertificateChain');
         }
-    } catch (e) {
-        logError(`Failed to hook CertGetCertificateChain: ${e.message}`);
+    } catch (error) {
+        logError(`Failed to hook CertGetCertificateChain: ${error.message}`);
     }
 
     try {
@@ -204,7 +204,7 @@ if (!crypt32) {
         );
         if (CertFreeCertificateChain) {
             Interceptor.attach(CertFreeCertificateChain, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const pChainContext = args[0];
 
                     if (!pChainContext.isNull()) {
@@ -212,7 +212,7 @@ if (!crypt32) {
                         this.pChainContext = pChainContext;
                     }
                 },
-                onLeave: function (_retval) {
+                onLeave(_retval) {
                     if (this.pChainContext) {
                         log('CertFreeCertificateChain: Chain freed successfully');
                     }
@@ -220,8 +220,8 @@ if (!crypt32) {
             });
             log('Successfully hooked CertFreeCertificateChain');
         }
-    } catch (e) {
-        logError(`Failed to hook CertFreeCertificateChain: ${e.message}`);
+    } catch (error) {
+        logError(`Failed to hook CertFreeCertificateChain: ${error.message}`);
     }
 
     try {
@@ -231,14 +231,14 @@ if (!crypt32) {
         );
         if (CertCreateCertificateChainEngine) {
             Interceptor.attach(CertCreateCertificateChainEngine, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const _pConfig = args[0];
                     const phChainEngine = args[1];
 
                     log('CertCreateCertificateChainEngine: Creating custom chain engine');
                     this.phChainEngine = phChainEngine;
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     const success = retval.toInt32();
                     if (success === 0) {
                         log('CertCreateCertificateChainEngine: Failed, forcing TRUE');
@@ -248,13 +248,13 @@ if (!crypt32) {
                             try {
                                 const existingHandle = this.phChainEngine.readPointer();
                                 if (existingHandle.isNull()) {
-                                    this.phChainEngine.writePointer(ptr(0xdeadbeef));
+                                    this.phChainEngine.writePointer(ptr(0xDE_AD_BE_EF));
                                     log(
                                         'CertCreateCertificateChainEngine: Created synthetic engine handle'
                                     );
                                 }
-                            } catch (e) {
-                                logError(`Failed to create engine handle: ${e.message}`);
+                            } catch (error) {
+                                logError(`Failed to create engine handle: ${error.message}`);
                             }
                         }
                     } else {
@@ -264,9 +264,11 @@ if (!crypt32) {
             });
             log('Successfully hooked CertCreateCertificateChainEngine');
         }
-    } catch (e) {
-        logError(`Failed to hook CertCreateCertificateChainEngine: ${e.message}`);
+    } catch (error) {
+        logError(`Failed to hook CertCreateCertificateChainEngine: ${error.message}`);
     }
+} else {
+    logError('crypt32.dll module not found');
 }
 
 const bcrypt = Process.findModuleByName('bcrypt.dll');
@@ -280,7 +282,7 @@ if (bcrypt) {
         );
         if (BCryptVerifySignature) {
             Interceptor.attach(BCryptVerifySignature, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const hKey = args[0];
                     const _pPaddingInfo = args[1];
                     const _pbHash = args[2];
@@ -297,27 +299,27 @@ if (bcrypt) {
                 onLeave: retval => {
                     const status = retval.toInt32();
 
-                    if (status !== 0) {
+                    if (status === 0) {
+                        log('BCryptVerifySignature: Succeeded');
+                    } else {
                         log(
                             `BCryptVerifySignature: Failed with status=0x${status.toString(16)}, forcing success (STATUS_SUCCESS = 0)`
                         );
                         retval.replace(ptr(0));
-                    } else {
-                        log('BCryptVerifySignature: Succeeded');
                     }
                 },
             });
             log('Successfully hooked BCryptVerifySignature');
         }
-    } catch (e) {
-        logError(`Failed to hook BCryptVerifySignature: ${e.message}`);
+    } catch (error) {
+        logError(`Failed to hook BCryptVerifySignature: ${error.message}`);
     }
 
     try {
         const BCryptHashData = Module.findExportByName('bcrypt.dll', 'BCryptHashData');
         if (BCryptHashData) {
             Interceptor.attach(BCryptHashData, {
-                onEnter: function (args) {
+                onEnter(args) {
                     const _hHash = args[0];
                     const _pbInput = args[1];
                     const cbInput = args[2].toInt32();
@@ -336,8 +338,8 @@ if (bcrypt) {
             });
             log('Successfully hooked BCryptHashData');
         }
-    } catch (e) {
-        logError(`Failed to hook BCryptHashData: ${e.message}`);
+    } catch (error) {
+        logError(`Failed to hook BCryptHashData: ${error.message}`);
     }
 } else {
     log('bcrypt.dll not found (may not be loaded yet)');

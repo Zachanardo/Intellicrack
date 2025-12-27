@@ -427,7 +427,7 @@ class FridaScriptManager:
 
             # Set up message handler
             def on_message(message: frida.core.ScriptPayloadMessage | frida.core.ScriptErrorMessage, data: bytes | None) -> None:
-                self._handle_message(result, cast(dict[str, Any], message), data, output_callback)
+                self._handle_message(result, cast("dict[str, Any]", message), data, output_callback)
 
             script.on("message", on_message)
             script.load()

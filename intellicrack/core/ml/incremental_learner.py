@@ -31,6 +31,7 @@ from numpy.typing import NDArray
 from intellicrack.core.ml.feature_extraction import BinaryFeatureExtractor
 from intellicrack.core.ml.protection_classifier import ProtectionClassifier
 
+
 if TYPE_CHECKING:
     from sklearn.ensemble import RandomForestClassifier
     from sklearn.preprocessing import LabelEncoder, StandardScaler
@@ -239,11 +240,7 @@ class IncrementalLearner:
             "is_verified": sample.source in ["manual", "verified"],
         }
 
-        if (
-            self.classifier.model is not None
-            and self.classifier.scaler is not None
-            and self.classifier.label_encoder is not None
-        ):
+        if self.classifier.model is not None and self.classifier.scaler is not None and self.classifier.label_encoder is not None:
             try:
                 feature_vector = sample.feature_vector.reshape(1, -1)
                 scaled_features = self.classifier.scaler.transform(feature_vector)

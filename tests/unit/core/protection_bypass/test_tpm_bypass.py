@@ -10,14 +10,26 @@ import time
 import unittest
 from unittest import TestCase
 from typing import Dict, List, Optional
+import pytest
 
-from intellicrack.core.protection_bypass.tpm_bypass import (
-    TPMBypassEngine,
-    TPM2Algorithm,
-    TPM2CommandCode,
-    PCRBank,
-    AttestationData
-)
+try:
+    from intellicrack.core.protection_bypass.tpm_bypass import (
+        TPMBypassEngine,
+        TPM2Algorithm,
+        TPM2CommandCode,
+        PCRBank,
+        AttestationData
+    )
+    MODULE_AVAILABLE = True
+except ImportError:
+    TPMBypassEngine = None
+    TPM2Algorithm = None
+    TPM2CommandCode = None
+    PCRBank = None
+    AttestationData = None
+    MODULE_AVAILABLE = False
+
+pytestmark = pytest.mark.skipif(not MODULE_AVAILABLE, reason="Module not available")
 
 
 class TestTPMBypassRealWorld(TestCase):

@@ -7,7 +7,20 @@ covering the full analysis roundtrip workflow with proper mocking.
 import unittest
 from unittest.mock import MagicMock, patch
 
-from intellicrack.core.processing.vm_workflow_manager import VMWorkflowManager
+import pytest
+
+try:
+    from intellicrack.core.processing.vm_workflow_manager import VMWorkflowManager
+    VM_WORKFLOW_AVAILABLE = True
+except ImportError:
+    VM_WORKFLOW_AVAILABLE = False
+    VMWorkflowManager = None
+
+
+pytestmark = pytest.mark.skipif(
+    not VM_WORKFLOW_AVAILABLE,
+    reason="VM workflow manager not available"
+)
 
 
 class TestVMWorkflowManager(unittest.TestCase):

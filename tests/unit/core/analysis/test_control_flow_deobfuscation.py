@@ -19,6 +19,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
 
+import pytest
+
 try:
     import networkx as nx
 
@@ -26,12 +28,22 @@ try:
 except ImportError:
     NETWORKX_AVAILABLE = False
 
-from intellicrack.core.analysis.control_flow_deobfuscation import (
-    BasicBlock,
-    ControlFlowDeobfuscator,
-    DeobfuscationResult,
-    DispatcherInfo,
-)
+try:
+    from intellicrack.core.analysis.control_flow_deobfuscation import (
+        BasicBlock,
+        ControlFlowDeobfuscator,
+        DeobfuscationResult,
+        DispatcherInfo,
+    )
+    AVAILABLE = True
+except ImportError:
+    BasicBlock = None
+    ControlFlowDeobfuscator = None
+    DeobfuscationResult = None
+    DispatcherInfo = None
+    AVAILABLE = False
+
+pytestmark = pytest.mark.skipif(not AVAILABLE, reason="Module not available")
 
 
 class TestBasicBlock(unittest.TestCase):

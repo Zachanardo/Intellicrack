@@ -6,8 +6,8 @@ const MAX_LOG = 1000;
 function log(message, level = 'info') {
     const entry = {
         timestamp: new Date().toISOString(),
-        level: level,
-        message: message,
+        level,
+        message,
     };
     send({ type: 'log', data: entry });
     activity.push(entry);
@@ -20,10 +20,7 @@ function logError(message) {
     log(message, 'error');
 }
 
-if (!Java.available) {
-    logError('Java runtime not available - not an Android app');
-    send({ type: 'bypass_failure', platform: 'Android', reason: 'Java not available' });
-} else {
+if (Java.available) {
     log('Java runtime detected - initializing Android certificate pinning bypass');
 
     Java.perform(() => {
@@ -42,7 +39,7 @@ if (!Java.available) {
                         const _cert = peerCertificates.get(i);
                         const certInfo = {
                             timestamp: new Date().toISOString(),
-                            hostname: hostname,
+                            hostname,
                             certificateIndex: i,
                             bypassed: true,
                             method: 'OkHttp3 CertificatePinner',
@@ -51,15 +48,15 @@ if (!Java.available) {
                         if (pinnedCerts.length > MAX_LOG) {
                             pinnedCerts.shift();
                         }
-                    } catch (e) {
-                        logError(`Failed to extract certificate info: ${e.message}`);
+                    } catch (error) {
+                        logError(`Failed to extract certificate info: ${error.message}`);
                     }
                 }
 
-                send({ type: 'pinning_bypass', method: 'OkHttp3', hostname: hostname });
+                send({ type: 'pinning_bypass', method: 'OkHttp3', hostname });
             };
             log('Successfully hooked OkHttp3 CertificatePinner.check');
-        } catch (_e) {
+        } catch {
             log('OkHttp3 CertificatePinner not found (not using OkHttp or different version)');
         }
 
@@ -78,10 +75,10 @@ if (!Java.available) {
 
                 const chainInfo = {
                     timestamp: new Date().toISOString(),
-                    host: host,
+                    host,
                     untrustedChainLength: untrustedChain.length,
                     trustAnchorChainLength: trustAnchorChain ? trustAnchorChain.length : 0,
-                    clientAuth: clientAuth,
+                    clientAuth,
                     bypassed: true,
                     method: 'TrustManagerImpl',
                 };
@@ -90,12 +87,12 @@ if (!Java.available) {
                     bypassedConnections.shift();
                 }
 
-                send({ type: 'trust_manager_bypass', host: host });
+                send({ type: 'trust_manager_bypass', host });
                 return untrustedChain;
             };
             log('Successfully hooked TrustManagerImpl.verifyChain');
-        } catch (e) {
-            logError(`Failed to hook TrustManagerImpl: ${e.message}`);
+        } catch (error) {
+            logError(`Failed to hook TrustManagerImpl: ${error.message}`);
         }
 
         try {
@@ -108,7 +105,7 @@ if (!Java.available) {
                 send({ type: 'network_security_bypass' });
             };
             log('Successfully hooked NetworkSecurityTrustManager.checkPins');
-        } catch (_e) {
+        } catch {
             log('NetworkSecurityTrustManager not found or different API level');
         }
 
@@ -139,8 +136,8 @@ if (!Java.available) {
 
                                 const certInfo = {
                                     timestamp: new Date().toISOString(),
-                                    className: className,
-                                    authType: authType,
+                                    className,
+                                    authType,
                                     chainLength: chain.length,
                                     bypassed: true,
                                     method: 'X509TrustManager',
@@ -150,7 +147,7 @@ if (!Java.available) {
                                     bypassedConnections.shift();
                                 }
 
-                                send({ type: 'x509_bypass', className: className });
+                                send({ type: 'x509_bypass', className });
                             };
                         }
 
@@ -169,19 +166,19 @@ if (!Java.available) {
                                 log(
                                     `X509TrustManager.checkServerTrusted (with host): Bypassing for host="${host}"`
                                 );
-                                send({ type: 'x509_bypass_with_host', host: host });
+                                send({ type: 'x509_bypass_with_host', host });
                             };
                         }
-                    } catch (e) {
-                        logError(`Failed to hook X509TrustManager instance: ${e.message}`);
+                    } catch (error) {
+                        logError(`Failed to hook X509TrustManager instance: ${error.message}`);
                     }
                 },
                 onComplete: () => {
                     log('Completed X509TrustManager enumeration and hooking');
                 },
             });
-        } catch (e) {
-            logError(`Failed to enumerate X509TrustManager implementations: ${e.message}`);
+        } catch (error) {
+            logError(`Failed to enumerate X509TrustManager implementations: ${error.message}`);
         }
 
         try {
@@ -204,7 +201,7 @@ if (!Java.available) {
                     },
                     checkServerTrusted: (_chain, authType) => {
                         log('CustomTrustManager.checkServerTrusted: Accepting all certificates');
-                        send({ type: 'custom_trust_manager_bypass', authType: authType });
+                        send({ type: 'custom_trust_manager_bypass', authType });
                     },
                     getAcceptedIssuers: () =>
                         Java.array('Ljava.security.cert.X509Certificate;', []),
@@ -226,8 +223,8 @@ if (!Java.available) {
                 originalInit.call(this, keyManagers, customTrustManagers, secureRandom);
             };
             log('Successfully hooked SSLContext.init and registered CustomTrustManager');
-        } catch (e) {
-            logError(`Failed to hook SSLContext.init: ${e.message}`);
+        } catch (error) {
+            logError(`Failed to hook SSLContext.init: ${error.message}`);
         }
 
         try {
@@ -252,8 +249,8 @@ if (!Java.available) {
                 handler.proceed();
             };
             log('Successfully hooked WebViewClient.onReceivedSslError');
-        } catch (e) {
-            logError(`Failed to hook WebViewClient: ${e.message}`);
+        } catch (error) {
+            logError(`Failed to hook WebViewClient: ${error.message}`);
         }
 
         try {
@@ -273,20 +270,20 @@ if (!Java.available) {
                                 log(
                                     `HostnameVerifier.verify: Auto-verifying hostname="${hostname}"`
                                 );
-                                send({ type: 'hostname_verifier_bypass', hostname: hostname });
+                                send({ type: 'hostname_verifier_bypass', hostname });
                                 return true;
                             };
                         }
-                    } catch (e) {
-                        logError(`Failed to hook HostnameVerifier instance: ${e.message}`);
+                    } catch (error) {
+                        logError(`Failed to hook HostnameVerifier instance: ${error.message}`);
                     }
                 },
                 onComplete: () => {
                     log('Completed HostnameVerifier enumeration and hooking');
                 },
             });
-        } catch (e) {
-            logError(`Failed to enumerate HostnameVerifier implementations: ${e.message}`);
+        } catch (error) {
+            logError(`Failed to enumerate HostnameVerifier implementations: ${error.message}`);
         }
 
         try {
@@ -297,18 +294,21 @@ if (!Java.available) {
                 send({ type: 'appcelerator_bypass' });
             };
             log('Successfully hooked Appcelerator PinningTrustManager');
-        } catch (_e) {
+        } catch {
             log('Appcelerator PinningTrustManager not found');
         }
 
         try {
             const _WorkManagerUtils = Java.use('androidx.work.impl.utils.WorkManagerUtils');
             log('WorkManager detected - additional SSL handling may be needed');
-        } catch (_e) {}
+        } catch {}
 
         log('Android certificate pinning bypass initialization complete');
         send({ type: 'bypass_success', platform: 'Android' });
     });
+} else {
+    logError('Java runtime not available - not an Android app');
+    send({ type: 'bypass_failure', platform: 'Android', reason: 'Java not available' });
 }
 
 rpc.exports = {

@@ -183,25 +183,23 @@ class ConcolicExecutionEngine:
 
             # Process exploration results from states
             paths_explored: int = len(states)
-            target_reached: bool = any(
-                getattr(state, 'pc', None) == target_address for state in states
-            )
+            target_reached: bool = any(getattr(state, "pc", None) == target_address for state in states)
 
             # Extract inputs from states
             inputs: list[dict[str, Any]] = []
             for state in states:
-                if hasattr(state, 'input_symbols') and isinstance(state.input_symbols, dict):
-                    stdin_data: Any = state.input_symbols.get('stdin')
+                if hasattr(state, "input_symbols") and isinstance(state.input_symbols, dict):
+                    stdin_data: Any = state.input_symbols.get("stdin")
                     if stdin_data:
                         if isinstance(stdin_data, bytes):
                             inputs.append({
                                 "stdin": stdin_data.hex(),
-                                "address": hex(getattr(state, 'pc', 0)),
+                                "address": hex(getattr(state, "pc", 0)),
                             })
                         elif isinstance(stdin_data, str):
                             inputs.append({
                                 "stdin": stdin_data.encode().hex(),
-                                "address": hex(getattr(state, 'pc', 0)),
+                                "address": hex(getattr(state, "pc", 0)),
                             })
 
             return {

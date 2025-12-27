@@ -23,6 +23,7 @@ from collections import defaultdict
 from collections.abc import Callable
 from typing import Any
 
+
 try:
     import capstone
 

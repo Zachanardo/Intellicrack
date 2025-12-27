@@ -79,7 +79,7 @@ const CertificatePinnerBypass = {
         quantumSafeCertificateValidationBypassEvents: 0,
     },
 
-    run: function () {
+    run() {
         send({
             type: 'status',
             target: 'certificate_pinner_bypass',
@@ -136,7 +136,7 @@ const CertificatePinnerBypass = {
     },
 
     // Platform detection
-    detectPlatform: function () {
+    detectPlatform() {
         this.platform = {
             windows: Process.platform === 'windows',
             android: Java.available && Process.platform === 'linux',
@@ -148,8 +148,8 @@ const CertificatePinnerBypass = {
         // Check for .NET
         Process.enumerateModules().forEach(function (module) {
             if (
-                module.name.toLowerCase().indexOf('clr.dll') !== -1 ||
-                module.name.toLowerCase().indexOf('coreclr.dll') !== -1
+                module.name.toLowerCase().includes('clr.dll')
+                || module.name.toLowerCase().includes('coreclr.dll')
             ) {
                 this.platform.dotnet = true;
             }
@@ -164,7 +164,7 @@ const CertificatePinnerBypass = {
     },
 
     // Windows certificate API hooks
-    hookWindowsCertificateAPIs: function () {
+    hookWindowsCertificateAPIs() {
         const self = this;
 
         // CertVerifyCertificateChainPolicy
@@ -200,12 +200,12 @@ const CertificatePinnerBypass = {
                     // Modify chain flags to disable revocation checking
                     if (args[3]) {
                         let flags = args[3].readU32();
-                        flags &= ~0x00001000; // Remove CERT_CHAIN_REVOCATION_CHECK_CHAIN
-                        flags &= ~0x00002000; // Remove CERT_CHAIN_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT
+                        flags &= ~0x00_00_10_00; // Remove CERT_CHAIN_REVOCATION_CHECK_CHAIN
+                        flags &= ~0x00_00_20_00; // Remove CERT_CHAIN_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT
                         args[3].writeU32(flags);
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (retval.toInt32() !== 0) {
                         // Modify chain context to indicate success
                         const chainContext = this.context.r9;
@@ -215,7 +215,7 @@ const CertificatePinnerBypass = {
                                 // TrustStatus is at offset 0x14
                                 const trustStatus = pChainContext.add(0x14);
                                 trustStatus.writeU32(0); // dwErrorStatus = 0
-                                trustStatus.add(4).writeU32(0x00000000); // dwInfoStatus = 0
+                                trustStatus.add(4).writeU32(0x00_00_00_00); // dwInfoStatus = 0
                             }
                         }
                         self.stats.validationsBypassed++;
@@ -257,7 +257,7 @@ const CertificatePinnerBypass = {
     },
 
     // WinHTTP certificate validation hooks
-    hookWinHTTPCertificateValidation: function () {
+    hookWinHTTPCertificateValidation() {
         const self = this;
 
         // WinHttpSetOption - disable certificate validation
@@ -271,16 +271,16 @@ const CertificatePinnerBypass = {
                     if (option === 31) {
                         let flags = args[2].readU32();
                         // Add ignore flags
-                        flags |= 0x00000100; // SECURITY_FLAG_IGNORE_UNKNOWN_CA
-                        flags |= 0x00000200; // SECURITY_FLAG_IGNORE_CERT_DATE_INVALID
-                        flags |= 0x00001000; // SECURITY_FLAG_IGNORE_CERT_CN_INVALID
-                        flags |= 0x00002000; // SECURITY_FLAG_IGNORE_CERT_WRONG_USAGE
+                        flags |= 0x00_00_01_00; // SECURITY_FLAG_IGNORE_UNKNOWN_CA
+                        flags |= 0x00_00_02_00; // SECURITY_FLAG_IGNORE_CERT_DATE_INVALID
+                        flags |= 0x00_00_10_00; // SECURITY_FLAG_IGNORE_CERT_CN_INVALID
+                        flags |= 0x00_00_20_00; // SECURITY_FLAG_IGNORE_CERT_WRONG_USAGE
                         args[2].writeU32(flags);
                         send({
                             type: 'bypass',
                             target: 'certificate_pinner_bypass',
                             action: 'modified_winhttp_security_flags',
-                            flags: flags,
+                            flags,
                         });
                     }
                 },
@@ -292,12 +292,12 @@ const CertificatePinnerBypass = {
         const winHttpQueryOption = Module.findExportByName('winhttp.dll', 'WinHttpQueryOption');
         if (winHttpQueryOption) {
             Interceptor.attach(winHttpQueryOption, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.option = args[1].toInt32();
                     this.buffer = args[2];
                     this.bufferLength = args[3];
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     // WINHTTP_OPTION_SERVER_CERT_CONTEXT
                     if (this.option === 78 && retval.toInt32() === 1) {
                         // Replace with trusted certificate
@@ -311,7 +311,7 @@ const CertificatePinnerBypass = {
     },
 
     // Schannel API hooks
-    hookSchannelAPIs: function () {
+    hookSchannelAPIs() {
         const self = this;
 
         // InitializeSecurityContext
@@ -322,9 +322,9 @@ const CertificatePinnerBypass = {
                     // Modify context requirements to disable cert validation
                     if (args[5]) {
                         let contextReq = args[5].readU32();
-                        contextReq &= ~0x00020000; // Remove ISC_REQ_MUTUAL_AUTH
-                        contextReq |= 0x00000002; // Add ISC_REQ_VALIDATE_CONTEXT
-                        contextReq |= 0x00100000; // Add ISC_REQ_MANUAL_CRED_VALIDATION
+                        contextReq &= ~0x00_02_00_00; // Remove ISC_REQ_MUTUAL_AUTH
+                        contextReq |= 0x00_00_00_02; // Add ISC_REQ_VALIDATE_CONTEXT
+                        contextReq |= 0x00_10_00_00; // Add ISC_REQ_MANUAL_CRED_VALIDATION
                         args[5].writeU32(contextReq);
                     }
                 },
@@ -342,11 +342,11 @@ const CertificatePinnerBypass = {
         const queryContextAttrs = Module.findExportByName('secur32.dll', 'QueryContextAttributesW');
         if (queryContextAttrs) {
             Interceptor.attach(queryContextAttrs, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.attribute = args[1].toInt32();
                     this.buffer = args[2];
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     // SECPKG_ATTR_REMOTE_CERT_CONTEXT
                     if (this.attribute === 0x53 && retval.toInt32() === 0) {
                         self.injectTrustedCertificate(this.buffer);
@@ -359,7 +359,7 @@ const CertificatePinnerBypass = {
     },
 
     // Android certificate pinning hooks
-    hookAndroidCertificatePinning: function () {
+    hookAndroidCertificatePinning() {
         if (!Java.available) {
             return;
         }
@@ -382,8 +382,8 @@ const CertificatePinnerBypass = {
                         target: 'certificate_pinner_bypass',
                         action: 'android_trust_manager_bypassed',
                         method: 'verifyChain',
-                        host: host,
-                        clientAuth: clientAuth,
+                        host,
+                        clientAuth,
                         hasOcspData: ocspData !== null,
                         hasTlsSctData: tlsSctData !== null,
                         trustAnchorCount: trustAnchorChain ? trustAnchorChain.length : 0,
@@ -406,8 +406,8 @@ const CertificatePinnerBypass = {
                         action: 'android_trust_manager_bypassed',
                         method: 'checkTrustedRecursive',
                         certsCount: certs ? certs.length : 0,
-                        host: host,
-                        clientAuth: clientAuth,
+                        host,
+                        clientAuth,
                         untrustedChainCount: untrustedChain ? untrustedChain.length : 0,
                         trustAnchorChainCount: trustAnchorChain ? trustAnchorChain.length : 0,
                         usedCount: used ? used.length : 0,
@@ -417,13 +417,13 @@ const CertificatePinnerBypass = {
                 };
 
                 this.stats.hooksInstalled += 2;
-            } catch (e) {
+            } catch (error) {
                 send({
                     type: 'debug',
                     target: 'certificate_pinner_bypass',
                     action: 'trust_manager_hook_failed',
-                    error: e.toString(),
-                    stack: e.stack || 'No stack trace',
+                    error: error.toString(),
+                    stack: error.stack || 'No stack trace',
                 });
             }
 
@@ -466,14 +466,14 @@ const CertificatePinnerBypass = {
                             }
 
                             this.stats.hooksInstalled += 3;
-                        } catch (e) {
+                        } catch (error) {
                             send({
                                 type: 'debug',
                                 target: 'certificate_pinner_bypass',
                                 action: 'custom_trust_manager_hook_failed',
-                                className: className,
-                                error: e.toString(),
-                                stack: e.stack || 'No stack trace',
+                                className,
+                                error: error.toString(),
+                                stack: error.stack || 'No stack trace',
                             });
                         }
                     }
@@ -491,7 +491,7 @@ const CertificatePinnerBypass = {
                     methods: {
                         verify: (hostname, session) => {
                             const sessionInfo = {
-                                hostname: hostname,
+                                hostname,
                                 protocol: session ? session.getProtocol() : 'unknown',
                                 cipherSuite: session ? session.getCipherSuite() : 'unknown',
                             };
@@ -515,7 +515,7 @@ const CertificatePinnerBypass = {
                                 const clazz = Java.use(className);
                                 clazz.verify.implementation = (hostname, session) => {
                                     const sessionData = {
-                                        hostname: hostname,
+                                        hostname,
                                         protocol: session ? session.getProtocol() : 'N/A',
                                         peerHost: session ? session.getPeerHost() : 'N/A',
                                     };
@@ -530,32 +530,32 @@ const CertificatePinnerBypass = {
                                     return true;
                                 };
                                 this.stats.hooksInstalled++;
-                            } catch (e) {
+                            } catch (error) {
                                 send({
                                     type: 'debug',
                                     target: 'certificate_pinner_bypass',
                                     action: 'custom_hostname_verifier_hook_failed',
                                     class_name: className,
-                                    error: e.toString(),
+                                    error: error.toString(),
                                 });
                             }
                         }
                     },
                     onComplete: () => {},
                 });
-            } catch (e) {
+            } catch (error) {
                 send({
                     type: 'error',
                     target: 'certificate_pinner_bypass',
                     action: 'failed_to_hook_hostname_verifier',
-                    error: e.toString(),
+                    error: error.toString(),
                 });
             }
         });
     },
 
     // OkHttp certificate pinning hooks
-    hookOkHttpPinning: function () {
+    hookOkHttpPinning() {
         if (!Java.available) {
             return;
         }
@@ -574,7 +574,7 @@ const CertificatePinnerBypass = {
                         target: 'certificate_pinner_bypass',
                         action: 'okhttp3_pinning_bypassed',
                         method: 'List overload',
-                        hostname: hostname,
+                        hostname,
                         certificateCount: peerCertificates ? peerCertificates.size() : 0,
                     });
                     this.stats.validationsBypassed++;
@@ -589,20 +589,20 @@ const CertificatePinnerBypass = {
                         target: 'certificate_pinner_bypass',
                         action: 'okhttp3_pinning_bypassed',
                         method: 'Certificate array overload',
-                        hostname: hostname,
+                        hostname,
                         certificateCount: peerCertificates ? peerCertificates.length : 0,
                     });
                     this.stats.validationsBypassed++;
                 };
 
                 this.stats.hooksInstalled += 2;
-            } catch (e) {
+            } catch (error) {
                 send({
                     type: 'debug',
                     target: 'certificate_pinner_bypass',
                     action: 'okhttp3_hook_failed',
-                    error: e.toString(),
-                    stack: e.stack || 'No stack trace',
+                    error: error.toString(),
+                    stack: error.stack || 'No stack trace',
                 });
             }
 
@@ -618,20 +618,20 @@ const CertificatePinnerBypass = {
                         type: 'bypass',
                         target: 'certificate_pinner_bypass',
                         action: 'okhttp2_pinning_bypassed',
-                        hostname: hostname,
+                        hostname,
                         certificateCount: peerCertificates ? peerCertificates.size() : 0,
                     });
                     this.stats.validationsBypassed++;
                 };
 
                 this.stats.hooksInstalled++;
-            } catch (e) {
+            } catch (error) {
                 send({
                     type: 'debug',
                     target: 'certificate_pinner_bypass',
                     action: 'okhttp2_hook_failed',
-                    error: e.toString(),
-                    stack: e.stack || 'No stack trace',
+                    error: error.toString(),
+                    stack: error.stack || 'No stack trace',
                 });
             }
 
@@ -650,7 +650,7 @@ const CertificatePinnerBypass = {
                                 target: 'certificate_pinner_bypass',
                                 action: 'trust_all_manager_check_client',
                                 chainLength: chain ? chain.length : 0,
-                                authType: authType,
+                                authType,
                             });
                         },
                         checkServerTrusted: (chain, authType) => {
@@ -659,7 +659,7 @@ const CertificatePinnerBypass = {
                                 target: 'certificate_pinner_bypass',
                                 action: 'trust_all_manager_check_server',
                                 chainLength: chain ? chain.length : 0,
-                                authType: authType,
+                                authType,
                             });
                         },
                         getAcceptedIssuers: () =>
@@ -679,20 +679,20 @@ const CertificatePinnerBypass = {
                 };
 
                 this.stats.hooksInstalled++;
-            } catch (e) {
+            } catch (error) {
                 send({
                     type: 'debug',
                     target: 'certificate_pinner_bypass',
                     action: 'retrofit_hook_failed',
-                    error: e.toString(),
-                    stack: e.stack || 'No stack trace',
+                    error: error.toString(),
+                    stack: error.stack || 'No stack trace',
                 });
             }
         });
     },
 
     // OpenSSL validation hooks
-    hookOpenSSLValidation: function () {
+    hookOpenSSLValidation() {
         // SSL_CTX_set_verify
         const ssl_ctx_set_verify = Module.findExportByName(null, 'SSL_CTX_set_verify');
         if (ssl_ctx_set_verify) {
@@ -774,7 +774,7 @@ const CertificatePinnerBypass = {
     },
 
     // .NET certificate validation hooks
-    hookDotNetCertificateValidation: function () {
+    hookDotNetCertificateValidation() {
         if (!this.platform.dotnet) {
             return;
         }
@@ -843,7 +843,7 @@ const CertificatePinnerBypass = {
     },
 
     // Java certificate validation hooks
-    hookJavaCertificateValidation: function () {
+    hookJavaCertificateValidation() {
         if (!Java.available) {
             return;
         }
@@ -882,7 +882,7 @@ const CertificatePinnerBypass = {
                                     action: 'java_trust_manager_bypassed',
                                     method: 'checkClientTrusted',
                                     chainLength: chain ? chain.length : 0,
-                                    authType: authType,
+                                    authType,
                                 });
                                 self.stats.validationsBypassed++;
                             },
@@ -893,7 +893,7 @@ const CertificatePinnerBypass = {
                                     action: 'java_trust_manager_bypassed',
                                     method: 'checkServerTrusted',
                                     chainLength: chain ? chain.length : 0,
-                                    authType: authType,
+                                    authType,
                                 });
                                 self.stats.validationsBypassed++;
                             },
@@ -909,12 +909,12 @@ const CertificatePinnerBypass = {
                 };
 
                 self.stats.hooksInstalled++;
-            } catch (e) {
+            } catch (error) {
                 send({
                     type: 'error',
                     target: 'certificate_pinner_bypass',
                     action: 'failed_to_hook_java_sslcontext',
-                    error: e.toString(),
+                    error: error.toString(),
                 });
             }
 
@@ -927,7 +927,7 @@ const CertificatePinnerBypass = {
                         type: 'bypass',
                         target: 'certificate_pinner_bypass',
                         action: 'java_https_hostname_verifier_intercepted',
-                        originalVerifier: verifier !== null ? verifier.$className : 'null',
+                        originalVerifier: verifier === null ? 'null' : verifier.$className,
                     });
 
                     const HostnameVerifier = Java.use('javax.net.ssl.HostnameVerifier');
@@ -937,7 +937,7 @@ const CertificatePinnerBypass = {
                         methods: {
                             verify: (hostname, session) => {
                                 const sessionData = {
-                                    hostname: hostname,
+                                    hostname,
                                     protocol: session ? session.getProtocol() : 'N/A',
                                     peerPort: session ? session.getPeerPort() : -1,
                                 };
@@ -957,19 +957,19 @@ const CertificatePinnerBypass = {
                 };
 
                 self.stats.hooksInstalled++;
-            } catch (e) {
+            } catch (error) {
                 send({
                     type: 'error',
                     target: 'certificate_pinner_bypass',
                     action: 'failed_to_hook_https_connection',
-                    error: e.toString(),
+                    error: error.toString(),
                 });
             }
         });
     },
 
     // iOS certificate validation hooks
-    hookiOSCertificateValidation: function () {
+    hookiOSCertificateValidation() {
         if (!ObjC.available) {
             return;
         }
@@ -995,8 +995,8 @@ const CertificatePinnerBypass = {
 
             // Hook delegate methods
             if (ObjC.classes.NSURLSessionDelegate) {
-                const origMethod =
-                    ObjC.classes.NSURLSessionDelegate[
+                const origMethod
+                    = ObjC.classes.NSURLSessionDelegate[
                         '- URLSession:didReceiveChallenge:completionHandler:'
                     ];
                 if (origMethod) {
@@ -1027,12 +1027,12 @@ const CertificatePinnerBypass = {
                     this.stats.hooksInstalled++;
                 }
             }
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'certificate_pinner_bypass',
                 action: 'failed_to_hook_nsurlsession',
-                error: e.toString(),
+                error: error.toString(),
             });
         }
 
@@ -1093,7 +1093,7 @@ const CertificatePinnerBypass = {
     },
 
     // Hook custom pinning implementations
-    hookCustomPinningImplementations: function () {
+    hookCustomPinningImplementations() {
         // Common function name patterns
         const patterns = [
             '*pin*cert*',
@@ -1107,14 +1107,14 @@ const CertificatePinnerBypass = {
         // Search for custom implementations
         Process.enumerateModules().forEach(module => {
             if (
-                module.name.toLowerCase().includes('app') ||
-                module.name.toLowerCase().includes('lib')
+                module.name.toLowerCase().includes('app')
+                || module.name.toLowerCase().includes('lib')
             ) {
                 module.enumerateExports().forEach(exp => {
                     const name = exp.name.toLowerCase();
 
                     patterns.forEach(pattern => {
-                        const regex = new RegExp(pattern.replace(/\*/g, '.*'));
+                        const regex = new RegExp(pattern.replaceAll('*', '.*'));
                         if (regex.test(name)) {
                             try {
                                 Interceptor.attach(exp.address, {
@@ -1133,14 +1133,14 @@ const CertificatePinnerBypass = {
                                     },
                                 });
                                 this.stats.hooksInstalled++;
-                            } catch (e) {
+                            } catch (error) {
                                 send({
                                     type: 'debug',
                                     target: 'certificate_pinner_bypass',
                                     action: 'custom_function_hook_failed',
                                     function_name: exp.name,
-                                    error: e.toString(),
-                                    stack: e.stack || 'No stack trace',
+                                    error: error.toString(),
+                                    stack: error.stack || 'No stack trace',
                                 });
                             }
                         }
@@ -1163,7 +1163,7 @@ const CertificatePinnerBypass = {
     },
 
     // Hook AFNetworking (iOS)
-    hookAFNetworkingPinning: function () {
+    hookAFNetworkingPinning() {
         if (!ObjC.available) {
             return;
         }
@@ -1217,18 +1217,18 @@ const CertificatePinnerBypass = {
 
                 this.stats.hooksInstalled += 3;
             }
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'certificate_pinner_bypass',
                 action: 'failed_to_hook_afnetworking',
-                error: e.toString(),
+                error: error.toString(),
             });
         }
     },
 
     // Conscrypt validation hooks (Android)
-    hookConscryptValidation: function () {
+    hookConscryptValidation() {
         if (!Java.available) {
             return;
         }
@@ -1243,7 +1243,7 @@ const CertificatePinnerBypass = {
                         type: 'bypass',
                         target: 'certificate_pinner_bypass',
                         action: 'android_conscrypt_chain_pinning_bypassed',
-                        hostname: hostname,
+                        hostname,
                         chainLength: chain ? chain.length : 0,
                     });
                     this.stats.validationsBypassed++;
@@ -1255,7 +1255,7 @@ const CertificatePinnerBypass = {
                         type: 'bypass',
                         target: 'certificate_pinner_bypass',
                         action: 'android_conscrypt_chain_valid_bypassed',
-                        hostname: hostname,
+                        hostname,
                         chainLength: chain ? chain.length : 0,
                     });
                     this.stats.validationsBypassed++;
@@ -1263,13 +1263,13 @@ const CertificatePinnerBypass = {
                 };
 
                 this.stats.hooksInstalled += 2;
-            } catch (e) {
+            } catch (error) {
                 send({
                     type: 'debug',
                     target: 'certificate_pinner_bypass',
                     action: 'conscrypt_hook_failed',
-                    error: e.toString(),
-                    stack: e.stack || 'No stack trace',
+                    error: error.toString(),
+                    stack: error.stack || 'No stack trace',
                 });
             }
 
@@ -1300,13 +1300,13 @@ const CertificatePinnerBypass = {
                 };
 
                 this.stats.hooksInstalled++;
-            } catch (e) {
+            } catch (error) {
                 send({
                     type: 'debug',
                     target: 'certificate_pinner_bypass',
                     action: 'network_security_config_hook_failed',
-                    error: e.toString(),
-                    stack: e.stack || 'No stack trace',
+                    error: error.toString(),
+                    stack: error.stack || 'No stack trace',
                 });
             }
         });
@@ -1315,31 +1315,31 @@ const CertificatePinnerBypass = {
     // NEW 2024-2025 MODERN CERTIFICATE SECURITY BYPASS ENHANCEMENTS
 
     // 1. Certificate Transparency (CT) Logs Bypass
-    hookCertificateTransparencyLogsBypass: function () {
+    hookCertificateTransparencyLogsBypass() {
         const self = this;
 
         // Hook Chrome CT verification APIs
-        const chromeCTPattern =
-            Process.platform === 'windows'
+        const chromeCTPattern
+            = Process.platform === 'windows'
                 ? '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F9 48 8B DA 48 8B F1'
                 : '55 48 89 E5 41 57 41 56 53 48 83 EC 18 49 89 FE 49 89 F7';
 
         Process.enumerateModules().forEach(module => {
             if (
-                module.name.toLowerCase().includes('chrome') ||
-                module.name.toLowerCase().includes('cert') ||
-                module.name.toLowerCase().includes('ssl')
+                module.name.toLowerCase().includes('chrome')
+                || module.name.toLowerCase().includes('cert')
+                || module.name.toLowerCase().includes('ssl')
             ) {
                 try {
                     const matches = Memory.scanSync(module.base, module.size, chromeCTPattern);
                     matches.forEach(match => {
                         try {
                             Interceptor.attach(match.address, {
-                                onEnter: function (args) {
+                                onEnter(args) {
                                     this.ctContext = true;
                                     this.argsCount = args.length;
                                 },
-                                onLeave: function (retval) {
+                                onLeave(retval) {
                                     if (this.ctContext && retval.toInt32() === 0) {
                                         retval.replace(1); // Force CT validation success
                                         self.stats.certificateTransparencyBypassEvents++;
@@ -1354,23 +1354,23 @@ const CertificatePinnerBypass = {
                                 },
                             });
                             self.stats.hooksInstalled++;
-                        } catch (e) {
+                        } catch (error) {
                             send({
                                 type: 'debug',
                                 target: 'certificate_pinner_bypass',
                                 action: 'hook_failed',
                                 module: module.name,
-                                error: e.toString(),
-                                stack: e.stack || 'No stack trace',
+                                error: error.toString(),
+                                stack: error.stack || 'No stack trace',
                             });
                         }
                     });
-                } catch (e) {
+                } catch (error) {
                     send({
                         type: 'debug',
                         target: 'certificate_pinner_bypass',
                         action: 'hook_failed',
-                        error: e.toString(),
+                        error: error.toString(),
                     });
                 }
             }
@@ -1393,7 +1393,7 @@ const CertificatePinnerBypass = {
                             cert_ptr: cert.toString(),
                             issuer_ptr: issuer.toString(),
                             log_id_ptr: log_id.toString(),
-                            signature_type: signature_type,
+                            signature_type,
                         });
                         return 1; // SCT_VALIDATION_STATUS_VALID
                     },
@@ -1411,25 +1411,25 @@ const CertificatePinnerBypass = {
                     const CTPolicyManager = Java.use(
                         'android.security.net.config.CertificateTransparencyPolicy'
                     );
-                    CTPolicyManager.isCertificateTransparencyVerificationRequired.implementation =
-                        hostname => {
+                    CTPolicyManager.isCertificateTransparencyVerificationRequired.implementation
+                        = hostname => {
                             self.stats.certificateTransparencyBypassEvents++;
                             send({
                                 type: 'bypass',
                                 target: 'certificate_pinner_bypass',
                                 action: 'certificate_transparency_bypassed',
                                 method: 'android_ct_policy_disabled',
-                                hostname: hostname,
+                                hostname,
                             });
                             return false;
                         };
                     self.stats.hooksInstalled++;
-                } catch (e) {
+                } catch (error) {
                     send({
                         type: 'debug',
                         target: 'certificate_pinner_bypass',
                         action: 'hook_failed',
-                        error: e.toString(),
+                        error: error.toString(),
                     });
                 }
 
@@ -1449,18 +1449,18 @@ const CertificatePinnerBypass = {
                             action: 'certificate_transparency_bypassed',
                             method: 'chromium_ct_verification',
                             chainLength: certChain ? certChain.length : 0,
-                            hostname: hostname,
-                            authType: authType,
+                            hostname,
+                            authType,
                         });
                         return [];
                     };
                     self.stats.hooksInstalled++;
-                } catch (e) {
+                } catch (error) {
                     send({
                         type: 'debug',
                         target: 'certificate_pinner_bypass',
                         action: 'hook_failed',
-                        error: e.toString(),
+                        error: error.toString(),
                     });
                 }
             });
@@ -1475,20 +1475,20 @@ const CertificatePinnerBypass = {
     },
 
     // 2. Certificate Authority Authorization (CAA) Record Bypass
-    hookCertificateAuthorityAuthorizationBypass: function () {
+    hookCertificateAuthorityAuthorizationBypass() {
         const self = this;
 
         // Hook DNS CAA record validation
-        const dnsQuery =
-            Module.findExportByName(null, 'res_query') ||
-            Module.findExportByName('dnsapi.dll', 'DnsQuery_A') ||
-            Module.findExportByName('dnsapi.dll', 'DnsQuery_W');
+        const dnsQuery
+            = Module.findExportByName(null, 'res_query')
+            || Module.findExportByName('dnsapi.dll', 'DnsQuery_A')
+            || Module.findExportByName('dnsapi.dll', 'DnsQuery_W');
 
         if (dnsQuery) {
             Interceptor.attach(dnsQuery, {
-                onEnter: function (args) {
-                    const queryType =
-                        Process.platform === 'windows' ? args[1].toInt32() : args[2].toInt32();
+                onEnter(args) {
+                    const queryType
+                        = Process.platform === 'windows' ? args[1].toInt32() : args[2].toInt32();
                     // CAA record type = 257
                     if (queryType === 257) {
                         this.isCAAQuery = true;
@@ -1500,7 +1500,7 @@ const CertificatePinnerBypass = {
                         });
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.isCAAQuery) {
                         // Return no CAA records found (success for certificate issuance)
                         if (Process.platform === 'windows') {
@@ -1524,13 +1524,13 @@ const CertificatePinnerBypass = {
         // Hook OpenSSL CAA validation
         Process.enumerateModules().forEach(module => {
             if (
-                module.name.toLowerCase().includes('ssl') ||
-                module.name.toLowerCase().includes('crypto')
+                module.name.toLowerCase().includes('ssl')
+                || module.name.toLowerCase().includes('crypto')
             ) {
                 try {
                     // Pattern for CAA record validation
-                    const caaPattern =
-                        '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC ??';
+                    const caaPattern
+                        = '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC ??';
                     const matches = Memory.scanSync(module.base, module.size, caaPattern);
 
                     matches.forEach(match => {
@@ -1551,21 +1551,21 @@ const CertificatePinnerBypass = {
                                 },
                             });
                             self.stats.hooksInstalled++;
-                        } catch (e) {
+                        } catch (error) {
                             send({
                                 type: 'debug',
                                 target: 'certificate_pinner_bypass',
                                 action: 'hook_failed',
-                                error: e.toString(),
+                                error: error.toString(),
                             });
                         }
                     });
-                } catch (e) {
+                } catch (error) {
                     send({
                         type: 'debug',
                         target: 'certificate_pinner_bypass',
                         action: 'hook_failed',
-                        error: e.toString(),
+                        error: error.toString(),
                     });
                 }
             }
@@ -1583,18 +1583,18 @@ const CertificatePinnerBypass = {
                             target: 'certificate_pinner_bypass',
                             action: 'caa_record_validation_bypassed',
                             method: 'android_caa_validator',
-                            hostname: hostname,
+                            hostname,
                             certificatesCount: certificates ? certificates.length : 0,
                         });
                         return true;
                     };
                     self.stats.hooksInstalled++;
-                } catch (e) {
+                } catch (error) {
                     send({
                         type: 'debug',
                         target: 'certificate_pinner_bypass',
                         action: 'hook_failed',
-                        error: e.toString(),
+                        error: error.toString(),
                     });
                 }
             });
@@ -1608,12 +1608,12 @@ const CertificatePinnerBypass = {
     },
 
     // 3. HTTP Public Key Pinning (HPKP) Advanced Bypass
-    hookHttpPublicKeyPinningAdvancedBypass: function () {
+    hookHttpPublicKeyPinningAdvancedBypass() {
         // Hook HPKP header processing
-        const parseHeaders =
-            Module.findExportByName(null, 'HTTP_ParseHeaders') ||
-            Module.findExportByName('wininet.dll', 'HttpAddRequestHeadersA') ||
-            Module.findExportByName('wininet.dll', 'HttpAddRequestHeadersW');
+        const parseHeaders
+            = Module.findExportByName(null, 'HTTP_ParseHeaders')
+            || Module.findExportByName('wininet.dll', 'HttpAddRequestHeadersA')
+            || Module.findExportByName('wininet.dll', 'HttpAddRequestHeadersW');
 
         if (parseHeaders) {
             Interceptor.attach(parseHeaders, {
@@ -1621,17 +1621,17 @@ const CertificatePinnerBypass = {
                     try {
                         const headers = args[1].readUtf8String() || args[1].readUtf16String();
                         if (
-                            headers &&
-                            (headers.includes('Public-Key-Pins') ||
-                                headers.includes('Public-Key-Pins-Report-Only'))
+                            headers
+                            && (headers.includes('Public-Key-Pins')
+                                || headers.includes('Public-Key-Pins-Report-Only'))
                         ) {
                             // Remove HPKP headers
-                            let cleanHeaders = headers.replace(
-                                /Public-Key-Pins[^:]*:[^\r\n]*/gi,
+                            let cleanHeaders = headers.replaceAll(
+                                /public-key-pins[^:]*:[^\n\r]*/gi,
                                 ''
                             );
-                            cleanHeaders = cleanHeaders.replace(
-                                /Public-Key-Pins-Report-Only[^:]*:[^\r\n]*/gi,
+                            cleanHeaders = cleanHeaders.replaceAll(
+                                /public-key-pins-report-only[^:]*:[^\n\r]*/gi,
                                 ''
                             );
 
@@ -1649,12 +1649,12 @@ const CertificatePinnerBypass = {
                                 method: 'header_manipulation',
                             });
                         }
-                    } catch (e) {
+                    } catch (error) {
                         send({
                             type: 'debug',
                             target: 'certificate_pinner_bypass',
                             action: 'hook_failed',
-                            error: e.toString(),
+                            error: error.toString(),
                         });
                     }
                 },
@@ -1665,13 +1665,13 @@ const CertificatePinnerBypass = {
         // Hook Chrome HPKP implementation
         Process.enumerateModules().forEach(module => {
             if (
-                module.name.toLowerCase().includes('chrome') ||
-                module.name.toLowerCase().includes('content')
+                module.name.toLowerCase().includes('chrome')
+                || module.name.toLowerCase().includes('content')
             ) {
                 try {
                     // Pattern for HPKP validation
-                    const hpkpPattern =
-                        '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B DA 48 8B F9 48 8B F1';
+                    const hpkpPattern
+                        = '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B DA 48 8B F9 48 8B F1';
                     const matches = Memory.scanSync(module.base, module.size, hpkpPattern);
 
                     matches.forEach(match => {
@@ -1690,21 +1690,21 @@ const CertificatePinnerBypass = {
                                 },
                             });
                             this.stats.hooksInstalled++;
-                        } catch (e) {
+                        } catch (error) {
                             send({
                                 type: 'debug',
                                 target: 'certificate_pinner_bypass',
                                 action: 'hook_failed',
-                                error: e.toString(),
+                                error: error.toString(),
                             });
                         }
                     });
-                } catch (e) {
+                } catch (error) {
                     send({
                         type: 'debug',
                         target: 'certificate_pinner_bypass',
                         action: 'hook_failed',
-                        error: e.toString(),
+                        error: error.toString(),
                     });
                 }
             }
@@ -1736,12 +1736,12 @@ const CertificatePinnerBypass = {
                         handler.proceed();
                     };
                     this.stats.hooksInstalled++;
-                } catch (e) {
+                } catch (error) {
                     send({
                         type: 'debug',
                         target: 'certificate_pinner_bypass',
                         action: 'hook_failed',
-                        error: e.toString(),
+                        error: error.toString(),
                     });
                 }
 
@@ -1756,18 +1756,18 @@ const CertificatePinnerBypass = {
                             target: 'certificate_pinner_bypass',
                             action: 'hpkp_validation_bypassed',
                             method: 'android_hpkp_validator',
-                            hostname: hostname,
+                            hostname,
                             chainLength: chain ? chain.length : 0,
                         });
                         return true;
                     };
                     this.stats.hooksInstalled++;
-                } catch (e) {
+                } catch (error) {
                     send({
                         type: 'debug',
                         target: 'certificate_pinner_bypass',
                         action: 'hook_failed',
-                        error: e.toString(),
+                        error: error.toString(),
                     });
                 }
             });
@@ -1781,24 +1781,24 @@ const CertificatePinnerBypass = {
     },
 
     // 4. DNS-based Authentication of Named Entities (DANE) Bypass
-    hookDnsBasedAuthenticationBypass: function () {
+    hookDnsBasedAuthenticationBypass() {
         const self = this;
 
         // Hook DANE TLSA record queries
-        const dnsQuery =
-            Module.findExportByName(null, 'res_query') ||
-            Module.findExportByName('dnsapi.dll', 'DnsQuery_A');
+        const dnsQuery
+            = Module.findExportByName(null, 'res_query')
+            || Module.findExportByName('dnsapi.dll', 'DnsQuery_A');
 
         if (dnsQuery) {
             Interceptor.attach(dnsQuery, {
-                onEnter: function (args) {
-                    const queryType =
-                        Process.platform === 'windows' ? args[1].toInt32() : args[2].toInt32();
+                onEnter(args) {
+                    const queryType
+                        = Process.platform === 'windows' ? args[1].toInt32() : args[2].toInt32();
                     // TLSA record type = 52
                     if (queryType === 52) {
                         this.isTLSAQuery = true;
-                        this.hostname =
-                            Process.platform === 'windows'
+                        this.hostname
+                            = Process.platform === 'windows'
                                 ? args[0].readUtf8String()
                                 : args[0].readUtf8String();
                         send({
@@ -1809,7 +1809,7 @@ const CertificatePinnerBypass = {
                         });
                     }
                 },
-                onLeave: function (retval) {
+                onLeave(retval) {
                     if (this.isTLSAQuery) {
                         // Return NXDOMAIN for TLSA queries (no DANE records)
                         retval.replace(3);
@@ -1828,9 +1828,9 @@ const CertificatePinnerBypass = {
         }
 
         // Hook OpenSSL DANE validation
-        const daneVerify =
-            Module.findExportByName(null, 'SSL_CTX_dane_enable') ||
-            Module.findExportByName(null, 'SSL_dane_enable');
+        const daneVerify
+            = Module.findExportByName(null, 'SSL_CTX_dane_enable')
+            || Module.findExportByName(null, 'SSL_dane_enable');
 
         if (daneVerify) {
             Interceptor.replace(
@@ -1856,9 +1856,9 @@ const CertificatePinnerBypass = {
         }
 
         // Hook DANE certificate verification
-        const daneVerifyCert =
-            Module.findExportByName(null, 'SSL_get0_dane_authority') ||
-            Module.findExportByName(null, 'SSL_get0_dane_tlsa');
+        const daneVerifyCert
+            = Module.findExportByName(null, 'SSL_get0_dane_authority')
+            || Module.findExportByName(null, 'SSL_get0_dane_tlsa');
 
         if (daneVerifyCert) {
             Interceptor.replace(
@@ -1890,13 +1890,13 @@ const CertificatePinnerBypass = {
         // Hook browser DANE implementations
         Process.enumerateModules().forEach(module => {
             if (
-                module.name.toLowerCase().includes('firefox') ||
-                module.name.toLowerCase().includes('gecko')
+                module.name.toLowerCase().includes('firefox')
+                || module.name.toLowerCase().includes('gecko')
             ) {
                 try {
                     // Pattern for Mozilla DANE validation
-                    const danePattern =
-                        '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC ??';
+                    const danePattern
+                        = '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC ??';
                     const matches = Memory.scanSync(module.base, module.size, danePattern);
 
                     matches.slice(0, 5).forEach(match => {
@@ -1916,21 +1916,21 @@ const CertificatePinnerBypass = {
                                 },
                             });
                             self.stats.hooksInstalled++;
-                        } catch (e) {
+                        } catch (error) {
                             send({
                                 type: 'debug',
                                 target: 'certificate_pinner_bypass',
                                 action: 'hook_failed',
-                                error: e.toString(),
+                                error: error.toString(),
                             });
                         }
                     });
-                } catch (e) {
+                } catch (error) {
                     send({
                         type: 'debug',
                         target: 'certificate_pinner_bypass',
                         action: 'hook_failed',
-                        error: e.toString(),
+                        error: error.toString(),
                     });
                 }
             }
@@ -1944,11 +1944,11 @@ const CertificatePinnerBypass = {
     },
 
     // 5. Signed Certificate Timestamps (SCT) Validation Bypass
-    hookSignedCertificateTimestampsBypass: function () {
+    hookSignedCertificateTimestampsBypass() {
         // Hook SCT validation in OpenSSL
-        const sctVerify =
-            Module.findExportByName(null, 'SCT_verify') ||
-            Module.findExportByName(null, 'SCT_verify_signature');
+        const sctVerify
+            = Module.findExportByName(null, 'SCT_verify')
+            || Module.findExportByName(null, 'SCT_verify_signature');
 
         if (sctVerify) {
             Interceptor.replace(
@@ -1982,13 +1982,13 @@ const CertificatePinnerBypass = {
         // Hook Chrome SCT validation
         Process.enumerateModules().forEach(module => {
             if (
-                module.name.toLowerCase().includes('chrome') ||
-                module.name.toLowerCase().includes('blink')
+                module.name.toLowerCase().includes('chrome')
+                || module.name.toLowerCase().includes('blink')
             ) {
                 try {
                     // Pattern for Chrome SCT validation
-                    const sctPattern =
-                        '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F9 48 8B DA';
+                    const sctPattern
+                        = '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F9 48 8B DA';
                     const matches = Memory.scanSync(module.base, module.size, sctPattern);
 
                     matches.slice(0, 10).forEach(match => {
@@ -2009,21 +2009,21 @@ const CertificatePinnerBypass = {
                                 },
                             });
                             this.stats.hooksInstalled++;
-                        } catch (e) {
+                        } catch (error) {
                             send({
                                 type: 'debug',
                                 target: 'certificate_pinner_bypass',
                                 action: 'hook_failed',
-                                error: e.toString(),
+                                error: error.toString(),
                             });
                         }
                     });
-                } catch (e) {
+                } catch (error) {
                     send({
                         type: 'debug',
                         target: 'certificate_pinner_bypass',
                         action: 'hook_failed',
-                        error: e.toString(),
+                        error: error.toString(),
                     });
                 }
             }
@@ -2048,12 +2048,12 @@ const CertificatePinnerBypass = {
                         return true;
                     };
                     this.stats.hooksInstalled++;
-                } catch (e) {
+                } catch (error) {
                     send({
                         type: 'debug',
                         target: 'certificate_pinner_bypass',
                         action: 'hook_failed',
-                        error: e.toString(),
+                        error: error.toString(),
                     });
                 }
 
@@ -2073,18 +2073,18 @@ const CertificatePinnerBypass = {
                             action: 'sct_validation_bypassed',
                             method: 'android_ct_policy_conformance',
                             hasResult: result !== null,
-                            hostname: hostname,
+                            hostname,
                             certificatesCount: certificates ? certificates.length : 0,
                         });
                         return true;
                     };
                     this.stats.hooksInstalled++;
-                } catch (e) {
+                } catch (error) {
                     send({
                         type: 'debug',
                         target: 'certificate_pinner_bypass',
                         action: 'hook_failed',
-                        error: e.toString(),
+                        error: error.toString(),
                     });
                 }
             });
@@ -2095,8 +2095,8 @@ const CertificatePinnerBypass = {
             try {
                 const { NSURLSession } = ObjC.classes;
                 if (NSURLSession) {
-                    const sctValidation =
-                        NSURLSession['- URLSession:task:didReceiveChallenge:completionHandler:'];
+                    const sctValidation
+                        = NSURLSession['- URLSession:task:didReceiveChallenge:completionHandler:'];
                     if (sctValidation) {
                         Interceptor.attach(sctValidation.implementation, {
                             onEnter: args => {
@@ -2131,12 +2131,12 @@ const CertificatePinnerBypass = {
                         this.stats.hooksInstalled++;
                     }
                 }
-            } catch (e) {
+            } catch (error) {
                 send({
                     type: 'debug',
                     target: 'certificate_pinner_bypass',
                     action: 'hook_failed',
-                    error: e.toString(),
+                    error: error.toString(),
                 });
             }
         }
@@ -2149,11 +2149,11 @@ const CertificatePinnerBypass = {
     },
 
     // 6. Modern TLS 1.3 Security Features Bypass
-    hookModernTls13SecurityBypass: function () {
+    hookModernTls13SecurityBypass() {
         // Hook TLS 1.3 session ticket validation
-        const tls13Validate =
-            Module.findExportByName(null, 'tls13_process_new_session_ticket') ||
-            Module.findExportByName(null, 'SSL_process_ticket');
+        const tls13Validate
+            = Module.findExportByName(null, 'tls13_process_new_session_ticket')
+            || Module.findExportByName(null, 'SSL_process_ticket');
 
         if (tls13Validate) {
             Interceptor.attach(tls13Validate, {
@@ -2173,9 +2173,9 @@ const CertificatePinnerBypass = {
         }
 
         // Hook TLS 1.3 certificate verification
-        const tls13CertVerify =
-            Module.findExportByName(null, 'tls13_process_certificate_verify') ||
-            Module.findExportByName(null, 'SSL_verify_certificate');
+        const tls13CertVerify
+            = Module.findExportByName(null, 'tls13_process_certificate_verify')
+            || Module.findExportByName(null, 'SSL_verify_certificate');
 
         if (tls13CertVerify) {
             Interceptor.replace(
@@ -2194,7 +2194,7 @@ const CertificatePinnerBypass = {
                             ssl_pointer: sslPtr,
                             cert_pointer: certPtr,
                             verify_data_pointer: verifyDataPtr,
-                            verify_len: verify_len,
+                            verify_len,
                         });
                         return 1; // Success
                     },
@@ -2206,13 +2206,13 @@ const CertificatePinnerBypass = {
         }
 
         // Hook TLS 1.3 PSK (Pre-Shared Key) validation
-        const tls13PSK =
-            Module.findExportByName(null, 'tls13_generate_psk_binders') ||
-            Module.findExportByName(null, 'SSL_use_psk_identity_hint');
+        const tls13PSK
+            = Module.findExportByName(null, 'tls13_generate_psk_binders')
+            || Module.findExportByName(null, 'SSL_use_psk_identity_hint');
 
         if (tls13PSK) {
             Interceptor.attach(tls13PSK, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.argsCount = args.length;
                     send({
                         type: 'info',
@@ -2237,9 +2237,9 @@ const CertificatePinnerBypass = {
         }
 
         // Hook TLS 1.3 early data validation
-        const tls13EarlyData =
-            Module.findExportByName(null, 'SSL_get_early_data_status') ||
-            Module.findExportByName(null, 'tls13_process_early_data');
+        const tls13EarlyData
+            = Module.findExportByName(null, 'SSL_get_early_data_status')
+            || Module.findExportByName(null, 'tls13_process_early_data');
 
         if (tls13EarlyData) {
             Interceptor.replace(
@@ -2267,14 +2267,14 @@ const CertificatePinnerBypass = {
         // Hook browser TLS 1.3 implementations
         Process.enumerateModules().forEach(module => {
             if (
-                module.name.toLowerCase().includes('ssl') ||
-                module.name.toLowerCase().includes('tls') ||
-                module.name.toLowerCase().includes('crypto')
+                module.name.toLowerCase().includes('ssl')
+                || module.name.toLowerCase().includes('tls')
+                || module.name.toLowerCase().includes('crypto')
             ) {
                 try {
                     // Pattern for TLS 1.3 handshake verification
-                    const tls13Pattern =
-                        '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC ??';
+                    const tls13Pattern
+                        = '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC ??';
                     const matches = Memory.scanSync(module.base, module.size, tls13Pattern);
 
                     matches.slice(0, 5).forEach(match => {
@@ -2294,21 +2294,21 @@ const CertificatePinnerBypass = {
                                 },
                             });
                             this.stats.hooksInstalled++;
-                        } catch (e) {
+                        } catch (error) {
                             send({
                                 type: 'debug',
                                 target: 'certificate_pinner_bypass',
                                 action: 'hook_failed',
-                                error: e.toString(),
+                                error: error.toString(),
                             });
                         }
                     });
-                } catch (e) {
+                } catch (error) {
                     send({
                         type: 'debug',
                         target: 'certificate_pinner_bypass',
                         action: 'hook_failed',
-                        error: e.toString(),
+                        error: error.toString(),
                     });
                 }
             }
@@ -2322,17 +2322,17 @@ const CertificatePinnerBypass = {
     },
 
     // 7. Application-Layer Protocol Negotiation (ALPN) Security Bypass
-    hookApplicationLayerProtocolNegotiationBypass: function () {
+    hookApplicationLayerProtocolNegotiationBypass() {
         const self = this;
 
         // Hook ALPN protocol selection
-        const alpnSelect =
-            Module.findExportByName(null, 'SSL_CTX_set_alpn_select_cb') ||
-            Module.findExportByName(null, 'SSL_select_next_proto');
+        const alpnSelect
+            = Module.findExportByName(null, 'SSL_CTX_set_alpn_select_cb')
+            || Module.findExportByName(null, 'SSL_select_next_proto');
 
         if (alpnSelect) {
             Interceptor.attach(alpnSelect, {
-                onEnter: function (args) {
+                onEnter(args) {
                     this.argsCount = args.length;
                     send({
                         type: 'info',
@@ -2357,9 +2357,9 @@ const CertificatePinnerBypass = {
         }
 
         // Hook HTTP/2 ALPN validation
-        const http2Alpn =
-            Module.findExportByName(null, 'nghttp2_session_want_read') ||
-            Module.findExportByName(null, 'SSL_CTX_set_alpn_protos');
+        const http2Alpn
+            = Module.findExportByName(null, 'nghttp2_session_want_read')
+            || Module.findExportByName(null, 'SSL_CTX_set_alpn_protos');
 
         if (http2Alpn) {
             Interceptor.attach(http2Alpn, {
@@ -2375,13 +2375,13 @@ const CertificatePinnerBypass = {
                                 protocols: 'h2,http/1.1',
                                 protocols_length: protocols ? protocols.byteLength : 0,
                             });
-                        } catch (e) {
+                        } catch (error) {
                             send({
                                 type: 'debug',
                                 target: 'certificate_pinner_bypass',
                                 action: 'hook_failed',
-                                error: e.toString(),
-                                stack: e.stack || 'No stack trace',
+                                error: error.toString(),
+                                stack: error.stack || 'No stack trace',
                             });
                         }
                     }
@@ -2425,13 +2425,13 @@ const CertificatePinnerBypass = {
                         return this.protocols(protocolList);
                     };
                     self.stats.hooksInstalled++;
-                } catch (e) {
+                } catch (error) {
                     send({
                         type: 'debug',
                         target: 'certificate_pinner_bypass',
                         action: 'hook_failed',
-                        error: e.toString(),
-                        stack: e.stack || 'No stack trace',
+                        error: error.toString(),
+                        stack: error.stack || 'No stack trace',
                     });
                 }
 
@@ -2448,12 +2448,12 @@ const CertificatePinnerBypass = {
                         return 'h2'; // Force HTTP/2
                     };
                     self.stats.hooksInstalled++;
-                } catch (e) {
+                } catch (error) {
                     send({
                         type: 'debug',
                         target: 'certificate_pinner_bypass',
                         action: 'hook_failed',
-                        error: e.toString(),
+                        error: error.toString(),
                     });
                 }
             });
@@ -2462,13 +2462,13 @@ const CertificatePinnerBypass = {
         // Hook Chrome ALPN negotiation
         Process.enumerateModules().forEach(module => {
             if (
-                module.name.toLowerCase().includes('chrome') ||
-                module.name.toLowerCase().includes('net')
+                module.name.toLowerCase().includes('chrome')
+                || module.name.toLowerCase().includes('net')
             ) {
                 try {
                     // Pattern for Chrome ALPN negotiation
-                    const alpnPattern =
-                        '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F9 48 8B DA';
+                    const alpnPattern
+                        = '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F9 48 8B DA';
                     const matches = Memory.scanSync(module.base, module.size, alpnPattern);
 
                     matches.slice(0, 3).forEach(match => {
@@ -2487,21 +2487,21 @@ const CertificatePinnerBypass = {
                                 },
                             });
                             self.stats.hooksInstalled++;
-                        } catch (e) {
+                        } catch (error) {
                             send({
                                 type: 'debug',
                                 target: 'certificate_pinner_bypass',
                                 action: 'hook_failed',
-                                error: e.toString(),
+                                error: error.toString(),
                             });
                         }
                     });
-                } catch (e) {
+                } catch (error) {
                     send({
                         type: 'debug',
                         target: 'certificate_pinner_bypass',
                         action: 'hook_failed',
-                        error: e.toString(),
+                        error: error.toString(),
                     });
                 }
             }
@@ -2515,11 +2515,11 @@ const CertificatePinnerBypass = {
     },
 
     // 8. Online Certificate Status Protocol (OCSP) Must-Staple Bypass
-    hookOnlineCertificateStatusProtocolBypass: function () {
+    hookOnlineCertificateStatusProtocolBypass() {
         // Hook OCSP stapling validation
-        const ocspStaple =
-            Module.findExportByName(null, 'SSL_CTX_set_tlsext_status_cb') ||
-            Module.findExportByName(null, 'OCSP_response_status');
+        const ocspStaple
+            = Module.findExportByName(null, 'SSL_CTX_set_tlsext_status_cb')
+            || Module.findExportByName(null, 'OCSP_response_status');
 
         if (ocspStaple) {
             Interceptor.replace(
@@ -2547,9 +2547,9 @@ const CertificatePinnerBypass = {
         }
 
         // Hook OCSP response verification
-        const ocspVerify =
-            Module.findExportByName(null, 'OCSP_basic_verify') ||
-            Module.findExportByName(null, 'OCSP_resp_verify');
+        const ocspVerify
+            = Module.findExportByName(null, 'OCSP_basic_verify')
+            || Module.findExportByName(null, 'OCSP_resp_verify');
 
         if (ocspVerify) {
             Interceptor.replace(
@@ -2568,7 +2568,7 @@ const CertificatePinnerBypass = {
                             bs_pointer: bsPtr,
                             certs_pointer: certsPtr,
                             st_pointer: stPtr,
-                            flags: flags,
+                            flags,
                         });
                         return 1; // Success
                     },
@@ -2580,9 +2580,9 @@ const CertificatePinnerBypass = {
         }
 
         // Hook OCSP certificate status checking
-        const ocspCertStatus =
-            Module.findExportByName(null, 'OCSP_cert_status_str') ||
-            Module.findExportByName(null, 'OCSP_single_get0_status');
+        const ocspCertStatus
+            = Module.findExportByName(null, 'OCSP_cert_status_str')
+            || Module.findExportByName(null, 'OCSP_single_get0_status');
 
         if (ocspCertStatus) {
             Interceptor.replace(
@@ -2669,9 +2669,9 @@ const CertificatePinnerBypass = {
                             hasCert: cert !== null,
                             hasIssuerCert: issuerCert !== null,
                             hasResponderCert: responderCert !== null,
-                            responderURI: responderURI,
-                            responseLifetime: responseLifetime,
-                            useNonce: useNonce,
+                            responderURI,
+                            responseLifetime,
+                            useNonce,
                             hasTrustAnchors: trustAnchors !== null,
                             hasCertStores: certStores !== null,
                             hasUnresolvedCritExts: unresolvedCritExts !== null,
@@ -2680,12 +2680,12 @@ const CertificatePinnerBypass = {
                         // Return without throwing exception (successful validation)
                     };
                     this.stats.hooksInstalled++;
-                } catch (e) {
+                } catch (error) {
                     send({
                         type: 'debug',
                         target: 'certificate_pinner_bypass',
                         action: 'hook_failed',
-                        error: e.toString(),
+                        error: error.toString(),
                     });
                 }
 
@@ -2700,17 +2700,17 @@ const CertificatePinnerBypass = {
                             method: 'android_conscrypt_ocsp',
                             chainLength: chain ? chain.length : 0,
                             hasOcspData: ocspData !== null,
-                            hostname: hostname,
+                            hostname,
                         });
                         return true;
                     };
                     this.stats.hooksInstalled++;
-                } catch (e) {
+                } catch (error) {
                     send({
                         type: 'debug',
                         target: 'certificate_pinner_bypass',
                         action: 'hook_failed',
-                        error: e.toString(),
+                        error: error.toString(),
                     });
                 }
             });
@@ -2724,30 +2724,30 @@ const CertificatePinnerBypass = {
     },
 
     // 9. Certificate Authority Browser Forum (CABF) Validation Bypass
-    hookCertificateAuthorityBrowserForumBypass: function () {
+    hookCertificateAuthorityBrowserForumBypass() {
         const self = this;
 
         // Hook CABF baseline requirements validation
         Process.enumerateModules().forEach(module => {
             if (
-                module.name.toLowerCase().includes('ssl') ||
-                module.name.toLowerCase().includes('crypto') ||
-                module.name.toLowerCase().includes('cert')
+                module.name.toLowerCase().includes('ssl')
+                || module.name.toLowerCase().includes('crypto')
+                || module.name.toLowerCase().includes('cert')
             ) {
                 try {
                     // Pattern for certificate policy validation
-                    const cabfPattern =
-                        '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC ??';
+                    const cabfPattern
+                        = '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC ??';
                     const matches = Memory.scanSync(module.base, module.size, cabfPattern);
 
                     matches.slice(0, 8).forEach(match => {
                         try {
                             Interceptor.attach(match.address, {
-                                onEnter: function (args) {
+                                onEnter(args) {
                                     this.cabfValidation = true;
                                     this.argsCount = args.length;
                                 },
-                                onLeave: function (retval) {
+                                onLeave(retval) {
                                     if (this.cabfValidation && retval.toInt32() === 0) {
                                         retval.replace(1); // Force CABF validation success
                                         self.stats.certificateAuthorityBrowserForumBypassEvents++;
@@ -2762,32 +2762,32 @@ const CertificatePinnerBypass = {
                                 },
                             });
                             self.stats.hooksInstalled++;
-                        } catch (e) {
+                        } catch (error) {
                             send({
                                 type: 'debug',
                                 target: 'certificate_pinner_bypass',
                                 action: 'hook_failed',
                                 module: module.name,
-                                error: e.toString(),
-                                stack: e.stack || 'No stack trace',
+                                error: error.toString(),
+                                stack: error.stack || 'No stack trace',
                             });
                         }
                     });
-                } catch (e) {
+                } catch (error) {
                     send({
                         type: 'debug',
                         target: 'certificate_pinner_bypass',
                         action: 'hook_failed',
-                        error: e.toString(),
+                        error: error.toString(),
                     });
                 }
             }
         });
 
         // Hook certificate policy validation
-        const certPolicyCheck =
-            Module.findExportByName(null, 'X509_policy_check') ||
-            Module.findExportByName(null, 'X509_VERIFY_PARAM_set_purpose');
+        const certPolicyCheck
+            = Module.findExportByName(null, 'X509_policy_check')
+            || Module.findExportByName(null, 'X509_VERIFY_PARAM_set_purpose');
 
         if (certPolicyCheck) {
             Interceptor.attach(certPolicyCheck, {
@@ -2812,9 +2812,9 @@ const CertificatePinnerBypass = {
         }
 
         // Hook Extended Validation (EV) certificate validation
-        const evValidation =
-            Module.findExportByName(null, 'X509_check_purpose') ||
-            Module.findExportByName(null, 'X509_verify_cert_purpose');
+        const evValidation
+            = Module.findExportByName(null, 'X509_check_purpose')
+            || Module.findExportByName(null, 'X509_verify_cert_purpose');
 
         if (evValidation) {
             Interceptor.replace(
@@ -2829,8 +2829,8 @@ const CertificatePinnerBypass = {
                             action: 'cabf_validation_bypassed',
                             method: 'ev_certificate_validation',
                             x_pointer: xPtr,
-                            purpose: purpose,
-                            ca: ca,
+                            purpose,
+                            ca,
                         });
                         return 1; // Success
                     },
@@ -2859,12 +2859,12 @@ const CertificatePinnerBypass = {
                         // Return without throwing exception
                     };
                     self.stats.hooksInstalled++;
-                } catch (e) {
+                } catch (error) {
                     send({
                         type: 'debug',
                         target: 'certificate_pinner_bypass',
                         action: 'hook_failed',
-                        error: e.toString(),
+                        error: error.toString(),
                     });
                 }
 
@@ -2885,8 +2885,8 @@ const CertificatePinnerBypass = {
                             action: 'cabf_validation_bypassed',
                             method: 'android_trust_recursive',
                             certsCount: certs ? certs.length : 0,
-                            host: host,
-                            clientAuth: clientAuth,
+                            host,
+                            clientAuth,
                             untrustedChainCount: untrustedChain ? untrustedChain.length : 0,
                             trustAnchorChainCount: trustAnchorChain ? trustAnchorChain.length : 0,
                             usedCount: used ? used.length : 0,
@@ -2894,12 +2894,12 @@ const CertificatePinnerBypass = {
                         return Java.use('java.util.ArrayList').$new();
                     };
                     self.stats.hooksInstalled++;
-                } catch (e) {
+                } catch (error) {
                     send({
                         type: 'debug',
                         target: 'certificate_pinner_bypass',
                         action: 'hook_failed',
-                        error: e.toString(),
+                        error: error.toString(),
                     });
                 }
             });
@@ -2908,13 +2908,13 @@ const CertificatePinnerBypass = {
         // Hook Chrome certificate authority validation
         Process.enumerateModules().forEach(module => {
             if (
-                module.name.toLowerCase().includes('chrome') ||
-                module.name.toLowerCase().includes('content')
+                module.name.toLowerCase().includes('chrome')
+                || module.name.toLowerCase().includes('content')
             ) {
                 try {
                     // Pattern for Chrome CA validation
-                    const chromeCAPattern =
-                        '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F9 48 8B DA';
+                    const chromeCAPattern
+                        = '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F9 48 8B DA';
                     const matches = Memory.scanSync(module.base, module.size, chromeCAPattern);
 
                     matches.slice(0, 5).forEach(match => {
@@ -2934,21 +2934,21 @@ const CertificatePinnerBypass = {
                                 },
                             });
                             self.stats.hooksInstalled++;
-                        } catch (e) {
+                        } catch (error) {
                             send({
                                 type: 'debug',
                                 target: 'certificate_pinner_bypass',
                                 action: 'hook_failed',
-                                error: e.toString(),
+                                error: error.toString(),
                             });
                         }
                     });
-                } catch (e) {
+                } catch (error) {
                     send({
                         type: 'debug',
                         target: 'certificate_pinner_bypass',
                         action: 'hook_failed',
-                        error: e.toString(),
+                        error: error.toString(),
                     });
                 }
             }
@@ -2962,14 +2962,14 @@ const CertificatePinnerBypass = {
     },
 
     // 10. Quantum-Safe Certificate Validation Bypass
-    hookQuantumSafeCertificateValidationBypass: function () {
+    hookQuantumSafeCertificateValidationBypass() {
         const self = this;
 
         // Hook post-quantum cryptography validation
-        const pqcValidation =
-            Module.findExportByName(null, 'CRYSTALS_KYBER_keypair') ||
-            Module.findExportByName(null, 'CRYSTALS_DILITHIUM_sign') ||
-            Module.findExportByName(null, 'FALCON_sign');
+        const pqcValidation
+            = Module.findExportByName(null, 'CRYSTALS_KYBER_keypair')
+            || Module.findExportByName(null, 'CRYSTALS_DILITHIUM_sign')
+            || Module.findExportByName(null, 'FALCON_sign');
 
         if (pqcValidation) {
             Interceptor.replace(
@@ -2993,9 +2993,9 @@ const CertificatePinnerBypass = {
         }
 
         // Hook lattice-based cryptography validation
-        const latticeValidation =
-            Module.findExportByName(null, 'lattice_verify_signature') ||
-            Module.findExportByName(null, 'ring_lwe_decrypt');
+        const latticeValidation
+            = Module.findExportByName(null, 'lattice_verify_signature')
+            || Module.findExportByName(null, 'ring_lwe_decrypt');
 
         if (latticeValidation) {
             Interceptor.replace(
@@ -3025,9 +3025,9 @@ const CertificatePinnerBypass = {
         }
 
         // Hook homomorphic encryption validation
-        const heValidation =
-            Module.findExportByName(null, 'FHE_decrypt') ||
-            Module.findExportByName(null, 'homomorphic_evaluate');
+        const heValidation
+            = Module.findExportByName(null, 'FHE_decrypt')
+            || Module.findExportByName(null, 'homomorphic_evaluate');
 
         if (heValidation) {
             Interceptor.attach(heValidation, {
@@ -3049,14 +3049,14 @@ const CertificatePinnerBypass = {
         // Hook quantum-resistant certificate validation patterns
         Process.enumerateModules().forEach(module => {
             if (
-                module.name.toLowerCase().includes('quantum') ||
-                module.name.toLowerCase().includes('pqc') ||
-                module.name.toLowerCase().includes('crypto')
+                module.name.toLowerCase().includes('quantum')
+                || module.name.toLowerCase().includes('pqc')
+                || module.name.toLowerCase().includes('crypto')
             ) {
                 try {
                     // Pattern for quantum-safe validation
-                    const quantumPattern =
-                        '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC ??';
+                    const quantumPattern
+                        = '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC ??';
                     const matches = Memory.scanSync(module.base, module.size, quantumPattern);
 
                     matches.slice(0, 3).forEach(match => {
@@ -3076,21 +3076,21 @@ const CertificatePinnerBypass = {
                                 },
                             });
                             self.stats.hooksInstalled++;
-                        } catch (e) {
+                        } catch (error) {
                             send({
                                 type: 'debug',
                                 target: 'certificate_pinner_bypass',
                                 action: 'hook_failed',
-                                error: e.toString(),
+                                error: error.toString(),
                             });
                         }
                     });
-                } catch (e) {
+                } catch (error) {
                     send({
                         type: 'debug',
                         target: 'certificate_pinner_bypass',
                         action: 'hook_failed',
-                        error: e.toString(),
+                        error: error.toString(),
                     });
                 }
             }
@@ -3114,12 +3114,12 @@ const CertificatePinnerBypass = {
                         return this.generateKeyPair();
                     };
                     self.stats.hooksInstalled++;
-                } catch (e) {
+                } catch (error) {
                     send({
                         type: 'debug',
                         target: 'certificate_pinner_bypass',
                         action: 'hook_failed',
-                        error: e.toString(),
+                        error: error.toString(),
                     });
                 }
 
@@ -3140,21 +3140,21 @@ const CertificatePinnerBypass = {
                         return true; // Force signature validation success
                     };
                     self.stats.hooksInstalled++;
-                } catch (e) {
+                } catch (error) {
                     send({
                         type: 'debug',
                         target: 'certificate_pinner_bypass',
                         action: 'hook_failed',
-                        error: e.toString(),
+                        error: error.toString(),
                     });
                 }
             });
         }
 
         // Hook experimental quantum-safe TLS implementations
-        const quantumTLS =
-            Module.findExportByName(null, 'SSL_CTX_set_post_quantum_security_level') ||
-            Module.findExportByName(null, 'SSL_enable_post_quantum');
+        const quantumTLS
+            = Module.findExportByName(null, 'SSL_CTX_set_post_quantum_security_level')
+            || Module.findExportByName(null, 'SSL_enable_post_quantum');
 
         if (quantumTLS) {
             Interceptor.attach(quantumTLS, {

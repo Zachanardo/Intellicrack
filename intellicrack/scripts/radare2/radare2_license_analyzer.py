@@ -794,7 +794,7 @@ class R2LicenseAnalyzer:
             json.dump(
                 [
                     {
-                        "address": f"0x{p['address']:x}" if isinstance(p['address'], int) else str(p['address']),
+                        "address": f"0x{p['address']:x}" if isinstance(p["address"], int) else str(p["address"]),
                         "original": p["original"].hex() if isinstance(p["original"], bytes) else str(p["original"]),
                         "patched": p["patched"].hex() if isinstance(p["patched"], bytes) else str(p["patched"]),
                         "function": p["function"],

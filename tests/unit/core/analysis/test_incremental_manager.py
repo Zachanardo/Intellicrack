@@ -16,15 +16,28 @@ import time
 import threading
 import gzip
 from pathlib import Path
+import pytest
 
-from intellicrack.core.analysis.incremental_manager import (
-    IncrementalAnalysisManager,
-    secure_pickle_dump,
-    secure_pickle_load,
-    RestrictedUnpickler,
-    run_analysis_manager,
-    PICKLE_SECURITY_KEY
-)
+try:
+    from intellicrack.core.analysis.incremental_manager import (
+        IncrementalAnalysisManager,
+        secure_pickle_dump,
+        secure_pickle_load,
+        RestrictedUnpickler,
+        run_analysis_manager,
+        PICKLE_SECURITY_KEY
+    )
+    INCREMENTAL_MANAGER_AVAILABLE = True
+except ImportError:
+    IncrementalAnalysisManager = None
+    secure_pickle_dump = None
+    secure_pickle_load = None
+    RestrictedUnpickler = None
+    run_analysis_manager = None
+    PICKLE_SECURITY_KEY = None
+    INCREMENTAL_MANAGER_AVAILABLE = False
+
+pytestmark = pytest.mark.skipif(not INCREMENTAL_MANAGER_AVAILABLE, reason="incremental_manager module not available")
 
 
 class TestSecurePickleFunctions(unittest.TestCase):

@@ -25,9 +25,8 @@ between binary_differ.py and vulnerability_analyzer.py.
 import csv
 import json
 import logging
-from typing import Any
-from typing import cast
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
+
 
 if TYPE_CHECKING:
     from _csv import _writer as CSVWriter

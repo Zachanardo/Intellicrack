@@ -7,7 +7,6 @@ Licensed under GNU General Public License v3.0
 """
 
 import os
-
 from typing import Any, Protocol
 
 from PyQt6.QtCore import QObject, QProcess, QTimer, pyqtSignal
@@ -335,6 +334,7 @@ class IntellicrackHexProtectionIntegration(QObject):
         # Check for advanced search module
         try:
             import importlib.util
+
             spec = importlib.util.find_spec(".advanced_search", package="intellicrack.hexview")
             if spec is not None:
                 features["Advanced Search"] = True

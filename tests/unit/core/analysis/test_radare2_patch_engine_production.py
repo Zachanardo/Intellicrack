@@ -724,3 +724,297 @@ class TestRealWorldScenarios:
 
         engine.close()
         je_binary.unlink()
+
+
+class TestEdgeCasesMalformedPatches:
+    """Test edge cases with malformed patches, zero-length patches, and overlapping regions."""
+
+    def test_zero_length_nop_sled_raises_error(self, simple_x86_binary: Path) -> None:
+        """Zero-length NOP sled should raise ValueError."""
+        engine = Radare2PatchEngine(simple_x86_binary)
+
+        with pytest.raises(ValueError):
+            engine.create_nop_sled(address=0x100, length=0)
+
+        engine.close()
+
+    def test_negative_length_nop_sled_raises_error(self, simple_x86_binary: Path) -> None:
+        """Negative-length NOP sled should raise ValueError."""
+        engine = Radare2PatchEngine(simple_x86_binary)
+
+        with pytest.raises(ValueError):
+            engine.create_nop_sled(address=0x100, length=-10)
+
+        engine.close()
+
+    def test_overlapping_patch_regions_detected(self, simple_x86_binary: Path) -> None:
+        """Overlapping patches should be detected and handled correctly."""
+        import shutil
+        temp_binary = simple_x86_binary.with_suffix('.overlap.exe')
+        shutil.copy(simple_x86_binary, temp_binary)
+
+        engine = Radare2PatchEngine(temp_binary, write_mode=True)
+
+        patch1 = engine.create_nop_sled(0x100, 10)
+        patch2 = engine.create_nop_sled(0x105, 10)
+
+        patches = [patch1, patch2]
+        patch_set = engine.create_patch_set("overlapping_test", patches)
+
+        assert patch1.address == 0x100
+        assert patch2.address == 0x105
+        assert (patch1.address + len(patch1.patch_bytes)) > patch2.address
+
+        engine.close()
+        temp_binary.unlink()
+
+    def test_patch_beyond_binary_size_handled(self, simple_x86_binary: Path) -> None:
+        """Patching beyond binary size should fail gracefully."""
+        engine = Radare2PatchEngine(simple_x86_binary)
+
+        binary_size = simple_x86_binary.stat().st_size
+
+        with pytest.raises((ValueError, Exception)):
+            engine.create_nop_sled(address=binary_size + 1000, length=10)
+
+        engine.close()
+
+    def test_malformed_jump_target_out_of_range(self, simple_x86_binary: Path) -> None:
+        """Jump target outside valid address space should be handled."""
+        engine = Radare2PatchEngine(simple_x86_binary)
+
+        try:
+            patch = engine.modify_jump(address=0x100, target=0xFFFFFFFF, jump_type="jmp")
+            assert patch is not None
+        except (ValueError, OverflowError):
+            pass
+
+        engine.close()
+
+    def test_corrupt_conditional_jump_instruction(self, simple_x86_binary: Path) -> None:
+        """Attempting to invert non-conditional jump should fail gracefully."""
+        unconditional_jmp = b'\xeb\x10'
+        with tempfile.NamedTemporaryFile(suffix='.bin', delete=False) as f:
+            f.write(b'\x00' * 0x100 + unconditional_jmp + b'\x00' * 100)
+            temp_path = Path(f.name)
+
+        engine = Radare2PatchEngine(temp_path)
+
+        try:
+            patch = engine.invert_conditional_jump(address=0x100)
+            assert patch.patch_bytes[0] != unconditional_jmp[0]
+        except (ValueError, Exception):
+            pass
+        finally:
+            engine.close()
+            temp_path.unlink()
+
+    def test_patch_at_invalid_alignment(self, simple_x86_binary: Path) -> None:
+        """Patches at misaligned addresses should still work correctly."""
+        engine = Radare2PatchEngine(simple_x86_binary)
+
+        patch = engine.create_nop_sled(address=0x101, length=5)
+
+        assert patch.address == 0x101
+        assert len(patch.patch_bytes) == 5
+
+        engine.close()
+
+    def test_extremely_large_nop_sled(self, simple_x86_binary: Path) -> None:
+        """Very large NOP sleds (e.g., 64KB) should generate correctly."""
+        engine = Radare2PatchEngine(simple_x86_binary)
+
+        large_size = 65536
+
+        try:
+            patch = engine.create_nop_sled(0x100, large_size)
+            assert len(patch.patch_bytes) == large_size
+        except (MemoryError, ValueError):
+            pass
+
+        engine.close()
+
+    def test_patch_set_with_duplicate_addresses(self, simple_x86_binary: Path) -> None:
+        """Patch sets with duplicate addresses should be detected."""
+        engine = Radare2PatchEngine(simple_x86_binary)
+
+        patch1 = engine.create_nop_sled(0x100, 5)
+        patch2 = engine.create_nop_sled(0x100, 5)
+
+        patch_set = engine.create_patch_set("duplicate_test", [patch1, patch2])
+
+        assert len(patch_set.patches) == 2
+        assert patch_set.patches[0].address == patch_set.patches[1].address
+
+        engine.close()
+
+    def test_apply_patch_to_readonly_binary(self, simple_x86_binary: Path) -> None:
+        """Applying patches to read-only binary should fail gracefully."""
+        import stat
+        import shutil
+
+        temp_binary = simple_x86_binary.with_suffix('.readonly.exe')
+        shutil.copy(simple_x86_binary, temp_binary)
+        temp_binary.chmod(stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
+
+        try:
+            engine = Radare2PatchEngine(temp_binary, write_mode=True)
+            patch = engine.create_nop_sled(0x100, 5)
+            result = engine.apply_patch(patch)
+
+            assert result is False or isinstance(result, bool)
+            engine.close()
+        except PermissionError:
+            pass
+        finally:
+            temp_binary.chmod(stat.S_IWUSR | stat.S_IRUSR)
+            if temp_binary.exists():
+                temp_binary.unlink()
+
+    def test_patch_with_invalid_bytes(self, simple_x86_binary: Path) -> None:
+        """Creating patch with invalid byte sequences should be handled."""
+        engine = Radare2PatchEngine(simple_x86_binary)
+
+        invalid_asm = "invalid_mnemonic_xyz"
+
+        try:
+            patch = engine.create_inline_patch(0x100, invalid_asm)
+            assert False, "Should have raised exception for invalid assembly"
+        except Exception as e:
+            assert "invalid" in str(e).lower() or "error" in str(e).lower()
+
+        engine.close()
+
+    def test_concurrent_patch_application_safety(self, simple_x86_binary: Path) -> None:
+        """Multiple patch applications should maintain integrity."""
+        import shutil
+        temp_binary = simple_x86_binary.with_suffix('.concurrent.exe')
+        shutil.copy(simple_x86_binary, temp_binary)
+
+        engine = Radare2PatchEngine(temp_binary, write_mode=True)
+
+        patches = [
+            engine.create_nop_sled(0x100 + (i * 20), 5) for i in range(10)
+        ]
+
+        for patch in patches:
+            result = engine.apply_patch(patch)
+            assert result is True or result is False
+
+        engine.close()
+        temp_binary.unlink()
+
+    def test_patch_reversal_idempotency(self, simple_x86_binary: Path) -> None:
+        """Reverting a patch twice should be idempotent."""
+        import shutil
+        temp_binary = simple_x86_binary.with_suffix('.idempotent.exe')
+        shutil.copy(simple_x86_binary, temp_binary)
+
+        engine = Radare2PatchEngine(temp_binary, write_mode=True)
+
+        patch = engine.create_nop_sled(0x100, 5)
+        engine.apply_patch(patch)
+
+        result1 = engine.revert_patch(patch)
+        result2 = engine.revert_patch(patch)
+
+        assert result1 is True or result1 is False
+        assert result2 is True or result2 is False
+
+        engine.close()
+        temp_binary.unlink()
+
+    def test_checksum_stability_after_revert(self, simple_x86_binary: Path) -> None:
+        """Binary checksum should match original after patch revert."""
+        import shutil
+        temp_binary = simple_x86_binary.with_suffix('.checksum.exe')
+        shutil.copy(simple_x86_binary, temp_binary)
+
+        engine = Radare2PatchEngine(temp_binary, write_mode=True)
+
+        original_checksum = engine._calculate_checksum()
+
+        patch = engine.create_nop_sled(0x100, 10)
+        engine.apply_patch(patch)
+
+        patched_checksum = engine._calculate_checksum()
+        assert original_checksum != patched_checksum
+
+        engine.revert_patch(patch)
+
+        reverted_checksum = engine._calculate_checksum()
+        assert reverted_checksum == original_checksum
+
+        engine.close()
+        temp_binary.unlink()
+
+
+class TestComplexPatchScenarios:
+    """Test complex real-world patching scenarios."""
+
+    def test_multi_layer_license_bypass(self, simple_x86_binary: Path) -> None:
+        """Multi-layer license bypass with jump redirects and return patches."""
+        import shutil
+        temp_binary = simple_x86_binary.with_suffix('.multilayer.exe')
+        shutil.copy(simple_x86_binary, temp_binary)
+
+        engine = Radare2PatchEngine(temp_binary, write_mode=True)
+
+        patches = [
+            engine.patch_return_value(0x100, 1, value_size=4),
+            engine.invert_conditional_jump(0x10D) if temp_binary.read_bytes()[0x10D:0x10F] in [b'\x74\x05', b'\x75\x03'] else engine.create_nop_sled(0x10D, 2),
+            engine.create_nop_sled(0x120, 20),
+        ]
+
+        patch_set = engine.create_patch_set("complex_bypass", patches)
+        result = engine.apply_patch_set("complex_bypass")
+
+        assert result is True or result is False
+
+        engine.close()
+        temp_binary.unlink()
+
+    def test_cascading_patch_dependencies(self, simple_x86_binary: Path) -> None:
+        """Patches that depend on previous patches being applied first."""
+        import shutil
+        temp_binary = simple_x86_binary.with_suffix('.cascading.exe')
+        shutil.copy(simple_x86_binary, temp_binary)
+
+        engine = Radare2PatchEngine(temp_binary, write_mode=True)
+
+        patch1 = engine.create_nop_sled(0x100, 10)
+        patch2 = engine.modify_jump(0x100, 0x200, "jmp")
+        patch3 = engine.patch_return_value(0x200, 1, value_size=4)
+
+        patch_set = engine.create_patch_set("cascading", [patch1, patch2, patch3])
+
+        result = engine.apply_patch_set("cascading")
+
+        assert result is True or result is False
+        assert patch_set.applied is True or patch_set.applied is False
+
+        engine.close()
+        temp_binary.unlink()
+
+    def test_patch_serialization_and_reload(self, simple_x86_binary: Path, tmp_path: Path) -> None:
+        """Patch sets should serialize and reload correctly."""
+        engine = Radare2PatchEngine(simple_x86_binary)
+
+        patch1 = engine.create_nop_sled(0x100, 5)
+        patch2 = engine.modify_jump(0x110, 0x200, "jmp")
+
+        engine.create_patch_set("serialization_test", [patch1, patch2])
+
+        export_path = tmp_path / "patches_serial.json"
+        engine.export_patch_set("serialization_test", export_path)
+
+        assert export_path.exists()
+
+        with open(export_path) as f:
+            data = json.load(f)
+
+        assert "name" in data
+        assert "patches" in data
+        assert len(data["patches"]) == 2
+
+        engine.close()

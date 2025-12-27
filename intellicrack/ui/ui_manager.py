@@ -150,7 +150,7 @@ class UIManager:
             "task_manager": self.main_window.task_manager,
         }
 
-        parent_widget = cast(QWidget, self.main_window)
+        parent_widget = cast("QWidget", self.main_window)
         self.main_window.dashboard_tab = DashboardTab(shared_context, parent_widget)
         self.main_window.analysis_tab = AnalysisTab(shared_context, parent_widget)
         self.main_window.exploitation_tab = ExploitationTab(shared_context, parent_widget)

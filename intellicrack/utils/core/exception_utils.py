@@ -38,7 +38,11 @@ QMessageBox: type[Any] | None = None
 QApplication: type[Any] | None = None
 
 try:
-    from PyQt6.QtWidgets import QApplication as _QApplication, QMessageBox as _QMessageBox
+    from PyQt6.QtWidgets import (
+        QApplication as _QApplication,
+        QMessageBox as _QMessageBox,
+    )
+
     QMessageBox = _QMessageBox
     QApplication = _QApplication
 except ImportError as e:
@@ -85,12 +89,12 @@ class RestrictedUnpickler(pickle.Unpickler):  # noqa: S301
 
         # Allow model classes from our own modules
         if module.startswith("intellicrack."):
-            result: type[object] = cast(type[object], super().find_class(module, name))
+            result: type[object] = cast("type[object]", super().find_class(module, name))
             return result
 
         # Check if module is in allowed list
         if any(module.startswith(allowed) for allowed in ALLOWED_MODULES):
-            result = cast(type[object], super().find_class(module, name))
+            result = cast("type[object]", super().find_class(module, name))
             return result
 
         # Deny everything else

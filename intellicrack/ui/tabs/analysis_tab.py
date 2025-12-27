@@ -34,8 +34,6 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from intellicrack.core.monitoring.monitor_event import MonitorEvent
 
-logger = logging.getLogger(__name__)
-
 from intellicrack.core.license_snapshot import LicenseSnapshot
 from intellicrack.core.license_validation_bypass import LicenseValidationBypass
 from intellicrack.core.monitoring.monitoring_session import MonitoringConfig, MonitoringSession
@@ -67,6 +65,8 @@ from intellicrack.handlers.pyqt6_handler import (
 from intellicrack.utils.subprocess_security import secure_run
 
 from .base_tab import BaseTab
+
+logger = logging.getLogger(__name__)
 
 
 class CollapsibleGroupBox(QGroupBox):
@@ -1310,7 +1310,6 @@ class AnalysisTab(BaseTab):
                 task_id = tm.submit_callable(
                     self._run_static_analysis,
                     description=f"Static analysis of {binary_name}",
-                    callback=self._on_static_analysis_complete,
                 )
                 self.log_activity(f"Static analysis task submitted: {str(task_id)[:8]}...")
         else:
@@ -1810,14 +1809,12 @@ class AnalysisTab(BaseTab):
 
                 # Disassemble
                 disasm_output = [f"; Disassembly of {os.path.basename(self.current_file_path or '')}"]
-                disasm_output.extend(
-                    (
-                        f"; Architecture: {cs.arch}",
-                        f"; Mode: {cs.mode}",
-                        "; " + "=" * 60,
-                        "",
-                    )
-                )
+                disasm_output.extend((
+                    f"; Architecture: {cs.arch}",
+                    f"; Mode: {cs.mode}",
+                    "; " + "=" * 60,
+                    "",
+                ))
                 for instruction in cs.disasm(code_data, base_address):
                     hex_bytes = " ".join(f"{b:02x}" for b in instruction.bytes)
                     disasm_output.append(f"0x{instruction.address:08x}:  {hex_bytes:<20}  {instruction.mnemonic:<8} {instruction.op_str}")

@@ -29,7 +29,7 @@ from dataclasses import dataclass, field
 from datetime import UTC
 from enum import IntEnum
 from pathlib import Path
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -37,6 +37,10 @@ from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 from intellicrack.utils.logger import get_logger
+
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 logger = get_logger(__name__)

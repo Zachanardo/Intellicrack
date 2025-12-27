@@ -17,10 +17,14 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import IntEnum
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec, padding, rsa
+
+
+if TYPE_CHECKING:
+    from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes, PublicKeyTypes
 
 
 logger = logging.getLogger(__name__)
@@ -555,7 +559,6 @@ class TPMEmulator:
 
         # Generate key based on template
         from cryptography.hazmat.backends import default_backend
-        from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes, PublicKeyTypes
 
         key_alg = key_template.get("algorithm", TPM_ALG.RSA)
         key_size = key_template.get("key_size", 2048)

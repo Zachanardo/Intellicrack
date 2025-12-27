@@ -27,8 +27,8 @@ from datetime import datetime
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Protocol, cast
 
-from intellicrack.utils.type_safety import validate_type
 from intellicrack.utils.logger import logger
+from intellicrack.utils.type_safety import validate_type
 
 from ...utils.logger import get_logger
 from .radare2_error_handler import get_error_handler, r2_error_context
@@ -144,6 +144,7 @@ except ImportError:
                 event: File system event object with src_path attribute.
 
             """
+
 
 if TYPE_CHECKING:
     from watchdog.events import FileSystemEventHandler as WatchdogFileSystemEventHandlerType

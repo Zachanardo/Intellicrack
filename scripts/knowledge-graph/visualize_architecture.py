@@ -339,7 +339,7 @@ class KnowledgeGraphGenerator:
         except Exception:
             logger.exception("Failed to save GraphML file:")
 
-    def _calculate_hierarchical_layout(  # noqa: PLR6301
+    def _calculate_hierarchical_layout(
         self, filtered_graph: nx.DiGraph
     ) -> dict[str, dict[str, float]]:
         """Calculate hierarchical layout based on module depth with grid wrapping."""
@@ -382,7 +382,7 @@ class KnowledgeGraphGenerator:
         logger.info("Hierarchical layout calculated for %d nodes.", len(layout_map))
         return layout_map
 
-    def _calculate_radial_layout(self, filtered_graph: nx.DiGraph) -> dict[str, dict[str, float]]:  # noqa: PLR6301
+    def _calculate_radial_layout(self, filtered_graph: nx.DiGraph) -> dict[str, dict[str, float]]:
         """Calculate radial layout with entry point at center."""
         logger.info("Calculating radial layout...")
         layout_map: dict[str, dict[str, float]] = {}
@@ -428,7 +428,7 @@ class KnowledgeGraphGenerator:
         logger.info("Radial layout calculated for %d nodes.", len(layout_map))
         return layout_map
 
-    def _calculate_sfdp_layout(self, dot_file: Path) -> dict[str, dict[str, float]]:  # noqa: PLR6301
+    def _calculate_sfdp_layout(self, dot_file: Path) -> dict[str, dict[str, float]]:
         """Calculates layout using sfdp and returns node positions."""
         logger.info("Calculating pre-loaded layout using sfdp (this may take a while)...")
         layout_map: dict[str, dict[str, float]] = {}
@@ -464,7 +464,7 @@ class KnowledgeGraphGenerator:
 
         return layout_map
 
-    def _generate_dot_file(self, filtered_graph: nx.DiGraph, dot_path: Path) -> bool:  # noqa: PLR6301
+    def _generate_dot_file(self, filtered_graph: nx.DiGraph, dot_path: Path) -> bool:
         """Generate DOT file for external layout tools."""
         try:
             try:
@@ -637,7 +637,7 @@ class KnowledgeGraphGenerator:
         except Exception:
             logger.exception("Failed to save HTML file:")
 
-    def _generate_html_template(  # noqa: PLR6301
+    def _generate_html_template(
         self,
         json_nodes: str,
         json_edges: str,

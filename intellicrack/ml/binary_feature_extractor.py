@@ -16,7 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
-
 import contextlib
 from pathlib import Path
 from types import ModuleType
@@ -36,6 +35,7 @@ try:
 
     capstone_module: ModuleType | None = capstone
     from capstone_module import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
+
     CAPSTONE_AVAILABLE = True
 except ImportError:
     logger.debug("Capstone not available", exc_info=True)
@@ -57,9 +57,9 @@ except ImportError:
     pefile_module = None
 
 try:
-    import networkx
+    import networkx as nx
 
-    nx_module: ModuleType | None = networkx
+    nx_module: ModuleType | None = nx
     NETWORKX_AVAILABLE = True
 except ImportError:
     logger.debug("NetworkX not available", exc_info=True)
@@ -326,7 +326,7 @@ class BinaryFeatureExtractor:
 
             try:
                 for insn in self.disassembler.disasm(section_data, section_va):
-                    current_block["size"] = current_block["size"] + insn.size
+                    current_block["size"] += insn.size
 
                     # Check if instruction ends basic block
                     if insn.mnemonic in [

@@ -49,7 +49,7 @@ class Plugin:
         populated when the plugin is registered with a BinaryAnalyzer.
 
         """
-        self.analyzer: "BinaryAnalyzer | None" = None
+        self.analyzer: BinaryAnalyzer | None = None
         self.analysis_start_time: float = 0.0
         self.total_states_analyzed: int = 0
         self.analysis_metadata: dict[str, Any] = {}
@@ -317,7 +317,7 @@ class BinaryAnalyzer:
         self.binary_path: str = binary_path
         self.workspace_url: str | None = workspace_url
         self.logger: logging.Logger = logging.getLogger("SimConcolic")
-        self.hooks: dict[int, list[Callable[["State"], None]]] = {}
+        self.hooks: dict[int, list[Callable[[State], None]]] = {}
         self.plugins: list[Plugin] = []
         self._states: dict[str, State] = {}
         self._exec_timeout: int | None = None

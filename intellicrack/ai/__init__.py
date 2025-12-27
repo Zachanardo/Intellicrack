@@ -21,6 +21,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import logging
 from typing import TYPE_CHECKING
 
+
 if TYPE_CHECKING:
     from intellicrack.ai.ai_script_generator import AIScriptGenerator, ScriptType
     from intellicrack.ai.api_provider_clients import (
@@ -34,13 +35,7 @@ if TYPE_CHECKING:
         ProviderManager,
         get_provider_manager,
     )
-    from intellicrack.ai.code_analysis_tools import (
-        AIAssistant,
-        CodeAnalyzer,
-        analyze_with_ai,
-        explain_code,
-        get_ai_suggestions,
-    )
+    from intellicrack.ai.code_analysis_tools import AIAssistant, CodeAnalyzer, analyze_with_ai, explain_code, get_ai_suggestions
     from intellicrack.ai.coordination_layer import (
         AICoordinationLayer,
         AnalysisRequest,
@@ -49,11 +44,7 @@ if TYPE_CHECKING:
         comprehensive_analysis,
         quick_vulnerability_scan,
     )
-    from intellicrack.ai.integration_manager import (
-        IntegrationManager,
-        IntegrationTask,
-        WorkflowResult,
-    )
+    from intellicrack.ai.integration_manager import IntegrationManager, IntegrationTask, WorkflowResult
     from intellicrack.ai.intelligent_code_modifier import (
         ChangeStatus,
         CodeChange,
@@ -61,11 +52,7 @@ if TYPE_CHECKING:
         ModificationRequest as ModificationRequest,
         ModificationType as ModificationType,
     )
-    from intellicrack.ai.interactive_assistant import (
-        IntellicrackAIAssistant,
-        Tool,
-        ToolCategory,
-    )
+    from intellicrack.ai.interactive_assistant import IntellicrackAIAssistant, Tool, ToolCategory
     from intellicrack.ai.learning_engine import (
         AILearningEngine as AILearningEngine,
         FailureAnalysis,
@@ -87,14 +74,8 @@ if TYPE_CHECKING:
         get_llm_manager,
         shutdown_llm_manager,
     )
-    from intellicrack.ai.llm_config_manager import (
-        LLMConfigManager,
-        get_llm_config_manager,
-    )
-    from intellicrack.ai.model_discovery_service import (
-        ModelDiscoveryService,
-        get_model_discovery_service,
-    )
+    from intellicrack.ai.llm_config_manager import LLMConfigManager, get_llm_config_manager
+    from intellicrack.ai.model_discovery_service import ModelDiscoveryService, get_model_discovery_service
     from intellicrack.ai.model_manager_module import (
         ModelBackend,
         ModelManager,
@@ -107,14 +88,7 @@ if TYPE_CHECKING:
         load_model,
         save_model,
     )
-    from intellicrack.ai.multi_agent_system import (
-        AgentMessage,
-        AgentRole,
-        AgentTask,
-        MessageType,
-        MultiAgentSystem,
-        TaskPriority,
-    )
+    from intellicrack.ai.multi_agent_system import AgentMessage, AgentRole, AgentTask, MessageType, MultiAgentSystem, TaskPriority
     from intellicrack.ai.optimization_config import (
         OptimizationManager,
         OptimizationRule,
@@ -159,13 +133,18 @@ if TYPE_CHECKING:
         SemanticNode,
         SemanticRelationship,
     )
-    from intellicrack.ai.vulnerability_research_integration import (
-        LicensingProtectionAnalyzer,
-    )
+    from intellicrack.ai.vulnerability_research_integration import LicensingProtectionAnalyzer
 
     QemuTestManager = QEMUManager
 
     def learning_engine() -> AILearningEngine:
+        """Return the singleton AI learning engine instance.
+
+        Returns:
+            AILearningEngine: The global learning engine for pattern recognition
+                and protection analysis.
+
+        """
         return get_learning_engine()
 
 

@@ -14,8 +14,6 @@ import threading
 from collections.abc import Callable
 from typing import Any
 
-logger = logging.getLogger(__name__)
-
 from intellicrack.core.adobe_injector_integration import AdobeInjectorWidget
 from intellicrack.core.terminal_manager import get_terminal_manager
 from intellicrack.handlers.pyqt6_handler import (
@@ -33,6 +31,8 @@ from intellicrack.handlers.pyqt6_handler import (
 )
 from intellicrack.ui.tabs.base_tab import BaseTab
 from intellicrack.utils.path_resolver import get_project_root
+
+logger = logging.getLogger(__name__)
 
 
 class AdobeInjectorTab(BaseTab):
@@ -107,7 +107,7 @@ class AdobeInjectorTab(BaseTab):
         layout = QVBoxLayout(tab)
 
         self.embedded_widget = AdobeInjectorWidget()
-        if hasattr(self.embedded_widget, 'status_updated'):
+        if hasattr(self.embedded_widget, "status_updated"):
             self.embedded_widget.status_updated.connect(self.on_status_update)
         layout.addWidget(self.embedded_widget)
 

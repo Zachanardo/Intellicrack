@@ -9,7 +9,6 @@ from __future__ import annotations
 from collections.abc import ItemsView
 from typing import TYPE_CHECKING, Any, cast
 
-from intellicrack.utils.type_safety import validate_type
 from intellicrack.ai.interactive_assistant import IntellicrackAIAssistant
 from intellicrack.handlers.pyqt6_handler import (
     QApplication,
@@ -31,12 +30,16 @@ from intellicrack.handlers.pyqt6_handler import (
     QWidget,
 )
 from intellicrack.utils.logger import get_logger
+from intellicrack.utils.type_safety import validate_type
 
 from .base_tab import BaseTab
 
+
 if TYPE_CHECKING:
-    from intellicrack.ai.api_provider_clients import BaseProviderClient
-    from intellicrack.ai.api_provider_clients import ModelInfo as APIModelInfo
+    from intellicrack.ai.api_provider_clients import (
+        BaseProviderClient,
+        ModelInfo as APIModelInfo,
+    )
 
 
 logger = get_logger(__name__)

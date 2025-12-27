@@ -37,8 +37,8 @@ function parseTPMCommand(buffer) {
 
     return {
         tag: `0x${tag.toString(16)}`,
-        size: size,
-        commandCode: commandCode,
+        size,
+        commandCode,
         commandName: TPM_COMMANDS[commandCode] || `Unknown_0x${commandCode.toString(16)}`,
         fullBuffer: buffer,
     };
@@ -55,8 +55,8 @@ function parseTPMResponse(buffer) {
 
     return {
         tag: `0x${tag.toString(16)}`,
-        size: size,
-        responseCode: responseCode,
+        size,
+        responseCode,
         success: responseCode === 0,
         fullBuffer: buffer,
     };
@@ -76,14 +76,14 @@ function hookTbsipSubmitCommand() {
     }
 
     Interceptor.attach(tbsipSubmitCommand, {
-        onEnter: function (args) {
+        onEnter(args) {
             const _context = args[0];
             const locality = args[1].toInt32();
             const priority = args[2].toInt32();
             const commandBuffer = args[3];
             const commandSize = args[4].toInt32();
 
-            if (commandSize > 0 && commandSize < 65536) {
+            if (commandSize > 0 && commandSize < 65_536) {
                 try {
                     const commandData = commandBuffer.readByteArray(commandSize);
                     const buffer = Buffer.from(commandData);
@@ -99,22 +99,37 @@ function hookTbsipSubmitCommand() {
                         interceptedCommands.push({
                             timestamp: Date.now(),
                             command: parsed,
-                            locality: locality,
-                            priority: priority,
+                            locality,
+                            priority,
                         });
 
-                        if (parsed.commandName === 'TPM2_Unseal') {
-                            console.log('[*] Unseal operation detected - extracting sealed key...');
-                        } else if (parsed.commandName === 'TPM2_Quote') {
-                            console.log('[*] Quote operation detected - monitoring attestation...');
-                        } else if (parsed.commandName === 'TPM2_PCR_Extend') {
-                            console.log(
-                                '[*] PCR Extend detected - monitoring integrity measurement...'
-                            );
+                        switch (parsed.commandName) {
+                            case 'TPM2_Unseal': {
+                                console.log(
+                                    '[*] Unseal operation detected - extracting sealed key...'
+                                );
+
+                                break;
+                            }
+                            case 'TPM2_Quote': {
+                                console.log(
+                                    '[*] Quote operation detected - monitoring attestation...'
+                                );
+
+                                break;
+                            }
+                            case 'TPM2_PCR_Extend': {
+                                console.log(
+                                    '[*] PCR Extend detected - monitoring integrity measurement...'
+                                );
+
+                                break;
+                            }
+                            // No default
                         }
                     }
-                } catch (e) {
-                    console.log(`[-] Error parsing command: ${e.message}`);
+                } catch (error) {
+                    console.log(`[-] Error parsing command: ${error.message}`);
                 }
             }
 
@@ -124,11 +139,11 @@ function hookTbsipSubmitCommand() {
             this.resultSize = args[6];
         },
 
-        onLeave: function (retval) {
+        onLeave(retval) {
             if (retval.toInt32() === 0 && this.resultBuffer && !this.resultBuffer.isNull()) {
                 try {
                     const resultSizeValue = this.resultSize.readU32();
-                    if (resultSizeValue > 0 && resultSizeValue < 65536) {
+                    if (resultSizeValue > 0 && resultSizeValue < 65_536) {
                         const responseData = this.resultBuffer.readByteArray(resultSizeValue);
                         const buffer = Buffer.from(responseData);
                         const parsed = parseTPMResponse(buffer);
@@ -147,8 +162,8 @@ function hookTbsipSubmitCommand() {
                             }
                         }
                     }
-                } catch (e) {
-                    console.log(`[-] Error parsing response: ${e.message}`);
+                } catch (error) {
+                    console.log(`[-] Error parsing response: ${error.message}`);
                 }
             }
         },
@@ -172,12 +187,12 @@ function hookTbsiContextCreate() {
     }
 
     Interceptor.attach(tbsiContextCreate, {
-        onEnter: function (args) {
+        onEnter(args) {
             console.log('[+] TBS Context Creation Detected');
             this.contextPtr = args[1];
         },
 
-        onLeave: function (retval) {
+        onLeave(retval) {
             if (retval.toInt32() === 0) {
                 console.log('[+] TBS Context Created Successfully');
                 if (this.contextPtr && !this.contextPtr.isNull()) {
@@ -205,7 +220,7 @@ function hookNCryptTPMFunctions() {
     const ncryptOpenStorageProvider = ncryptDll.getExportByName('NCryptOpenStorageProvider');
     if (ncryptOpenStorageProvider) {
         Interceptor.attach(ncryptOpenStorageProvider, {
-            onEnter: function (args) {
+            onEnter(args) {
                 const providerNamePtr = args[1];
                 if (providerNamePtr && !providerNamePtr.isNull()) {
                     try {
@@ -214,13 +229,13 @@ function hookNCryptTPMFunctions() {
                             console.log(`[+] NCrypt TPM Provider Access: ${providerName}`);
                             this.isTpmProvider = true;
                         }
-                    } catch (e) {
-                        console.log(`[-] Error reading provider name: ${e.message}`);
+                    } catch (error) {
+                        console.log(`[-] Error reading provider name: ${error.message}`);
                     }
                 }
             },
 
-            onLeave: function (retval) {
+            onLeave(retval) {
                 if (this.isTpmProvider && retval.toInt32() === 0) {
                     console.log('[+] TPM Storage Provider Opened');
                 }
@@ -240,8 +255,8 @@ function hookNCryptTPMFunctions() {
                     try {
                         const keyName = keyNamePtr.readUtf16String();
                         console.log(`[+] NCrypt Key Access: ${keyName}`);
-                    } catch (e) {
-                        console.log(`[-] Error reading key name: ${e.message}`);
+                    } catch (error) {
+                        console.log(`[-] Error reading key name: ${error.message}`);
                     }
                 }
             },
@@ -277,9 +292,9 @@ function hookDeviceIoControl() {
             try {
                 const deviceName = hDevice.toString();
                 if (
-                    deviceName.includes('TPM') ||
-                    dwIoControlCode === 0x22c000 ||
-                    dwIoControlCode === 0x22c004
+                    deviceName.includes('TPM')
+                    || dwIoControlCode === 0x22_C0_00
+                    || dwIoControlCode === 0x22_C0_04
                 ) {
                     console.log('[+] DeviceIoControl TPM Access Detected');
                     console.log(
@@ -290,10 +305,10 @@ function hookDeviceIoControl() {
                     const inputSize = args[3].toInt32();
 
                     if (
-                        inputSize > 0 &&
-                        inputSize < 65536 &&
-                        inputBuffer &&
-                        !inputBuffer.isNull()
+                        inputSize > 0
+                        && inputSize < 65_536
+                        && inputBuffer
+                        && !inputBuffer.isNull()
                     ) {
                         const inputData = inputBuffer.readByteArray(inputSize);
                         const buffer = Buffer.from(inputData);
@@ -304,8 +319,8 @@ function hookDeviceIoControl() {
                         }
                     }
                 }
-            } catch (e) {
-                console.log(`[-] Error in DeviceIoControl hook: ${e.message}`);
+            } catch (error) {
+                console.log(`[-] Error in DeviceIoControl hook: ${error.message}`);
             }
         },
     });
@@ -317,7 +332,7 @@ function hookDeviceIoControl() {
 
 function getSummary() {
     return {
-        hookedFunctions: Array.from(hookedFunctions),
+        hookedFunctions: [...hookedFunctions],
         interceptedCommandCount: interceptedCommands.length,
         commands: interceptedCommands.map(entry => ({
             timestamp: entry.timestamp,
@@ -356,7 +371,7 @@ function initialize() {
 }
 
 rpc.exports = {
-    getSummary: getSummary,
+    getSummary,
     getInterceptedCommands: () => interceptedCommands,
     clearCommands: () => {
         interceptedCommands.length = 0;

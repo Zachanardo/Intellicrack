@@ -9,5 +9,38 @@
         "verified": true,
         "notes": "Test sample",
         "feature_extraction_version": "1.0.0"
+    },
+    "4ba3efd3a532ec4dfcb53e65e4aedec1306bf70ad8a6d749c98b20db4941579f": {
+        "file_hash": "4ba3efd3a532ec4dfcb53e65e4aedec1306bf70ad8a6d749c98b20db4941579f",
+        "protection_type": "VMProtect",
+        "file_size": 4032,
+        "timestamp": "2025-12-27T02:27:11.847735+00:00",
+        "confidence": 1.0,
+        "source": "manual",
+        "verified": true,
+        "notes": "Test verified sample",
+        "feature_extraction_version": "1.0.0"
+    },
+    "821a614d2cdabb91b98139b6024531d02c58f16bd5c56b08b09528cbaf538701": {
+        "file_hash": "821a614d2cdabb91b98139b6024531d02c58f16bd5c56b08b09528cbaf538701",
+        "protection_type": "VMProtect",
+        "file_size": 1268,
+        "timestamp": "2025-12-27T02:27:13.973506+00:00",
+        "confidence": 1.0,
+        "source": "manual",
+        "verified": true,
+        "notes": "",
+        "feature_extraction_version": "1.0.0"
+    },
+    "86e3dc03abddad06edeae2545419bd2847175c7f9235dab997a82e55d0423984": {
+        "file_hash": "86e3dc03abddad06edeae2545419bd2847175c7f9235dab997a82e55d0423984",
+        "protection_type": "VMProtect",
+        "file_size": 4032,
+        "timestamp": "2025-12-27T02:43:12.969152+00:00",
+        "confidence": 1.0,
+        "source": "manual",
+        "verified": true,
+        "notes": "Test verified sample",
+        "feature_extraction_version": "1.0.0"
     }
 }

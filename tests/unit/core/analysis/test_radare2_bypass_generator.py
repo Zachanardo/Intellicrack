@@ -1878,5 +1878,488 @@ class TestDecisionPointAnalysis:
         assert bypass_method != ""
 
 
+class TestEdgeCasesIncompleteLicenseChecks:
+    """Test edge cases with incomplete license checks and partial validation."""
+
+    @pytest.fixture
+    def incomplete_check_generator(self):
+        """Create generator with incomplete license check patterns."""
+        with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
+            incomplete_binary = (
+                b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' +
+                b'\x00' * 200 +
+                b'\x85\xc0' +
+                b'\x74\x02' +
+                b'\xc3' +
+                b'license'
+            )
+            tmp_binary.write(incomplete_binary)
+            binary_path = tmp_binary.name
+
+        yield R2BypassGenerator(binary_path, "r2")
+        os.unlink(binary_path)
+
+    def test_incomplete_license_check_single_comparison(self, incomplete_check_generator: "R2BypassGenerator") -> None:
+        """Test bypass generation for incomplete license check with only one comparison."""
+        analysis = incomplete_check_generator._analyze_license_mechanisms()
+
+        assert isinstance(analysis, dict)
+
+        if 'validation_flow' in analysis:
+            validation_flow = analysis['validation_flow']
+            assert isinstance(validation_flow, (list, dict))
+
+    def test_partial_validation_without_error_handling(self, incomplete_check_generator: "R2BypassGenerator") -> None:
+        """Test bypass for validation routines without proper error handling."""
+        bypass_result = incomplete_check_generator.generate_comprehensive_bypass()
+
+        assert isinstance(bypass_result, dict)
+        assert 'bypass_strategies' in bypass_result
+        assert len(bypass_result['bypass_strategies']) >= 1
+
+        for strategy in bypass_result['bypass_strategies']:
+            assert 'method' in strategy
+            assert 'implementation' in strategy
+
+    def test_license_check_missing_crypto_validation(self, incomplete_check_generator: "R2BypassGenerator") -> None:
+        """Test bypass for license check without cryptographic validation."""
+        crypto_ops = incomplete_check_generator._extract_crypto_operations()
+
+        assert isinstance(crypto_ops, list)
+
+        if len(crypto_ops) == 0:
+            bypass_strategies = incomplete_check_generator._generate_bypass_strategies()
+            assert len(bypass_strategies) > 0
+
+            simple_strategies = [s for s in bypass_strategies if s.get('difficulty') in ['trivial', 'easy']]
+            assert len(simple_strategies) > 0
+
+    def test_incomplete_serial_validation_pattern(self):
+        """Test bypass for incomplete serial validation (checksum only, no signature)."""
+        with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
+            checksum_only_binary = (
+                b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' +
+                b'\x00' * 200 +
+                b'serial\x00checksum\x00'
+                b'\x33\xc0' +
+                b'\x85\xc0' +
+                b'\x74\x05'
+            )
+            tmp_binary.write(checksum_only_binary)
+            binary_path = tmp_binary.name
+
+        try:
+            generator = R2BypassGenerator(binary_path, "r2")
+            bypass_result = generator.generate_comprehensive_bypass()
+
+            assert isinstance(bypass_result, dict)
+            assert 'bypass_strategies' in bypass_result
+
+            strategies = bypass_result['bypass_strategies']
+            assert len(strategies) >= 1
+
+            for strategy in strategies:
+                if 'success_rate' in strategy:
+                    assert strategy['success_rate'] >= 50
+        finally:
+            os.unlink(binary_path)
+
+    def test_truncated_license_validation_function(self):
+        """Test bypass for truncated validation function (missing epilogue)."""
+        with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
+            truncated_function = (
+                b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' +
+                b'\x00' * 200 +
+                b'\x55' +
+                b'\x89\xe5' +
+                b'\x85\xc0' +
+                b'\x74\x05'
+            )
+            tmp_binary.write(truncated_function)
+            binary_path = tmp_binary.name
+
+        try:
+            generator = R2BypassGenerator(binary_path, "r2")
+            analysis = generator._analyze_license_mechanisms()
+
+            assert isinstance(analysis, dict)
+        finally:
+            os.unlink(binary_path)
+
+
+class TestEdgeCasesNestedValidation:
+    """Test edge cases with nested validation functions and multi-level checks."""
+
+    @pytest.fixture
+    def nested_validation_generator(self):
+        """Create generator with nested validation patterns."""
+        with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
+            nested_binary = (
+                b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' +
+                b'\x00' * 200 +
+                b'\xe8\x10\x00\x00\x00' +
+                b'\x85\xc0' +
+                b'\x74\x0a' +
+                b'\xe8\x20\x00\x00\x00' +
+                b'\x85\xc0' +
+                b'\x74\x05' +
+                b'\xb8\x01\x00\x00\x00' +
+                b'\xc3'
+            )
+            tmp_binary.write(nested_binary)
+            binary_path = tmp_binary.name
+
+        yield R2BypassGenerator(binary_path, "r2")
+        os.unlink(binary_path)
+
+    def test_nested_validation_call_hierarchy(self, nested_validation_generator: "R2BypassGenerator") -> None:
+        """Test bypass generation for nested validation call hierarchy."""
+        cfg_analysis = nested_validation_generator._analyze_control_flow_graph()
+
+        assert isinstance(cfg_analysis, dict)
+
+        if 'basic_blocks' in cfg_analysis:
+            basic_blocks = cfg_analysis['basic_blocks']
+            assert isinstance(basic_blocks, list)
+
+    def test_multi_level_license_check_chain(self, nested_validation_generator: "R2BypassGenerator") -> None:
+        """Test bypass for multi-level license check chains."""
+        bypass_result = nested_validation_generator.generate_comprehensive_bypass()
+
+        assert isinstance(bypass_result, dict)
+        assert 'bypass_strategies' in bypass_result
+
+        strategies = bypass_result['bypass_strategies']
+        assert len(strategies) >= 2
+
+        has_multi_stage = any(
+            'stage' in str(s).lower() or 'multi' in str(s).lower() or 'nested' in str(s).lower()
+            for s in strategies
+        )
+
+    def test_recursive_validation_detection(self, nested_validation_generator: "R2BypassGenerator") -> None:
+        """Test detection and bypass of recursive validation patterns."""
+        decision_points = nested_validation_generator._identify_decision_points()
+
+        assert isinstance(decision_points, list)
+
+        for point in decision_points:
+            assert isinstance(point, dict)
+            assert 'address' in point
+            assert 'instruction' in point
+
+    def test_validation_function_calling_validator(self):
+        """Test bypass for validation function that calls another validator."""
+        with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
+            validator_chain = (
+                b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' +
+                b'\x00' * 300 +
+                b'validate_license\x00validate_serial\x00validate_key\x00'
+                b'\xe8\x50\x00\x00\x00' +
+                b'\x85\xc0' +
+                b'\x74\x10' +
+                b'\xe8\x60\x00\x00\x00' +
+                b'\x85\xc0' +
+                b'\x74\x08' +
+                b'\xe8\x70\x00\x00\x00' +
+                b'\xc3'
+            )
+            tmp_binary.write(validator_chain)
+            binary_path = tmp_binary.name
+
+        try:
+            generator = R2BypassGenerator(binary_path, "r2")
+            bypass_result = generator.generate_comprehensive_bypass()
+
+            assert isinstance(bypass_result, dict)
+            assert 'bypass_strategies' in bypass_result
+
+            strategies = bypass_result['bypass_strategies']
+            multi_point_strategies = [
+                s for s in strategies
+                if 'implementation' in s and len(str(s['implementation'])) > 300
+            ]
+            assert len(multi_point_strategies) >= 1
+        finally:
+            os.unlink(binary_path)
+
+
+class TestEdgeCasesObfuscatedPatterns:
+    """Test edge cases with obfuscated license validation patterns."""
+
+    @pytest.fixture
+    def obfuscated_generator(self):
+        """Create generator with obfuscated validation patterns."""
+        with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
+            obfuscated_binary = (
+                b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' +
+                b'\x00' * 200 +
+                b'\x8b\x44\x24\x04' +
+                b'\x33\xd2' +
+                b'\x8a\x10' +
+                b'\x80\xf2\x42' +
+                b'\x88\x10' +
+                b'\x40' +
+                b'\x42' +
+                b'\x83\xfa\x10' +
+                b'\x7c\xf3' +
+                b'\x85\xc0' +
+                b'\x74\x05' +
+                b'\xc3'
+            )
+            tmp_binary.write(obfuscated_binary)
+            binary_path = tmp_binary.name
+
+        yield R2BypassGenerator(binary_path, "r2")
+        os.unlink(binary_path)
+
+    def test_xor_obfuscated_string_comparison(self, obfuscated_generator: "R2BypassGenerator") -> None:
+        """Test bypass for XOR-obfuscated string comparisons."""
+        strings_analysis = obfuscated_generator._analyze_license_strings()
+
+        assert isinstance(strings_analysis, dict)
+
+    def test_opaque_predicate_detection(self, obfuscated_generator: "R2BypassGenerator") -> None:
+        """Test detection of opaque predicates in validation logic."""
+        cfg_analysis = obfuscated_generator._analyze_control_flow_graph()
+
+        assert isinstance(cfg_analysis, dict)
+
+        if 'decision_points' in cfg_analysis:
+            decision_points = cfg_analysis['decision_points']
+            assert isinstance(decision_points, (list, dict))
+
+    def test_indirect_jump_table_validation(self, obfuscated_generator: "R2BypassGenerator") -> None:
+        """Test bypass for validation using indirect jump tables."""
+        bypass_strategies = obfuscated_generator._generate_bypass_strategies()
+
+        assert isinstance(bypass_strategies, list)
+        assert len(bypass_strategies) >= 1
+
+        for strategy in bypass_strategies:
+            assert 'method' in strategy
+            assert 'complexity' in strategy or 'difficulty' in strategy
+
+    def test_control_flow_flattening_detection(self):
+        """Test bypass generation for control flow flattening."""
+        with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
+            flattened_flow = (
+                b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' +
+                b'\x00' * 200 +
+                b'\xb8\x00\x00\x00\x00' +
+                b'\x83\xf8\x00' +
+                b'\x74\x05' +
+                b'\x83\xf8\x01' +
+                b'\x74\x08' +
+                b'\x83\xf8\x02' +
+                b'\x74\x0b' +
+                b'\xeb\x10' +
+                b'\xb8\x01\x00\x00\x00' +
+                b'\xeb\x0c' +
+                b'\xb8\x02\x00\x00\x00' +
+                b'\xeb\x07' +
+                b'\xc3'
+            )
+            tmp_binary.write(flattened_flow)
+            binary_path = tmp_binary.name
+
+        try:
+            generator = R2BypassGenerator(binary_path, "r2")
+            cfg_analysis = generator._analyze_control_flow_graph()
+
+            assert isinstance(cfg_analysis, dict)
+
+            if 'edges' in cfg_analysis:
+                edges = cfg_analysis['edges']
+                assert isinstance(edges, (list, dict))
+        finally:
+            os.unlink(binary_path)
+
+    def test_virtualized_instruction_detection(self):
+        """Test bypass for virtualized instruction sequences."""
+        with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
+            virtualized_code = (
+                b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' +
+                b'\x00' * 200 +
+                b'VMProtect\x00'
+                b'\x50\x53\x51\x52' +
+                b'\xe8\x00\x00\x00\x00' +
+                b'\x58' +
+                b'\x05\x10\x00\x00\x00' +
+                b'\x8b\x00' +
+                b'\xff\xe0'
+            )
+            tmp_binary.write(virtualized_code)
+            binary_path = tmp_binary.name
+
+        try:
+            generator = R2BypassGenerator(binary_path, "r2")
+            analysis = generator._analyze_license_mechanisms()
+
+            assert isinstance(analysis, dict)
+
+            if 'protection_detection' in analysis or 'packer_detected' in analysis:
+                bypass_result = generator.generate_comprehensive_bypass()
+                assert isinstance(bypass_result, dict)
+                assert 'bypass_strategies' in bypass_result
+        finally:
+            os.unlink(binary_path)
+
+    def test_encrypted_constant_comparison(self):
+        """Test bypass for encrypted constant comparison in validation."""
+        with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
+            encrypted_constants = (
+                b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' +
+                b'\x00' * 200 +
+                b'\xa1\x00\x10\x40\x00' +
+                b'\x35\x5a\x5a\x5a\x5a' +
+                b'\x3d\x12\x34\x56\x78' +
+                b'\x74\x05' +
+                b'\xc3'
+            )
+            tmp_binary.write(encrypted_constants)
+            binary_path = tmp_binary.name
+
+        try:
+            generator = R2BypassGenerator(binary_path, "r2")
+            crypto_ops = generator._extract_crypto_operations()
+
+            assert isinstance(crypto_ops, list)
+
+            bypass_strategies = generator._generate_bypass_strategies()
+            assert len(bypass_strategies) >= 1
+        finally:
+            os.unlink(binary_path)
+
+    def test_anti_debugging_interleaved_with_validation(self):
+        """Test bypass for validation interleaved with anti-debugging checks."""
+        with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
+            interleaved_checks = (
+                b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' +
+                b'\x00' * 200 +
+                b'\x64\xa1\x30\x00\x00\x00' +
+                b'\x8b\x40\x02' +
+                b'\x85\xc0' +
+                b'\x75\x02' +
+                b'\xeb\x05' +
+                b'\xe8\x10\x00\x00\x00' +
+                b'\x85\xc0' +
+                b'\x74\x05' +
+                b'\xc3'
+            )
+            tmp_binary.write(interleaved_checks)
+            binary_path = tmp_binary.name
+
+        try:
+            generator = R2BypassGenerator(binary_path, "r2")
+            bypass_result = generator.generate_comprehensive_bypass()
+
+            assert isinstance(bypass_result, dict)
+            assert 'bypass_strategies' in bypass_result
+
+            strategies = bypass_result['bypass_strategies']
+            assert len(strategies) >= 2
+
+            combined_strategies = [
+                s for s in strategies
+                if 'implementation' in s and len(str(s['implementation'])) > 200
+            ]
+        finally:
+            os.unlink(binary_path)
+
+
+class TestEdgeCasesRealWorldComplexity:
+    """Test edge cases with real-world complexity scenarios."""
+
+    def test_multi_thread_license_validation(self):
+        """Test bypass for multi-threaded license validation."""
+        with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
+            multithread_binary = (
+                b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' +
+                b'\x00' * 200 +
+                b'CreateThread\x00'
+                b'WaitForSingleObject\x00'
+                b'\xe8\x00\x00\x00\x00' +
+                b'\x50' +
+                b'\x6a\x00' +
+                b'\x68\x00\x10\x40\x00' +
+                b'\xff\x15\x00\x20\x40\x00' +
+                b'\xc3'
+            )
+            tmp_binary.write(multithread_binary)
+            binary_path = tmp_binary.name
+
+        try:
+            generator = R2BypassGenerator(binary_path, "r2")
+            bypass_result = generator.generate_comprehensive_bypass()
+
+            assert isinstance(bypass_result, dict)
+            assert 'bypass_strategies' in bypass_result
+        finally:
+            os.unlink(binary_path)
+
+    def test_network_based_license_validation(self):
+        """Test bypass for network-based license validation."""
+        with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
+            network_validation = (
+                b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' +
+                b'\x00' * 200 +
+                b'InternetOpen\x00HttpSendRequest\x00'
+                b'license.server.com\x00'
+                b'\xff\x15\x00\x30\x40\x00' +
+                b'\x85\xc0' +
+                b'\x74\x10' +
+                b'\xc3'
+            )
+            tmp_binary.write(network_validation)
+            binary_path = tmp_binary.name
+
+        try:
+            generator = R2BypassGenerator(binary_path, "r2")
+            bypass_result = generator.generate_comprehensive_bypass()
+
+            assert isinstance(bypass_result, dict)
+            assert 'bypass_strategies' in bypass_result
+
+            strategies = bypass_result['bypass_strategies']
+            network_strategies = [
+                s for s in strategies
+                if 'network' in str(s).lower() or 'internet' in str(s).lower() or 'server' in str(s).lower()
+            ]
+        finally:
+            os.unlink(binary_path)
+
+    def test_time_based_trial_expiration_check(self):
+        """Test bypass for time-based trial expiration logic."""
+        with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
+            time_check = (
+                b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' +
+                b'\x00' * 200 +
+                b'GetSystemTime\x00GetLocalTime\x00'
+                b'\xff\x15\x00\x40\x40\x00' +
+                b'\x8b\x45\xf8' +
+                b'\x3d\xe8\x07\x00\x00' +
+                b'\x77\x05' +
+                b'\xc3'
+            )
+            tmp_binary.write(time_check)
+            binary_path = tmp_binary.name
+
+        try:
+            generator = R2BypassGenerator(binary_path, "r2")
+            bypass_result = generator.generate_comprehensive_bypass()
+
+            assert isinstance(bypass_result, dict)
+            assert 'bypass_strategies' in bypass_result
+
+            strategies = bypass_result['bypass_strategies']
+            time_strategies = [
+                s for s in strategies
+                if 'time' in str(s).lower() or 'date' in str(s).lower() or 'clock' in str(s).lower()
+            ]
+        finally:
+            os.unlink(binary_path)
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v', '--tb=short'])

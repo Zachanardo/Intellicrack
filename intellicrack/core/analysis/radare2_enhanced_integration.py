@@ -22,9 +22,10 @@ import threading
 import time
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Any, cast
+from typing import Any, TypedDict
 
 from intellicrack.utils.type_safety import get_typed_item, validate_type
+
 from ...utils.logger import get_logger
 from .radare2_ai_integration import R2AIEngine
 from .radare2_binary_diff import R2BinaryDiff
@@ -40,6 +41,31 @@ from .radare2_scripting import R2ScriptingEngine
 from .radare2_signatures import R2SignatureAnalyzer
 from .radare2_strings import R2StringAnalyzer
 from .radare2_vulnerability_engine import R2VulnerabilityEngine
+
+
+class AnalysisTimingStats(TypedDict):
+    """Statistics for a specific analysis type."""
+
+    times: list[float]
+    successes: int
+    failures: int
+
+
+class CachedResult(TypedDict):
+    """Cached analysis result with timestamp."""
+
+    result: dict[str, Any]
+    timestamp: float
+
+
+class PerformanceStats(TypedDict):
+    """Performance statistics for the R2 integration."""
+
+    analysis_times: dict[str, AnalysisTimingStats]
+    cache_hits: int
+    cache_misses: int
+    errors_handled: int
+    recoveries_successful: int
 
 
 logger = get_logger(__name__)
@@ -88,7 +114,7 @@ class EnhancedR2Integration:
             self.r2pipe_available = True
 
         # Performance and monitoring
-        self.performance_stats: dict[str, Any] = {
+        self.performance_stats: PerformanceStats = {
             "analysis_times": {},
             "cache_hits": 0,
             "cache_misses": 0,
@@ -108,7 +134,7 @@ class EnhancedR2Integration:
         self._initialize_components()
 
         # Results cache with TTL
-        self.results_cache: dict[str, dict[str, Any]] = {}
+        self.results_cache: dict[str, CachedResult] = {}
         self.cache_ttl = self.config.get("cache_ttl", 300)  # 5 minutes default
 
         # Real-time monitoring
@@ -248,13 +274,11 @@ class EnhancedR2Integration:
         # Check cache first
         cache_key = f"{analysis_type}_{self.binary_path}"
         if cached_result := self._get_cached_result(cache_key):
-            cache_hits = cast(int, self.performance_stats["cache_hits"])
-            self.performance_stats["cache_hits"] = cache_hits + 1
+            self.performance_stats["cache_hits"] += 1
             self.performance_monitor.record_cache_hit()
             return cached_result
 
-        cache_misses = cast(int, self.performance_stats["cache_misses"])
-        self.performance_stats["cache_misses"] = cache_misses + 1
+        self.performance_stats["cache_misses"] += 1
         self.performance_monitor.record_cache_miss()
 
         # Check if component is available
@@ -320,8 +344,7 @@ class EnhancedR2Integration:
             self.performance_monitor.end_operation(operation_metrics, success=False, error_message=str(e))
 
             self.logger.exception("Analysis %s failed: %s", analysis_type, e)
-            errors_handled = cast(int, self.performance_stats["errors_handled"])
-            self.performance_stats["errors_handled"] = errors_handled + 1
+            self.performance_stats["errors_handled"] += 1
 
             # Try recovery
             if self.error_handler.handle_error(
@@ -333,8 +356,7 @@ class EnhancedR2Integration:
                     "component": component,
                 },
             ):
-                recoveries = cast(int, self.performance_stats["recoveries_successful"])
-                self.performance_stats["recoveries_successful"] = recoveries + 1
+                self.performance_stats["recoveries_successful"] += 1
                 # Retry once after recovery
                 try:
                     retry_result: dict[str, Any]
@@ -358,10 +380,8 @@ class EnhancedR2Integration:
         with self._lock:
             if cache_key in self.results_cache:
                 cached_data = self.results_cache[cache_key]
-                timestamp = cast(float, cached_data["timestamp"])
-                if time.time() - timestamp < self.cache_ttl:
-                    return cast(dict[str, Any], cached_data["result"])
-                # Remove expired cache entry
+                if time.time() - cached_data["timestamp"] < self.cache_ttl:
+                    return cached_data["result"]
                 del self.results_cache[cache_key]
         return None
 
@@ -387,7 +407,7 @@ class EnhancedR2Integration:
     def _record_analysis_time(self, analysis_type: str, duration: float, success: bool = True) -> None:
         """Record analysis performance."""
         with self._lock:
-            analysis_times = cast(dict[str, Any], self.performance_stats["analysis_times"])
+            analysis_times = self.performance_stats["analysis_times"]
             if analysis_type not in analysis_times:
                 analysis_times[analysis_type] = {
                     "times": [],
@@ -395,20 +415,16 @@ class EnhancedR2Integration:
                     "failures": 0,
                 }
 
-            stats = cast(dict[str, Any], analysis_times[analysis_type])
-            times_list = cast(list[float], stats["times"])
-            times_list.append(duration)
+            stats = analysis_times[analysis_type]
+            stats["times"].append(duration)
 
             if success:
-                successes = cast(int, stats["successes"])
-                stats["successes"] = successes + 1
+                stats["successes"] += 1
             else:
-                failures = cast(int, stats["failures"])
-                stats["failures"] = failures + 1
+                stats["failures"] += 1
 
-            # Keep only last 50 measurements
-            if len(times_list) > 50:
-                stats["times"] = times_list[-50:]
+            if len(stats["times"]) > 50:
+                stats["times"] = stats["times"][-50:]
 
     def start_real_time_monitoring(self, callback: Callable[..., None] | None = None) -> None:
         """Start real-time monitoring of analysis results."""
@@ -454,7 +470,7 @@ class EnhancedR2Integration:
     def get_performance_stats(self) -> dict[str, Any]:
         """Get comprehensive performance statistics."""
         with self._lock:
-            stats = self.performance_stats.copy()
+            stats: dict[str, Any] = dict(self.performance_stats)
 
             # Calculate averages and rates
             analysis_times = validate_type(stats["analysis_times"], dict)
@@ -498,10 +514,11 @@ class EnhancedR2Integration:
                 self.cache_ttl = max(self.cache_ttl * 0.8, 60)  # Decrease TTL, min 1 min
 
         # Reset circuit breakers for high-performing operations
-        analysis_times = cast(dict[str, Any], stats["analysis_times"])
+        analysis_times = validate_type(stats["analysis_times"], dict)
         for analysis_type, data in analysis_times.items():
-            data_dict = cast(dict[str, Any], data)
-            success_rate = cast(float, data_dict.get("success_rate", 0))
+            data_dict = validate_type(data, dict)
+            success_rate_val = data_dict.get("success_rate", 0.0)
+            success_rate = float(success_rate_val) if success_rate_val is not None else 0.0
             if success_rate > 0.9:  # High success rate
                 self.error_handler.reset_circuit_breaker(f"r2_{analysis_type}")
 

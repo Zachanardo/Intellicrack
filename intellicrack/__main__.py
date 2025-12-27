@@ -51,11 +51,11 @@ os.environ["MKL_THREADING_LAYER"] = "GNU"  # Fix PyTorch + TensorFlow import con
 try:
     from intellicrack.core import security_enforcement
 
-    # Initialize security enforcement before running the application
-    security_enforcement.initialize_security()
-    security_status = security_enforcement.get_security_status()
-    if security_status.get("initialized"):
-        logger.info("Security enforcement initialized: %s", security_status.get("patches_applied", {}))
+    if security_enforcement is not None:
+        security_enforcement.initialize_security()
+        security_status = security_enforcement.get_security_status()
+        if security_status.get("initialized"):
+            logger.info("Security enforcement initialized: %s", security_status.get("patches_applied", {}))
 except ImportError:
     logger.warning("Security enforcement module not available - running without enhanced protections")
 

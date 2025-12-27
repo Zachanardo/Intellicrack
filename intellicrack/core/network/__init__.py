@@ -4,18 +4,18 @@ This package contains networking components for communication protocols,
 C2 infrastructure, and network-based analysis capabilities.
 """
 
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from intellicrack.utils.logger import logger
 
+
 if TYPE_CHECKING:
-    from .traffic_analyzer import NetworkTrafficAnalyzer
-    from .ssl_interceptor import SSLTLSInterceptor
-    from .protocol_fingerprinter import ProtocolFingerprinter as ProtocolFingerprinterType
-    from intellicrack.plugins.custom_modules.license_server_emulator import (
-        LicenseServerEmulator as NetworkLicenseServerEmulator,
-    )
+    from intellicrack.plugins.custom_modules.license_server_emulator import LicenseServerEmulator as NetworkLicenseServerEmulator
+
     from .cloud_license_hooker import CloudLicenseResponseGenerator
+    from .protocol_fingerprinter import ProtocolFingerprinter as ProtocolFingerprinterType
+    from .ssl_interceptor import SSLTLSInterceptor
+    from .traffic_analyzer import NetworkTrafficAnalyzer
 
 logger.debug("Network core module loaded")
 
@@ -44,9 +44,7 @@ except ImportError as e:
     ProtocolFingerprinter = None
 
 try:
-    from intellicrack.plugins.custom_modules.license_server_emulator import (
-        LicenseServerEmulator as NetworkLicenseServerEmulator,
-    )
+    from intellicrack.plugins.custom_modules.license_server_emulator import LicenseServerEmulator as NetworkLicenseServerEmulator
 
     LicenseServerEmulator = NetworkLicenseServerEmulator
 except ImportError as e:

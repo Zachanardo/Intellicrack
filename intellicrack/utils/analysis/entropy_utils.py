@@ -141,7 +141,9 @@ def is_high_entropy(data: bytes | str, threshold: float = 7.0) -> bool:
     return entropy >= threshold
 
 
-def analyze_entropy_sections(data: bytes, block_size: int = 256) -> dict[str, float | list[dict[str, int | float | bool]] | dict[str, float | int]]:
+def analyze_entropy_sections(
+    data: bytes, block_size: int = 256
+) -> dict[str, float | list[dict[str, int | float | bool]] | dict[str, float | int]]:
     """Analyze entropy across different sections of data.
 
     Args:

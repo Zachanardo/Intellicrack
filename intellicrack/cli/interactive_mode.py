@@ -21,7 +21,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import cmd
 import sys
 from pathlib import Path
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 
 # Add parent directories to path
@@ -29,6 +29,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from intellicrack.utils.logger import get_logger
 from intellicrack.utils.runtime.runner_functions import run_comprehensive_analysis
+
 
 if TYPE_CHECKING:
     from intellicrack.cli.ai_chat_interface import AITerminalChat
@@ -288,8 +289,7 @@ class IntellicrackShell(cmd.Cmd):
 
             if self.ai_chat is None:
                 self.ai_chat = AITerminalChat(
-                    binary_path=str(self.current_file) if self.current_file else None,
-                    analysis_results=self.analysis_results
+                    binary_path=str(self.current_file) if self.current_file else None, analysis_results=self.analysis_results
                 )
 
             response = self.ai_chat._get_ai_response(arg)

@@ -28,7 +28,7 @@ const config = {
     collectCoverage: true,
     filterByModule: null,
     filterByFunction: null,
-    maxTraceEvents: 1000000,
+    maxTraceEvents: 1_000_000,
     excludeModules: ['ntdll.dll', 'kernel32.dll', 'kernelbase.dll'],
     focusOnLicensing: true,
 };
@@ -121,7 +121,7 @@ function setupAPIMonitoring() {
         if (addr) {
             try {
                 Interceptor.attach(addr, {
-                    onEnter: function (_args) {
+                    onEnter(_args) {
                         const tid = Process.getCurrentThreadId();
                         const backtrace = Thread.backtrace(this.context, Backtracer.ACCURATE)
                             .map(formatAddress)
@@ -129,9 +129,9 @@ function setupAPIMonitoring() {
 
                         const callInfo = {
                             api: `${api.module}!${api.name}`,
-                            tid: tid,
+                            tid,
                             timestamp: Date.now(),
-                            backtrace: backtrace,
+                            backtrace,
                         };
 
                         if (!stats.apiCalls.has(api.name)) {
@@ -147,10 +147,10 @@ function setupAPIMonitoring() {
                     },
                 });
                 apiHooks.set(api.name, addr);
-            } catch (e) {
+            } catch (error) {
                 send({
                     type: 'error',
-                    message: `Failed to hook ${api.module}!${api.name}: ${e.message}`,
+                    message: `Failed to hook ${api.module}!${api.name}: ${error.message}`,
                 });
             }
         }
@@ -214,7 +214,7 @@ function createStalkerTransformer() {
                 }
             });
 
-            if (stats.totalInstructions % 10000 === 0) {
+            if (stats.totalInstructions % 10_000 === 0) {
                 send({
                     type: 'progress',
                     instructions: stats.totalInstructions,
@@ -258,12 +258,12 @@ function stopStalking() {
         category: 'stalker',
     });
 
-    const coverageData = Array.from(stats.coverage.entries()).map(([key, data]) => ({
-        key: key,
+    const coverageData = [...stats.coverage.entries()].map(([key, data]) => ({
+        key,
         ...data,
     }));
 
-    const apiCallData = Array.from(stats.apiCalls.entries()).map(([name, calls]) => ({
+    const apiCallData = [...stats.apiCalls.entries()].map(([name, calls]) => ({
         api: name,
         count: calls.length,
         calls: calls.slice(0, 100),
@@ -316,7 +316,7 @@ function traceFunction(moduleName, functionName) {
     const maxDepth = 20;
 
     Interceptor.attach(targetExport.address, {
-        onEnter: function (_args) {
+        onEnter(_args) {
             callDepth++;
             if (callDepth > maxDepth) {
                 return;
@@ -336,7 +336,7 @@ function traceFunction(moduleName, functionName) {
                 depth: callDepth,
                 thread: Process.getCurrentThreadId(),
                 timestamp: Date.now(),
-                backtrace: backtrace,
+                backtrace,
             };
 
             traceData.push(entry);
@@ -349,7 +349,7 @@ function traceFunction(moduleName, functionName) {
                 onReceive: events => {
                     const parsed = Stalker.parse(events);
                     parsed.forEach(event => {
-                        if (traceData.length < 10000) {
+                        if (traceData.length < 10_000) {
                             const moduleInfo = getModuleInfo(event[1]);
                             traceData.push({
                                 type: event[0],
@@ -445,7 +445,7 @@ function collectModuleCoverage(moduleName) {
             size: moduleSize,
             blocks_covered: blocksCovered.size,
             coverage_percentage: (blocksCovered.size / (moduleSize / 16)) * 100,
-            blocks: Array.from(blocksCovered).slice(0, 1000),
+            blocks: [...blocksCovered].slice(0, 1000),
         });
     }, 5000);
 }
@@ -471,17 +471,17 @@ function analyzeLicensingFlow() {
         const addr = Module.findExportByName(api.module, api.name);
         if (addr) {
             const hook = Interceptor.attach(addr, {
-                onEnter: function (_args) {
+                onEnter(_args) {
                     const backtrace = Thread.backtrace(this.context, Backtracer.ACCURATE);
                     const callers = backtrace
                         .map(addr => {
                             const info = getModuleInfo(addr);
                             return info
                                 ? {
-                                      module: info.name,
-                                      offset: info.offset,
-                                      address: formatAddress(addr),
-                                  }
+                                    module: info.name,
+                                    offset: info.offset,
+                                    address: formatAddress(addr),
+                                }
                                 : null;
                         })
                         .filter(x => x !== null);
@@ -499,7 +499,7 @@ function analyzeLicensingFlow() {
 
                         send({
                             type: 'licensing_event',
-                            data: licensingEvents[licensingEvents.length - 1],
+                            data: licensingEvents.at(-1),
                         });
                     }
                 },
@@ -516,11 +516,11 @@ function analyzeLicensingFlow() {
 }
 
 rpc.exports = {
-    startStalking: startStalking,
-    stopStalking: stopStalking,
-    traceFunction: traceFunction,
-    collectModuleCoverage: collectModuleCoverage,
-    analyzeLicensingFlow: analyzeLicensingFlow,
+    startStalking,
+    stopStalking,
+    traceFunction,
+    collectModuleCoverage,
+    analyzeLicensingFlow,
     getStats: () => ({
         totalInstructions: stats.totalInstructions,
         uniqueBlocks: stats.uniqueBlocks.size,
@@ -533,7 +533,7 @@ rpc.exports = {
         send({
             type: 'status',
             message: 'Configuration updated',
-            config: config,
+            config,
         });
     },
 };

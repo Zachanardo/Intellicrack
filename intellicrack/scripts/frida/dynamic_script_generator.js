@@ -221,18 +221,18 @@ const DynamicScriptGenerator = {
         realTimeAdaptations: 0,
     },
 
-    onAttach: function (pid) {
+    onAttach(pid) {
         send({
             type: 'info',
             target: 'dynamic_script_generator',
             action: 'attaching_to_process',
-            pid: pid,
+            pid,
         });
         this.processId = pid;
         this.startTime = Date.now();
     },
 
-    run: function () {
+    run() {
         send({
             type: 'status',
             target: 'dynamic_script_generator',
@@ -266,7 +266,7 @@ const DynamicScriptGenerator = {
     },
 
     // === ANALYSIS ENGINE INITIALIZATION ===
-    initializeAnalysisEngine: function () {
+    initializeAnalysisEngine() {
         send({
             type: 'status',
             target: 'dynamic_script_generator',
@@ -292,7 +292,7 @@ const DynamicScriptGenerator = {
         };
     },
 
-    createStaticAnalyzer: function () {
+    createStaticAnalyzer() {
         return {
             analyzeImportTable: this.analyzeImportTable.bind(this),
             analyzeExportTable: this.analyzeExportTable.bind(this),
@@ -305,7 +305,7 @@ const DynamicScriptGenerator = {
         };
     },
 
-    createDynamicAnalyzer: function () {
+    createDynamicAnalyzer() {
         return {
             traceAPIUsage: this.traceAPIUsage.bind(this),
             monitorMemoryAccess: this.monitorMemoryAccess.bind(this),
@@ -317,7 +317,7 @@ const DynamicScriptGenerator = {
         };
     },
 
-    createPatternMatcher: function () {
+    createPatternMatcher() {
         return {
             knownProtectionSignatures: this.loadProtectionSignatures(),
             apiCallPatterns: this.loadAPICallPatterns(),
@@ -328,7 +328,7 @@ const DynamicScriptGenerator = {
         };
     },
 
-    createHeuristicEngine: function () {
+    createHeuristicEngine() {
         return {
             rules: this.loadHeuristicRules(),
             evaluateHeuristic: this.evaluateHeuristic.bind(this),
@@ -338,7 +338,7 @@ const DynamicScriptGenerator = {
         };
     },
 
-    createMLClassifier: function () {
+    createMLClassifier() {
         return {
             models: this.loadMLModels(),
             featureExtractor: this.createFeatureExtractor(),
@@ -349,7 +349,7 @@ const DynamicScriptGenerator = {
     },
 
     // === TEMPLATE SYSTEM INITIALIZATION ===
-    initializeTemplateSystem: function () {
+    initializeTemplateSystem() {
         send({
             type: 'status',
             target: 'dynamic_script_generator',
@@ -361,7 +361,7 @@ const DynamicScriptGenerator = {
         this.initializeTemplateEngine();
     },
 
-    loadBuiltinTemplates: function () {
+    loadBuiltinTemplates() {
         send({
             type: 'info',
             target: 'dynamic_script_generator',
@@ -497,7 +497,7 @@ const DynamicScriptGenerator = {
     }),
 
     // === BINARY ANALYSIS IMPLEMENTATION ===
-    analyzeImportTable: function () {
+    analyzeImportTable() {
         send({
             type: 'info',
             target: 'dynamic_script_generator',
@@ -515,17 +515,14 @@ const DynamicScriptGenerator = {
                 licenseAPIs: [],
             };
 
-            for (let i = 0; i < modules.length; i++) {
-                const module = modules[i];
-
+            for (const module of modules) {
                 try {
                     const imports = Module.enumerateImports(module.name);
 
-                    for (let j = 0; j < imports.length; j++) {
-                        const imp = imports[j];
+                    for (const imp of imports) {
                         this.categorizeImport(imp, importAnalysis);
                     }
-                } catch (_e) {}
+                } catch {}
             }
 
             this.analysisResults.binaryInfo.imports = importAnalysis;
@@ -537,12 +534,12 @@ const DynamicScriptGenerator = {
                 action: 'import_analysis_completed',
                 suspicious_imports_count: importAnalysis.suspiciousImports.length,
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'dynamic_script_generator',
                 action: 'import_analysis_failed',
-                error: e.toString(),
+                error: error.toString(),
             });
         }
     },
@@ -615,7 +612,7 @@ const DynamicScriptGenerator = {
         }
     },
 
-    analyzeStringLiterals: function () {
+    analyzeStringLiterals() {
         send({
             type: 'info',
             target: 'dynamic_script_generator',
@@ -635,9 +632,7 @@ const DynamicScriptGenerator = {
             // Search for strings in loaded modules
             const modules = Process.enumerateModules();
 
-            for (let i = 0; i < modules.length; i++) {
-                const module = modules[i];
-
+            for (const module of modules) {
                 // Skip system modules
                 if (this.isSystemModule(module.name)) {
                     continue;
@@ -645,7 +640,7 @@ const DynamicScriptGenerator = {
 
                 try {
                     this.scanModuleForStrings(module, stringAnalysis);
-                } catch (_e) {}
+                } catch {}
             }
 
             this.analysisResults.stringPatterns = stringAnalysis;
@@ -657,12 +652,12 @@ const DynamicScriptGenerator = {
                 action: 'string_analysis_completed',
                 protection_strings_count: stringAnalysis.protectionStrings.length,
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'dynamic_script_generator',
                 action: 'string_analysis_failed',
-                error: e.toString(),
+                error: error.toString(),
             });
         }
     },
@@ -696,15 +691,12 @@ const DynamicScriptGenerator = {
                 coalesce: false,
             }).filter(
                 range =>
-                    range.file?.path &&
-                    range.file.path.toLowerCase().indexOf(module.name.toLowerCase()) !== -1
+                    range.file?.path
+                    && range.file.path.toLowerCase().includes(module.name.toLowerCase())
             );
 
-            for (let r = 0; r < ranges.length; r++) {
-                var range = ranges[r];
-
-                for (let i = 0; i < protectionKeywords.length; i++) {
-                    const keyword = protectionKeywords[i];
+            for (const range of ranges) {
+                for (const keyword of protectionKeywords) {
                     const keywordBytes = Memory.allocUtf8String(keyword);
 
                     try {
@@ -715,22 +707,21 @@ const DynamicScriptGenerator = {
                             Memory.readByteArray(keywordBytes, keyword.length)
                         );
 
-                        for (let m = 0; m < matches.length; m++) {
-                            const match = matches[m];
+                        for (const match of matches) {
                             // Verify it's a complete string (not part of larger data)
                             let context = '';
                             try {
                                 const beforeByte = match.address.sub(1).readU8();
                                 const afterByte = match.address.add(keyword.length).readU8();
                                 if (
-                                    (beforeByte === 0 || beforeByte < 32) &&
-                                    (afterByte === 0 || afterByte < 32)
+                                    (beforeByte === 0 || beforeByte < 32)
+                                    && (afterByte === 0 || afterByte < 32)
                                 ) {
                                     context = 'string_table';
                                 } else {
                                     context = 'embedded_data';
                                 }
-                            } catch (_e) {
+                            } catch {
                                 context = 'memory_boundary';
                             }
 
@@ -738,7 +729,7 @@ const DynamicScriptGenerator = {
                                 string: keyword,
                                 module: module.name,
                                 address: match.address,
-                                context: context,
+                                context,
                                 range: range.protection,
                             });
                         }
@@ -751,8 +742,7 @@ const DynamicScriptGenerator = {
                         }
 
                         const wideMatches = Memory.scanSync(range.base, range.size, widePattern);
-                        for (let wm = 0; wm < wideMatches.length; wm++) {
-                            const wideMatch = wideMatches[wm];
+                        for (const wideMatch of wideMatches) {
                             analysis.protectionStrings.push({
                                 string: keyword,
                                 module: module.name,
@@ -761,12 +751,11 @@ const DynamicScriptGenerator = {
                                 range: range.protection,
                             });
                         }
-                    } catch (_scanError) {}
+                    } catch {}
                 }
 
                 // Scan for URL patterns in this range
-                for (let u = 0; u < urlPatterns.length; u++) {
-                    const urlPattern = urlPatterns[u];
+                for (const urlPattern of urlPatterns) {
                     const urlBytes = Memory.allocUtf8String(urlPattern);
 
                     try {
@@ -776,13 +765,12 @@ const DynamicScriptGenerator = {
                             Memory.readByteArray(urlBytes, urlPattern.length)
                         );
 
-                        for (let um = 0; um < urlMatches.length; um++) {
-                            const urlMatch = urlMatches[um];
+                        for (const urlMatch of urlMatches) {
                             // Try to read more context around URL
                             let fullUrl = '';
                             try {
                                 fullUrl = urlMatch.address.readCString(128);
-                            } catch (_e) {
+                            } catch {
                                 fullUrl = urlPattern;
                             }
 
@@ -794,7 +782,7 @@ const DynamicScriptGenerator = {
                                 range: range.protection,
                             });
                         }
-                    } catch (_urlScanError) {}
+                    } catch {}
                 }
             }
         } catch (moduleError) {
@@ -809,7 +797,7 @@ const DynamicScriptGenerator = {
         }
     },
 
-    analyzePEStructure: function () {
+    analyzePEStructure() {
         send({
             type: 'info',
             target: 'dynamic_script_generator',
@@ -845,12 +833,12 @@ const DynamicScriptGenerator = {
                 action: 'pe_analysis_completed',
                 module_name: mainModule.name,
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'dynamic_script_generator',
                 action: 'pe_analysis_failed',
-                error: e.toString(),
+                error: error.toString(),
             });
         }
     },
@@ -866,13 +854,11 @@ const DynamicScriptGenerator = {
             { name: '.rsrc', characteristics: 'resources', entropy: 0.7 },
         ];
 
-        for (let i = 0; i < commonSections.length; i++) {
-            const section = commonSections[i];
-
+        for (const [i, section] of commonSections.entries()) {
             analysis.sections.push({
                 name: section.name,
-                virtualAddress: ptr(module.base).add(i * 0x1000),
-                size: 0x1000,
+                virtualAddress: ptr(module.base).add(i * 0x10_00),
+                size: 0x10_00,
                 characteristics: section.characteristics,
                 entropy: section.entropy + (Math.random() * 0.2 - 0.1),
             });
@@ -891,32 +877,32 @@ const DynamicScriptGenerator = {
         }
     },
 
-    detectPackingIndicators: function (analysis) {
+    detectPackingIndicators(analysis) {
         // Packer signatures database
         const packerSignatures = {
             UPX: {
                 sections: ['UPX0', 'UPX1', 'UPX2'],
-                entryPoint: [0x60, 0xbe], // PUSHA; MOV ESI
-                magic: 0x21585055, // "UPX!"
+                entryPoint: [0x60, 0xBE], // PUSHA; MOV ESI
+                magic: 0x21_58_50_55, // "UPX!"
             },
             Themida: {
                 sections: ['.themida', '.WinLicense'],
-                entryPoint: [0xb8, 0x00, 0x00, 0x00, 0x00, 0x60], // MOV EAX, 0; PUSHA
+                entryPoint: [0xB8, 0x00, 0x00, 0x00, 0x00, 0x60], // MOV EAX, 0; PUSHA
                 imports: ['SecureEngineCustom'],
             },
             VMProtect: {
                 sections: ['.vmp0', '.vmp1', '.vmp2'],
                 entryPoint: [0x68], // PUSH
-                patterns: [0x9c, 0x60, 0xe8], // PUSHFD; PUSHA; CALL
+                patterns: [0x9C, 0x60, 0xE8], // PUSHFD; PUSHA; CALL
             },
             ASProtect: {
                 sections: ['.aspack', '.adata', '.aspr'],
-                entryPoint: [0x60, 0xe8, 0x03], // PUSHA; CALL
+                entryPoint: [0x60, 0xE8, 0x03], // PUSHA; CALL
                 overlay: true,
             },
             Armadillo: {
                 sections: ['.text', '.data', '.pdata'],
-                entryPoint: [0x60, 0xe8, 0x00, 0x00, 0x00, 0x00], // PUSHA; CALL $+5
+                entryPoint: [0x60, 0xE8, 0x00, 0x00, 0x00, 0x00], // PUSHA; CALL $+5
                 debugCheck: true,
             },
         };
@@ -931,12 +917,12 @@ const DynamicScriptGenerator = {
         const peHeader = mainModule.base;
         const dos = peHeader.readU16();
 
-        if (dos === 0x5a4d) {
+        if (dos === 0x5A_4D) {
             // MZ signature
-            const peOffset = peHeader.add(0x3c).readU32();
+            const peOffset = peHeader.add(0x3C).readU32();
             const peSignature = peHeader.add(peOffset).readU32();
 
-            if (peSignature === 0x00004550) {
+            if (peSignature === 0x00_00_45_50) {
                 // PE\0\0 signature
                 // Check entry point for packer patterns
                 const optionalHeaderOffset = peOffset + 0x18;
@@ -946,10 +932,10 @@ const DynamicScriptGenerator = {
 
                 // Check sections for packer indicators
                 const numberOfSections = peHeader.add(peOffset + 0x6).readU16();
-                const sectionHeaderOffset =
-                    optionalHeaderOffset + peHeader.add(peOffset + 0x14).readU16();
+                const sectionHeaderOffset
+                    = optionalHeaderOffset + peHeader.add(peOffset + 0x14).readU16();
 
-                for (let packerName in packerSignatures) {
+                for (const packerName in packerSignatures) {
                     const sig = packerSignatures[packerName];
                     let confidence = 0;
 
@@ -972,7 +958,7 @@ const DynamicScriptGenerator = {
                         const sectionHeader = peHeader.add(sectionHeaderOffset + i * 0x28);
                         const sectionName = sectionHeader.readCString(8);
 
-                        if (sig.sections && sig.sections.indexOf(sectionName) !== -1) {
+                        if (sig.sections && sig.sections.includes(sectionName)) {
                             confidence += 0.3;
                             break;
                         }
@@ -983,7 +969,7 @@ const DynamicScriptGenerator = {
                     if (textSection) {
                         const entropy = this.calculateEntropy(
                             textSection.base,
-                            Math.min(0x1000, textSection.size)
+                            Math.min(0x10_00, textSection.size)
                         );
                         if (entropy > 6.5) {
                             // High entropy threshold
@@ -994,8 +980,8 @@ const DynamicScriptGenerator = {
                     // Check import table for packer-specific imports
                     if (sig.imports) {
                         const imports = Process.enumerateImports(mainModule.name);
-                        for (let j = 0; j < imports.length; j++) {
-                            if (sig.imports.indexOf(imports[j].name) !== -1) {
+                        for (const import_ of imports) {
+                            if (sig.imports.includes(import_.name)) {
                                 confidence += 0.1;
                                 break;
                             }
@@ -1016,7 +1002,7 @@ const DynamicScriptGenerator = {
     },
 
     // === DYNAMIC ANALYSIS IMPLEMENTATION ===
-    traceAPIUsage: function () {
+    traceAPIUsage() {
         send({
             type: 'info',
             target: 'dynamic_script_generator',
@@ -1048,31 +1034,29 @@ const DynamicScriptGenerator = {
         // Analyze patterns after some time
         setTimeout(() => {
             this.analyzeAPIPatterns(apiTrace);
-        }, 30000); // Analyze after 30 seconds
+        }, 30_000); // Analyze after 30 seconds
     },
 
     hookAPICategory: (module, functions, trace) => {
-        for (let i = 0; i < functions.length; i++) {
-            const funcName = functions[i];
-
+        for (const funcName of functions) {
             try {
                 const apiFunc = Module.findExportByName(module, funcName);
                 if (apiFunc) {
                     Interceptor.attach(apiFunc, {
-                        onEnter: function (_args) {
+                        onEnter(_args) {
                             this.startTime = Date.now();
                             this.funcName = funcName;
                             this.module = module;
                         },
 
-                        onLeave: function (retval) {
+                        onLeave(retval) {
                             const duration = Date.now() - this.startTime;
 
                             trace.calls.push({
                                 function: this.funcName,
                                 module: this.module,
                                 timestamp: Date.now(),
-                                duration: duration,
+                                duration,
                                 result: retval.toInt32(),
                                 success: retval.toInt32() !== 0,
                             });
@@ -1081,7 +1065,7 @@ const DynamicScriptGenerator = {
                         },
                     });
                 }
-            } catch (_e) {}
+            } catch {}
         }
     },
 
@@ -1105,7 +1089,7 @@ const DynamicScriptGenerator = {
         // Update other metrics would be calculated here
     },
 
-    analyzeAPIPatterns: function (trace) {
+    analyzeAPIPatterns(trace) {
         send({
             type: 'info',
             target: 'dynamic_script_generator',
@@ -1121,7 +1105,7 @@ const DynamicScriptGenerator = {
         });
 
         // Identify hotspots (frequently called APIs)
-        for (let key in trace.patterns) {
+        for (const key in trace.patterns) {
             const pattern = trace.patterns[key];
 
             if (pattern.callCount > totalCalls * 0.1) {
@@ -1146,13 +1130,11 @@ const DynamicScriptGenerator = {
             'advapi32.dll!RegQueryValue',
         ];
 
-        for (let i = 0; i < protectionAPIs.length; i++) {
-            const api = protectionAPIs[i];
-
+        for (const api of protectionAPIs) {
             if (trace.patterns[api] && trace.patterns[api].callCount > 5) {
                 trace.suspiciousActivity.push({
                     type: 'protection_check',
-                    api: api,
+                    api,
                     frequency: trace.patterns[api].callCount,
                     significance: 'high',
                 });
@@ -1161,7 +1143,7 @@ const DynamicScriptGenerator = {
                     type: 'warning',
                     target: 'dynamic_script_generator',
                     action: 'suspicious_activity_detected',
-                    api: api,
+                    api,
                     call_count: trace.patterns[api].callCount,
                 });
             }
@@ -1169,7 +1151,7 @@ const DynamicScriptGenerator = {
     },
 
     // === PROTECTION DETECTION ===
-    startAnalysisPipeline: function () {
+    startAnalysisPipeline() {
         send({
             type: 'status',
             target: 'dynamic_script_generator',
@@ -1187,14 +1169,14 @@ const DynamicScriptGenerator = {
 
         setTimeout(() => {
             this.performProtectionDetection();
-        }, 10000);
+        }, 10_000);
 
         setTimeout(() => {
             this.generateOptimalScript();
-        }, 15000);
+        }, 15_000);
     },
 
-    performStaticAnalysis: function () {
+    performStaticAnalysis() {
         send({
             type: 'status',
             target: 'dynamic_script_generator',
@@ -1223,7 +1205,7 @@ const DynamicScriptGenerator = {
         });
     },
 
-    performDynamicAnalysis: function () {
+    performDynamicAnalysis() {
         send({
             type: 'status',
             target: 'dynamic_script_generator',
@@ -1246,7 +1228,7 @@ const DynamicScriptGenerator = {
         });
     },
 
-    performProtectionDetection: function () {
+    performProtectionDetection() {
         send({
             type: 'status',
             target: 'dynamic_script_generator',
@@ -1275,7 +1257,7 @@ const DynamicScriptGenerator = {
         this.analysisState.completedAnalyses.push('protection');
     },
 
-    detectAntiDebugMechanisms: function () {
+    detectAntiDebugMechanisms() {
         const mechanisms = [];
 
         // Check import table for anti-debug APIs
@@ -1288,9 +1270,9 @@ const DynamicScriptGenerator = {
                     subtype: 'api_based',
                     confidence: 0.9,
                     evidence: imports.debugAPIs,
-                    description:
-                        'Uses anti-debug APIs: ' +
-                        imports.debugAPIs.map(api => api.name).join(', '),
+                    description: `Uses anti-debug APIs: ${imports.debugAPIs
+                        .map(api => api.name)
+                        .join(', ')}`,
                 });
             }
         }
@@ -1299,9 +1281,7 @@ const DynamicScriptGenerator = {
         if (this.analysisResults.apiUsagePatterns?.suspiciousActivity) {
             const suspicious = this.analysisResults.apiUsagePatterns.suspiciousActivity;
 
-            for (let i = 0; i < suspicious.length; i++) {
-                const activity = suspicious[i];
-
+            for (const activity of suspicious) {
                 if (activity.type === 'protection_check') {
                     mechanisms.push({
                         type: 'anti_debug',
@@ -1317,7 +1297,7 @@ const DynamicScriptGenerator = {
         return mechanisms;
     },
 
-    detectPackingMechanisms: function () {
+    detectPackingMechanisms() {
         const mechanisms = [];
 
         // Check PE structure analysis results
@@ -1348,7 +1328,7 @@ const DynamicScriptGenerator = {
         return mechanisms;
     },
 
-    detectLicensingMechanisms: function () {
+    detectLicensingMechanisms() {
         const mechanisms = [];
 
         // Check for license-related strings
@@ -1357,10 +1337,10 @@ const DynamicScriptGenerator = {
 
             const licenseStrings = strings.filter(
                 s =>
-                    s.string.includes('license') ||
-                    s.string.includes('trial') ||
-                    s.string.includes('registration') ||
-                    s.string.includes('activation')
+                    s.string.includes('license')
+                    || s.string.includes('trial')
+                    || s.string.includes('registration')
+                    || s.string.includes('activation')
             );
 
             if (licenseStrings.length > 0) {
@@ -1392,7 +1372,7 @@ const DynamicScriptGenerator = {
         return mechanisms;
     },
 
-    detectDRMMechanisms: function () {
+    detectDRMMechanisms() {
         const mechanisms = [];
 
         // Check for DRM-related imports
@@ -1401,9 +1381,9 @@ const DynamicScriptGenerator = {
 
             const drmAPIs = imports.protectionAPIs.filter(
                 api =>
-                    api.name.toLowerCase().includes('crypt') ||
-                    api.name.toLowerCase().includes('drm') ||
-                    api.name.toLowerCase().includes('media')
+                    api.name.toLowerCase().includes('crypt')
+                    || api.name.toLowerCase().includes('drm')
+                    || api.name.toLowerCase().includes('media')
             );
 
             if (drmAPIs.length > 0) {
@@ -1421,7 +1401,7 @@ const DynamicScriptGenerator = {
     },
 
     // === SCRIPT GENERATION ===
-    generateOptimalScript: function () {
+    generateOptimalScript() {
         send({
             type: 'status',
             target: 'dynamic_script_generator',
@@ -1444,7 +1424,7 @@ const DynamicScriptGenerator = {
         this.executeGeneratedScript(generatedScript);
     },
 
-    createScriptPlan: function () {
+    createScriptPlan() {
         send({
             type: 'info',
             target: 'dynamic_script_generator',
@@ -1499,43 +1479,49 @@ const DynamicScriptGenerator = {
         return plan;
     },
 
-    createBypassStrategy: function (mechanism) {
+    createBypassStrategy(mechanism) {
         let strategy = null;
 
         switch (mechanism.type) {
-            case 'anti_debug':
+            case 'anti_debug': {
                 strategy = this.createAntiDebugStrategy(mechanism);
                 break;
+            }
 
-            case 'packing':
+            case 'packing': {
                 strategy = this.createUnpackingStrategy(mechanism);
                 break;
+            }
 
-            case 'licensing':
+            case 'licensing': {
                 strategy = this.createLicenseBypassStrategy(mechanism);
                 break;
+            }
 
-            case 'drm':
+            case 'drm': {
                 strategy = this.createDRMBypassStrategy(mechanism);
                 break;
+            }
 
-            case 'obfuscation':
+            case 'obfuscation': {
                 strategy = this.createDeobfuscationStrategy(mechanism);
                 break;
+            }
 
-            default:
+            default: {
                 strategy = this.createGenericBypassStrategy(mechanism);
                 break;
+            }
         }
 
         return strategy;
     },
 
-    createAntiDebugStrategy: function (mechanism) {
+    createAntiDebugStrategy(mechanism) {
         const strategy = {
             id: `antidebug_${Date.now()}`,
             type: 'anti_debug_bypass',
-            mechanism: mechanism,
+            mechanism,
             effectiveness: 0.9,
             template: null,
             customizations: {},
@@ -1571,11 +1557,11 @@ const DynamicScriptGenerator = {
         return strategy;
     },
 
-    createLicenseBypassStrategy: function (mechanism) {
+    createLicenseBypassStrategy(mechanism) {
         const strategy = {
             id: `license_${Date.now()}`,
             type: 'license_bypass',
-            mechanism: mechanism,
+            mechanism,
             effectiveness: 0.8,
             template: null,
             customizations: {},
@@ -1595,9 +1581,9 @@ const DynamicScriptGenerator = {
                 'hasValidLicense',
             ];
 
-            for (let i = 0; i < licenseHooks.length; i++) {
+            for (const licenseHook of licenseHooks) {
                 strategy.hooks.push({
-                    target: licenseHooks[i],
+                    target: licenseHook,
                     strategy: 'replace_return',
                     returnValue: 1,
                     description: 'Force license validation to succeed',
@@ -1612,7 +1598,7 @@ const DynamicScriptGenerator = {
         return strategy;
     },
 
-    generateScript: function (plan) {
+    generateScript(plan) {
         send({
             type: 'status',
             target: 'dynamic_script_generator',
@@ -1682,7 +1668,7 @@ const DynamicScriptGenerator = {
         return config;
     },
 
-    generateScriptImplementation: function (plan) {
+    generateScriptImplementation(plan) {
         const implementation = {
             initFunction: this.generateInitFunction(plan),
             runFunction: this.generateRunFunction(plan),
@@ -1700,8 +1686,7 @@ const DynamicScriptGenerator = {
         return implementation;
     },
 
-    generateInitFunction: _plan => {
-        return `
+    generateInitFunction: _plan => `
             onAttach: function(pid) {
                 send({
                     type: "status",
@@ -1717,8 +1702,7 @@ const DynamicScriptGenerator = {
                     successfulBypasses: 0,
                     failedBypasses: 0
                 };
-            },`;
-    },
+            },`,
 
     generateRunFunction: plan => {
         let runCode = `
@@ -1751,7 +1735,7 @@ const DynamicScriptGenerator = {
         return runCode;
     },
 
-    generateStrategyFunction: function (strategy) {
+    generateStrategyFunction(strategy) {
         let functionCode = `
     execute_${strategy.id}: function() {
         send({
@@ -1799,7 +1783,7 @@ const DynamicScriptGenerator = {
         let hookCode = '';
 
         switch (hook.strategy) {
-            case 'replace_return':
+            case 'replace_return': {
                 hookCode = `
             // Hook ${hook.target} - ${hook.description}
             var ${hook.target.toLowerCase()}Func = Module.findExportByName("${hook.module}", "${hook.target}");
@@ -1816,8 +1800,9 @@ const DynamicScriptGenerator = {
                 this.stats.hooksInstalled++;
             }`;
                 break;
+            }
 
-            case 'manipulate_output':
+            case 'manipulate_output': {
                 hookCode = `
             // Hook ${hook.target} - ${hook.description}
             var ${hook.target.toLowerCase()}Func = Module.findExportByName("${hook.module}", "${hook.target}");
@@ -1836,8 +1821,9 @@ const DynamicScriptGenerator = {
                 this.stats.hooksInstalled++;
             }`;
                 break;
+            }
 
-            default:
+            default: {
                 hookCode = `
             // Generic hook for ${hook.target}
             send({
@@ -1847,6 +1833,7 @@ const DynamicScriptGenerator = {
                 function_name: "${hook.target}"
             });`;
                 break;
+            }
         }
 
         return hookCode;
@@ -1881,7 +1868,7 @@ const DynamicScriptGenerator = {
     ${script.implementation.runFunction}`;
 
         // Add strategy functions
-        for (let strategyId in script.implementation.strategyFunctions) {
+        for (const strategyId in script.implementation.strategyFunctions) {
             fullScript += `\n${script.implementation.strategyFunctions[strategyId]}`;
         }
 
@@ -1944,7 +1931,7 @@ const DynamicScriptGenerator = {
         });
     }`,
 
-    executeGeneratedScript: function (script) {
+    executeGeneratedScript(script) {
         send({
             type: 'status',
             target: 'dynamic_script_generator',
@@ -1972,19 +1959,19 @@ const DynamicScriptGenerator = {
             });
 
             this.stats.successfulBypass++;
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'dynamic_script_generator',
                 action: 'script_execution_failed',
-                error: e.toString(),
+                error: error.toString(),
             });
             this.stats.failedAttempts++;
         }
     },
 
     // === UTILITY FUNCTIONS ===
-    monitorBehaviorPatterns: function () {
+    monitorBehaviorPatterns() {
         send({
             type: 'status',
             target: 'dynamic_script_generator',
@@ -2002,7 +1989,7 @@ const DynamicScriptGenerator = {
         };
     },
 
-    analyzeNetworkActivity: function () {
+    analyzeNetworkActivity() {
         send({
             type: 'status',
             target: 'dynamic_script_generator',
@@ -2012,8 +1999,8 @@ const DynamicScriptGenerator = {
         // Hook network functions to detect license/activation traffic
         const networkHooks = ['WinHttpSendRequest', 'InternetReadFile', 'connect', 'send'];
 
-        for (let i = 0; i < networkHooks.length; i++) {
-            this.hookNetworkFunction(networkHooks[i]);
+        for (const networkHook of networkHooks) {
+            this.hookNetworkFunction(networkHook);
         }
     },
 
@@ -2021,11 +2008,11 @@ const DynamicScriptGenerator = {
         try {
             const modules = ['winhttp.dll', 'wininet.dll', 'ws2_32.dll'];
 
-            for (let i = 0; i < modules.length; i++) {
-                const networkFunc = Module.findExportByName(modules[i], functionName);
+            for (const module_ of modules) {
+                const networkFunc = Module.findExportByName(module_, functionName);
                 if (networkFunc) {
                     Interceptor.attach(networkFunc, {
-                        onEnter: function (_args) {
+                        onEnter(_args) {
                             send({
                                 type: 'info',
                                 target: 'dynamic_script_generator',
@@ -2038,7 +2025,7 @@ const DynamicScriptGenerator = {
                     break;
                 }
             }
-        } catch (_e) {
+        } catch {
             // Hook failed
         }
     },
@@ -2136,13 +2123,13 @@ const DynamicScriptGenerator = {
                 : 0.5,
             protectionCount: analysisResults.protectionMechanisms.length,
             confidence:
-                analysisResults.protectionMechanisms.reduce((sum, m) => sum + m.confidence, 0) /
-                Math.max(analysisResults.protectionMechanisms.length, 1),
+                analysisResults.protectionMechanisms.reduce((sum, m) => sum + m.confidence, 0)
+                / Math.max(analysisResults.protectionMechanisms.length, 1),
         }),
     }),
 
     // Production-ready implementations for core functions
-    initializeScriptGenerator: function () {
+    initializeScriptGenerator() {
         // Initialize core components
         this.scriptCache = {};
         this.hookManager = new Map();
@@ -2154,7 +2141,7 @@ const DynamicScriptGenerator = {
             send({
                 type: 'exception',
                 target: 'dynamic_script_generator',
-                details: details,
+                details,
             });
         });
 
@@ -2273,7 +2260,7 @@ const DynamicScriptGenerator = {
     combineEvidence: evidenceList =>
         evidenceList.reduce((sum, e) => sum + e.confidence, 0) / evidenceList.length,
 
-    calculateConfidence: evidence => Math.min(evidence.length * 0.2, 1.0),
+    calculateConfidence: evidence => Math.min(evidence.length * 0.2, 1),
 
     generateHypotheses: _evidence => ['anti_debug', 'license_check', 'drm_protection'],
 
@@ -2298,7 +2285,7 @@ const DynamicScriptGenerator = {
     createUnpackingStrategy: mechanism => ({
         id: `unpack_${Date.now()}`,
         type: 'unpacking',
-        mechanism: mechanism,
+        mechanism,
         effectiveness: 0.6,
         description: 'Unpacking strategy',
     }),
@@ -2306,7 +2293,7 @@ const DynamicScriptGenerator = {
     createDRMBypassStrategy: mechanism => ({
         id: `drm_${Date.now()}`,
         type: 'drm_bypass',
-        mechanism: mechanism,
+        mechanism,
         effectiveness: 0.7,
         description: 'DRM bypass strategy',
     }),
@@ -2314,7 +2301,7 @@ const DynamicScriptGenerator = {
     createDeobfuscationStrategy: mechanism => ({
         id: `deobfusc_${Date.now()}`,
         type: 'deobfuscation',
-        mechanism: mechanism,
+        mechanism,
         effectiveness: 0.5,
         description: 'Deobfuscation strategy',
     }),
@@ -2322,7 +2309,7 @@ const DynamicScriptGenerator = {
     createGenericBypassStrategy: mechanism => ({
         id: `generic_${Date.now()}`,
         type: 'generic_bypass',
-        mechanism: mechanism,
+        mechanism,
         effectiveness: 0.4,
         description: 'Generic bypass strategy',
     }),
@@ -2348,7 +2335,7 @@ const DynamicScriptGenerator = {
     }`,
 
     // === v3.0.0 AI/ML COMPONENTS INITIALIZATION ===
-    initializeAIMLComponents: function () {
+    initializeAIMLComponents() {
         send({
             type: 'status',
             target: 'dynamic_script_generator',
@@ -2414,17 +2401,17 @@ const DynamicScriptGenerator = {
                 action: 'aiml_components_initialized',
                 components_count: Object.keys(this.aiComponents).length,
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'dynamic_script_generator',
                 action: 'aiml_initialization_failed',
-                error: e.toString(),
+                error: error.toString(),
             });
         }
     },
 
-    createScriptGenerationNN: function () {
+    createScriptGenerationNN() {
         return {
             layers: [256, 128, 64, 32, 16],
             weights: this.initializeNeuralWeights([256, 128, 64, 32, 16]),
@@ -2437,7 +2424,7 @@ const DynamicScriptGenerator = {
         };
     },
 
-    createProtectionClassificationNN: function () {
+    createProtectionClassificationNN() {
         return {
             layers: [128, 64, 32, 16, 8],
             weights: this.initializeNeuralWeights([128, 64, 32, 16, 8]),
@@ -2449,7 +2436,7 @@ const DynamicScriptGenerator = {
         };
     },
 
-    createBypassEvolutionGA: function () {
+    createBypassEvolutionGA() {
         return {
             population: [],
             populationSize: 100,
@@ -2463,7 +2450,7 @@ const DynamicScriptGenerator = {
         };
     },
 
-    createBypassRLAgent: function () {
+    createBypassRLAgent() {
         return {
             qTable: {},
             learningRate: 0.1,
@@ -2479,7 +2466,7 @@ const DynamicScriptGenerator = {
     },
 
     // === QUANTUM COMPONENTS INITIALIZATION ===
-    initializeQuantumComponents: function () {
+    initializeQuantumComponents() {
         send({
             type: 'status',
             target: 'dynamic_script_generator',
@@ -2545,17 +2532,17 @@ const DynamicScriptGenerator = {
                 action: 'quantum_components_initialized',
                 components_count: Object.keys(this.quantumComponents).length,
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'dynamic_script_generator',
                 action: 'quantum_initialization_failed',
-                error: e.toString(),
+                error: error.toString(),
             });
         }
     },
 
-    createQuantumBypassCircuit: function () {
+    createQuantumBypassCircuit() {
         return {
             qubits: 8,
             gates: [],
@@ -2567,7 +2554,7 @@ const DynamicScriptGenerator = {
         };
     },
 
-    createQuantumCryptographyCircuit: function () {
+    createQuantumCryptographyCircuit() {
         return {
             qubits: 16,
             keyDistribution: true,
@@ -2580,7 +2567,7 @@ const DynamicScriptGenerator = {
     },
 
     // === REAL-TIME ADAPTATION INITIALIZATION ===
-    initializeRealtimeAdaptation: function () {
+    initializeRealtimeAdaptation() {
         send({
             type: 'status',
             target: 'dynamic_script_generator',
@@ -2648,17 +2635,17 @@ const DynamicScriptGenerator = {
                 action: 'realtime_adaptation_initialized',
                 components_count: Object.keys(this.adaptationComponents).length,
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'dynamic_script_generator',
                 action: 'realtime_adaptation_failed',
-                error: e.toString(),
+                error: error.toString(),
             });
         }
     },
 
-    createPatternAnalyzer: function () {
+    createPatternAnalyzer() {
         return {
             patterns: {},
             threshold: 0.8,
@@ -2668,7 +2655,7 @@ const DynamicScriptGenerator = {
         };
     },
 
-    createDynamicSwitcher: function () {
+    createDynamicSwitcher() {
         return {
             currentStrategy: null,
             switchHistory: [],
@@ -2680,7 +2667,7 @@ const DynamicScriptGenerator = {
     },
 
     // === ADVANCED GENERATION INITIALIZATION ===
-    initializeAdvancedGeneration: function () {
+    initializeAdvancedGeneration() {
         send({
             type: 'status',
             target: 'dynamic_script_generator',
@@ -2711,17 +2698,17 @@ const DynamicScriptGenerator = {
                 action: 'advanced_generation_initialized',
                 features: Object.keys(this.advancedGeneration),
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'dynamic_script_generator',
                 action: 'advanced_generation_failed',
-                error: e.toString(),
+                error: error.toString(),
             });
         }
     },
 
-    createPolymorphicEngine: function () {
+    createPolymorphicEngine() {
         return {
             templates: [],
             mutations: [
@@ -2736,7 +2723,7 @@ const DynamicScriptGenerator = {
         };
     },
 
-    createMetamorphicEngine: function () {
+    createMetamorphicEngine() {
         return {
             transformations: [
                 'semantic_preserving',
@@ -2750,7 +2737,7 @@ const DynamicScriptGenerator = {
     },
 
     // === ZERO-TRUST GENERATION INITIALIZATION ===
-    initializeZeroTrustGeneration: function () {
+    initializeZeroTrustGeneration() {
         send({
             type: 'status',
             target: 'dynamic_script_generator',
@@ -2781,19 +2768,19 @@ const DynamicScriptGenerator = {
                 action: 'zero_trust_generation_initialized',
                 trust_model: 'dynamic_continuous_verification',
             });
-        } catch (e) {
+        } catch (error) {
             send({
                 type: 'error',
                 target: 'dynamic_script_generator',
                 action: 'zero_trust_initialization_failed',
-                error: e.toString(),
+                error: error.toString(),
             });
         }
     },
 
-    createTrustEvaluator: function () {
+    createTrustEvaluator() {
         return {
-            trustScore: 0.0,
+            trustScore: 0,
             factors: ['behavior', 'context', 'history', 'reputation'],
             weights: [0.3, 0.2, 0.3, 0.2],
             evaluate: this.evaluateTrust.bind(this),
@@ -2809,7 +2796,7 @@ const DynamicScriptGenerator = {
             for (let j = 0; j < layers[i]; j++) {
                 const nodeWeights = [];
                 for (let k = 0; k < layers[i + 1]; k++) {
-                    nodeWeights.push((Math.random() * 2 - 1) * Math.sqrt(2.0 / layers[i]));
+                    nodeWeights.push((Math.random() * 2 - 1) * Math.sqrt(2 / layers[i]));
                 }
                 layerWeights.push(nodeWeights);
             }
@@ -2830,7 +2817,7 @@ const DynamicScriptGenerator = {
         return biases;
     },
 
-    generateScriptWithNN: function (_inputFeatures) {
+    generateScriptWithNN(_inputFeatures) {
         this.stats.neuralNetworkInferences++;
         return {
             script: '// Neural Network Generated Injection Script',
@@ -2845,14 +2832,14 @@ const DynamicScriptGenerator = {
 
     evaluateBypassFitness: _strategy => Math.random() * 100,
 
-    evolveBypassStrategies: function () {
+    evolveBypassStrategies() {
         this.stats.geneticEvolutions++;
         return 'evolution_completed';
     },
 
     selectRLAction: _state => 'optimal_action',
 
-    executeQuantumBypass: function (_target) {
+    executeQuantumBypass(_target) {
         this.stats.quantumBypassesGenerated++;
         return {
             success: Math.random() > 0.3,
@@ -2865,11 +2852,11 @@ const DynamicScriptGenerator = {
         method: 'quantum_factorization',
     }),
 
-    startContinuousMonitoring: function () {
+    startContinuousMonitoring() {
         setInterval(() => {
             this.stats.realTimeAdaptations++;
             this.adaptEnvironment();
-        }, 10000); // Every 10 seconds
+        }, 10_000); // Every 10 seconds
     },
 
     adaptEnvironment: () => {
@@ -2895,23 +2882,23 @@ const DynamicScriptGenerator = {
         });
     },
 
-    generatePolymorphicScript: function (baseScript) {
+    generatePolymorphicScript(baseScript) {
         this.stats.polymorphicGeneration++;
         return `${baseScript}// Polymorphic variation`;
     },
 
-    transformScript: function (_script) {
+    transformScript(_script) {
         this.stats.metamorphicGeneration++;
         return '// Metamorphic transformation applied';
     },
 
-    evaluateTrust: function (_context) {
+    evaluateTrust(_context) {
         this.stats.trustScoreUpdates++;
         return Math.random();
     },
 
     // === INSTALLATION SUMMARY ===
-    installSummary: function () {
+    installSummary() {
         setTimeout(() => {
             send({
                 type: 'summary',
@@ -3012,7 +2999,7 @@ const DynamicScriptGenerator = {
 
     // === ULTRA-ROBUST PRODUCTION ENHANCEMENT METHODS ===
 
-    initializeAdvancedEvasionEngine: function () {
+    initializeAdvancedEvasionEngine() {
         send({
             type: 'status',
             target: 'dynamic_script_generator_evasion',
@@ -3031,8 +3018,8 @@ const DynamicScriptGenerator = {
                 'opaque_predicates',
                 'dynamic_opcode_generation',
             ],
-            generatePolymorphicCode: function (originalCode) {
-                const variant = Math.floor(Math.random() * 10000);
+            generatePolymorphicCode(originalCode) {
+                const variant = Math.floor(Math.random() * 10_000);
                 let morphedCode = originalCode;
 
                 morphedCode = this.applyControlFlowFlattening(morphedCode);
@@ -3043,7 +3030,7 @@ const DynamicScriptGenerator = {
 
                 return {
                     code: morphedCode,
-                    variant: variant,
+                    variant,
                     morphingTechniques: this.obfuscationTechniques.slice(
                         0,
                         3 + Math.floor(Math.random() * 3)
@@ -3052,10 +3039,13 @@ const DynamicScriptGenerator = {
             },
             applyControlFlowFlattening: code => {
                 const dispatcher = `var __dispatch = ${Math.floor(Math.random() * 1000)};\n`;
-                const flattened = code.replace(/if\s*\([^)]+\)\s*{([^}]+)}/g, (_match, block) => {
-                    const caseNum = Math.floor(Math.random() * 100);
-                    return `switch(__dispatch + ${caseNum}) { case ${caseNum}: ${block}; break; default: break; }`;
-                });
+                const flattened = code.replaceAll(
+                    /if\s*\([^)]+\)\s*{([^}]+)}/g,
+                    (_match, block) => {
+                        const caseNum = Math.floor(Math.random() * 100);
+                        return `switch(__dispatch + ${caseNum}) { case ${caseNum}: ${block}; break; default: break; }`;
+                    }
+                );
                 return dispatcher + flattened;
             },
             insertDeadCodeBlocks: (code, variant) => {
@@ -3068,14 +3058,11 @@ const DynamicScriptGenerator = {
                 let modifiedCode = code;
                 for (let i = 0; i < numBlocks; i++) {
                     const randomPos = Math.floor(Math.random() * modifiedCode.length);
-                    const deadCode =
-                        deadCodeBlocks[Math.floor(Math.random() * deadCodeBlocks.length)];
-                    modifiedCode =
-                        modifiedCode.slice(0, randomPos) +
-                        '\n' +
-                        deadCode +
-                        '\n' +
-                        modifiedCode.slice(randomPos);
+                    const deadCode
+                        = deadCodeBlocks[Math.floor(Math.random() * deadCodeBlocks.length)];
+                    modifiedCode = `${modifiedCode.slice(0, randomPos)}\n${
+                        deadCode
+                    }\n${modifiedCode.slice(randomPos)}`;
                 }
                 return modifiedCode;
             },
@@ -3090,13 +3077,13 @@ const DynamicScriptGenerator = {
                 let substituted = code;
                 for (const [pattern, replacement] of Object.entries(substitutions)) {
                     if (Math.random() > 0.7) {
-                        substituted = substituted.replace(new RegExp(pattern, 'g'), replacement);
+                        substituted = substituted.replaceAll(new RegExp(pattern, 'g'), replacement);
                     }
                 }
                 return substituted;
             },
             obfuscateStringLiterals: (code, variant) =>
-                code.replace(/"([^"]+)"/g, (_match, str) => {
+                code.replaceAll(/"([^"]+)"/g, (_match, str) => {
                     const encoded = btoa(`${str}_v${variant}`);
                     return `atob("${encoded}").slice(0, -${`_v${variant}`.length})`;
                 }),
@@ -3107,7 +3094,7 @@ const DynamicScriptGenerator = {
                     '(typeof undefined === "undefined")',
                 ];
                 const predicate = predicates[Math.floor(Math.random() * predicates.length)];
-                return code.replace(/\/\*\s*OPAQUE\s*\*\//g, `if(${predicate}) `);
+                return code.replaceAll(/\/\*\s*OPAQUE\s*\*\//g, `if(${predicate}) `);
             },
         };
 
@@ -3122,7 +3109,7 @@ const DynamicScriptGenerator = {
                 'behavioral_equivalence',
                 'syntactic_diversification',
             ],
-            evolveCode: function (baseCode, targetSignature) {
+            evolveCode(baseCode, targetSignature) {
                 this.evolutionGenerations++;
                 const genome = this.createCodeGenome(baseCode);
 
@@ -3142,18 +3129,18 @@ const DynamicScriptGenerator = {
                     mutations: bestMutation.appliedMutations,
                 };
             },
-            createCodeGenome: function (code) {
+            createCodeGenome(code) {
                 return {
-                    code: code,
+                    code,
                     blocks: this.extractCodeBlocks(code),
                     dependencies: this.extractDependencies(code),
                     entryPoints: this.findEntryPoints(code),
                     dataFlow: this.analyzeDataFlow(code),
                 };
             },
-            applySemanticMutation: function (genome) {
-                const mutated = Object.assign({}, genome);
-                mutated.code = mutated.code.replace(/var\s+(\w+)/g, (_match, varName) => {
+            applySemanticMutation(genome) {
+                const mutated = { ...genome };
+                mutated.code = mutated.code.replaceAll(/var\s+(\w+)/g, (_match, varName) => {
                     const newName = this.generateSemanticAlias(varName);
                     return `var ${newName}`;
                 });
@@ -3161,43 +3148,43 @@ const DynamicScriptGenerator = {
                 mutated.fitness = this.calculateFitness(mutated);
                 return mutated;
             },
-            applyStructuralMutation: function (genome) {
-                const mutated = Object.assign({}, genome);
+            applyStructuralMutation(genome) {
+                const mutated = { ...genome };
                 mutated.code = this.restructureFunctionCalls(mutated.code);
                 mutated.code = this.reorderIndependentStatements(mutated.code);
                 mutated.appliedMutations = ['structural_reordering'];
                 mutated.fitness = this.calculateFitness(mutated);
                 return mutated;
             },
-            applySyntacticMutation: function (genome) {
-                const mutated = Object.assign({}, genome);
-                mutated.code = mutated.code.replace(/\+\+(\w+)/g, '$1 = $1 + 1');
-                mutated.code = mutated.code.replace(/(\w+) === (\w+)/g, '!($1 !== $2)');
+            applySyntacticMutation(genome) {
+                const mutated = { ...genome };
+                mutated.code = mutated.code.replaceAll(/\+\+(\w+)/g, '$1 = $1 + 1');
+                mutated.code = mutated.code.replaceAll(/(\w+) === (\w+)/g, '!($1 !== $2)');
                 mutated.appliedMutations = ['syntactic_equivalence'];
                 mutated.fitness = this.calculateFitness(mutated);
                 return mutated;
             },
-            selectFittestMutation: function (mutations, targetSignature) {
+            selectFittestMutation(mutations, targetSignature) {
                 return mutations.reduce((best, current) => {
                     const currentScore = this.evaluateAgainstSignature(current, targetSignature);
                     const bestScore = this.evaluateAgainstSignature(best, targetSignature);
                     return currentScore > bestScore ? current : best;
                 });
             },
-            extractCodeBlocks: code => code.match(/\{[^{}]*\}/g) || [],
-            extractDependencies: code => code.match(/require\(['"][^'"]+['"]\)/g) || [],
+            extractCodeBlocks: code => code.match(/{[^{}]*}/g) || [],
+            extractDependencies: code => code.match(/require\(["'][^"']+["']\)/g) || [],
             findEntryPoints: code => code.match(/function\s+\w+\s*\(/g) || [],
             analyzeDataFlow: code => ({ variables: code.match(/var\s+\w+/g) || [] }),
             generateSemanticAlias: name => {
                 const prefixes = ['enhanced', 'advanced', 'optimized', 'secure', 'dynamic'];
                 return (
-                    prefixes[Math.floor(Math.random() * prefixes.length)] +
-                    name.charAt(0).toUpperCase() +
-                    name.slice(1)
+                    prefixes[Math.floor(Math.random() * prefixes.length)]
+                    + name.charAt(0).toUpperCase()
+                    + name.slice(1)
                 );
             },
             restructureFunctionCalls: code =>
-                code.replace(/(\w+)\(([^)]+)\)/g, (match, func, args) => {
+                code.replaceAll(/(\w+)\(([^)]+)\)/g, (match, func, args) => {
                     if (Math.random() > 0.6) {
                         return `(function(){ return ${func}(${args}); })()`;
                     }
@@ -3221,13 +3208,13 @@ const DynamicScriptGenerator = {
             calculateFitness: genome => {
                 const complexity = genome.code.length;
                 const uniqueness = new Set(genome.code.split(' ')).size;
-                return (uniqueness / complexity) * 10000;
+                return (uniqueness / complexity) * 10_000;
             },
-            evaluateAgainstSignature: function (mutation, targetSignature) {
+            evaluateAgainstSignature(mutation, targetSignature) {
                 const mutationHash = this.hashCode(mutation.code);
                 const targetHash = this.hashCode(targetSignature);
                 const similarity = this.calculateSimilarity(mutationHash, targetHash);
-                return 1.0 - similarity;
+                return 1 - similarity;
             },
             hashCode: str => {
                 let hash = 0;
@@ -3245,19 +3232,19 @@ const DynamicScriptGenerator = {
         this.memoryLayoutRandomizer = {
             baseAddresses: new Map(),
             allocationStrategies: ['random_offset', 'segmented_allocation', 'interleaved_blocks'],
-            randomizeLayout: function () {
-                const strategy =
-                    this.allocationStrategies[
+            randomizeLayout() {
+                const strategy
+                    = this.allocationStrategies[
                         Math.floor(Math.random() * this.allocationStrategies.length)
                     ];
-                const baseOffset = Math.floor(Math.random() * 0x10000000);
+                const baseOffset = Math.floor(Math.random() * 0x10_00_00_00);
 
-                this.baseAddresses.set('code_section', baseOffset + 0x1000);
-                this.baseAddresses.set('data_section', baseOffset + 0x2000);
-                this.baseAddresses.set('heap_section', baseOffset + 0x3000);
+                this.baseAddresses.set('code_section', baseOffset + 0x10_00);
+                this.baseAddresses.set('data_section', baseOffset + 0x20_00);
+                this.baseAddresses.set('heap_section', baseOffset + 0x30_00);
 
                 return {
-                    strategy: strategy,
+                    strategy,
                     baseOffset: baseOffset.toString(16),
                     sections: Object.fromEntries(this.baseAddresses),
                 };
@@ -3266,7 +3253,7 @@ const DynamicScriptGenerator = {
 
         // Anti-Analysis Countermeasures
         this.antiAnalysisCountermeasures = {
-            deployCountermeasures: function () {
+            deployCountermeasures() {
                 return {
                     timing_obfuscation: this.implementTimingObfuscation(),
                     control_flow_integrity: this.implementCFIBypass(),
@@ -3327,7 +3314,7 @@ const DynamicScriptGenerator = {
         });
     },
 
-    initializeRedundancySystem: function () {
+    initializeRedundancySystem() {
         send({
             type: 'status',
             target: 'dynamic_script_generator_redundancy',
@@ -3353,7 +3340,7 @@ const DynamicScriptGenerator = {
                 },
             ],
             currentTier: 0,
-            executeFallback: function (failureReason) {
+            executeFallback(failureReason) {
                 if (this.currentTier >= this.tiers.length) {
                     return { success: false, error: 'all_fallback_tiers_exhausted' };
                 }
@@ -3366,7 +3353,7 @@ const DynamicScriptGenerator = {
                     target: 'resilient_failsafe',
                     action: 'executing_fallback',
                     tier: tier.level,
-                    method: method,
+                    method,
                     reason: failureReason,
                 });
 
@@ -3410,7 +3397,7 @@ const DynamicScriptGenerator = {
                 };
                 return implementations[method] ? implementations[method]() : { success: false };
             },
-            resetToBaseline: function () {
+            resetToBaseline() {
                 this.currentTier = 0;
                 send({
                     type: 'info',
@@ -3425,7 +3412,7 @@ const DynamicScriptGenerator = {
             healthChecks: new Map(),
             repairStrategies: new Map(),
             monitoringActive: false,
-            startSelfHealing: function () {
+            startSelfHealing() {
                 this.monitoringActive = true;
                 this.scheduleHealthChecks();
                 this.initializeRepairStrategies();
@@ -3436,8 +3423,8 @@ const DynamicScriptGenerator = {
                     action: 'monitoring_started',
                 });
             },
-            scheduleHealthChecks: function () {
-                const checkInterval = 30000; // 30 seconds
+            scheduleHealthChecks() {
+                const checkInterval = 30_000; // 30 seconds
                 const checkTypes = [
                     'memory_integrity_check',
                     'hook_persistence_check',
@@ -3453,7 +3440,7 @@ const DynamicScriptGenerator = {
                     }
                 }, checkInterval);
             },
-            performHealthCheck: function (checkType) {
+            performHealthCheck(checkType) {
                 const checkResults = {
                     memory_integrity_check: () => this.checkMemoryIntegrity(),
                     hook_persistence_check: () => this.checkHookPersistence(),
@@ -3476,17 +3463,17 @@ const DynamicScriptGenerator = {
                     if (baseAddr) {
                         try {
                             const _header = baseAddr.readPointer();
-                            const expectedSig = 0x4d5a; // MZ signature
+                            const expectedSig = 0x4D_5A; // MZ signature
                             if (baseAddr.readU16() !== expectedSig) {
                                 issues.push(`memory_corruption_detected_in_${region}`);
                             }
-                        } catch (_e) {
+                        } catch {
                             issues.push(`memory_access_violation_in_${region}`);
                         }
                     }
                 });
 
-                return { healthy: issues.length === 0, issues: issues };
+                return { healthy: issues.length === 0, issues };
             },
             checkHookPersistence: () => {
                 const hookedFunctions = ['NtCreateFile', 'NtReadFile', 'NtWriteFile'];
@@ -3499,7 +3486,7 @@ const DynamicScriptGenerator = {
                     }
                 });
 
-                return { healthy: issues.length === 0, issues: issues };
+                return { healthy: issues.length === 0, issues };
             },
             checkInjectionStability: () => {
                 const injectedModules = ['payload.dll', 'bypass.dll'];
@@ -3512,7 +3499,7 @@ const DynamicScriptGenerator = {
                     }
                 });
 
-                return { healthy: issues.length === 0, issues: issues };
+                return { healthy: issues.length === 0, issues };
             },
             checkDetectionAvoidance: () => {
                 const avoidanceMechanisms = ['anti_debug', 'anti_vm', 'anti_analysis'];
@@ -3525,15 +3512,15 @@ const DynamicScriptGenerator = {
                     }
                 });
 
-                return { healthy: issues.length === 0, issues: issues };
+                return { healthy: issues.length === 0, issues };
             },
-            triggerSelfRepair: function (checkType, issues) {
+            triggerSelfRepair(checkType, issues) {
                 send({
                     type: 'warning',
                     target: 'self_healing',
                     action: 'initiating_self_repair',
                     check_type: checkType,
-                    issues: issues,
+                    issues,
                 });
 
                 const repairStrategies = {
@@ -3559,7 +3546,7 @@ const DynamicScriptGenerator = {
                         type: 'info',
                         target: 'self_healing',
                         action: 'repairing_memory_region',
-                        region: region,
+                        region,
                     });
                 });
                 return { success: true, repaired: issues.length };
@@ -3578,7 +3565,7 @@ const DynamicScriptGenerator = {
             },
             stabilizeInjections: issues => ({ success: true, stabilized: issues.length }),
             reinforceAvoidance: issues => ({ success: true, reinforced: issues.length }),
-            initializeRepairStrategies: function () {
+            initializeRepairStrategies() {
                 this.repairStrategies.set('memory_corruption', 'reallocate_and_restore');
                 this.repairStrategies.set('hook_failure', 'rehook_with_alternative_method');
                 this.repairStrategies.set('injection_failure', 'reinject_with_different_technique');
@@ -3606,13 +3593,13 @@ const DynamicScriptGenerator = {
                 system_instability: 4,
                 imminent_discovery: 5,
             },
-            evaluateAndDegrade: function (trigger) {
+            evaluateAndDegrade(trigger) {
                 const newMode = this.degradationTriggers[trigger] || 1;
                 if (newMode > this.currentMode) {
                     this.executeGracefulDegradation(newMode);
                 }
             },
-            executeGracefulDegradation: function (targetMode) {
+            executeGracefulDegradation(targetMode) {
                 const mode = this.operationalModes[targetMode - 1];
 
                 send({
@@ -3649,7 +3636,7 @@ const DynamicScriptGenerator = {
                             type: 'info',
                             target: 'graceful_degradation',
                             action: 'disabling_feature',
-                            feature: feature,
+                            feature,
                         });
                     }
                 });
@@ -3661,7 +3648,7 @@ const DynamicScriptGenerator = {
             threatLevels: ['green', 'yellow', 'orange', 'red', 'critical'],
             currentThreatLevel: 'green',
             emergencyProcedures: new Map(),
-            activateEmergencyProtocol: function (threatLevel, context) {
+            activateEmergencyProtocol(threatLevel, context) {
                 this.currentThreatLevel = threatLevel;
                 const procedure = this.emergencyProcedures.get(threatLevel);
 
@@ -3670,7 +3657,7 @@ const DynamicScriptGenerator = {
                     target: 'emergency_protocols',
                     action: 'emergency_protocol_activated',
                     threat_level: threatLevel,
-                    context: context,
+                    context,
                 });
 
                 return procedure ? procedure.execute(context) : { success: false };
@@ -3707,7 +3694,7 @@ const DynamicScriptGenerator = {
         });
     },
 
-    initializePredictiveAnalysis: function () {
+    initializePredictiveAnalysis() {
         send({
             type: 'status',
             target: 'dynamic_script_generator_predictive',
@@ -3727,7 +3714,7 @@ const DynamicScriptGenerator = {
             ],
             threatIndicators: new Set(),
             riskAssessment: new Map(),
-            initializeFeeds: function () {
+            initializeFeeds() {
                 this.activeSources.forEach(source => {
                     this.feeds.set(source, {
                         status: 'active',
@@ -3739,8 +3726,8 @@ const DynamicScriptGenerator = {
 
                 this.startIntelligenceGathering();
             },
-            startIntelligenceGathering: function () {
-                const gatherInterval = 300000; // 5 minutes
+            startIntelligenceGathering() {
+                const gatherInterval = 300_000; // 5 minutes
 
                 setInterval(() => {
                     this.collectThreatIntelligence();
@@ -3755,7 +3742,7 @@ const DynamicScriptGenerator = {
                     sources: this.activeSources.length,
                 });
             },
-            collectThreatIntelligence: function (source, threatTypes) {
+            collectThreatIntelligence(source, threatTypes) {
                 const threats = [];
                 // Scan process memory for threat indicators
                 Process.enumerateModules().forEach(module => {
@@ -3765,22 +3752,23 @@ const DynamicScriptGenerator = {
                             onMatch: (address, _size) => {
                                 threats.push({
                                     type: threatType,
-                                    address: address,
+                                    address,
                                     module: module.name,
-                                    source: source,
+                                    source,
                                 });
                             },
                         });
                     });
                 });
 
+                const numThreats = Math.min(threats.length + 5, threatTypes.length * 3);
                 for (let i = 0; i < numThreats; i++) {
                     const threatType = threatTypes[Math.floor(Math.random() * threatTypes.length)];
                     const threatId = `${source}_${threatType}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
                     threats.push({
                         id: threatId,
                         type: threatType,
-                        source: source,
+                        source,
                         description: `New ${threatType} detected via ${source}`,
                         indicators: this.generateThreatIndicators(threatType),
                     });
@@ -3828,12 +3816,10 @@ const DynamicScriptGenerator = {
 
                 return severityFactors[threat.type] || 0.5;
             },
-            assessActionability: _threat => {
-                return Math.random() > 0.3; // 70% of threats are actionable
-            },
-            analyzeSecurityLandscape: function () {
+            assessActionability: _threat => Math.random() > 0.3, // 70% of threats are actionable
+            analyzeSecurityLandscape() {
                 const landscape = {
-                    emerging_threats: Array.from(this.threatIndicators).slice(-10),
+                    emerging_threats: [...this.threatIndicators].slice(-10),
                     protection_evolution: this.assessProtectionEvolution(),
                     attack_vector_trends: this.identifyAttackVectorTrends(),
                     technology_shifts: this.detectTechnologyShifts(),
@@ -3843,7 +3829,7 @@ const DynamicScriptGenerator = {
                     type: 'info',
                     target: 'threat_intelligence',
                     action: 'security_landscape_analyzed',
-                    landscape: landscape,
+                    landscape,
                 });
 
                 return landscape;
@@ -3866,8 +3852,8 @@ const DynamicScriptGenerator = {
                 quantum_computing: 'preparation_phase',
                 edge_security: 'deployment_phase',
             }),
-            updateRiskProfiles: function () {
-                const currentThreats = Array.from(this.threatIndicators);
+            updateRiskProfiles() {
+                const currentThreats = [...this.threatIndicators];
                 const riskProfile = {
                     overall_risk: this.calculateOverallRisk(currentThreats),
                     critical_vulnerabilities: this.identifyCriticalVulnerabilities(currentThreats),
@@ -3885,14 +3871,15 @@ const DynamicScriptGenerator = {
                     critical_items: riskProfile.critical_vulnerabilities.length,
                 });
             },
-            calculateOverallRisk: function (threats) {
-                const totalSeverity = threats.reduce((sum, threat) => {
-                    return sum + this.calculateThreatSeverity(threat);
-                }, 0);
+            calculateOverallRisk(threats) {
+                const totalSeverity = threats.reduce(
+                    (sum, threat) => sum + this.calculateThreatSeverity(threat),
+                    0
+                );
 
-                return Math.min(totalSeverity / threats.length, 1.0);
+                return Math.min(totalSeverity / threats.length, 1);
             },
-            identifyCriticalVulnerabilities: function (threats) {
+            identifyCriticalVulnerabilities(threats) {
                 return threats.filter(threat => this.calculateThreatSeverity(threat) > 0.8);
             },
             generateAdaptationRecommendations: threats => {
@@ -3905,7 +3892,7 @@ const DynamicScriptGenerator = {
 
                 return recommendations;
             },
-            estimateAdaptationTimeline: function (threats) {
+            estimateAdaptationTimeline(threats) {
                 const criticalThreats = this.identifyCriticalVulnerabilities(threats);
                 return {
                     immediate_actions: criticalThreats.length > 0 ? criticalThreats.length : 0,
@@ -3920,7 +3907,7 @@ const DynamicScriptGenerator = {
             models: new Map(),
             trainingData: new Map(),
             predictionAccuracy: new Map(),
-            initializePredictiveModels: function () {
+            initializePredictiveModels() {
                 const modelTypes = [
                     'bypass_success_predictor',
                     'detection_risk_estimator',
@@ -3940,8 +3927,8 @@ const DynamicScriptGenerator = {
 
                 this.startModelTraining();
             },
-            startModelTraining: function () {
-                const trainingInterval = 600000; // 10 minutes
+            startModelTraining() {
+                const trainingInterval = 600_000; // 10 minutes
 
                 setInterval(() => {
                     this.models.forEach((_model, modelType) => {
@@ -3950,7 +3937,7 @@ const DynamicScriptGenerator = {
                     });
                 }, trainingInterval);
             },
-            trainModel: function (modelType) {
+            trainModel(modelType) {
                 const trainingData = this.trainingData.get(modelType);
                 const model = this.models.get(modelType);
 
@@ -3985,7 +3972,7 @@ const DynamicScriptGenerator = {
                     data_points: trainingData.length,
                 });
             },
-            generateTrainingData: function (modelType) {
+            generateTrainingData(modelType) {
                 const dataGenerators = {
                     bypass_success_predictor: () => this.generateBypassPredictionData(),
                     detection_risk_estimator: () => this.generateDetectionRiskData(),
@@ -4007,7 +3994,7 @@ const DynamicScriptGenerator = {
                 for (let i = 0; i < 10; i++) {
                     const scenario = scenarios[Math.floor(Math.random() * scenarios.length)];
                     data.push({
-                        scenario: scenario,
+                        scenario,
                         complexity: Math.random(),
                         protection_level: Math.random(),
                         success_probability: Math.random(),
@@ -4056,7 +4043,7 @@ const DynamicScriptGenerator = {
                     timestamp: Date.now(),
                 },
             ],
-            makePrediction: function (modelType, inputData) {
+            makePrediction(modelType, inputData) {
                 const model = this.models.get(modelType);
                 if (!model) {
                     return null;
@@ -4076,12 +4063,12 @@ const DynamicScriptGenerator = {
                     type: 'info',
                     target: 'predictive_modeling',
                     action: 'prediction_made',
-                    prediction: prediction,
+                    prediction,
                 });
 
                 return prediction;
             },
-            validateModelAccuracy: function (modelType) {
+            validateModelAccuracy(modelType) {
                 const model = this.models.get(modelType);
                 const recentPredictions = model.predictions.slice(-20);
 
@@ -4090,31 +4077,29 @@ const DynamicScriptGenerator = {
                     let correctPredictions = 0;
                     const totalPredictions = recentPredictions.length;
 
-                    recentPredictions.forEach(
-                        function (prediction) {
-                            // Verify each prediction against actual observed behavior
-                            const actualBehavior = this.observedBehaviors.get(prediction.id);
-                            if (actualBehavior) {
-                                // Compare prediction with what actually happened
-                                if (
-                                    prediction.type === 'api_call' &&
-                                    actualBehavior.apiCalled === prediction.predicted
-                                ) {
-                                    correctPredictions++;
-                                } else if (
-                                    prediction.type === 'memory_access' &&
-                                    Math.abs(actualBehavior.address - prediction.address) < 0x1000
-                                ) {
-                                    correctPredictions++;
-                                } else if (
-                                    prediction.type === 'registry_operation' &&
-                                    actualBehavior.key === prediction.key
-                                ) {
-                                    correctPredictions++;
-                                }
+                    recentPredictions.forEach(prediction => {
+                        // Verify each prediction against actual observed behavior
+                        const actualBehavior = this.observedBehaviors.get(prediction.id);
+                        if (actualBehavior) {
+                            // Compare prediction with what actually happened
+                            if (
+                                prediction.type === 'api_call'
+                                && actualBehavior.apiCalled === prediction.predicted
+                            ) {
+                                correctPredictions++;
+                            } else if (
+                                prediction.type === 'memory_access'
+                                && Math.abs(actualBehavior.address - prediction.address) < 0x10_00
+                            ) {
+                                correctPredictions++;
+                            } else if (
+                                prediction.type === 'registry_operation'
+                                && actualBehavior.key === prediction.key
+                            ) {
+                                correctPredictions++;
                             }
-                        }.bind(this)
-                    );
+                        }
+                    });
 
                     const validationScore = correctPredictions / totalPredictions;
                     this.predictionAccuracy.set(modelType, validationScore);
@@ -4135,7 +4120,7 @@ const DynamicScriptGenerator = {
                     }
                 }
             },
-            triggerModelRetraining: function (modelType) {
+            triggerModelRetraining(modelType) {
                 send({
                     type: 'warning',
                     target: 'predictive_modeling',
@@ -4155,7 +4140,7 @@ const DynamicScriptGenerator = {
             competitors: new Map(),
             marketAnalysis: new Map(),
             innovationTracking: new Map(),
-            initializeCompetitiveAnalysis: function () {
+            initializeCompetitiveAnalysis() {
                 const competitors = [
                     'advanced_protection_systems',
                     'ml_detection_platforms',
@@ -4202,8 +4187,8 @@ const DynamicScriptGenerator = {
 
                 return techMapping[competitor] || ['generic_technology'];
             },
-            startCompetitiveMonitoring: function () {
-                const monitoringInterval = 900000; // 15 minutes
+            startCompetitiveMonitoring() {
+                const monitoringInterval = 900_000; // 15 minutes
 
                 setInterval(() => {
                     this.analyzeCompetitivePosition();
@@ -4211,7 +4196,7 @@ const DynamicScriptGenerator = {
                     this.assessMarketDisruption();
                 }, monitoringInterval);
             },
-            analyzeCompetitivePosition: function () {
+            analyzeCompetitivePosition() {
                 this.competitors.forEach((competitor, name) => {
                     const analysis = {
                         competitive_advantage: this.assessCompetitiveAdvantage(competitor),
@@ -4243,7 +4228,7 @@ const DynamicScriptGenerator = {
                 return factors.reduce((sum, factor) => sum + factor, 0) / factors.length;
             },
             assessThreatLevel: competitor =>
-                Math.min(1.0, competitor.threat_level * competitor.innovation_rate),
+                Math.min(1, competitor.threat_level * competitor.innovation_rate),
             generateResponseStrategy: _competitor => {
                 const strategies = [
                     'enhance_existing_capabilities',
@@ -4256,7 +4241,7 @@ const DynamicScriptGenerator = {
             },
             calculateMonitoringPriority: competitor =>
                 competitor.threat_level * 0.6 + competitor.innovation_rate * 0.4,
-            trackInnovationTrends: function () {
+            trackInnovationTrends() {
                 const trends = {
                     emerging_technologies: this.identifyEmergingTechnologies(),
                     patent_activity: this.analyzePotentialPatentActivity(),
@@ -4286,7 +4271,7 @@ const DynamicScriptGenerator = {
 
                 ranges.forEach(range => {
                     try {
-                        const data = range.base.readByteArray(Math.min(range.size, 0x10000));
+                        const data = range.base.readByteArray(Math.min(range.size, 0x1_00_00));
                         const dataStr = String.fromCharCode.apply(null, new Uint8Array(data));
 
                         // Count actual patent-related indicators in binary
@@ -4305,7 +4290,7 @@ const DynamicScriptGenerator = {
                         if (dataStr.includes('proprietary') || dataStr.includes('Proprietary')) {
                             patentIndicators += 7;
                         }
-                    } catch (_e) {}
+                    } catch {}
                 });
 
                 return patentIndicators;
@@ -4324,10 +4309,10 @@ const DynamicScriptGenerator = {
                     // Check for advanced crypto/security libraries
                     imports.forEach(imp => {
                         if (
-                            imp.name &&
-                            (imp.name.includes('crypto') ||
-                                imp.name.includes('ssl') ||
-                                imp.name.includes('tls'))
+                            imp.name
+                            && (imp.name.includes('crypto')
+                                || imp.name.includes('ssl')
+                                || imp.name.includes('tls'))
                         ) {
                             complexityScore += 2;
                         }
@@ -4352,8 +4337,8 @@ const DynamicScriptGenerator = {
                     innovation_acceleration: Math.random(),
                 };
 
-                const disruptionLevel =
-                    Object.values(disruptionIndicators).reduce((sum, val) => sum + val, 0) / 4;
+                const disruptionLevel
+                    = Object.values(disruptionIndicators).reduce((sum, val) => sum + val, 0) / 4;
 
                 if (disruptionLevel > 0.7) {
                     send({
@@ -4392,7 +4377,7 @@ const DynamicScriptGenerator = {
         });
     },
 
-    initializeAdaptiveDefense: function () {
+    initializeAdaptiveDefense() {
         send({
             type: 'status',
             target: 'dynamic_script_generator_adaptive',
@@ -4405,7 +4390,7 @@ const DynamicScriptGenerator = {
             variantTemplates: new Map(),
             activeVariants: new Map(),
             variantEffectiveness: new Map(),
-            initializeVariantSystem: function () {
+            initializeVariantSystem() {
                 const variantTypes = [
                     'false_vulnerability_variants',
                     'alternate_process_variants',
@@ -4420,7 +4405,7 @@ const DynamicScriptGenerator = {
 
                 this.startVariantDeployment();
             },
-            createVariantTemplate: function (_variantType) {
+            createVariantTemplate(variantType) {
                 const templates = {
                     false_vulnerability_variants: {
                         vulnerabilities: [
@@ -4483,10 +4468,10 @@ const DynamicScriptGenerator = {
                                 symbols.forEach(exp => {
                                     // Hook network functions to capture real endpoints
                                     if (
-                                        exp.name.includes('connect') ||
-                                        exp.name.includes('send') ||
-                                        exp.name.includes('HttpOpen') ||
-                                        exp.name.includes('InternetConnect')
+                                        exp.name.includes('connect')
+                                        || exp.name.includes('send')
+                                        || exp.name.includes('HttpOpen')
+                                        || exp.name.includes('InternetConnect')
                                     ) {
                                         Interceptor.attach(exp.address, {
                                             onEnter: args => {
@@ -4496,15 +4481,15 @@ const DynamicScriptGenerator = {
                                                     if (addr) {
                                                         const serverStr = addr.readUtf8String();
                                                         if (
-                                                            serverStr &&
-                                                            (serverStr.includes('license') ||
-                                                                serverStr.includes('activation') ||
-                                                                serverStr.includes('validate'))
+                                                            serverStr
+                                                            && (serverStr.includes('license')
+                                                                || serverStr.includes('activation')
+                                                                || serverStr.includes('validate'))
                                                         ) {
                                                             servers.push(serverStr);
                                                         }
                                                     }
-                                                } catch (_e) {}
+                                                } catch {}
                                             },
                                         });
                                     }
@@ -4528,7 +4513,7 @@ const DynamicScriptGenerator = {
                             if (Module.findExportByName(null, 'SSL_CTX_new')) {
                                 protocols.add('tls');
                             }
-                            return Array.from(protocols);
+                            return [...protocols];
                         })(),
                         response_manipulation: {
                             intercept_responses: () => {
@@ -4539,7 +4524,7 @@ const DynamicScriptGenerator = {
 
                                 if (recv) {
                                     Interceptor.attach(recv, {
-                                        onLeave: function (retval) {
+                                        onLeave(retval) {
                                             if (retval.toInt32() > 0) {
                                                 const data = this.context.rsi || this.context.rdx;
                                                 // Modify license validation responses to always succeed
@@ -4549,15 +4534,15 @@ const DynamicScriptGenerator = {
                                                 if (response?.includes('licensed')) {
                                                     data.writeUtf8String(
                                                         response
-                                                            .replace(
+                                                            .replaceAll(
                                                                 /"licensed":\s*false/g,
                                                                 '"licensed":true'
                                                             )
-                                                            .replace(
+                                                            .replaceAll(
                                                                 /"valid":\s*false/g,
                                                                 '"valid":true'
                                                             )
-                                                            .replace(
+                                                            .replaceAll(
                                                                 /"expired":\s*true/g,
                                                                 '"expired":false'
                                                             )
@@ -4572,10 +4557,10 @@ const DynamicScriptGenerator = {
                     },
                 };
 
-                return templates[decoyType] || { default: 'generic_decoy' };
+                return templates[variantType] || { default: 'generic_variant' };
             },
-            startDecoyDeployment: function () {
-                const deploymentInterval = 180000; // 3 minutes
+            startDecoyDeployment() {
+                const deploymentInterval = 180_000; // 3 minutes
 
                 setInterval(() => {
                     this.deployRandomDecoys();
@@ -4586,11 +4571,11 @@ const DynamicScriptGenerator = {
                 // Initial deployment
                 this.deployRandomDecoys();
             },
-            deployRandomDecoys: function () {
+            deployRandomDecoys() {
                 const numVariantsToDeploy = Math.floor(Math.random() * 3) + 2; // 2-4 variants
 
                 for (let i = 0; i < numVariantsToDeploy; i++) {
-                    const decoyTypes = Array.from(this.decoyTemplates.keys());
+                    const decoyTypes = [...this.decoyTemplates.keys()];
                     const selectedType = decoyTypes[Math.floor(Math.random() * decoyTypes.length)];
                     const decoy = this.generateDecoy(selectedType);
 
@@ -4605,14 +4590,14 @@ const DynamicScriptGenerator = {
                     });
                 }
             },
-            generateDecoy: function (decoyType) {
+            generateDecoy(decoyType) {
                 const template = this.decoyTemplates.get(decoyType);
                 const decoyId = `${decoyType}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
 
                 return {
                     id: decoyId,
                     type: decoyType,
-                    template: template,
+                    template,
                     deployment_time: Date.now(),
                     interactions: 0,
                     effectiveness_score: 0,
@@ -4632,7 +4617,7 @@ const DynamicScriptGenerator = {
 
                 return locations[Math.floor(Math.random() * locations.length)];
             },
-            monitorDecoyEffectiveness: function () {
+            monitorDecoyEffectiveness() {
                 this.activeDecoys.forEach((decoy, decoyId) => {
                     const interactions = this.detectRealDecoyInteractions(decoy);
                     decoy.interactions += interactions;
@@ -4648,15 +4633,23 @@ const DynamicScriptGenerator = {
                             target: 'decoy_generation',
                             action: 'decoy_interaction_detected',
                             decoy_id: decoyId,
-                            interactions: interactions,
+                            interactions,
                             effectiveness: effectiveness.toFixed(3),
                         });
                     }
                 });
             },
             detectRealDecoyInteractions: decoy => {
-                // Monitor actual debugger and analysis tool interactions with decoys
                 let _detectedInteractions = 0;
+
+                const typeModifiers = {
+                    false_vulnerability_decoys: 1.5,
+                    honeypot_process_decoys: 1.2,
+                    credential_decoys: 1.3,
+                    communication_decoys: 1.1,
+                    algorithm_decoys: 1,
+                };
+                const baseInteractionRate = 0.15;
 
                 // Hook debugger breakpoint functions to detect when decoys are examined
                 const SetBreakpoint = Module.findExportByName(null, 'SetBreakpoint');
@@ -4668,7 +4661,7 @@ const DynamicScriptGenerator = {
                         Interceptor.attach(SetBreakpoint, {
                             onEnter: args => {
                                 const bpAddr = args[0];
-                                if (Math.abs(bpAddr - decoy.address) < 0x1000) {
+                                if (Math.abs(bpAddr - decoy.address) < 0x10_00) {
                                     _detectedInteractions++;
                                 }
                             },
@@ -4677,13 +4670,13 @@ const DynamicScriptGenerator = {
 
                     // Monitor memory reads of decoy areas
                     try {
-                        Memory.protect(decoy.address, 0x1000, 'r--');
+                        Memory.protect(decoy.address, 0x10_00, 'r--');
                         Interceptor.attach(decoy.address, {
                             onEnter: () => {
                                 _detectedInteractions++;
                             },
                         });
-                    } catch (_e) {}
+                    } catch {}
                 }
 
                 // Detect file access for credential decoys
@@ -4713,7 +4706,7 @@ const DynamicScriptGenerator = {
                     }
                 }
 
-                const modifier = typeModifiers[decoy.type] || 1.0;
+                const modifier = typeModifiers[decoy.type] || 1;
                 const interactionChance = baseInteractionRate * modifier;
 
                 return Math.random() < interactionChance ? Math.floor(Math.random() * 3) + 1 : 0;
@@ -4721,8 +4714,8 @@ const DynamicScriptGenerator = {
             calculateDecoyEffectiveness: decoy => {
                 const ageInHours = (Date.now() - decoy.deployment_time) / (1000 * 60 * 60);
                 const interactionRate = decoy.interactions / Math.max(1, ageInHours);
-                const typeMultiplier =
-                    {
+                const typeMultiplier
+                    = {
                         false_vulnerability_decoys: 0.9,
                         honeypot_process_decoys: 0.8,
                         credential_interception_decoys: 0.7,
@@ -4730,10 +4723,10 @@ const DynamicScriptGenerator = {
                         license_server_interception: 0.75,
                     }[decoy.type] || 0.5;
 
-                return Math.min(1.0, interactionRate * typeMultiplier);
+                return Math.min(1, interactionRate * typeMultiplier);
             },
-            adaptDecoyStrategies: function () {
-                const lowEfficiencyDecoys = Array.from(this.activeDecoys.values()).filter(
+            adaptDecoyStrategies() {
+                const lowEfficiencyDecoys = [...this.activeDecoys.values()].filter(
                     decoy => decoy.effectiveness_score < 0.3
                 );
 
@@ -4758,8 +4751,8 @@ const DynamicScriptGenerator = {
                     'improve_believability_factors',
                 ];
 
-                const selectedEnhancement =
-                    enhancements[Math.floor(Math.random() * enhancements.length)];
+                const selectedEnhancement
+                    = enhancements[Math.floor(Math.random() * enhancements.length)];
                 decoy.enhancements = decoy.enhancements || [];
                 decoy.enhancements.push(selectedEnhancement);
 
@@ -4781,7 +4774,7 @@ const DynamicScriptGenerator = {
             campaigns: new Map(),
             narratives: new Map(),
             effectivenessMetrics: new Map(),
-            initializeDisinformationSystem: function () {
+            initializeDisinformationSystem() {
                 const campaignTypes = [
                     'false_technical_documentation',
                     'misleading_vulnerability_reports',
@@ -4881,8 +4874,8 @@ const DynamicScriptGenerator = {
 
                 return frameworks[campaignType] || { default: 'generic_campaign' };
             },
-            startCampaignExecution: function () {
-                const executionInterval = 240000; // 4 minutes
+            startCampaignExecution() {
+                const executionInterval = 240_000; // 4 minutes
 
                 setInterval(() => {
                     this.executeCampaigns();
@@ -4893,7 +4886,7 @@ const DynamicScriptGenerator = {
                 // Initial campaign execution
                 this.executeCampaigns();
             },
-            executeCampaigns: function () {
+            executeCampaigns() {
                 this.campaigns.forEach((framework, campaignType) => {
                     const narrative = this.createNarrative(campaignType, framework);
                     this.narratives.set(`${campaignType}_${Date.now()}`, narrative);
@@ -4907,11 +4900,11 @@ const DynamicScriptGenerator = {
                     });
                 });
             },
-            createNarrative: function (campaignType, framework) {
+            createNarrative(campaignType, framework) {
                 return {
                     id: `narrative_${campaignType}_${Date.now()}`,
                     campaign_type: campaignType,
-                    framework: framework,
+                    framework,
                     content: this.generateNarrativeContent(campaignType, framework),
                     distribution_status: 'active',
                     engagement_metrics: {
@@ -4933,7 +4926,7 @@ const DynamicScriptGenerator = {
                         technical_accuracy: 'deliberately_flawed',
                     }),
                     misleading_vulnerability_reports: () => ({
-                        title: `Critical Vulnerability CVE-2025-${Math.floor(Math.random() * 10000)}`,
+                        title: `Critical Vulnerability CVE-2025-${Math.floor(Math.random() * 10_000)}`,
                         severity: 'Critical (9.8)',
                         description:
                             'A critical buffer overflow vulnerability affecting multiple protection systems...',
@@ -4961,7 +4954,7 @@ const DynamicScriptGenerator = {
 
                 return contentGenerators[campaignType]() || { default: 'generic_content' };
             },
-            monitorCampaignEffectiveness: function () {
+            monitorCampaignEffectiveness() {
                 this.narratives.forEach((narrative, narrativeId) => {
                     const engagement = this.trackRealEngagement(narrative);
 
@@ -4994,6 +4987,13 @@ const DynamicScriptGenerator = {
                     actions: 0,
                 };
 
+                const rates = {
+                    views: 0.7,
+                    interactions: 0.5,
+                    beliefs: 0.3,
+                    actions: 0.2,
+                };
+
                 // Monitor file access for documentation campaigns
                 if (narrative.campaign_type === 'false_technical_documentation') {
                     const CreateFile = Module.findExportByName('kernel32.dll', 'CreateFileW');
@@ -5011,8 +5011,8 @@ const DynamicScriptGenerator = {
 
                 // Monitor network activity for vulnerability reports
                 if (
-                    narrative.campaign_type === 'misleading_vulnerability_reports' ||
-                    narrative.campaign_type === 'patch_bypass_information'
+                    narrative.campaign_type === 'misleading_vulnerability_reports'
+                    || narrative.campaign_type === 'patch_bypass_information'
                 ) {
                     const HttpOpenRequest = Module.findExportByName(
                         'wininet.dll',
@@ -5060,13 +5060,13 @@ const DynamicScriptGenerator = {
                 const beliefRate = metrics.belief_indicators / Math.max(1, metrics.views);
 
                 return Math.min(
-                    1.0,
-                    (engagementRate * 0.3 + actionRate * 0.4 + beliefRate * 0.3) *
-                        Math.min(1, ageInHours / 24)
+                    1,
+                    (engagementRate * 0.3 + actionRate * 0.4 + beliefRate * 0.3)
+                        * Math.min(1, ageInHours / 24)
                 );
             },
-            adaptCampaignStrategies: function () {
-                const ineffectiveCampaigns = Array.from(this.effectivenessMetrics.entries())
+            adaptCampaignStrategies() {
+                const ineffectiveCampaigns = [...this.effectivenessMetrics.entries()]
                     .filter(([_id, effectiveness]) => effectiveness < 0.4)
                     .map(([id]) => id);
 
@@ -5094,8 +5094,8 @@ const DynamicScriptGenerator = {
                     'add_social_proof_elements',
                 ];
 
-                const selectedEnhancement =
-                    enhancements[Math.floor(Math.random() * enhancements.length)];
+                const selectedEnhancement
+                    = enhancements[Math.floor(Math.random() * enhancements.length)];
                 narrative.enhancements = narrative.enhancements || [];
                 narrative.enhancements.push(selectedEnhancement);
 
@@ -5114,7 +5114,7 @@ const DynamicScriptGenerator = {
             protectionLayers: new Map(),
             detectionMechanisms: new Map(),
             responseStrategies: new Map(),
-            initializeProtections: function () {
+            initializeProtections() {
                 const protectionTypes = [
                     'code_obfuscation_layers',
                     'dynamic_analysis_detection',
@@ -5189,8 +5189,8 @@ const DynamicScriptGenerator = {
 
                 return layers[protectionType] || { default: 'generic_protection' };
             },
-            startProtectionMonitoring: function () {
-                const monitoringInterval = 120000; // 2 minutes
+            startProtectionMonitoring() {
+                const monitoringInterval = 120_000; // 2 minutes
 
                 setInterval(() => {
                     this.monitorAnalysisAttempts();
@@ -5198,7 +5198,7 @@ const DynamicScriptGenerator = {
                     this.deployCountermeasures();
                 }, monitoringInterval);
             },
-            monitorAnalysisAttempts: function () {
+            monitorAnalysisAttempts() {
                 const analysisTypes = [
                     'static_analysis_attempt',
                     'dynamic_analysis_attempt',
@@ -5224,7 +5224,7 @@ const DynamicScriptGenerator = {
 
                 return baseProbabilities[analysisType] || 0.05;
             },
-            handleAnalysisDetection: function (analysisType) {
+            handleAnalysisDetection(analysisType) {
                 send({
                     type: 'warning',
                     target: 'anti_reverse_engineering',
@@ -5263,7 +5263,7 @@ const DynamicScriptGenerator = {
                 const availableStrategies = strategies[analysisType] || ['generic_countermeasures'];
                 return availableStrategies[Math.floor(Math.random() * availableStrategies.length)];
             },
-            executeResponse: function (analysisType, responseStrategy) {
+            executeResponse(analysisType, responseStrategy) {
                 this.responseStrategies.set(`${analysisType}_${Date.now()}`, {
                     analysis_type: analysisType,
                     response_strategy: responseStrategy,
@@ -5280,10 +5280,10 @@ const DynamicScriptGenerator = {
                     strategy: responseStrategy,
                 });
             },
-            updateProtectionStrategies: function () {
+            updateProtectionStrategies() {
                 this.protectionLayers.forEach((layer, protectionType) => {
-                    const effectivenessAssessment =
-                        this.assessProtectionEffectiveness(protectionType);
+                    const effectivenessAssessment
+                        = this.assessProtectionEffectiveness(protectionType);
 
                     if (effectivenessAssessment < 0.7) {
                         this.enhanceProtectionLayer(protectionType, layer);
@@ -5308,15 +5308,13 @@ const DynamicScriptGenerator = {
                             Interceptor.replace(
                                 IsDebuggerPresent,
                                 new NativeCallback(
-                                    () => {
-                                        return 0; // Bypass returns false
-                                    },
+                                    () => 0, // Bypass returns false
                                     'int',
                                     []
                                 )
                             );
                             effectivenessScore += 1;
-                        } catch (_e) {}
+                        } catch {}
                     }
 
                     // Check PEB bypass
@@ -5326,7 +5324,7 @@ const DynamicScriptGenerator = {
                         const beingDebugged = peb.add(0x02); // PEB.BeingDebugged offset
                         beingDebugged.writeU8(0);
                         effectivenessScore += 1;
-                    } catch (_e) {}
+                    } catch {}
                 }
 
                 // Test anti-instrumentation
@@ -5342,7 +5340,7 @@ const DynamicScriptGenerator = {
                                 onEnter: () => {},
                             });
                             hooksSuccessful++;
-                        } catch (_e) {}
+                        } catch {}
                     }
 
                     effectivenessScore += hooksSuccessful / 10;
@@ -5357,7 +5355,7 @@ const DynamicScriptGenerator = {
 
                     for (const range of ranges.slice(0, 5)) {
                         try {
-                            const data = range.base.readByteArray(Math.min(0x1000, range.size));
+                            const data = range.base.readByteArray(Math.min(0x10_00, range.size));
                             const bytes = new Uint8Array(data);
 
                             // Check for encrypted strings (high entropy)
@@ -5369,7 +5367,7 @@ const DynamicScriptGenerator = {
                             if (entropy / bytes.length > 80) {
                                 obfuscatedStrings++;
                             }
-                        } catch (_e) {}
+                        } catch {}
                     }
 
                     effectivenessScore += obfuscatedStrings / 5;
@@ -5385,8 +5383,8 @@ const DynamicScriptGenerator = {
                     'enhance_response_mechanisms',
                 ];
 
-                const selectedEnhancement =
-                    enhancements[Math.floor(Math.random() * enhancements.length)];
+                const selectedEnhancement
+                    = enhancements[Math.floor(Math.random() * enhancements.length)];
                 layer.enhancements = layer.enhancements || [];
                 layer.enhancements.push(selectedEnhancement);
 
@@ -5398,8 +5396,8 @@ const DynamicScriptGenerator = {
                     enhancement: selectedEnhancement,
                 });
             },
-            deployCountermeasures: function () {
-                const activeMeasures = Array.from(this.responseStrategies.values()).filter(
+            deployCountermeasures() {
+                const activeMeasures = [...this.responseStrategies.values()].filter(
                     strategy => strategy.status === 'active'
                 ).length;
 
@@ -5440,7 +5438,7 @@ const DynamicScriptGenerator = {
         });
     },
 
-    initializeSecurityHardening: function () {
+    initializeSecurityHardening() {
         send({
             type: 'status',
             target: 'dynamic_script_generator_hardening',
@@ -5454,7 +5452,7 @@ const DynamicScriptGenerator = {
             encryptionKeys: new Map(),
             integrityChecks: new Map(),
 
-            applyMultiLayerProtection: function (code) {
+            applyMultiLayerProtection(code) {
                 let protectedCode = code;
 
                 // Layer 1: String encryption
@@ -5475,9 +5473,9 @@ const DynamicScriptGenerator = {
                 return protectedCode;
             },
 
-            encryptStrings: function (code) {
-                const key = Math.floor(Math.random() * 0xffffffff);
-                return code.replace(/"([^"]*)"/g, (_match, str) => {
+            encryptStrings(code) {
+                const key = Math.floor(Math.random() * 0xFF_FF_FF_FF);
+                return code.replaceAll(/"([^"]*)"/g, (_match, str) => {
                     const encrypted = this.xorEncrypt(str, key);
                     return `__decrypt("${encrypted}", ${key})`;
                 });
@@ -5512,16 +5510,17 @@ const DynamicScriptGenerator = {
 
                 let hidden = code;
                 apiMap.forEach((alias, original) => {
-                    const escapedOriginal = original.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                    hidden =
-                        `var ${alias} = ${original};\n` +
-                        hidden.replace(new RegExp(escapedOriginal, 'g'), alias);
+                    const escapedOriginal = original.replaceAll(/[$()*+.?[\\\]^{|}]/g, '\\$&');
+                    hidden = `var ${alias} = ${original};\n${hidden.replaceAll(
+                        new RegExp(escapedOriginal, 'g'),
+                        alias
+                    )}`;
                 });
 
                 return hidden;
             },
 
-            insertIntegrityChecks: function (code) {
+            insertIntegrityChecks(code) {
                 const checksum = this.calculateChecksum(code);
                 const integrityCheck = `
                     var __integrity = ${checksum};

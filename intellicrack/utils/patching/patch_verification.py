@@ -989,7 +989,6 @@ def _add_manual_review_suggestions(
         )
 
 
-
 def _handle_no_patches_alternative(app: MainWindow, strategy_used: str) -> None:
     """Handle case when no patches were generated from deep analysis.
 

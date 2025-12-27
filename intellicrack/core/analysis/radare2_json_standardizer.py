@@ -1129,22 +1129,22 @@ class R2JSONStandardizer:
     def _count_process_apis(self, imports: list[dict[str, Any]]) -> int:
         """Count process manipulation APIs."""
         process_keywords = ["createprocess", "terminateprocess", "openprocess", "thread"]
-        return sum(any((keyword in imp.get("name", "").lower() for keyword in process_keywords)) for imp in imports)
+        return sum(any(keyword in imp.get("name", "").lower() for keyword in process_keywords) for imp in imports)
 
     def _count_file_apis(self, imports: list[dict[str, Any]]) -> int:
         """Count file operation APIs."""
         file_keywords = ["createfile", "readfile", "writefile", "deletefile", "copyfile"]
-        return sum(any((keyword in imp.get("name", "").lower() for keyword in file_keywords)) for imp in imports)
+        return sum(any(keyword in imp.get("name", "").lower() for keyword in file_keywords) for imp in imports)
 
     def _count_network_apis(self, imports: list[dict[str, Any]]) -> int:
         """Count network operation APIs."""
         network_keywords = ["socket", "connect", "send", "recv", "internetopen", "urldownload"]
-        return sum(any((keyword in imp.get("name", "").lower() for keyword in network_keywords)) for imp in imports)
+        return sum(any(keyword in imp.get("name", "").lower() for keyword in network_keywords) for imp in imports)
 
     def _count_registry_apis(self, imports: list[dict[str, Any]]) -> int:
         """Count registry operation APIs."""
         registry_keywords = ["regopen", "regclose", "regset", "regquery", "regdelete"]
-        return sum(any((keyword in imp.get("name", "").lower() for keyword in registry_keywords)) for imp in imports)
+        return sum(any(keyword in imp.get("name", "").lower() for keyword in registry_keywords) for imp in imports)
 
     def _count_memory_apis(self, imports: list[dict[str, Any]]) -> int:
         """Count memory operation APIs."""
@@ -1155,7 +1155,7 @@ class R2JSONStandardizer:
             "malloc",
             "heap",
         ]
-        return sum(any((keyword in imp.get("name", "").lower() for keyword in memory_keywords)) for imp in imports)
+        return sum(any(keyword in imp.get("name", "").lower() for keyword in memory_keywords) for imp in imports)
 
     def _create_histogram(self, values: list[float], bins: int = 10) -> list[int]:
         """Create histogram from values."""

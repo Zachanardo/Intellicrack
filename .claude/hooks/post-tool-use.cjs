@@ -94,9 +94,23 @@ function detectViolations(filePath) {
             }
         });
 
-        // Check for ellipsis as function body
+        let inProtocolClass = false;
+        let classIndent = -1;
         lines.forEach((line, index) => {
-            if (line.trim() === '...') {
+            const trimmed = line.trim();
+            const currentIndent = line.length - line.trimStart().length;
+
+            if (trimmed.startsWith('class ') && trimmed.includes('Protocol')) {
+                inProtocolClass = true;
+                classIndent = currentIndent;
+            }
+
+            if (inProtocolClass && trimmed.startsWith('class ') && !trimmed.includes('Protocol') && currentIndent <= classIndent) {
+                inProtocolClass = false;
+                classIndent = -1;
+            }
+
+            if (trimmed === '...' && !inProtocolClass) {
                 violations.push(`Ellipsis-only function body found at: ${index + 1}`);
             }
         });

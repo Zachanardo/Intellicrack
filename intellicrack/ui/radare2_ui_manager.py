@@ -21,8 +21,8 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import os
 from typing import Any, cast
 
-from intellicrack.utils.type_safety import validate_type
 from intellicrack.handlers.pyqt6_handler import QMessageBox, QObject, QTabWidget, QWidget, pyqtSignal
+from intellicrack.utils.type_safety import validate_type
 
 from ..utils.logger import get_logger
 from .enhanced_ui_integration import EnhancedAnalysisDashboard, integrate_enhanced_ui_with_existing_app
@@ -145,7 +145,6 @@ class R2UIManager(QObject):
                         "Enhanced Analysis",
                     )
 
-                    # Store references in main app using setattr
                     setattr(main_app, "r2_ui_manager", self)
                     setattr(main_app, "r2_widget", self.ui_components["r2_widget"])
                     setattr(main_app, "enhanced_dashboard", self.ui_components["enhanced_dashboard"])
@@ -160,7 +159,9 @@ class R2UIManager(QObject):
                 if not hasattr(main_app, "tab_widget"):
                     new_tab_widget = QTabWidget()
                     setattr(main_app, "tab_widget", new_tab_widget)
-                    main_app.setCentralWidget(new_tab_widget)
+                    set_central_widget = getattr(main_app, "setCentralWidget", None)
+                    if callable(set_central_widget):
+                        set_central_widget(new_tab_widget)
 
                 tab_widget = getattr(main_app, "tab_widget", None)
                 if isinstance(tab_widget, QTabWidget):
@@ -174,7 +175,6 @@ class R2UIManager(QObject):
                         "Enhanced Analysis",
                     )
 
-                    # Store references
                     setattr(main_app, "r2_ui_manager", self)
 
                     self.logger.info("Successfully integrated with central widget")
@@ -184,7 +184,7 @@ class R2UIManager(QObject):
                 self.logger.info("Attempting integration with existing app structure")
 
                 # Use the existing integration functions (casting to Any for compatibility)
-                main_app_any = validate_type(main_app, Any)
+                main_app_any: Any = main_app
                 if integrate_with_main_app(main_app_any):
                     self.logger.info("Used existing integration method")
                 else:

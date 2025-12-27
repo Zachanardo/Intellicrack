@@ -41,9 +41,12 @@ except ImportError as e:
     psutil = None
 
 try:
-    from PIL import Image, ImageDraw
-    from PIL import Image as ImageModule
-    from PIL import ImageDraw as ImageDrawModule
+    from PIL import (
+        Image,
+        Image as ImageModule,
+        ImageDraw,
+        ImageDraw as ImageDrawModule,
+    )
 
     PIL_AVAILABLE = True
 except ImportError as e:

@@ -23,6 +23,7 @@ from typing import Any, TypeVar
 
 from intellicrack.utils.logger import logger
 
+
 F = TypeVar("F", bound=Callable[..., Any])
 
 

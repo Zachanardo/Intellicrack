@@ -25,32 +25,35 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+
 if TYPE_CHECKING:
     from logging import Logger
 
-    from PyQt6.QtCore import QObject as QObjectType
-    from PyQt6.QtCore import QRunnable as QRunnableType
-    from PyQt6.QtCore import QThreadPool as QThreadPoolType
-    from PyQt6.QtCore import QTimer as QTimerType
-    from PyQt6.QtCore import pyqtSignal as pyqtSignalType
-    from PyQt6.QtGui import QFont as QFontType
-    from PyQt6.QtGui import QTextDocument as QTextDocumentType
-    from PyQt6.QtWidgets import QDialog as QDialogType
-    from PyQt6.QtWidgets import QFileDialog as QFileDialogType
-    from PyQt6.QtWidgets import QHBoxLayout as QHBoxLayoutType
-    from PyQt6.QtWidgets import QLabel as QLabelType
-    from PyQt6.QtWidgets import QMessageBox as QMessageBoxType
-    from PyQt6.QtWidgets import QPushButton as QPushButtonType
-    from PyQt6.QtWidgets import QTextEdit as QTextEditType
-    from PyQt6.QtWidgets import QVBoxLayout as QVBoxLayoutType
-    from PyQt6.QtWidgets import QWidget as QWidgetType
+    from PyQt6.QtCore import (
+        QObject as QObjectType,
+        QRunnable as QRunnableType,
+        QThreadPool as QThreadPoolType,
+        QTimer as QTimerType,
+        pyqtSignal as pyqtSignalType,
+    )
+    from PyQt6.QtGui import (
+        QFont as QFontType,
+        QTextDocument as QTextDocumentType,
+    )
+    from PyQt6.QtWidgets import (
+        QDialog as QDialogType,
+        QFileDialog as QFileDialogType,
+        QHBoxLayout as QHBoxLayoutType,
+        QLabel as QLabelType,
+        QMessageBox as QMessageBoxType,
+        QPushButton as QPushButtonType,
+        QTextEdit as QTextEditType,
+        QVBoxLayout as QVBoxLayoutType,
+        QWidget as QWidgetType,
+    )
 
-    from ...ai.protection_aware_script_gen import (
-        ProtectionAwareScriptGenerator as ProtectionAwareScriptGeneratorType,
-    )
-    from ...protection.unified_protection_engine import (
-        UnifiedProtectionResult as UnifiedProtectionResultType,
-    )
+    from ...ai.protection_aware_script_gen import ProtectionAwareScriptGenerator as ProtectionAwareScriptGeneratorType
+    from ...protection.unified_protection_engine import UnifiedProtectionResult as UnifiedProtectionResultType
 
 try:
     from PyQt6.QtCore import QObject, QRunnable, QThreadPool, QTimer, pyqtSignal
@@ -151,7 +154,7 @@ except ImportError:
             parent: Any = None,
             caption: str = "",
             directory: str = "",
-            filter: str = "",
+            file_filter: str = "",
         ) -> tuple[str, str]:
             """Get save file name."""
             return ("", "")
@@ -442,9 +445,12 @@ class ScriptDisplayDialog(QDialog):
         if not PYQT6_AVAILABLE:
             return
 
-        from PyQt6.QtGui import QColor, QTextCharFormat
-        from PyQt6.QtGui import QFont as QFontReal
-        from PyQt6.QtGui import QTextDocument as QTextDocumentReal
+        from PyQt6.QtGui import (
+            QColor,
+            QFont as QFontReal,
+            QTextCharFormat,
+            QTextDocument as QTextDocumentReal,
+        )
 
         script_type = self.script_data.get("type", "")
         if not isinstance(script_type, str):
@@ -681,7 +687,7 @@ class ScriptGenerationHandler(QObject):
             parent_widget: Optional parent widget for dialogs.
 
         """
-        if result.get("success", False):
+        if result.get("success"):
             self.script_ready.emit(result)
 
             if parent_widget:

@@ -3,6 +3,8 @@
 import logging
 import os
 import time
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
 
 from intellicrack.handlers.pyqt6_handler import (
     QApplication,
@@ -34,6 +36,7 @@ from intellicrack.handlers.pyqt6_handler import (
 from intellicrack.utils.logger import logger
 
 from ...ai.model_discovery_service import get_model_discovery_service
+from ...ai.llm_backends import LLMConfig
 from ...utils.env_file_manager import EnvFileManager
 from .base_dialog import BaseDialog
 
@@ -58,11 +61,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
-
-from collections.abc import Callable
-from typing import TYPE_CHECKING, Any
-
-from ...ai.llm_backends import LLMConfig
 
 
 if TYPE_CHECKING:

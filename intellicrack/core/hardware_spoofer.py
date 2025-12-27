@@ -15,11 +15,11 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, cast
 
-from intellicrack.utils.type_safety import validate_type
 import netifaces
 
 from intellicrack.handlers.wmi_handler import wmi
 from intellicrack.utils.logger import get_logger
+from intellicrack.utils.type_safety import validate_type
 
 
 if TYPE_CHECKING:
@@ -865,7 +865,7 @@ class HardwareFingerPrintSpoofer:
             True if WMI hooks were successfully installed, False otherwise.
 
         """
-        from ctypes import POINTER, byref, c_void_p, cast, sizeof
+        from ctypes import byref, c_void_p, cast, sizeof
 
         CLSID_WbemLocator = "{4590F811-1D3A-11D0-891F-00AA004B2E24}"
         IID_IWbemLocator = "{DC12A687-737F-11CF-884D-00AA004B2E24}"
@@ -1049,7 +1049,7 @@ class HardwareFingerPrintSpoofer:
             HRESULT status code (0 = S_OK, negative = error).
 
         """
-        from ctypes import POINTER, c_void_p, cast, pointer
+        from ctypes import c_void_p, cast, pointer
 
         HRESULT = ctypes.c_long
         S_OK = 0
@@ -1282,7 +1282,7 @@ class HardwareFingerPrintSpoofer:
             True if registry hooks were successfully installed, False otherwise.
 
         """
-        from ctypes import POINTER, byref, c_ulong, c_void_p, cast, create_string_buffer, wintypes
+        from ctypes import byref, c_ulong, c_void_p, cast, create_string_buffer, wintypes
 
         advapi32 = ctypes.windll.advapi32
         kernel32 = ctypes.windll.kernel32
@@ -1523,7 +1523,7 @@ class HardwareFingerPrintSpoofer:
             True if kernel32.dll hooks were successfully installed, False otherwise.
 
         """
-        from ctypes import POINTER, byref, c_ulong, c_void_p, cast, wintypes
+        from ctypes import byref, c_ulong, c_void_p, cast, wintypes
 
         kernel32 = ctypes.windll.kernel32
 
@@ -1734,7 +1734,7 @@ class HardwareFingerPrintSpoofer:
             True if SetupAPI hooks were successfully installed, False otherwise.
 
         """
-        from ctypes import POINTER, byref, c_ulong, c_void_p, cast, wintypes
+        from ctypes import byref, c_ulong, c_void_p, cast, wintypes
 
         try:
             setupapi = ctypes.windll.setupapi
@@ -1939,7 +1939,7 @@ class HardwareFingerPrintSpoofer:
             True if IP Helper API hooks were successfully installed, False otherwise.
 
         """
-        from ctypes import POINTER, byref, c_ulong, c_void_p, cast, wintypes
+        from ctypes import byref, c_ulong, c_void_p, cast, wintypes
 
         try:
             iphlpapi = ctypes.windll.iphlpapi
@@ -1976,9 +1976,9 @@ class HardwareFingerPrintSpoofer:
             ("LeaseExpires", ctypes.c_ulong),
         ]
 
-        IpAdapterInfoPointer: TypeAlias = POINTER(IpAdapterInfo)
+        POINTER(IpAdapterInfo)
 
-        def hooked_GetAdaptersInfo(pAdapterInfo: IpAdapterInfoPointer | None, pOutBufLen: Any) -> int:
+        def hooked_GetAdaptersInfo(pAdapterInfo: Any, pOutBufLen: Any) -> int:
             """Intercept GetAdaptersInfo to return spoofed MAC addresses.
 
             Args:
@@ -1992,7 +1992,7 @@ class HardwareFingerPrintSpoofer:
             result: int = self.original_GetAdaptersInfo(pAdapterInfo, pOutBufLen)
 
             if result == 0 and pAdapterInfo and self.spoofed_hardware:
-                current: IpAdapterInfoPointer | None = pAdapterInfo
+                current: Any = pAdapterInfo
                 adapter_idx = 0
 
                 while current:

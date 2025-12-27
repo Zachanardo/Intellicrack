@@ -74,7 +74,7 @@ dependencies = [
 
     # Security & Network
     # "mitmproxy @ git+https://github.com/Zachanardo/mitmproxy.git",
-    "scapy>=2.6.1,<3",
+    "scapy>=2.7.0,<3",
     "cryptography",
     "paramiko>=4.0.0,<5",
     "pyshark>=0.6,<0.7",
@@ -118,7 +118,7 @@ dependencies = [
     "graphviz>=0.21,<0.22",
 
     # System & Hardware
-    "psutil>=7.1.1,<8",
+    "psutil>=7.2.0,<8",
     "GPUtil==1.4.0",
     "py-cpuinfo>=9.0.0,<10",
     "pynput>=1.8.1,<2",
@@ -303,7 +303,7 @@ dependencies = [
     "langchain-core",
     "langchain-community",
     "langgraph>=1.0.4,<2",
-    "langsmith>=0.4.56,<1",
+    "langsmith>=0.5.1,<1",
 
     # Monitoring & Logging
     "loguru",
@@ -402,10 +402,6 @@ testpaths = ["tests"]
 addopts = [
     "-ra",
     "--strict-markers",
-    "--cov=intellicrack",
-    "--cov-report=term-missing",
-    "--cov-report=html",
-    "--cov-report=xml",
     "--ignore=tests/runners",
     "--ignore=tests/generators",
     "--ignore=tests/checkpoints",
@@ -559,6 +555,7 @@ module = [
     "qiling.*",
     "unicorn.*",
     "mitmproxy.*",
+    "paramiko.*",
 ]
 ignore_missing_imports = true
 ignore_errors = true

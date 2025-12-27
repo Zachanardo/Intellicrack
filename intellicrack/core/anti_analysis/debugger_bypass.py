@@ -24,7 +24,11 @@ import os
 import platform
 import struct
 import sys
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any
+
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class DebuggerBypass:

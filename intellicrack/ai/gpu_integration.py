@@ -44,14 +44,7 @@ _gpu_autoloader_instance: GPUAutoLoaderProtocol
 
 # Import unified GPU system
 try:
-    from ..utils.gpu_autoloader import (
-        GPUAutoLoader,
-        get_device,
-        get_gpu_info,
-        gpu_autoloader,
-        optimize_for_gpu,
-        to_device,
-    )
+    from ..utils.gpu_autoloader import GPUAutoLoader, get_device, get_gpu_info, gpu_autoloader, optimize_for_gpu, to_device
 
     GPU_AUTOLOADER_AVAILABLE = True
     _gpu_autoloader_instance = gpu_autoloader

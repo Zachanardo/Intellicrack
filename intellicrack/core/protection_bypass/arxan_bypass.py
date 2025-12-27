@@ -28,8 +28,21 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from intellicrack.core.analysis.arxan_analyzer import (
+    ArxanAnalysisResult,
+    ArxanAnalyzer,
+    IntegrityCheckMechanism,
+    LicenseValidationRoutine,
+    RASPMechanism,
+    TamperCheckLocation,
+)
+from intellicrack.core.protection_detection.arxan_detector import ArxanDetector
+
+
 if TYPE_CHECKING:
     from types import ModuleType
+
+    import pefile as pefile_type
 
 try:
     import capstone
@@ -60,20 +73,6 @@ try:
 except ImportError:
     pefile = None
 PEFILE_AVAILABLE = pefile is not None
-
-from intellicrack.core.analysis.arxan_analyzer import (
-    ArxanAnalysisResult,
-    ArxanAnalyzer,
-    IntegrityCheckMechanism,
-    LicenseValidationRoutine,
-    RASPMechanism,
-    TamperCheckLocation,
-)
-from intellicrack.core.protection_detection.arxan_detector import ArxanDetector
-
-if TYPE_CHECKING:
-    import pefile as pefile_type
-
 
 logger = logging.getLogger(__name__)
 

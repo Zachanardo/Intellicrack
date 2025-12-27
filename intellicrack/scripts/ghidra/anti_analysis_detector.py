@@ -17,6 +17,8 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
+import os
+import sys
 from typing import Any
 
 
@@ -34,8 +36,6 @@ commonly used by protected software and malware.
 @tags anti-debug,anti-vm,protection,evasion
 """
 
-import os
-import sys
 
 try:
     from ghidra.app.script import GhidraScript as GhidraScriptBase

@@ -19,7 +19,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
-# Standard library imports
 import argparse
 import csv
 import json
@@ -27,28 +26,19 @@ import logging
 import os
 import sys
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
-
-logger = logging.getLogger(__name__)
-
-
-# Add parent directory to path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-# Third-party imports
 from rich import box
 from rich.console import Console
 from rich.syntax import Syntax
 from rich.table import Table
 
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-"""
-Pipeline Support for Intellicrack CLI
-Enables Unix-style command chaining and data flow between operations
-"""
+logger = logging.getLogger(__name__)
 
 
 @dataclass

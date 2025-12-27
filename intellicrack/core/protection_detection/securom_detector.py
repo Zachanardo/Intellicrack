@@ -11,8 +11,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, cast
 
-from intellicrack.utils.type_safety import validate_type
 from intellicrack.utils.logger import get_logger
+from intellicrack.utils.type_safety import validate_type
 
 
 logger = get_logger(__name__)

@@ -23,9 +23,12 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
+
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from PyQt6.QtCore import QObject, QRunnable, QThreadPool, pyqtSignal
 
     from ...protection.unified_protection_engine import UnifiedProtectionResult
@@ -96,9 +99,7 @@ except ImportError:
     LLMManager = None
 
 try:
-    from ...llm.tools.intellicrack_protection_analysis_tool import (
-        DIEAnalysisTool as _DIEAnalysisTool,
-    )
+    from ...llm.tools.intellicrack_protection_analysis_tool import DIEAnalysisTool as _DIEAnalysisTool
 
     DIEAnalysisTool: type[Any] | None = _DIEAnalysisTool
 except ImportError:

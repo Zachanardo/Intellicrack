@@ -22,7 +22,7 @@ import platform
 import threading
 import time
 from collections.abc import Callable
-from typing import Any, cast
+from typing import Any, TypedDict
 
 from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
@@ -46,6 +46,49 @@ from intellicrack.handlers.pyqt6_handler import (
     QWidget,
 )
 from intellicrack.utils.log_message import log_error, log_info, log_warning
+
+
+class LicenseConnectionInfo(TypedDict, total=False):
+    """Information about a license-related network connection."""
+
+    local_address: str
+    remote_address: str
+    local_port: int
+    remote_port: int
+    protocol: str
+    status: str
+    reason: str
+
+
+class ConnectionInfo(TypedDict, total=False):
+    """Detailed network connection information."""
+
+    local_ip: str
+    local_port: int
+    remote_ip: str
+    remote_port: int
+    protocol: str
+    status: str
+
+
+class ConversationInfo(TypedDict):
+    """Information about a network conversation."""
+
+    src: str
+    dst: str
+    count: int
+
+
+class TrafficAnalysisResults(TypedDict, total=False):
+    """Results from network traffic analysis."""
+
+    protocol_stats: dict[str, int]
+    top_conversations: list[ConversationInfo]
+    license_traffic: list[LicenseConnectionInfo]
+    connection_info: list[ConnectionInfo]
+    analysis_timestamp: float
+    total_connections: int
+    license_connection_count: int
 
 
 class TrafficAnalyzer:
@@ -95,7 +138,7 @@ class TrafficAnalyzer:
             if hasattr(main_window, "log_message"):
                 main_window.log_message(error_msg)
 
-    def analyze_network_traffic(self) -> dict[str, object] | None:
+    def analyze_network_traffic(self) -> TrafficAnalysisResults | None:
         """Analyze current network traffic for license-related communications.
 
         Captures and analyzes network traffic to detect license server communications,
@@ -110,13 +153,10 @@ class TrafficAnalyzer:
             import socket
             from collections import defaultdict
 
-            results: dict[str, object] = {
-                "protocol_stats": defaultdict(int),
-                "top_conversations": [],
-                "license_traffic": [],
-                "connection_info": [],
-                "analysis_timestamp": time.time(),
-            }
+            protocol_stats: dict[str, int] = defaultdict(int)
+            top_conversations: list[ConversationInfo] = []
+            license_traffic: list[LicenseConnectionInfo] = []
+            connection_info: list[ConnectionInfo] = []
 
             try:
                 import psutil
@@ -163,7 +203,6 @@ class TrafficAnalyzer:
                 for conn in connections:
                     try:
                         protocol = protocol_map.get(conn.type, "OTHER")
-                        protocol_stats = cast(dict[str, int], results["protocol_stats"])
                         protocol_stats[protocol] = protocol_stats.get(protocol, 0) + 1
 
                         if conn.laddr and conn.raddr:
@@ -173,59 +212,54 @@ class TrafficAnalyzer:
 
                             remote_port = conn.raddr.port
                             if remote_port in license_ports:
-                                license_conn: dict[str, Any] = {
-                                    "src": src,
-                                    "dst": dst,
-                                    "port": remote_port,
+                                license_conn: LicenseConnectionInfo = {
+                                    "local_address": src,
+                                    "remote_address": dst,
+                                    "remote_port": remote_port,
                                     "protocol": protocol,
                                     "status": conn.status,
                                     "reason": "Known license port",
                                 }
-                                license_traffic_list = cast(list[dict[str, Any]], results["license_traffic"])
-                                license_traffic_list.append(license_conn)
+                                license_traffic.append(license_conn)
 
-                            conn_info: dict[str, Any] = {
-                                "local": src,
-                                "remote": dst,
+                            conn_info_entry: ConnectionInfo = {
+                                "local_ip": conn.laddr.ip,
+                                "local_port": conn.laddr.port,
+                                "remote_ip": conn.raddr.ip,
+                                "remote_port": conn.raddr.port,
                                 "protocol": protocol,
                                 "status": conn.status,
-                                "pid": conn.pid,
                             }
 
                             if conn.pid:
                                 try:
                                     proc = psutil.Process(conn.pid)
                                     proc_name = proc.name().lower()
-                                    conn_info["process"] = proc.name()
 
                                     if any(kw in proc_name for kw in license_keywords):
-                                        license_conn_proc: dict[str, Any] = {
-                                            "src": src,
-                                            "dst": dst,
-                                            "process": proc.name(),
+                                        license_conn_proc: LicenseConnectionInfo = {
+                                            "local_address": src,
+                                            "remote_address": dst,
                                             "protocol": protocol,
                                             "reason": "License-related process",
                                         }
-                                        license_traffic_list = cast(list[dict[str, Any]], results["license_traffic"])
-                                        if license_conn_proc not in license_traffic_list:
-                                            license_traffic_list.append(license_conn_proc)
+                                        if license_conn_proc not in license_traffic:
+                                            license_traffic.append(license_conn_proc)
                                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                                     pass
 
-                            connection_info_list = cast(list[dict[str, Any]], results["connection_info"])
-                            connection_info_list.append(conn_info)
+                            connection_info.append(conn_info_entry)
 
                     except Exception as e:
                         log_error(f"Error analyzing network connection: {e}")
                         continue
 
                 sorted_convs = sorted(connection_counts.items(), key=lambda x: x[1], reverse=True)
-                top_conversations_list = cast(list[dict[str, Any]], results["top_conversations"])
-                for (src, dst), count in sorted_convs[:20]:
-                    top_conversations_list.append({
-                        "src": src,
-                        "dst": dst,
-                        "packets": count,
+                for (src_addr, dst_addr), count in sorted_convs[:20]:
+                    top_conversations.append({
+                        "src": src_addr,
+                        "dst": dst_addr,
+                        "count": count,
                     })
 
             except ImportError:
@@ -243,13 +277,11 @@ class TrafficAnalyzer:
 
                         if netstat_result.returncode == 0:
                             lines = netstat_result.stdout.strip().split("\n")
-                            protocol_stats_dict = cast(dict[str, int], results["protocol_stats"])
-                            license_traffic_list = cast(list[dict[str, Any]], results["license_traffic"])
                             for line in lines[4:]:
                                 parts = line.split()
                                 if len(parts) >= 4:
                                     protocol = parts[0]
-                                    protocol_stats_dict[protocol] = protocol_stats_dict.get(protocol, 0) + 1
+                                    protocol_stats[protocol] = protocol_stats.get(protocol, 0) + 1
 
                                     if len(parts) >= 3:
                                         remote_addr = parts[2]
@@ -259,9 +291,9 @@ class TrafficAnalyzer:
                                             try:
                                                 remote_port = int(remote_addr.split(":")[-1])
                                                 if remote_port in {443, 80, 27000, 27001, 5093, 7788, 1947}:
-                                                    license_traffic_list.append({
-                                                        "local": local_addr,
-                                                        "remote": remote_addr,
+                                                    license_traffic.append({
+                                                        "local_address": local_addr,
+                                                        "remote_address": remote_addr,
                                                         "protocol": protocol,
                                                         "reason": "Known license port",
                                                     })
@@ -284,22 +316,26 @@ class TrafficAnalyzer:
 
                         if ss_result.returncode == 0:
                             lines = ss_result.stdout.strip().split("\n")
-                            protocol_stats_dict = cast(dict[str, int], results["protocol_stats"])
                             for line in lines[1:]:
                                 if parts := line.split():
                                     protocol = parts[0]
-                                    protocol_stats_dict[protocol] = protocol_stats_dict.get(protocol, 0) + 1
+                                    protocol_stats[protocol] = protocol_stats.get(protocol, 0) + 1
 
                     except Exception as e:
                         self.logger.warning("ss fallback failed: %s", e)
 
-            protocol_stats_dict = cast(dict[str, int], results["protocol_stats"])
-            results["protocol_stats"] = dict(protocol_stats_dict)
-            results["total_connections"] = sum(cast(dict[str, int], results["protocol_stats"]).values())
-            results["license_connection_count"] = len(cast(list[Any], results["license_traffic"]))
+            total_connections = sum(protocol_stats.values())
 
-            total_connections = cast(int, results["total_connections"])
             if total_connections > 0:
+                results: TrafficAnalysisResults = {
+                    "protocol_stats": dict(protocol_stats),
+                    "top_conversations": top_conversations,
+                    "license_traffic": license_traffic,
+                    "connection_info": connection_info,
+                    "analysis_timestamp": time.time(),
+                    "total_connections": total_connections,
+                    "license_connection_count": len(license_traffic),
+                }
                 log_info(f"Traffic analysis complete: {total_connections} connections analyzed")
                 return results
 
@@ -341,7 +377,7 @@ class NetworkTrafficAnalysisDialog(QDialog):
         try:
             from intellicrack.core.network.traffic_analyzer import NetworkTrafficAnalyzer
 
-            self.analyzer = cast(Any, NetworkTrafficAnalyzer())
+            self.analyzer = NetworkTrafficAnalyzer()
             log_info("NetworkTrafficAnalyzer initialized successfully")
         except Exception as e:
             error_msg = f"Failed to initialize NetworkTrafficAnalyzer: {e}"
@@ -1021,15 +1057,15 @@ def start_network_capture(self: Any, interface: str | None = None, filter_str: s
 
                 interface = "Ethernet" if plat.system() == "Windows" else "eth0"
 
-        setattr(self, "_capture_interface", interface)
-        setattr(self, "_capture_filter", filter_str)
-        setattr(self, "_capture_active", True)
-        setattr(self, "_captured_packets", [])
+        self._capture_interface = interface
+        self._capture_filter = filter_str
+        self._capture_active = True
+        self._captured_packets = []
 
         import threading
 
         capture_thread = threading.Thread(target=_perform_network_capture, args=(self, interface, filter_str), daemon=True)
-        setattr(self, "_capture_thread", capture_thread)
+        self._capture_thread = capture_thread
         capture_thread.start()
 
         if hasattr(self, "log_message"):
@@ -1127,12 +1163,12 @@ def _perform_network_capture(self: Any, interface: str | None, filter_str: str |
 
                 """
                 if hasattr(self, "_captured_packets"):
-                    captured_packets: list[Any] = getattr(self, "_captured_packets")
+                    captured_packets: list[Any] = self._captured_packets
                     captured_packets.append(packet)
 
                     if hasattr(self, "update_output"):
                         packet_summary = f"Captured: {packet.summary()}"
-                        update_output: Any = getattr(self, "update_output")
+                        update_output: Any = self.update_output
                         update_output.emit(packet_summary)
 
             sniff(
@@ -1162,11 +1198,11 @@ def _perform_network_capture(self: Any, interface: str | None, filter_str: str |
                     packet_data, addr = sock.recvfrom(65535)
 
                     if hasattr(self, "_captured_packets"):
-                        captured_packets: list[Any] = getattr(self, "_captured_packets")
+                        captured_packets: list[Any] = self._captured_packets
                         captured_packets.append({"data": packet_data, "address": addr, "timestamp": time.time()})
 
                     if hasattr(self, "update_output"):
-                        update_output: Any = getattr(self, "update_output")
+                        update_output: Any = self.update_output
                         update_output.emit(f"Captured packet: {len(packet_data)} bytes")
 
                 except TimeoutError:

@@ -33,9 +33,7 @@ const pcrOperations = [];
 
 function setSpoofedPCRValue(pcrIndex, value) {
     spoofedPCRValues[pcrIndex] = value;
-    console.log(
-        `[+] PCR${pcrIndex} spoofed value set: ${value.toString('hex').substring(0, 32)}...`
-    );
+    console.log(`[+] PCR${pcrIndex} spoofed value set: ${value.toString('hex').slice(0, 32)}...`);
 }
 
 function blockPCRExtend(pcrIndex) {
@@ -58,9 +56,9 @@ function parseTPMCommand(buffer) {
     const commandCode = buffer.readU32BE(6);
 
     return {
-        tag: tag,
-        size: size,
-        commandCode: commandCode,
+        tag,
+        size,
+        commandCode,
         payload: buffer.slice(10),
     };
 }
@@ -69,7 +67,7 @@ function createTPMResponse(responseCode, data) {
     const responseSize = 10 + (data ? data.length : 0);
     const buffer = Buffer.alloc(responseSize);
 
-    buffer.writeUInt16BE(0x8001, 0);
+    buffer.writeUInt16BE(0x80_01, 0);
     buffer.writeUInt32BE(responseSize, 2);
     buffer.writeUInt32BE(responseCode, 6);
 
@@ -94,7 +92,7 @@ function hookTbsipSubmitCommandForPCR() {
     }
 
     Interceptor.attach(tbsipSubmitCommand, {
-        onEnter: function (args) {
+        onEnter(args) {
             this.commandBuffer = args[3];
             this.commandSize = args[4].toInt32();
             this.resultBuffer = args[5];
@@ -102,7 +100,7 @@ function hookTbsipSubmitCommandForPCR() {
             this.shouldModify = false;
             this.modifiedResponse = null;
 
-            if (this.commandSize > 0 && this.commandSize < 65536) {
+            if (this.commandSize > 0 && this.commandSize < 65_536) {
                 try {
                     const commandData = this.commandBuffer.readByteArray(this.commandSize);
                     const buffer = Buffer.from(commandData);
@@ -112,78 +110,89 @@ function hookTbsipSubmitCommandForPCR() {
                         return;
                     }
 
-                    if (parsed.commandCode === 0x00000182) {
-                        console.log('[*] PCR_Extend detected');
-                        if (parsed.payload.length >= 4) {
-                            const pcrIndex = parsed.payload.readUInt32BE(0);
-                            console.log(
-                                `    PCR Index: ${pcrIndex} (${TARGET_PCRS[pcrIndex] || 'Unknown'})`
-                            );
+                    switch (parsed.commandCode) {
+                        case 0x00_00_01_82: {
+                            console.log('[*] PCR_Extend detected');
+                            if (parsed.payload.length >= 4) {
+                                const pcrIndex = parsed.payload.readUInt32BE(0);
+                                console.log(
+                                    `    PCR Index: ${pcrIndex} (${TARGET_PCRS[pcrIndex] || 'Unknown'})`
+                                );
 
-                            if (blockedPCRs.has(pcrIndex)) {
-                                console.log(`[!] Blocking PCR${pcrIndex} extend operation`);
+                                if (blockedPCRs.has(pcrIndex)) {
+                                    console.log(`[!] Blocking PCR${pcrIndex} extend operation`);
+                                    this.shouldModify = true;
+                                    this.modifiedResponse = createTPMResponse(0, null);
+
+                                    pcrOperations.push({
+                                        timestamp: Date.now(),
+                                        operation: 'PCR_Extend',
+                                        pcr: pcrIndex,
+                                        blocked: true,
+                                    });
+                                }
+                            }
+
+                            break;
+                        }
+                        case 0x00_00_01_7E: {
+                            console.log('[*] PCR_Read detected');
+
+                            if (Object.keys(spoofedPCRValues).length > 0) {
+                                const responseData = Buffer.alloc(4 + 32 * 24);
+                                responseData.writeUInt32BE(24, 0);
+
+                                for (let i = 0; i < 24; i++) {
+                                    const offset = 4 + i * 32;
+                                    if (spoofedPCRValues[i]) {
+                                        spoofedPCRValues[i].copy(responseData, offset, 0, 32);
+                                        console.log(
+                                            `    Spoofing PCR${i}: ${spoofedPCRValues[i].toString('hex').slice(0, 16)}...`
+                                        );
+                                    } else {
+                                        responseData.fill(0, offset, offset + 32);
+                                    }
+                                }
+
+                                this.shouldModify = true;
+                                this.modifiedResponse = createTPMResponse(0, responseData);
+
+                                pcrOperations.push({
+                                    timestamp: Date.now(),
+                                    operation: 'PCR_Read',
+                                    spoofed: true,
+                                    pcrCount: Object.keys(spoofedPCRValues).length,
+                                });
+                            }
+
+                            break;
+                        }
+                        case 0x00_00_01_7F: {
+                            console.log('[*] PolicyPCR detected - PCR policy check');
+
+                            if (Object.keys(spoofedPCRValues).length > 0) {
+                                console.log('[!] Bypassing PCR policy check');
                                 this.shouldModify = true;
                                 this.modifiedResponse = createTPMResponse(0, null);
 
                                 pcrOperations.push({
                                     timestamp: Date.now(),
-                                    operation: 'PCR_Extend',
-                                    pcr: pcrIndex,
-                                    blocked: true,
+                                    operation: 'PolicyPCR',
+                                    bypassed: true,
                                 });
                             }
+
+                            break;
                         }
-                    } else if (parsed.commandCode === 0x0000017e) {
-                        console.log('[*] PCR_Read detected');
-
-                        if (Object.keys(spoofedPCRValues).length > 0) {
-                            const responseData = Buffer.alloc(4 + 32 * 24);
-                            responseData.writeUInt32BE(24, 0);
-
-                            for (let i = 0; i < 24; i++) {
-                                const offset = 4 + i * 32;
-                                if (spoofedPCRValues[i]) {
-                                    spoofedPCRValues[i].copy(responseData, offset, 0, 32);
-                                    console.log(
-                                        `    Spoofing PCR${i}: ${spoofedPCRValues[i].toString('hex').substring(0, 16)}...`
-                                    );
-                                } else {
-                                    responseData.fill(0, offset, offset + 32);
-                                }
-                            }
-
-                            this.shouldModify = true;
-                            this.modifiedResponse = createTPMResponse(0, responseData);
-
-                            pcrOperations.push({
-                                timestamp: Date.now(),
-                                operation: 'PCR_Read',
-                                spoofed: true,
-                                pcrCount: Object.keys(spoofedPCRValues).length,
-                            });
-                        }
-                    } else if (parsed.commandCode === 0x0000017f) {
-                        console.log('[*] PolicyPCR detected - PCR policy check');
-
-                        if (Object.keys(spoofedPCRValues).length > 0) {
-                            console.log('[!] Bypassing PCR policy check');
-                            this.shouldModify = true;
-                            this.modifiedResponse = createTPMResponse(0, null);
-
-                            pcrOperations.push({
-                                timestamp: Date.now(),
-                                operation: 'PolicyPCR',
-                                bypassed: true,
-                            });
-                        }
+                        // No default
                     }
-                } catch (e) {
-                    console.log(`[-] Error in PCR hook: ${e.message}`);
+                } catch (error) {
+                    console.log(`[-] Error in PCR hook: ${error.message}`);
                 }
             }
         },
 
-        onLeave: function (retval) {
+        onLeave(retval) {
             if (this.shouldModify && this.modifiedResponse) {
                 try {
                     const responseSize = this.modifiedResponse.length;
@@ -191,8 +200,8 @@ function hookTbsipSubmitCommandForPCR() {
                     this.resultSize.writeU32(responseSize);
                     retval.replace(ptr(0));
                     console.log('[+] PCR operation modified successfully');
-                } catch (e) {
-                    console.log(`[-] Error modifying response: ${e.message}`);
+                } catch (error) {
+                    console.log(`[-] Error modifying response: ${error.message}`);
                 }
             }
         },
@@ -227,12 +236,12 @@ function blockAllPCRExtends() {
 function getSummary() {
     return {
         spoofedPCRs: Object.keys(spoofedPCRValues).map(pcr => ({
-            pcr: parseInt(pcr, 10),
-            name: TARGET_PCRS[parseInt(pcr, 10)],
-            value: `${spoofedPCRValues[pcr].toString('hex').substring(0, 32)}...`,
+            pcr: Number.parseInt(pcr, 10),
+            name: TARGET_PCRS[Number.parseInt(pcr, 10)],
+            value: `${spoofedPCRValues[pcr].toString('hex').slice(0, 32)}...`,
         })),
-        blockedPCRs: Array.from(blockedPCRs).map(pcr => ({
-            pcr: pcr,
+        blockedPCRs: [...blockedPCRs].map(pcr => ({
+            pcr,
             name: TARGET_PCRS[pcr],
         })),
         operationCount: pcrOperations.length,
@@ -287,7 +296,7 @@ rpc.exports = {
         blockAllPCRExtends();
         return { status: 'success' };
     },
-    getSummary: getSummary,
+    getSummary,
     getOperations: () => pcrOperations,
     clearOperations: () => {
         pcrOperations.length = 0;

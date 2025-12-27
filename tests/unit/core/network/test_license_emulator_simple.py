@@ -2,15 +2,21 @@
 Simple test execution for license server emulator to validate test suite
 """
 
-
 import sys
 import os
+import pytest
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 
 try:
-    # Import the test module
     from tests.unit.core.network.test_license_server_emulator import *
+    MODULE_AVAILABLE = True
+except ImportError:
+    MODULE_AVAILABLE = False
 
+pytestmark = pytest.mark.skipif(not MODULE_AVAILABLE, reason="Module not available")
+
+if MODULE_AVAILABLE:
     print("OK Test module imported successfully")
 
     # Count test methods

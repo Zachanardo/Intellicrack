@@ -115,10 +115,10 @@ function randomDelay() {
     if (!CONFIG.stealthMode) {
         return;
     }
-    const delay =
-        Math.floor(Math.random() * (CONFIG.blockingDelay.max - CONFIG.blockingDelay.min + 1)) +
-        CONFIG.blockingDelay.min;
-    Thread.sleep(delay / 1000.0);
+    const delay
+        = Math.floor(Math.random() * (CONFIG.blockingDelay.max - CONFIG.blockingDelay.min + 1))
+        + CONFIG.blockingDelay.min;
+    Thread.sleep(delay / 1000);
 }
 
 function isExcludedProcess() {
@@ -127,7 +127,7 @@ function isExcludedProcess() {
             ? Process.getCurrentThreadId().toString()
             : '';
         return CONFIG.processExclusions.some(proc => processName.includes(proc));
-    } catch (_e) {
+    } catch {
         return false;
     }
 }
@@ -136,7 +136,7 @@ function encryptData(data) {
     if (!CONFIG.logEncryption) {
         return data;
     }
-    const key = 0xdeadbeef;
+    const key = 0xDE_AD_BE_EF;
     let result = '';
     for (let i = 0; i < data.length; i++) {
         result += String.fromCharCode(data.charCodeAt(i) ^ (key >> (8 * (i % 4))));
@@ -150,8 +150,8 @@ function detectDomainRotation(domain) {
     }
 
     const suspiciousPatterns = [
-        /\d{1,3}-\d{1,3}-\d{1,3}-\d{1,3}\.amazonaws\.com/,
-        /[a-f0-9]{8,}\.cloudfront\.net/,
+        /(?:\d{1,3}-){3}\d{1,3}\.amazonaws\.com/,
+        /[\da-f]{8,}\.cloudfront\.net/,
         /[a-z]{8,16}\.(com|net|org)$/,
         /telemetry\d+\./,
         /analytics\d+\./,
@@ -177,8 +177,8 @@ function tryAttach(module, funcName, hooks) {
             Interceptor.attach(func, hooks);
             return true;
         }
-    } catch (e) {
-        console.log(`Failed to attach to ${module}!${funcName}: ${e.message}`);
+    } catch (error) {
+        console.log(`Failed to attach to ${module}!${funcName}: ${error.message}`);
     }
     return false;
 }
@@ -204,11 +204,11 @@ tryAttach('ntdll.dll', 'NtCreateFile', {
                 this.blockTcp = true;
                 TELEMETRY_STATS.blockedConnections++;
             }
-        } catch (_e) {}
+        } catch {}
     },
     onLeave(retval) {
         if (this.blockTcp) {
-            retval.replace(ptr(0xc0000022)); // STATUS_ACCESS_DENIED
+            retval.replace(ptr(0xC0_00_00_22)); // STATUS_ACCESS_DENIED
         }
     },
 });
@@ -286,8 +286,8 @@ tryAttach('winhttp.dll', 'WinHttpSendRequest', {
             ];
 
             if (
-                headers &&
-                suspiciousHeaders.some(header => headers.toLowerCase().includes(header))
+                headers
+                && suspiciousHeaders.some(header => headers.toLowerCase().includes(header))
             ) {
                 randomDelay();
                 send({
@@ -301,7 +301,7 @@ tryAttach('winhttp.dll', 'WinHttpSendRequest', {
                 this.blockRequest = true;
                 TELEMETRY_STATS.blockedConnections++;
             }
-        } catch (_e) {}
+        } catch {}
     },
     onLeave(retval) {
         if (this.blockRequest) {
@@ -327,12 +327,12 @@ tryAttach('httpapi.dll', 'HttpSendHttpResponse', {
                     this.blockResponse = true;
                     TELEMETRY_STATS.blockedConnections++;
                 }
-            } catch (_e) {}
+            } catch {}
         }
     },
     onLeave(retval) {
         if (this.blockResponse) {
-            retval.replace(0x80070005); // ERROR_ACCESS_DENIED
+            retval.replace(0x80_07_00_05); // ERROR_ACCESS_DENIED
         }
     },
 });
@@ -363,7 +363,7 @@ if (CONFIG.cryptoHooking) {
                         timestamp: Date.now(),
                     });
                 }
-            } catch (_e) {}
+            } catch {}
         },
         onLeave(retval) {
             if (this.blockCrypto) {
@@ -389,7 +389,7 @@ if (CONFIG.cryptoHooking) {
                         this.blockCert = CRYPTO_CERT_SUBJECTS.some(subject => {
                             try {
                                 return certInfo.readCString().includes(subject);
-                            } catch (_e) {
+                            } catch {
                                 return false;
                             }
                         });
@@ -399,12 +399,12 @@ if (CONFIG.cryptoHooking) {
                             TELEMETRY_STATS.cryptoInterceptions++;
                         }
                     }
-                } catch (_e) {}
+                } catch {}
             }
         },
         onLeave(retval) {
             if (this.blockCert) {
-                retval.replace(0x800b0109); // CERT_E_UNTRUSTEDROOT
+                retval.replace(0x80_0B_01_09); // CERT_E_UNTRUSTEDROOT
             }
         },
     });
@@ -428,11 +428,11 @@ if (CONFIG.cryptoHooking) {
                     action: 'bcrypt_signature_blocked',
                     timestamp: Date.now(),
                 });
-            } catch (_e) {}
+            } catch {}
         },
         onLeave(retval) {
             if (this.blockBCrypt) {
-                retval.replace(0xc000000d); // STATUS_INVALID_PARAMETER
+                retval.replace(0xC0_00_00_0D); // STATUS_INVALID_PARAMETER
             }
         },
     });
@@ -459,7 +459,7 @@ tryAttach('ws2_32.dll', 'WSAConnect', {
             const ip = sockAddr.add(4).readU32();
 
             // Convert IP to readable format
-            const ipStr = `${ip & 0xff}.${(ip >> 8) & 0xff}.${(ip >> 16) & 0xff}.${(ip >> 24) & 0xff}`;
+            const ipStr = `${ip & 0xFF}.${(ip >> 8) & 0xFF}.${(ip >> 16) & 0xFF}.${(ip >> 24) & 0xFF}`;
 
             // Check against known telemetry IP ranges
             const suspiciousIPs = [
@@ -482,7 +482,9 @@ tryAttach('ws2_32.dll', 'WSAConnect', {
             ];
 
             const isSuspiciousIP = suspiciousIPs.some(range => ipStr.startsWith(range));
-            const isSuspiciousPort = [80, 443, 8080, 8443, 9001, 9443, 10001, 11001].includes(port);
+            const isSuspiciousPort = [80, 443, 8080, 8443, 9001, 9443, 10_001, 11_001].includes(
+                port
+            );
 
             if (isSuspiciousIP || isSuspiciousPort) {
                 randomDelay();
@@ -491,7 +493,7 @@ tryAttach('ws2_32.dll', 'WSAConnect', {
                     target: 'telemetry_blocker',
                     action: 'wsa_connection_blocked',
                     ip_address: encryptData(ipStr),
-                    port: port,
+                    port,
                     reason: isSuspiciousIP ? 'suspicious_ip_range' : 'suspicious_port',
                     timestamp: Date.now(),
                 });
@@ -525,7 +527,7 @@ tryAttach('ws2_32.dll', 'connect', {
         if (family === 2) {
             // AF_INET
             const port = (sockAddr.add(2).readU8() << 8) | sockAddr.add(3).readU8();
-            shouldBlock = [80, 443, 8080, 8443, 9001, 9443, 10443, 11443].includes(port);
+            shouldBlock = [80, 443, 8080, 8443, 9001, 9443, 10_443, 11_443].includes(port);
         } else if (family === 23) {
             // AF_INET6
             const port = (sockAddr.add(2).readU8() << 8) | sockAddr.add(3).readU8();
@@ -574,14 +576,14 @@ tryAttach('ws2_32.dll', 'send', {
                 ];
 
                 if (
-                    data &&
-                    suspiciousPayloads.some(payload => data.toLowerCase().includes(payload))
+                    data
+                    && suspiciousPayloads.some(payload => data.toLowerCase().includes(payload))
                 ) {
                     randomDelay();
                     this.blockSend = true;
                     TELEMETRY_STATS.blockedConnections++;
                 }
-            } catch (_e) {}
+            } catch {}
         }
     },
     onLeave(retval) {
@@ -641,7 +643,7 @@ tryAttach('ws2_32.dll', 'GetAddrInfoW', {
     },
     onLeave(retval) {
         if (this.blockDNS) {
-            retval.replace(11001); // WSAHOST_NOT_FOUND
+            retval.replace(11_001); // WSAHOST_NOT_FOUND
         }
     },
 });
@@ -693,7 +695,7 @@ tryAttach('ws2_32.dll', 'GetAddrInfoA', {
     },
     onLeave(retval) {
         if (this.blockDNS) {
-            retval.replace(11001); // WSAHOST_NOT_FOUND
+            retval.replace(11_001); // WSAHOST_NOT_FOUND
         }
     },
 });
@@ -931,11 +933,11 @@ tryAttach('ntdll.dll', 'NtCreateProcess', {
                 action: 'ntcreateprocess_blocked',
                 timestamp: Date.now(),
             });
-        } catch (_e) {}
+        } catch {}
     },
     onLeave(retval) {
         if (this.blockNtProcess) {
-            retval.replace(ptr(0xc0000022)); // STATUS_ACCESS_DENIED
+            retval.replace(ptr(0xC0_00_00_22)); // STATUS_ACCESS_DENIED
         }
     },
 });
@@ -1093,12 +1095,12 @@ tryAttach('ntdll.dll', 'NtSetValueKey', {
                     this.blockNtRegistry = true;
                     TELEMETRY_STATS.blockedRegistry++;
                 }
-            } catch (_e) {}
+            } catch {}
         }
     },
     onLeave(retval) {
         if (this.blockNtRegistry) {
-            retval.replace(ptr(0xc0000022)); // STATUS_ACCESS_DENIED
+            retval.replace(ptr(0xC0_00_00_22)); // STATUS_ACCESS_DENIED
         }
     },
 });
@@ -1219,11 +1221,11 @@ tryAttach('kernel32.dll', 'WriteFile', {
                         type: 'bypass',
                         target: 'telemetry_blocker',
                         action: 'writefile_blocked',
-                        data_preview: encryptData(data.substring(0, 100)),
+                        data_preview: encryptData(data.slice(0, 100)),
                         timestamp: Date.now(),
                     });
                 }
-            } catch (_e) {}
+            } catch {}
         }
     },
     onLeave(retval) {
@@ -1252,16 +1254,16 @@ setInterval(() => {
             blocked_registry: TELEMETRY_STATS.blockedRegistry,
             crypto_interceptions: TELEMETRY_STATS.cryptoInterceptions,
             total_blocked:
-                TELEMETRY_STATS.blockedConnections +
-                TELEMETRY_STATS.blockedDNS +
-                TELEMETRY_STATS.blockedFiles +
-                TELEMETRY_STATS.blockedProcesses +
-                TELEMETRY_STATS.blockedRegistry +
-                TELEMETRY_STATS.cryptoInterceptions,
+                TELEMETRY_STATS.blockedConnections
+                + TELEMETRY_STATS.blockedDNS
+                + TELEMETRY_STATS.blockedFiles
+                + TELEMETRY_STATS.blockedProcesses
+                + TELEMETRY_STATS.blockedRegistry
+                + TELEMETRY_STATS.cryptoInterceptions,
         },
         timestamp: Date.now(),
     });
-}, 30000); // Report every 30 seconds
+}, 30_000); // Report every 30 seconds
 
 send({
     type: 'status',

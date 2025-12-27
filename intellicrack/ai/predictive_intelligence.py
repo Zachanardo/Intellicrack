@@ -915,7 +915,7 @@ class ExecutionTimePredictor:
                         stats.sort_stats("cumulative")
 
                         # Extract timing information
-                        total_time = getattr(stats, 'total_tt', 0.0)
+                        total_time = getattr(stats, "total_tt", 0.0)
 
                         # Parse associated metadata
                         meta_file = profile_file.with_suffix(".json")

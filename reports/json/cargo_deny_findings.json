@@ -1,6 +1,6 @@
 {
   "tool": "cargo_deny",
-  "generated": "2025-12-20T21:59:46.476375",
+  "generated": "2025-12-26T20:22:52.233267",
   "total_findings": 291,
   "total_files": 1,
   "files": [
@@ -8,6 +8,1046 @@
       "path": "Cargo.toml",
       "count": 291,
       "findings": [
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
+        {
+          "line": null,
+          "column": null,
+          "severity": "error",
+          "code": "rejected",
+          "message": "failed to satisfy license requirements",
+          "raw": "error[rejected]: failed to satisfy license requirements"
+        },
         {
           "line": null,
           "column": null,
@@ -1123,202 +2163,10 @@
         {
           "line": null,
           "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
           "severity": "warning",
           "code": "duplicate",
           "message": "found 2 duplicate entries for crate 'thiserror'",
           "raw": "warning[duplicate]: found 2 duplicate entries for crate 'thiserror'"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
         },
         {
           "line": null,
@@ -1331,138 +2179,10 @@
         {
           "line": null,
           "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
           "severity": "warning",
           "code": "duplicate",
           "message": "found 2 duplicate entries for crate 'windows'",
           "raw": "warning[duplicate]: found 2 duplicate entries for crate 'windows'"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
         },
         {
           "line": null,
@@ -1475,26 +2195,10 @@
         {
           "line": null,
           "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
           "severity": "warning",
           "code": "duplicate",
           "message": "found 2 duplicate entries for crate 'windows-core'",
           "raw": "warning[duplicate]: found 2 duplicate entries for crate 'windows-core'"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
         },
         {
           "line": null,
@@ -1507,50 +2211,10 @@
         {
           "line": null,
           "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
           "severity": "warning",
           "code": "duplicate",
           "message": "found 2 duplicate entries for crate 'windows-link'",
           "raw": "warning[duplicate]: found 2 duplicate entries for crate 'windows-link'"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
         },
         {
           "line": null,
@@ -1563,42 +2227,10 @@
         {
           "line": null,
           "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
           "severity": "warning",
           "code": "duplicate",
           "message": "found 2 duplicate entries for crate 'windows-result'",
           "raw": "warning[duplicate]: found 2 duplicate entries for crate 'windows-result'"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
         },
         {
           "line": null,
@@ -1611,74 +2243,10 @@
         {
           "line": null,
           "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
           "severity": "warning",
           "code": "duplicate",
           "message": "found 3 duplicate entries for crate 'windows-sys'",
           "raw": "warning[duplicate]: found 3 duplicate entries for crate 'windows-sys'"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
         },
         {
           "line": null,
@@ -1691,42 +2259,10 @@
         {
           "line": null,
           "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
           "severity": "warning",
           "code": "duplicate",
           "message": "found 2 duplicate entries for crate 'windows-threading'",
           "raw": "warning[duplicate]: found 2 duplicate entries for crate 'windows-threading'"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
         },
         {
           "line": null,
@@ -1771,26 +2307,10 @@
         {
           "line": null,
           "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
           "severity": "warning",
           "code": "duplicate",
           "message": "found 2 duplicate entries for crate 'windows_x86_64_gnu'",
           "raw": "warning[duplicate]: found 2 duplicate entries for crate 'windows_x86_64_gnu'"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
         },
         {
           "line": null,
@@ -1807,526 +2327,6 @@
           "code": "duplicate",
           "message": "found 2 duplicate entries for crate 'windows_x86_64_msvc'",
           "raw": "warning[duplicate]: found 2 duplicate entries for crate 'windows_x86_64_msvc'"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
-        },
-        {
-          "line": null,
-          "column": null,
-          "severity": "error",
-          "code": "rejected",
-          "message": "failed to satisfy license requirements",
-          "raw": "error[rejected]: failed to satisfy license requirements"
         },
         {
           "line": null,

@@ -8,20 +8,37 @@ NO mocked components - validates actual GUI behavior.
 import pytest
 import tempfile
 import os
+import sys
 from unittest.mock import patch
-from intellicrack.ui.dialogs.common_imports import QApplication, QTest, Qt
 
 
-from intellicrack.ui.main_window import IntellicrackMainWindow
-from intellicrack.core.analysis.multi_format_analyzer import MultiFormatBinaryAnalyzer
+try:
+    from PyQt6.QtWidgets import QApplication
+    from PyQt6.QtTest import QTest
+    from PyQt6.QtCore import Qt
+    QT_AVAILABLE = True
+except ImportError:
+    QT_AVAILABLE = False
 
 
+def get_qt_app():
+    """Get or create QApplication instance."""
+    if not QT_AVAILABLE:
+        return None
+    app = QApplication.instance()
+    if app is None:
+        app = QApplication([])
+    return app
+
+
+@pytest.mark.skipif(not QT_AVAILABLE, reason="PyQt6 not available")
 class TestIntellicrackMainWindow:
     """Test REAL main window functionality with actual Qt interactions."""
 
     @pytest.fixture(autouse=True)
     def setup_app(self, qtbot):
         """Setup QApplication and main window with REAL Qt environment."""
+        from intellicrack.ui.main_window import IntellicrackMainWindow
         self.main_window = IntellicrackMainWindow()
         qtbot.addWidget(self.main_window)
         self.main_window.show()
@@ -42,7 +59,7 @@ class TestIntellicrackMainWindow:
     def test_tab_widget_real_tabs_created(self, qtbot):
         """Test that REAL tabs are created and accessible."""
         tab_widget = self.main_window.tab_widget
-        assert tab_widget.count() >= 6  # Dashboard, Analysis, Results, Protection, AI, Settings
+        assert tab_widget.count() >= 6
 
         tab_titles = [tab_widget.tabText(i) for i in range(tab_widget.count())]
         expected_tabs = ["Dashboard", "Analysis", "Results", "Protection", "AI Assistant", "Settings"]
@@ -65,12 +82,12 @@ class TestIntellicrackMainWindow:
         """Test REAL analysis button state management."""
         if hasattr(self.main_window, "analyze_button"):
             analyze_button = self.main_window.analyze_button
-            assert not analyze_button.isEnabled()  # Should be disabled initially
+            assert not analyze_button.isEnabled()
 
             if hasattr(self.main_window, "file_path_label"):
                 self.main_window.current_file_path = "C:\\test_binary.exe"
                 self.main_window._update_ui_state()
-                qtbot.wait(100)  # Allow UI to update
+                qtbot.wait(100)
 
     def test_status_bar_real_updates(self, qtbot):
         """Test REAL status bar message updates."""
@@ -79,7 +96,7 @@ class TestIntellicrackMainWindow:
 
         test_message = "Test status message"
         self.main_window.update_status.emit(test_message)
-        qtbot.wait(100)  # Wait for signal processing
+        qtbot.wait(100)
 
         assert test_message in status_bar.currentMessage()
 
@@ -153,7 +170,7 @@ class TestIntellicrackMainWindow:
     def test_real_binary_file_loading_ui_updates(self, qtbot):
         """Test REAL binary file loading and UI state updates."""
         with tempfile.NamedTemporaryFile(suffix=".exe", delete=False) as temp_file:
-            temp_file.write(b"MZ\x90\x00")  # Minimal PE header
+            temp_file.write(b"MZ\x90\x00")
             temp_file_path = temp_file.name
 
         try:
@@ -177,19 +194,14 @@ class TestIntellicrackMainWindow:
 
         if hasattr(self.main_window, "_run_analysis"):
             try:
-                # Test with real orchestrator analysis
                 if hasattr(self.main_window, "current_file_path"):
-                    # Create a real test file for analysis
                     with tempfile.NamedTemporaryFile(suffix=".exe", delete=False) as temp_file:
-                        # Write minimal PE data
                         test_pe = b"MZ\x90\x00" + b"\x00" * 60 + b"PE\x00\x00"
                         temp_file.write(test_pe)
                         self.main_window.current_file_path = temp_file.name
 
                 self.main_window._run_analysis()
             except Exception:
-                # Handle analysis errors gracefully
-                # Continue with test even if analysis fails
                 qtbot.wait(100)
 
     def test_real_progress_updates_ui_feedback(self, qtbot):

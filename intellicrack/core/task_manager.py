@@ -71,7 +71,7 @@ if QObject is not None:
 
 else:
 
-    class TaskSignals(object):  # type: ignore[no-redef,unreachable]
+    class TaskSignals:  # type: ignore[no-redef,unreachable]
         """Fallback signals implementation when PyQt6 is not available."""
 
         def __init__(self) -> None:
@@ -198,7 +198,7 @@ else:
                 self._started_at = datetime.now()
                 logger.info("Task started: %s - %s", self.task_id, self.description)
 
-                result = self.execute()
+                self.execute()
 
                 if not self._is_cancelled:
                     logger.info("Task completed: %s", self.task_id)
@@ -230,8 +230,14 @@ else:
             return self._is_cancelled
 
         def emit_progress(self, percentage: int, message: str = "") -> None:
-            """Emit progress update."""
-            pass
+            """Emit progress update.
+
+            Args:
+                percentage: Progress percentage (0-100).
+                message: Optional progress message.
+
+            """
+            logger.debug("Task %s progress: %d%% - %s", self.task_id, percentage, message)
 
 
 class CallableTask(BaseTask):
@@ -429,7 +435,7 @@ if QObject is not None and QThreadPool is not None:
 
 else:
 
-    class TaskManager(object):  # type: ignore[no-redef,unreachable]
+    class TaskManager:  # type: ignore[no-redef,unreachable]
         """Fallback TaskManager when PyQt6 is not available."""
 
         def __init__(self, max_thread_count: int | None = None) -> None:

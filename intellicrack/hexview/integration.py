@@ -5,14 +5,17 @@ from __future__ import annotations
 import logging
 import os
 from collections import Counter
-from collections.abc import Callable
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 from PyQt6.QtCore import QObject
 from PyQt6.QtWidgets import QDialog, QMessageBox, QToolBar, QWidget
 
 from intellicrack.handlers.pyqt6_handler import QAction
 from intellicrack.utils.logger import logger
+
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class AppInstance(Protocol):
@@ -25,8 +28,23 @@ class AppInstance(Protocol):
     _hex_viewer_integrated: bool
     TOOL_REGISTRY: dict[str, Callable[[Any, dict[str, Any]], dict[str, Any]]]
 
-    def menuBar(self) -> Any: ...
-    def children(self) -> list[QObject]: ...
+    def menuBar(self) -> Any:
+        """Return the main window's menu bar.
+
+        Returns:
+            The menu bar widget for adding menus and actions.
+
+        """
+        ...
+
+    def children(self) -> list[QObject]:
+        """Return all child QObject instances.
+
+        Returns:
+            List of child QObject widgets and objects.
+
+        """
+        ...
 
 
 """
