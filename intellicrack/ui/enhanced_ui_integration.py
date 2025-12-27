@@ -51,6 +51,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QWidget,
 )
 
+from ..core.reporting.pdf_generator import PDFReportGenerator
 from ..utils.logger import get_logger
 from ..utils.resource_helper import get_resource_path
 from .radare2_integration_ui import R2ConfigurationDialog, R2IntegrationWidget
@@ -406,8 +407,65 @@ class EnhancedAnalysisDashboard(QWidget):
             self.add_activity(f"Saved report: {os.path.basename(file_path)}")
 
     def _export_pdf(self) -> None:
-        """Export report as PDF."""
-        self.add_activity("PDF export not yet implemented")
+        """Export report as PDF.
+
+        Converts the current report content to PDF format using the PDFReportGenerator.
+        Supports both plain text and HTML formatting from the report editor.
+        """
+        report_content = self.report_editor.toPlainText()
+        if not report_content or not report_content.strip():
+            QMessageBox.warning(
+                self,
+                "No Content",
+                "There is no report content to export. Please generate a report first.",
+            )
+            self.add_activity("PDF export cancelled: No report content")
+            return
+
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Export Report as PDF",
+            "",
+            "PDF Files (*.pdf);;All Files (*)",
+        )
+
+        if not file_path:
+            self.add_activity("PDF export cancelled by user")
+            return
+
+        if not file_path.lower().endswith(".pdf"):
+            file_path += ".pdf"
+
+        try:
+            pdf_generator = PDFReportGenerator()
+
+            html_content = self.report_editor.toHtml()
+
+            result_path = pdf_generator.generate_from_html(html_content, file_path)
+
+            if result_path:
+                self.add_activity(f"Exported PDF: {os.path.basename(file_path)}")
+                QMessageBox.information(
+                    self,
+                    "Export Successful",
+                    f"Report exported successfully to:\n{file_path}",
+                )
+            else:
+                self.add_activity("PDF export failed: Generator returned None")
+                QMessageBox.warning(
+                    self,
+                    "Export Failed",
+                    "Failed to generate PDF. Check that PDF generation dependencies are installed.",
+                )
+
+        except (OSError, ValueError, RuntimeError) as e:
+            logger.exception("PDF export error")
+            self.add_activity(f"PDF export failed: {e}")
+            QMessageBox.critical(
+                self,
+                "Export Error",
+                f"An error occurred while exporting to PDF:\n{e}",
+            )
 
 
 class EnhancedMainWindow(QMainWindow):
