@@ -2206,8 +2206,73 @@ def test(script_path: str, binary: str | None, environment: str, timeout: int, v
                 click.echo("🧹 Cleaning up snapshot...")
                 test_manager.cleanup_snapshot(snapshot_id)
 
+        elif environment == "sandbox":
+            from intellicrack.ai.script_tester import SandboxScriptTester
+
+            tester = SandboxScriptTester()
+
+            if not tester.is_sandbox_available():
+                click.echo("ERROR No sandbox environment available!")
+                click.echo("Enable Windows Sandbox or install Docker to use sandbox testing.")
+                sys.exit(1)
+
+            click.echo("\n🔒 Running script in sandbox environment...")
+            try:
+                if script_type == "frida":
+                    result = tester.test_frida_script(script_content, binary or "", timeout)
+                else:
+                    result = tester.test_ghidra_script(script_content, binary or "", timeout)
+
+                if result.success:
+                    click.echo("OK Script executed successfully in sandbox!")
+                    click.echo(f"Runtime: {result.runtime_ms}ms")
+
+                    if verbose and result.output:
+                        click.echo("\nScript Output:")
+                        click.echo(result.output)
+                else:
+                    click.echo("ERROR Script execution failed in sandbox!")
+                    if result.error:
+                        click.echo(f"Error: {result.error}")
+                    sys.exit(1)
+
+            finally:
+                tester.cleanup()
+
+        elif environment == "direct":
+            from intellicrack.ai.script_tester import DirectScriptTester
+
+            tester = DirectScriptTester()
+
+            click.echo("\nWARNING Running script directly without isolation!")
+            click.echo("Only use with trusted scripts in development environments.")
+            click.echo("\nExecuting script...")
+
+            try:
+                if script_type == "frida":
+                    result = tester.test_frida_script(script_content, binary or "", timeout)
+                else:
+                    result = tester.test_ghidra_script(script_content, binary or "", timeout)
+
+                if result.success:
+                    click.echo("OK Script executed successfully!")
+                    click.echo(f"Runtime: {result.runtime_ms}ms")
+
+                    if verbose and result.output:
+                        click.echo("\nScript Output:")
+                        click.echo(result.output)
+                else:
+                    click.echo("ERROR Script execution failed!")
+                    if result.error:
+                        click.echo(f"Error: {result.error}")
+                    sys.exit(1)
+
+            finally:
+                tester.cleanup()
+
         else:
-            click.echo(f"Environment '{environment}' testing not yet implemented")
+            click.echo(f"ERROR Unknown environment: {environment}")
+            sys.exit(1)
 
     except (
         OSError,
